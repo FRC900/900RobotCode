@@ -14,6 +14,7 @@ TalonFXProDevice::TalonFXProDevice(const std::string &name_space,
 , can_bus_{can_bus}
 , state_{std::make_unique<hardware_interface::talonfxpro::TalonFXProHWState>(can_id)}
 , command_{std::make_unique<hardware_interface::talonfxpro::TalonFXProHWCommand>()}
+, config_{std::make_unique<ctre::phoenix6::configs::TalonFXConfiguration>()}
 , read_state_mutex_{std::make_unique<std::mutex>()}
 , read_thread_state_{std::make_unique<hardware_interface::talonfxpro::TalonFXProHWState>(can_id)}
 , talonfxpro_{std::make_unique<ctre::phoenix6::hardware::core::CoreTalonFX>(can_id, can_bus)}
@@ -154,12 +155,29 @@ void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*pe
     state_->setDifferentialClosedLoopError(read_thread_state_->getDifferentialClosedLoopError());
 }
 
+// Set of macros for common code used to read 
+// all signals with error checking.
+// MAKE_SIGNAL is just an easy way to create the signal object
+// that's used for subsequent reads
+#define MAKE_SIGNAL(var, function) \
+auto var##_signal = function;
+
+// SAFE_READ takes the signal short name, passes the 
+// previously-created signal name to the base-class
+// safeRead, and checks the returned std::optional
+// var. If the var is not valid, don't run any
+// additional code in the loop.
 #define SAFE_READ(var, function) \
-const auto var = safeRead(function, #function); \
+const auto var = safeRead(var##_signal, #function); \
 if (!var) { tracer->stop() ; continue; }
 
+// Similar to above, but if the value returned
+// from safeRead is valid, assign it to 
+// a previously created variable. This is used in
+// cases where we need to e..g do unit conversion on values
+// read from the signal or convert from a ctre enum.
 #define SAFE_READ_INTO(var, function) \
-const auto foo##var = safeRead(function, #function); \
+const auto foo##var = safeRead(var##_signal, #function); \
 if (!foo##var) { tracer->stop() ; continue; } \
 var = *foo##var;
 
@@ -178,6 +196,104 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 #endif
 	ros::Duration(3.25 + joint_idx * 0.05).sleep(); // Sleep for a few seconds to let CAN start up
 	ROS_INFO_STREAM("Starting talonfxpro " << read_thread_state_->getCANID() << " thread at " << ros::Time::now());
+
+    //Construct status signal objects here once, reuse them each time through the loop
+
+    MAKE_SIGNAL(version_major, talonfxpro_->GetVersionMajor())
+    MAKE_SIGNAL(version_minor, talonfxpro_->GetVersionMinor())
+    MAKE_SIGNAL(version_bugfix, talonfxpro_->GetVersionBugfix())
+    MAKE_SIGNAL(version_build, talonfxpro_->GetVersionBuild())
+
+    MAKE_SIGNAL(motor_voltage, talonfxpro_->GetMotorVoltage())
+
+    MAKE_SIGNAL(forward_limit, talonfxpro_->GetForwardLimit())
+    MAKE_SIGNAL(reverse_limit, talonfxpro_->GetReverseLimit())
+
+    MAKE_SIGNAL(ctre_applied_rotor_polarity, talonfxpro_->GetAppliedRotorPolarity())
+    MAKE_SIGNAL(duty_cycle, talonfxpro_->GetDutyCycle())
+    MAKE_SIGNAL(torque_current, talonfxpro_->GetTorqueCurrent())
+    MAKE_SIGNAL(stator_current, talonfxpro_->GetStatorCurrent())
+    MAKE_SIGNAL(supply_current, talonfxpro_->GetSupplyCurrent())
+    MAKE_SIGNAL(supply_voltage, talonfxpro_->GetSupplyVoltage())
+    MAKE_SIGNAL(device_temp, talonfxpro_->GetDeviceTemp())
+    MAKE_SIGNAL(processor_temp, talonfxpro_->GetProcessorTemp())
+    MAKE_SIGNAL(rotor_velocity, talonfxpro_->GetRotorVelocity())
+    MAKE_SIGNAL(rotor_position, talonfxpro_->GetRotorPosition())
+    MAKE_SIGNAL(velocity, talonfxpro_->GetVelocity())
+    MAKE_SIGNAL(position, talonfxpro_->GetPosition())
+    MAKE_SIGNAL(acceleration, talonfxpro_->GetAcceleration())
+    MAKE_SIGNAL(device_enable, talonfxpro_->GetDeviceEnable())
+    MAKE_SIGNAL(motion_magic_is_running, talonfxpro_->GetMotionMagicIsRunning())
+    MAKE_SIGNAL(ctre_differential_control_mode, talonfxpro_->GetDifferentialControlMode());
+    MAKE_SIGNAL(differential_average_velocity, talonfxpro_->GetDifferentialAverageVelocity())
+    MAKE_SIGNAL(differential_average_position, talonfxpro_->GetDifferentialAveragePosition())
+    MAKE_SIGNAL(differential_difference_velocity, talonfxpro_->GetDifferentialDifferenceVelocity())
+    MAKE_SIGNAL(differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition())
+
+    MAKE_SIGNAL(ctre_bridge_output_value, talonfxpro_->GetBridgeOutput());
+
+    MAKE_SIGNAL(fault_hardware, talonfxpro_->GetFault_Hardware())
+    MAKE_SIGNAL(fault_proctemp, talonfxpro_->GetFault_ProcTemp())
+    MAKE_SIGNAL(fault_devicetemp, talonfxpro_->GetFault_DeviceTemp())
+    MAKE_SIGNAL(fault_undervoltage, talonfxpro_->GetFault_Undervoltage())
+    MAKE_SIGNAL(fault_bootduringenable, talonfxpro_->GetFault_BootDuringEnable())
+    MAKE_SIGNAL(fault_bridgebrownout, talonfxpro_->GetFault_BridgeBrownout())
+    MAKE_SIGNAL(fault_unlicensed_feature_in_use, talonfxpro_->GetFault_UnlicensedFeatureInUse())
+    MAKE_SIGNAL(fault_remotesensorreset, talonfxpro_->GetFault_RemoteSensorReset())
+    MAKE_SIGNAL(fault_missingdifferentialfx, talonfxpro_->GetFault_MissingDifferentialFX())
+    MAKE_SIGNAL(fault_remotesensorposoverflow, talonfxpro_->GetFault_RemoteSensorPosOverflow())
+    MAKE_SIGNAL(fault_oversupplyv, talonfxpro_->GetFault_OverSupplyV())
+    MAKE_SIGNAL(fault_unstablesupplyv, talonfxpro_->GetFault_UnstableSupplyV())
+    MAKE_SIGNAL(fault_reversehardlimit, talonfxpro_->GetFault_ReverseHardLimit())
+    MAKE_SIGNAL(fault_forwardhardlimit, talonfxpro_->GetFault_ForwardHardLimit())
+    MAKE_SIGNAL(fault_reversesoftlimit, talonfxpro_->GetFault_ReverseSoftLimit())
+    MAKE_SIGNAL(fault_forwardsoftlimit, talonfxpro_->GetFault_ForwardSoftLimit())
+    MAKE_SIGNAL(fault_remotesensordatainvalid, talonfxpro_->GetFault_RemoteSensorDataInvalid())
+    MAKE_SIGNAL(fault_fusedsensoroutofsync, talonfxpro_->GetFault_FusedSensorOutOfSync())
+    MAKE_SIGNAL(fault_statorcurrlimit, talonfxpro_->GetFault_StatorCurrLimit())
+    MAKE_SIGNAL(fault_supplycurrlimit, talonfxpro_->GetFault_SupplyCurrLimit())
+
+    MAKE_SIGNAL(sticky_fault_hardware, talonfxpro_->GetStickyFault_Hardware())
+    MAKE_SIGNAL(sticky_fault_proctemp, talonfxpro_->GetStickyFault_ProcTemp())
+    MAKE_SIGNAL(sticky_fault_devicetemp, talonfxpro_->GetStickyFault_DeviceTemp())
+    MAKE_SIGNAL(sticky_fault_undervoltage, talonfxpro_->GetStickyFault_Undervoltage())
+    MAKE_SIGNAL(sticky_fault_bootduringenable, talonfxpro_->GetStickyFault_BootDuringEnable())
+    MAKE_SIGNAL(sticky_fault_bridgebrownout, talonfxpro_->GetStickyFault_BridgeBrownout())
+    MAKE_SIGNAL(sticky_fault_unlicensed_feature_in_use, talonfxpro_->GetStickyFault_UnlicensedFeatureInUse())
+    MAKE_SIGNAL(sticky_fault_remotesensorreset, talonfxpro_->GetStickyFault_RemoteSensorReset())
+    MAKE_SIGNAL(sticky_fault_missingdifferentialfx, talonfxpro_->GetStickyFault_MissingDifferentialFX())
+    MAKE_SIGNAL(sticky_fault_remotesensorposoverflow, talonfxpro_->GetStickyFault_RemoteSensorPosOverflow())
+    MAKE_SIGNAL(sticky_fault_oversupplyv, talonfxpro_->GetStickyFault_OverSupplyV())
+    MAKE_SIGNAL(sticky_fault_unstablesupplyv, talonfxpro_->GetStickyFault_UnstableSupplyV())
+    MAKE_SIGNAL(sticky_fault_reversehardlimit, talonfxpro_->GetStickyFault_ReverseHardLimit())
+    MAKE_SIGNAL(sticky_fault_forwardhardlimit, talonfxpro_->GetStickyFault_ForwardHardLimit())
+    MAKE_SIGNAL(sticky_fault_reversesoftlimit, talonfxpro_->GetStickyFault_ReverseSoftLimit())
+    MAKE_SIGNAL(sticky_fault_forwardsoftlimit, talonfxpro_->GetStickyFault_ForwardSoftLimit())
+    MAKE_SIGNAL(sticky_fault_remotesensordatainvalid, talonfxpro_->GetStickyFault_RemoteSensorDataInvalid())
+    MAKE_SIGNAL(sticky_fault_fusedsensoroutofsync, talonfxpro_->GetStickyFault_FusedSensorOutOfSync())
+    MAKE_SIGNAL(sticky_fault_statorcurrlimit, talonfxpro_->GetStickyFault_StatorCurrLimit())
+    MAKE_SIGNAL(sticky_fault_supplycurrlimit, talonfxpro_->GetStickyFault_SupplyCurrLimit())
+
+    MAKE_SIGNAL(control_mode, talonfxpro_->GetControlMode());
+    MAKE_SIGNAL(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput())
+    MAKE_SIGNAL(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput())
+    MAKE_SIGNAL(closed_loop_feed_forward, talonfxpro_->GetClosedLoopFeedForward())
+    MAKE_SIGNAL(closed_loop_derivative_output, talonfxpro_->GetClosedLoopDerivativeOutput())
+    MAKE_SIGNAL(closed_loop_output, talonfxpro_->GetClosedLoopOutput())
+    MAKE_SIGNAL(closed_loop_reference_local, talonfxpro_->GetClosedLoopReference())
+    MAKE_SIGNAL(closed_loop_reference_slope_local, talonfxpro_->GetClosedLoopReferenceSlope())
+    MAKE_SIGNAL(closed_loop_error, talonfxpro_->GetClosedLoopError())
+
+    MAKE_SIGNAL(differential_output, talonfxpro_->GetDifferentialOutput())
+    MAKE_SIGNAL(differential_closed_loop_proportional_output, talonfxpro_->GetDifferentialClosedLoopProportionalOutput())
+    MAKE_SIGNAL(differential_closed_loop_integrated_output, talonfxpro_->GetDifferentialClosedLoopIntegratedOutput())
+    MAKE_SIGNAL(differential_closed_loop_feed_forward, talonfxpro_->GetDifferentialClosedLoopFeedForward())
+    MAKE_SIGNAL(differential_closed_loop_derivative_output, talonfxpro_->GetDifferentialClosedLoopDerivativeOutput())
+    MAKE_SIGNAL(differential_closed_loop_output, talonfxpro_->GetDifferentialClosedLoopOutput())
+    MAKE_SIGNAL(differential_closed_loop_reference_local, talonfxpro_->GetDifferentialClosedLoopReference())
+    MAKE_SIGNAL(differential_closed_loop_reference_slope_local, talonfxpro_->GetDifferentialClosedLoopReferenceSlope())
+    MAKE_SIGNAL(differential_closed_loop_error, talonfxpro_->GetDifferentialClosedLoopError())
+
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("talonfxpro read main_loop");
@@ -319,15 +435,14 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             case ctre::phoenix6::signals::DifferentialControlModeValue::CoastOut:
                 differential_control_mode = hardware_interface::talonfxpro::DifferentialControlMode::CoastOut;
                 break;
+            default:
+                ROS_ERROR_STREAM("TalonFXPro " << getName() << " read thread : could not convert differential control mode : " << static_cast<int>(ctre_differential_control_mode->value));
+                break;
             }
-            SAFE_READ(ctre_differential_average_velocity, talonfxpro_->GetDifferentialAverageVelocity())
-            SAFE_READ(ctre_differential_average_position, talonfxpro_->GetDifferentialAveragePosition())
-            SAFE_READ(ctre_differential_difference_velocity, talonfxpro_->GetDifferentialDifferenceVelocity())
-            SAFE_READ(ctre_differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition())
-            differential_average_velocity = *ctre_differential_average_velocity;
-            differential_average_position = *ctre_differential_average_position;
-            differential_difference_velocity = *ctre_differential_average_velocity;
-            differential_difference_position = *ctre_differential_average_position;
+            SAFE_READ_INTO(differential_average_velocity, talonfxpro_->GetDifferentialAverageVelocity())
+            SAFE_READ_INTO(differential_average_position, talonfxpro_->GetDifferentialAveragePosition())
+            SAFE_READ_INTO(differential_difference_velocity, talonfxpro_->GetDifferentialDifferenceVelocity())
+            SAFE_READ_INTO(differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition())
         }
 
         SAFE_READ(ctre_bridge_output_value, talonfxpro_->GetBridgeOutput());
@@ -357,6 +472,9 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
                 break;
             case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_FaultCoast:
                 bridge_output_value = hardware_interface::talonfxpro::BridgeOutput::FaultCoast;
+                break;
+            default:
+                ROS_ERROR_STREAM("TalonFXPro " << getName() << " read thread : could not convert bridge output value : " << static_cast<int>(ctre_bridge_output_value->value));
                 break;
         }
 
@@ -411,7 +529,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         units::radians_per_second_t closed_loop_reference_slope{0};
         double closed_loop_error{0};
 
-        SAFE_READ(control_mode, talonfxpro_->GetControlMode());
+        SAFE_READ(control_mode, talonfxpro_->GetControlMode())
 
         if ((*control_mode == ctre::phoenix6::signals::ControlModeValue::PositionDutyCycle) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityDutyCycle) ||
@@ -434,6 +552,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             SAFE_READ_INTO(closed_loop_feed_forward, talonfxpro_->GetClosedLoopFeedForward())
             SAFE_READ_INTO(closed_loop_derivative_output, talonfxpro_->GetClosedLoopDerivativeOutput())
             SAFE_READ_INTO(closed_loop_output, talonfxpro_->GetClosedLoopOutput())
+            // These don't have units, but need to be converted from turns to radians
             SAFE_READ(closed_loop_reference_local, talonfxpro_->GetClosedLoopReference())
             closed_loop_reference = units::turn_t{*closed_loop_reference_local};
             SAFE_READ(closed_loop_reference_slope_local, talonfxpro_->GetClosedLoopReferenceSlope())
@@ -441,8 +560,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             SAFE_READ_INTO(closed_loop_error, talonfxpro_->GetClosedLoopError())
         }
 
-        // TODO : either read these only if diff mode is active,
-        // or turn the calls below into SAFE_READ ones
+        // These can only be read if the motor is in differential mode
         double differential_output{0};
         double differential_closed_loop_proportional_output{0};
         double differential_closed_loop_integrated_output{0};
@@ -754,7 +872,6 @@ static bool convertDifferentialSensorSource(const hardware_interface::talonfxpro
     case hardware_interface::talonfxpro::DifferentialSensorSource::Disabled:
         out = ctre::phoenix6::signals::DifferentialSensorSourceValue::Disabled;
         break;
-
     case hardware_interface::talonfxpro::DifferentialSensorSource::RemoteTalonFX_Diff:
         out = ctre::phoenix6::signals::DifferentialSensorSourceValue::RemoteTalonFX_Diff;
         break;
@@ -865,6 +982,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         command_->setClearStickyFaults();
         command_->resetSetPosition();
         command_->resetControl();
+        ROS_WARN_STREAM("Detected reset on TalonFXPro " << getName());
     }
     // For each config sub-section, check to see if any of the values have changed
     // since the previous control loop iteration. If any have, write the updated 
@@ -876,95 +994,94 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     //    else if writing was unsuccessful
     //        reset the changed flag for the config so it is retried the next time through
     //        return; (since the motor controller isn't in the expected state)
-    ctre::phoenix6::configs::TalonFXConfiguration config;
     hardware_interface::talonfxpro::GravityType gravity_type;
-    if (command_->slotChanged(config.Slot0.kP,
-                              config.Slot0.kI,
-                              config.Slot0.kD,
-                              config.Slot0.kS,
-                              config.Slot0.kV,
-                              config.Slot0.kA,
-                              config.Slot0.kG,
+    if (command_->slotChanged(config_->Slot0.kP,
+                              config_->Slot0.kI,
+                              config_->Slot0.kD,
+                              config_->Slot0.kS,
+                              config_->Slot0.kV,
+                              config_->Slot0.kA,
+                              config_->Slot0.kG,
                               gravity_type,
                               0) &&
-        convertGravityType(gravity_type, config.Slot0.GravityType))
+        convertGravityType(gravity_type, config_->Slot0.GravityType))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.Slot0), "GetConfigurator().Apply(config.Slot0)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot0), "GetConfigurator().Apply(config_->Slot0)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot0 " << config.Slot0);
-            state_->setkP(config.Slot0.kP, 0);
-            state_->setkI(config.Slot0.kI, 0);
-            state_->setkD(config.Slot0.kD, 0);
-            state_->setkS(config.Slot0.kS, 0);
-            state_->setkV(config.Slot0.kV, 0);
-            state_->setkA(config.Slot0.kA, 0);
-            state_->setkG(config.Slot0.kG, 0);
+            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot0 " << config_->Slot0);
+            state_->setkP(config_->Slot0.kP, 0);
+            state_->setkI(config_->Slot0.kI, 0);
+            state_->setkD(config_->Slot0.kD, 0);
+            state_->setkS(config_->Slot0.kS, 0);
+            state_->setkV(config_->Slot0.kV, 0);
+            state_->setkA(config_->Slot0.kA, 0);
+            state_->setkG(config_->Slot0.kG, 0);
             state_->setGravityType(gravity_type, 0);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Slot0 " << config.Slot0);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Slot0 " << config_->Slot0);
             command_->resetSlot(0);
             return;
         }
     }
-    if (command_->slotChanged(config.Slot1.kP,
-                              config.Slot1.kI,
-                              config.Slot1.kD,
-                              config.Slot1.kS,
-                              config.Slot1.kV,
-                              config.Slot1.kA,
-                              config.Slot1.kG,
+    if (command_->slotChanged(config_->Slot1.kP,
+                              config_->Slot1.kI,
+                              config_->Slot1.kD,
+                              config_->Slot1.kS,
+                              config_->Slot1.kV,
+                              config_->Slot1.kA,
+                              config_->Slot1.kG,
                               gravity_type,
                               1) &&
-        convertGravityType(gravity_type, config.Slot1.GravityType))
+        convertGravityType(gravity_type, config_->Slot1.GravityType))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.Slot1), "GetConfigurator().Apply(config.Slot1)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot1), "GetConfigurator().Apply(config_->Slot1)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot1 " << config.Slot1);
-            state_->setkP(config.Slot1.kP, 1);
-            state_->setkI(config.Slot1.kI, 1);
-            state_->setkD(config.Slot1.kD, 1);
-            state_->setkS(config.Slot1.kS, 1);
-            state_->setkV(config.Slot1.kV, 1);
-            state_->setkV(config.Slot1.kA, 1);
-            state_->setkV(config.Slot1.kG, 1);
+            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot1 " << config_->Slot1);
+            state_->setkP(config_->Slot1.kP, 1);
+            state_->setkI(config_->Slot1.kI, 1);
+            state_->setkD(config_->Slot1.kD, 1);
+            state_->setkS(config_->Slot1.kS, 1);
+            state_->setkV(config_->Slot1.kV, 1);
+            state_->setkV(config_->Slot1.kA, 1);
+            state_->setkV(config_->Slot1.kG, 1);
             state_->setGravityType(gravity_type, 1);
 
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Slot1 " << config.Slot1);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Slot1 " << config_->Slot1);
             command_->resetSlot(1);
             return;
         }
     }
-    if (command_->slotChanged(config.Slot2.kP,
-                              config.Slot2.kI,
-                              config.Slot2.kD,
-                              config.Slot2.kS,
-                              config.Slot2.kV,
-                              config.Slot2.kA,
-                              config.Slot2.kG,
+    if (command_->slotChanged(config_->Slot2.kP,
+                              config_->Slot2.kI,
+                              config_->Slot2.kD,
+                              config_->Slot2.kS,
+                              config_->Slot2.kV,
+                              config_->Slot2.kA,
+                              config_->Slot2.kG,
                               gravity_type,
                               2) &&
-        convertGravityType(gravity_type, config.Slot2.GravityType))
+        convertGravityType(gravity_type, config_->Slot2.GravityType))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.Slot2), "GetConfigurator().Apply(config.Slot2)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot2), "GetConfigurator().Apply(config_->Slot2)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot2 " << config.Slot2);
-            state_->setkP(config.Slot2.kP, 2);
-            state_->setkI(config.Slot2.kI, 2);
-            state_->setkD(config.Slot2.kD, 2);
-            state_->setkS(config.Slot2.kS, 2);
-            state_->setkV(config.Slot2.kV, 2);
-            state_->setkV(config.Slot2.kA, 2);
-            state_->setkV(config.Slot2.kG, 2);
+            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot2 " << config_->Slot2);
+            state_->setkP(config_->Slot2.kP, 2);
+            state_->setkI(config_->Slot2.kI, 2);
+            state_->setkD(config_->Slot2.kD, 2);
+            state_->setkS(config_->Slot2.kS, 2);
+            state_->setkV(config_->Slot2.kV, 2);
+            state_->setkV(config_->Slot2.kA, 2);
+            state_->setkV(config_->Slot2.kG, 2);
             state_->setGravityType(gravity_type, 2);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Slot2 " << config.Slot2);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Slot2 " << config_->Slot2);
             command_->resetSlot(2);
             return;
         }
@@ -974,82 +1091,82 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     hardware_interface::talonfxpro::NeutralMode neutral_mode;
     if (command_->motorOutputConfigChanged(invert,
                                            neutral_mode,
-                                           config.MotorOutput.DutyCycleNeutralDeadband,
-                                           config.MotorOutput.PeakForwardDutyCycle,
-                                           config.MotorOutput.PeakReverseDutyCycle) &&
-        convertInverted(invert, config.MotorOutput.Inverted) &&
-        convertNeutralMode(neutral_mode, config.MotorOutput.NeutralMode))
+                                           config_->MotorOutput.DutyCycleNeutralDeadband,
+                                           config_->MotorOutput.PeakForwardDutyCycle,
+                                           config_->MotorOutput.PeakReverseDutyCycle) &&
+        convertInverted(invert, config_->MotorOutput.Inverted) &&
+        convertNeutralMode(neutral_mode, config_->MotorOutput.NeutralMode))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.MotorOutput), "GetConfigurator().Apply(config.MotorOutput)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotorOutput), "GetConfigurator().Apply(config_->MotorOutput)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " MotorOutput " << config.MotorOutput);
+            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " MotorOutput " << config_->MotorOutput);
             state_->setInvert(invert);
             state_->setNeutralMode(neutral_mode);
-            state_->setDutyCycleNeutralDeadband(config.MotorOutput.DutyCycleNeutralDeadband);
-            state_->setPeakForwardDutyCycle(config.MotorOutput.PeakForwardDutyCycle);
-            state_->setPeakReverseDutyCycle(config.MotorOutput.PeakReverseDutyCycle);
+            state_->setDutyCycleNeutralDeadband(config_->MotorOutput.DutyCycleNeutralDeadband);
+            state_->setPeakForwardDutyCycle(config_->MotorOutput.PeakForwardDutyCycle);
+            state_->setPeakReverseDutyCycle(config_->MotorOutput.PeakReverseDutyCycle);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " MotorOutput " << config.MotorOutput);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " MotorOutput " << config_->MotorOutput);
             command_->resetMotorOutputConfig();
             return;
         }
     }
 
-    if (command_->currentLimitChanged(config.CurrentLimits.StatorCurrentLimit,
-                                      config.CurrentLimits.StatorCurrentLimitEnable,
-                                      config.CurrentLimits.SupplyCurrentLimit,
-                                      config.CurrentLimits.SupplyCurrentLimitEnable))
+    if (command_->currentLimitChanged(config_->CurrentLimits.StatorCurrentLimit,
+                                      config_->CurrentLimits.StatorCurrentLimitEnable,
+                                      config_->CurrentLimits.SupplyCurrentLimit,
+                                      config_->CurrentLimits.SupplyCurrentLimitEnable))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.CurrentLimits), "GetConfigurator().Apply(config.CurrentLimits)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->CurrentLimits), "GetConfigurator().Apply(config_->CurrentLimits)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " CurrentLimits " << config.CurrentLimits);
-            state_->setStatorCurrentLimit(config.CurrentLimits.StatorCurrentLimit);
-            state_->setStatorCurrentLimitEnable(config.CurrentLimits.StatorCurrentLimitEnable);
-            state_->setSupplyCurrentLimit(config.CurrentLimits.SupplyCurrentLimit);
-            state_->setSupplyCurrentLimitEnable(config.CurrentLimits.SupplyCurrentLimitEnable);
+            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " CurrentLimits " << config_->CurrentLimits);
+            state_->setStatorCurrentLimit(config_->CurrentLimits.StatorCurrentLimit);
+            state_->setStatorCurrentLimitEnable(config_->CurrentLimits.StatorCurrentLimitEnable);
+            state_->setSupplyCurrentLimit(config_->CurrentLimits.SupplyCurrentLimit);
+            state_->setSupplyCurrentLimitEnable(config_->CurrentLimits.SupplyCurrentLimitEnable);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " CurrentLimits " << config.CurrentLimits);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " CurrentLimits " << config_->CurrentLimits);
             command_->resetCurrentLimit();
             return;
         }
     }
 
-    if (command_->voltageConfigsChanged(config.Voltage.SupplyVoltageTimeConstant,
-                                        config.Voltage.PeakForwardVoltage,
-                                        config.Voltage.PeakReverseVoltage))
+    if (command_->voltageConfigsChanged(config_->Voltage.SupplyVoltageTimeConstant,
+                                        config_->Voltage.PeakForwardVoltage,
+                                        config_->Voltage.PeakReverseVoltage))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.Voltage), "GetConfigurator().Apply(config.Voltage)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Voltage), "GetConfigurator().Apply(config_->Voltage)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Voltage " << config.Voltage);
-            state_->setSupplyVoltageTimeConstant(config.Voltage.SupplyVoltageTimeConstant);
-            state_->setPeakForwardVoltage(config.Voltage.PeakForwardVoltage);
-            state_->setPeakReverseVoltage(config.Voltage.PeakReverseVoltage);
+            ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Voltage " << config_->Voltage);
+            state_->setSupplyVoltageTimeConstant(config_->Voltage.SupplyVoltageTimeConstant);
+            state_->setPeakForwardVoltage(config_->Voltage.PeakForwardVoltage);
+            state_->setPeakReverseVoltage(config_->Voltage.PeakReverseVoltage);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Voltage " << config.Voltage);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " <<  getId() << " = " << getName() << " Voltage " << config_->Voltage);
             command_->resetVoltageConfigs();
             return;
         }
     }
-    if (command_->torqueCurrentChanged(config.TorqueCurrent.PeakForwardTorqueCurrent,
-                                       config.TorqueCurrent.PeakReverseTorqueCurrent,
-                                       config.TorqueCurrent.TorqueNeutralDeadband))
+    if (command_->torqueCurrentChanged(config_->TorqueCurrent.PeakForwardTorqueCurrent,
+                                       config_->TorqueCurrent.PeakReverseTorqueCurrent,
+                                       config_->TorqueCurrent.TorqueNeutralDeadband))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.TorqueCurrent), "GetConfigurator().Apply(config.TorqueCurrent)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->TorqueCurrent), "GetConfigurator().Apply(config_->TorqueCurrent)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " TorqueCurrent " << config.TorqueCurrent);
-            state_->setPeakForwardTorqueCurrent(config.TorqueCurrent.PeakForwardTorqueCurrent);
-            state_->setPeakReverseTorqueCurrent(config.TorqueCurrent.PeakReverseTorqueCurrent);
-            state_->setTorqueNeutralDeadband(config.TorqueCurrent.TorqueNeutralDeadband);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " TorqueCurrent " << config_->TorqueCurrent);
+            state_->setPeakForwardTorqueCurrent(config_->TorqueCurrent.PeakForwardTorqueCurrent);
+            state_->setPeakReverseTorqueCurrent(config_->TorqueCurrent.PeakReverseTorqueCurrent);
+            state_->setTorqueNeutralDeadband(config_->TorqueCurrent.TorqueNeutralDeadband);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " TorqueCurrent " << config.TorqueCurrent);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " TorqueCurrent " << config_->TorqueCurrent);
             command_->resetTorqueCurrent();
             return;
         }
@@ -1057,25 +1174,25 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     hardware_interface::talonfxpro::FeedbackSensorSource feedback_sensor_source;
     double feedback_rotor_offset_radians;
     if (command_->feebackChanged(feedback_rotor_offset_radians,
-                                 config.Feedback.SensorToMechanismRatio,
-                                 config.Feedback.RotorToSensorRatio,
+                                 config_->Feedback.SensorToMechanismRatio,
+                                 config_->Feedback.RotorToSensorRatio,
                                  feedback_sensor_source,
-                                 config.Feedback.FeedbackRemoteSensorID) &&
-        convertFeedbackSensorSource(feedback_sensor_source, config.Feedback.FeedbackSensorSource))
+                                 config_->Feedback.FeedbackRemoteSensorID) &&
+        convertFeedbackSensorSource(feedback_sensor_source, config_->Feedback.FeedbackSensorSource))
     {
-        config.Feedback.FeedbackRotorOffset = units::turn_t{units::radian_t{feedback_rotor_offset_radians}}.value();
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.Feedback), "GetConfigurator().Apply(config.Feedback)"))
+        config_->Feedback.FeedbackRotorOffset = units::turn_t{units::radian_t{feedback_rotor_offset_radians}}.value();
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Feedback), "GetConfigurator().Apply(config_->Feedback)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " Feedback " << config.Feedback);
-            state_->setFeedbackRotorOffset(config.Feedback.FeedbackRotorOffset);
-            state_->setSensorToMechanismRatio(config.Feedback.SensorToMechanismRatio);
-            state_->setRotorToSensorRatio(config.Feedback.RotorToSensorRatio);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " Feedback " << config_->Feedback);
+            state_->setFeedbackRotorOffset(config_->Feedback.FeedbackRotorOffset);
+            state_->setSensorToMechanismRatio(config_->Feedback.SensorToMechanismRatio);
+            state_->setRotorToSensorRatio(config_->Feedback.RotorToSensorRatio);
             state_->setFeedbackSensorSource(feedback_sensor_source);
-            state_->setFeedbackRemoteSensorID(config.Feedback.FeedbackRemoteSensorID);
+            state_->setFeedbackRemoteSensorID(config_->Feedback.FeedbackRemoteSensorID);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " Feedback " << config.Feedback);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " Feedback " << config_->Feedback);
             command_->resetFeedback();
             return;
         }
@@ -1083,77 +1200,77 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
 
     hardware_interface::talonfxpro::DifferentialSensorSource differential_sensor_source;
     if (command_->differentialSensorsChanged(differential_sensor_source,
-                                             config.DifferentialSensors.DifferentialTalonFXSensorID,
-                                             config.DifferentialSensors.DifferentialRemoteSensorID) &&
-        convertDifferentialSensorSource(differential_sensor_source, config.DifferentialSensors.DifferentialSensorSource))
+                                             config_->DifferentialSensors.DifferentialTalonFXSensorID,
+                                             config_->DifferentialSensors.DifferentialRemoteSensorID) &&
+        convertDifferentialSensorSource(differential_sensor_source, config_->DifferentialSensors.DifferentialSensorSource))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.DifferentialSensors), "GetConfigurator().Apply(config.DifferentialSensors)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->DifferentialSensors), "GetConfigurator().Apply(config_->DifferentialSensors)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " DifferentialSensors " << config.DifferentialSensors);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " DifferentialSensors " << config_->DifferentialSensors);
             state_->setDifferentialSensorSource(differential_sensor_source);
-            state_->setDifferentialTalonFXSensorID(config.DifferentialSensors.DifferentialTalonFXSensorID);
-            state_->setDifferentialRemoteSensorID(config.DifferentialSensors.DifferentialRemoteSensorID);
+            state_->setDifferentialTalonFXSensorID(config_->DifferentialSensors.DifferentialTalonFXSensorID);
+            state_->setDifferentialRemoteSensorID(config_->DifferentialSensors.DifferentialRemoteSensorID);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " DifferentialSensors " << config.DifferentialSensors);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " DifferentialSensors " << config_->DifferentialSensors);
             command_->resetDifferentialSensors();
             return;
         }
     }
 
-    if (command_->differentialConstantsChanged(config.DifferentialConstants.PeakDifferentialDutyCycle,
-                                               config.DifferentialConstants.PeakDifferentialVoltage,
-                                               config.DifferentialConstants.PeakDifferentialTorqueCurrent))
+    if (command_->differentialConstantsChanged(config_->DifferentialConstants.PeakDifferentialDutyCycle,
+                                               config_->DifferentialConstants.PeakDifferentialVoltage,
+                                               config_->DifferentialConstants.PeakDifferentialTorqueCurrent))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.DifferentialConstants), "GetConfigurator().Apply(config.DifferentialConstants)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->DifferentialConstants), "GetConfigurator().Apply(config_->DifferentialConstants)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " DifferentialConstants " << config.DifferentialConstants);
-            state_->setPeakDifferentialDutyCycle(config.DifferentialConstants.PeakDifferentialDutyCycle);
-            state_->setPeakDifferentialVoltage(config.DifferentialConstants.PeakDifferentialVoltage);
-            state_->setPeakDifferentialTorqueCurrent(config.DifferentialConstants.PeakDifferentialTorqueCurrent);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " DifferentialConstants " << config_->DifferentialConstants);
+            state_->setPeakDifferentialDutyCycle(config_->DifferentialConstants.PeakDifferentialDutyCycle);
+            state_->setPeakDifferentialVoltage(config_->DifferentialConstants.PeakDifferentialVoltage);
+            state_->setPeakDifferentialTorqueCurrent(config_->DifferentialConstants.PeakDifferentialTorqueCurrent);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " DifferentialConstants " << config.DifferentialConstants);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " DifferentialConstants " << config_->DifferentialConstants);
             command_->resetDifferentialConstants();
             return;
         }
     }
 
-    if (command_->openLoopRampsChanged(config.OpenLoopRamps.DutyCycleOpenLoopRampPeriod,
-                                       config.OpenLoopRamps.VoltageOpenLoopRampPeriod,
-                                       config.OpenLoopRamps.TorqueOpenLoopRampPeriod))
+    if (command_->openLoopRampsChanged(config_->OpenLoopRamps.DutyCycleOpenLoopRampPeriod,
+                                       config_->OpenLoopRamps.VoltageOpenLoopRampPeriod,
+                                       config_->OpenLoopRamps.TorqueOpenLoopRampPeriod))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.OpenLoopRamps), "GetConfigurator().Apply(config.OpenLoopRamps)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->OpenLoopRamps), "GetConfigurator().Apply(config_->OpenLoopRamps)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " OpenLoopRamps " << config.OpenLoopRamps);
-            state_->setDutyCycleOpenLoopRampPeriod(config.OpenLoopRamps.DutyCycleOpenLoopRampPeriod);
-            state_->setVoltageOpenLoopRampPeriod(config.OpenLoopRamps.VoltageOpenLoopRampPeriod);
-            state_->setTorqueOpenLoopRampPeriod(config.OpenLoopRamps.TorqueOpenLoopRampPeriod);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " OpenLoopRamps " << config_->OpenLoopRamps);
+            state_->setDutyCycleOpenLoopRampPeriod(config_->OpenLoopRamps.DutyCycleOpenLoopRampPeriod);
+            state_->setVoltageOpenLoopRampPeriod(config_->OpenLoopRamps.VoltageOpenLoopRampPeriod);
+            state_->setTorqueOpenLoopRampPeriod(config_->OpenLoopRamps.TorqueOpenLoopRampPeriod);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " OpenLoopRamps " << config.OpenLoopRamps);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " OpenLoopRamps " << config_->OpenLoopRamps);
             command_->resetOpenLoopRamps();
             return;
         }
     }
 
-    if (command_->closedLoopRampsChanged(config.ClosedLoopRamps.DutyCycleClosedLoopRampPeriod,
-                                         config.ClosedLoopRamps.VoltageClosedLoopRampPeriod,
-                                         config.ClosedLoopRamps.TorqueClosedLoopRampPeriod))
+    if (command_->closedLoopRampsChanged(config_->ClosedLoopRamps.DutyCycleClosedLoopRampPeriod,
+                                         config_->ClosedLoopRamps.VoltageClosedLoopRampPeriod,
+                                         config_->ClosedLoopRamps.TorqueClosedLoopRampPeriod))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.ClosedLoopRamps), "GetConfigurator().Apply(config.ClosedLoopRamps)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->ClosedLoopRamps), "GetConfigurator().Apply(config_->ClosedLoopRamps)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopRamps " << config.ClosedLoopRamps);
-            state_->setDutyCycleClosedLoopRampPeriod(config.ClosedLoopRamps.DutyCycleClosedLoopRampPeriod);
-            state_->setVoltageClosedLoopRampPeriod(config.ClosedLoopRamps.VoltageClosedLoopRampPeriod);
-            state_->setTorqueClosedLoopRampPeriod(config.ClosedLoopRamps.TorqueClosedLoopRampPeriod);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopRamps " << config_->ClosedLoopRamps);
+            state_->setDutyCycleClosedLoopRampPeriod(config_->ClosedLoopRamps.DutyCycleClosedLoopRampPeriod);
+            state_->setVoltageClosedLoopRampPeriod(config_->ClosedLoopRamps.VoltageClosedLoopRampPeriod);
+            state_->setTorqueClosedLoopRampPeriod(config_->ClosedLoopRamps.TorqueClosedLoopRampPeriod);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopRamps " << config.ClosedLoopRamps);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopRamps " << config_->ClosedLoopRamps);
             command_->resetClosedLoopRamps();
             return;
         }
@@ -1165,60 +1282,60 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     double forward_limit_position_value;
     double reverse_limit_position_value;
     if (command_->limitChanged(forward_limit_type,
-                               config.HardwareLimitSwitch.ForwardLimitAutosetPositionEnable,
+                               config_->HardwareLimitSwitch.ForwardLimitAutosetPositionEnable,
                                forward_limit_position_value,
-                               config.HardwareLimitSwitch.ForwardLimitEnable,
+                               config_->HardwareLimitSwitch.ForwardLimitEnable,
                                forward_limit_source,
-                               config.HardwareLimitSwitch.ForwardLimitRemoteSensorID,
+                               config_->HardwareLimitSwitch.ForwardLimitRemoteSensorID,
                                reverse_limit_type,
-                               config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable,
+                               config_->HardwareLimitSwitch.ReverseLimitAutosetPositionEnable,
                                reverse_limit_position_value,
-                               config.HardwareLimitSwitch.ReverseLimitEnable,
+                               config_->HardwareLimitSwitch.ReverseLimitEnable,
                                reverse_limit_source,
-                               config.HardwareLimitSwitch.ReverseLimitRemoteSensorID) &&
-        convertLimitType(forward_limit_type, config.HardwareLimitSwitch.ForwardLimitType) &&
-        convertLimitSource(forward_limit_source, config.HardwareLimitSwitch.ForwardLimitSource) &&
-        convertLimitType(reverse_limit_type, config.HardwareLimitSwitch.ReverseLimitType) &&
-        convertLimitSource(reverse_limit_source, config.HardwareLimitSwitch.ReverseLimitSource))
+                               config_->HardwareLimitSwitch.ReverseLimitRemoteSensorID) &&
+        convertLimitType(forward_limit_type, config_->HardwareLimitSwitch.ForwardLimitType) &&
+        convertLimitSource(forward_limit_source, config_->HardwareLimitSwitch.ForwardLimitSource) &&
+        convertLimitType(reverse_limit_type, config_->HardwareLimitSwitch.ReverseLimitType) &&
+        convertLimitSource(reverse_limit_source, config_->HardwareLimitSwitch.ReverseLimitSource))
     {
-        config.HardwareLimitSwitch.ForwardLimitAutosetPositionValue = units::turn_t{units::radian_t{forward_limit_position_value}}.value();
-        config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = units::turn_t{units::radian_t{reverse_limit_position_value}}.value();
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.HardwareLimitSwitch), "GetConfigurator().Apply(config.HardwareLimitSwitch)"))
+        config_->HardwareLimitSwitch.ForwardLimitAutosetPositionValue = units::turn_t{units::radian_t{forward_limit_position_value}}.value();
+        config_->HardwareLimitSwitch.ReverseLimitAutosetPositionValue = units::turn_t{units::radian_t{reverse_limit_position_value}}.value();
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->HardwareLimitSwitch), "GetConfigurator().Apply(config_->HardwareLimitSwitch)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " HardwareLimitSwitch " << config.HardwareLimitSwitch);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " HardwareLimitSwitch " << config_->HardwareLimitSwitch);
             state_->setForwardLimitType(forward_limit_type);
-            state_->setForwardLimitAutosetPositionEnable(config.HardwareLimitSwitch.ForwardLimitAutosetPositionEnable);
+            state_->setForwardLimitAutosetPositionEnable(config_->HardwareLimitSwitch.ForwardLimitAutosetPositionEnable);
             state_->setForwardLimitAutosetPositionValue(forward_limit_position_value);
-            state_->setForwardLimitEnable(config.HardwareLimitSwitch.ForwardLimitEnable);
+            state_->setForwardLimitEnable(config_->HardwareLimitSwitch.ForwardLimitEnable);
             state_->setForwardLimitSource(forward_limit_source);
-            state_->setForwardLimitRemoteSensorID(config.HardwareLimitSwitch.ForwardLimitRemoteSensorID);
+            state_->setForwardLimitRemoteSensorID(config_->HardwareLimitSwitch.ForwardLimitRemoteSensorID);
             state_->setReverseLimitType(reverse_limit_type);
-            state_->setReverseLimitAutosetPositionEnable(config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable);
+            state_->setReverseLimitAutosetPositionEnable(config_->HardwareLimitSwitch.ReverseLimitAutosetPositionEnable);
             state_->setReverseLimitAutosetPositionValue(reverse_limit_position_value);
-            state_->setReverseLimitEnable(config.HardwareLimitSwitch.ReverseLimitEnable);
+            state_->setReverseLimitEnable(config_->HardwareLimitSwitch.ReverseLimitEnable);
             state_->setReverseLimitSource(reverse_limit_source);
-            state_->setReverseLimitRemoteSensorID(config.HardwareLimitSwitch.ReverseLimitRemoteSensorID);
+            state_->setReverseLimitRemoteSensorID(config_->HardwareLimitSwitch.ReverseLimitRemoteSensorID);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " HardwareLimitSwitch " << config.HardwareLimitSwitch);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " HardwareLimitSwitch " << config_->HardwareLimitSwitch);
             command_->resetLimit();
             return;
         }
     }
 
-    if (command_->audioChanged(config.Audio.BeepOnBoot, config.Audio.BeepOnConfig, config.Audio.AllowMusicDurDisable))
+    if (command_->audioChanged(config_->Audio.BeepOnBoot, config_->Audio.BeepOnConfig, config_->Audio.AllowMusicDurDisable))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.Audio), "GetConfigurator().Apply(config.Audio)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Audio), "GetConfigurator().Apply(config_->Audio)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " Audio " << config.Audio);
-            state_->setBeepOnBoot(config.Audio.BeepOnBoot);
-            state_->setBeepOnConfig(config.Audio.BeepOnConfig);
-            state_->setAllowMusicDurDisable(config.Audio.AllowMusicDurDisable);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " Audio " << config_->Audio);
+            state_->setBeepOnBoot(config_->Audio.BeepOnBoot);
+            state_->setBeepOnConfig(config_->Audio.BeepOnConfig);
+            state_->setAllowMusicDurDisable(config_->Audio.AllowMusicDurDisable);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " Audio " << config.Audio);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " Audio " << config_->Audio);
             command_->resetAudio();
             return;
         }
@@ -1226,25 +1343,25 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
 
     double forward_soft_limit_threshold;
     double reverse_soft_limit_threshold;
-    if (command_->softLimitChanged(config.SoftwareLimitSwitch.ForwardSoftLimitEnable,
-                                   config.SoftwareLimitSwitch.ReverseSoftLimitEnable,
+    if (command_->softLimitChanged(config_->SoftwareLimitSwitch.ForwardSoftLimitEnable,
+                                   config_->SoftwareLimitSwitch.ReverseSoftLimitEnable,
                                    forward_soft_limit_threshold,
                                    reverse_soft_limit_threshold))
     {
         // Our units are radians, CTRE's are rotations
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = units::turn_t{units::radian_t{forward_soft_limit_threshold}}.value();
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = units::turn_t{units::radian_t{reverse_soft_limit_threshold}}.value();
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.SoftwareLimitSwitch), "GetConfigurator().Apply(config.SoftwareLimitSwitch)"))
+        config_->SoftwareLimitSwitch.ForwardSoftLimitThreshold = units::turn_t{units::radian_t{forward_soft_limit_threshold}}.value();
+        config_->SoftwareLimitSwitch.ReverseSoftLimitThreshold = units::turn_t{units::radian_t{reverse_soft_limit_threshold}}.value();
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->SoftwareLimitSwitch), "GetConfigurator().Apply(config_->SoftwareLimitSwitch)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " SoftwareLimitSwitch " << config.SoftwareLimitSwitch);
-            state_->setForwardSoftLimitEnable(config.SoftwareLimitSwitch.ForwardSoftLimitEnable);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " SoftwareLimitSwitch " << config_->SoftwareLimitSwitch);
+            state_->setForwardSoftLimitEnable(config_->SoftwareLimitSwitch.ForwardSoftLimitEnable);
             state_->setForwardSoftLimitThreshold(forward_soft_limit_threshold);
-            state_->setReverseSoftLimitEnable(config.SoftwareLimitSwitch.ReverseSoftLimitEnable);
+            state_->setReverseSoftLimitEnable(config_->SoftwareLimitSwitch.ReverseSoftLimitEnable);
             state_->setReverseSoftLimitThreshold(reverse_soft_limit_threshold);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " SoftwareLimitSwitch " << config.SoftwareLimitSwitch);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " SoftwareLimitSwitch " << config_->SoftwareLimitSwitch);
             command_->resetSoftLimit();
             return;
         }
@@ -1257,33 +1374,33 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                      motion_magic_jerk))
     {
         // Our units are radians/ sec (sec^2, sec^3), CTRE's are turns / sec
-        config.MotionMagic.MotionMagicCruiseVelocity = units::turns_per_second_t{units::radians_per_second_t{motion_magic_cruise_velocity}}.value();
-        config.MotionMagic.MotionMagicAcceleration = units::turns_per_second_squared_t{units::radians_per_second_squared_t{motion_magic_acceleration}}.value();
-        config.MotionMagic.MotionMagicJerk = motion_magic_jerk / (2.0 * M_PI); // units does't have cubed?
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.MotionMagic), "GetConfigurator().Apply(config.MotionMagic)"))
+        config_->MotionMagic.MotionMagicCruiseVelocity = units::turns_per_second_t{units::radians_per_second_t{motion_magic_cruise_velocity}}.value();
+        config_->MotionMagic.MotionMagicAcceleration = units::turns_per_second_squared_t{units::radians_per_second_squared_t{motion_magic_acceleration}}.value();
+        config_->MotionMagic.MotionMagicJerk = motion_magic_jerk / (2.0 * M_PI); // units does't have cubed?
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotionMagic), "GetConfigurator().Apply(config_->MotionMagic)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " MotionMagic " << config.MotionMagic);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " MotionMagic " << config_->MotionMagic);
             state_->setMotionMagicCruiseVelocity(motion_magic_cruise_velocity);
             state_->setMotionMagicAcceleration(motion_magic_acceleration);
             state_->setMotionMagicJerk(motion_magic_jerk);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " MotionMagic " << config.MotionMagic);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " MotionMagic " << config_->MotionMagic);
             command_->resetMotionMagic();
             return;
         }
     }
-    if (command_->continuousWrapChanged(config.ClosedLoopGeneral.ContinuousWrap))
+    if (command_->continuousWrapChanged(config_->ClosedLoopGeneral.ContinuousWrap))
     {
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config.ClosedLoopGeneral), "GetConfigurator().Apply(config.ClosedLoopGeneral)"))
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->ClosedLoopGeneral), "GetConfigurator().Apply(config_->ClosedLoopGeneral)"))
         {
-            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopGeneral " << config.ClosedLoopGeneral);
-            state_->setContinuousWrap(config.ClosedLoopGeneral.ContinuousWrap);
+            ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopGeneral " << config_->ClosedLoopGeneral);
+            state_->setContinuousWrap(config_->ClosedLoopGeneral.ContinuousWrap);
         }
         else
         {
-            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopGeneral " << config.ClosedLoopGeneral);
+            ROS_INFO_STREAM("Failed to update TalonFXPro id " << getId() << " = " << getName() << " ClosedLoopGeneral " << config_->ClosedLoopGeneral);
             command_->resetContinuousWrap();
             return;
         }

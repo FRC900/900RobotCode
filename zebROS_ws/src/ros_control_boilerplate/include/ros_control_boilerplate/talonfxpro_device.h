@@ -8,9 +8,16 @@
 #include "ros/node_handle.h"
 #include "ros_control_boilerplate/ctre_v6_device.h"
 
-namespace ctre::phoenix6::hardware::core
+namespace ctre::phoenix6
 {
-    class CoreTalonFX;
+    namespace configs
+    {
+        class TalonFXConfiguration;
+    }
+    namespace hardware::core
+    {
+        class CoreTalonFX;
+    }
 }
 
 namespace hardware_interface::talonfxpro
@@ -57,6 +64,7 @@ private:
 
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> state_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWCommand> command_;
+    std::unique_ptr<ctre::phoenix6::configs::TalonFXConfiguration> config_;
     std::unique_ptr<std::mutex> read_state_mutex_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> read_thread_state_;
     std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> talonfxpro_;

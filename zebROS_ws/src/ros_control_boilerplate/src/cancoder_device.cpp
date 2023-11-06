@@ -26,7 +26,6 @@ CANCoderDevice::CANCoderDevice(const std::string &name_space,
     , local_update_{local_update}
     , state_{std::make_unique<hardware_interface::cancoder::CANCoderHWState>(can_id)}
 {
-    // TODO : old code had a check for duplicate use of DIO channels? Needed?
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
                         "Loading joint " << joint_index << "=" << joint_name <<
                         (local_update_ ? " local" : " remote") << " update, " <<
@@ -115,14 +114,15 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
     if (cancoder_->HasResetOccurred())
     {
         command_->resetMagnetSensorConfigs();
+        ROS_WARN_STREAM("Reset detected on CANCoder " << getName());
     }
     state_->setConversionFactor(command_->getConversionFactor());
 
     hardware_interface::cancoder::SensorDirection sensor_direction;
+    double offset_radians;
     hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range;
 
     ctre::phoenix6::configs::MagnetSensorConfigs magnet_sensor_configs;
-    double offset_radians;
     if (command_->magnetSensorConfigsChanged(sensor_direction,
                                              offset_radians,
                                              absolute_sensor_range) &&
@@ -174,21 +174,57 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
     }
 }
 
+// Set of macros for common code used to read 
+// all signals with error checking.
+// MAKE_SIGNAL is just an easy way to create the signal object
+// that's used for subsequent reads
+#define MAKE_SIGNAL(var, function) \
+auto var##_signal = function;
+
+// SAFE_READ takes the signal short name, passes the 
+// previously-created signal name to the base-class
+// safeRead, and checks the returned std::optional
+// var. If the var is not valid, don't run any
+// additional code in the loop.
 #define SAFE_READ(var, function) \
-const auto var = safeRead(function, #function); \
+const auto var = safeRead(var##_signal, #function); \
 if (!var) { tracer->stop() ; continue; }
 
 void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
                                  const double poll_frequency)
 {
 #ifdef __linux__
-
 	if (std::stringstream thread_name{"cancdr_read_"}; pthread_setname_np(pthread_self(), thread_name.str().c_str()))
 	{
 		ROS_ERROR_STREAM("Error setting thread name " << thread_name.str() << " " << errno);
 	}
 #endif
 	ros::Duration(2.452 + read_thread_state_->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
+
+    MAKE_SIGNAL(version_major, cancoder_->GetVersionMajor())
+    MAKE_SIGNAL(version_minor, cancoder_->GetVersionMinor())
+    MAKE_SIGNAL(version_bugfix, cancoder_->GetVersionBugfix())
+    MAKE_SIGNAL(version_build, cancoder_->GetVersionBuild())
+
+    MAKE_SIGNAL(velocity, cancoder_->GetVelocity())
+    MAKE_SIGNAL(position, cancoder_->GetPosition())
+    MAKE_SIGNAL(absolute_position, cancoder_->GetAbsolutePosition())
+    MAKE_SIGNAL(unfilitered_vecloity, cancoder_->GetUnfilteredVelocity())
+    MAKE_SIGNAL(position_since_boot, cancoder_->GetPositionSinceBoot())
+    MAKE_SIGNAL(supply_voltage, cancoder_->GetSupplyVoltage())
+    MAKE_SIGNAL(magnet_health, cancoder_->GetMagnetHealth())
+
+    MAKE_SIGNAL(fault_hardware, cancoder_->GetFault_Hardware())
+    MAKE_SIGNAL(fault_undervoltage, cancoder_->GetFault_Undervoltage())
+    MAKE_SIGNAL(fault_bootduringenable, cancoder_->GetFault_BootDuringEnable())
+    MAKE_SIGNAL(fault_unlicensed_feature_in_use, cancoder_->GetFault_UnlicensedFeatureInUse())
+    MAKE_SIGNAL(fault_bad_magnet, cancoder_->GetFault_BadMagnet())
+
+    MAKE_SIGNAL(sticky_fault_hardware, cancoder_->GetStickyFault_Hardware())
+    MAKE_SIGNAL(sticky_fault_undervoltage, cancoder_->GetStickyFault_Undervoltage())
+    MAKE_SIGNAL(sticky_fault_bootduringenable, cancoder_->GetStickyFault_BootDuringEnable())
+    MAKE_SIGNAL(sticky_fault_unlicensed_feature_in_use, cancoder_->GetStickyFault_UnlicensedFeatureInUse())
+    MAKE_SIGNAL(sticky_fault_bad_magnet, cancoder_->GetStickyFault_BadMagnet())
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("cancoder read main_loop");
@@ -257,9 +293,11 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setUnfilteredVelocity(units::radians_per_second_t{*unfilitered_vecloity}.value() * conversion_factor);
 			read_thread_state_->setPositionSinceBoot(units::radian_t{*position_since_boot}.value() * conversion_factor);
 			read_thread_state_->setSupplyVoltage(units::volt_t{*supply_voltage}.value());
-            hardware_interface::cancoder::MagnetHealth hwi_magnet_health;
-            convertMagnetHealth(*magnet_health, hwi_magnet_health);
-			read_thread_state_->setMagnetHealth(hwi_magnet_health);
+            if (hardware_interface::cancoder::MagnetHealth hwi_magnet_health;
+                convertMagnetHealth(*magnet_health, hwi_magnet_health))
+            {
+                read_thread_state_->setMagnetHealth(hwi_magnet_health);
+            }
 
             read_thread_state_->setFaultHardware(*fault_hardware);
             read_thread_state_->setFaultUndervoltage(*fault_undervoltage);

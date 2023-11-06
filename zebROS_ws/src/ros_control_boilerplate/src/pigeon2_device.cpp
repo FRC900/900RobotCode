@@ -118,7 +118,9 @@ void Pigeon2Device::simInit(ros::NodeHandle nh, size_t joint_index)
 
 void Pigeon2Device::imuOdomCallback(const nav_msgs::OdometryConstPtr &msg)
 {
-	double roll, pitch, yaw;
+	double roll;
+	double pitch;
+	double yaw;
 	const geometry_msgs::Quaternion &q = msg->pose.pose.orientation;
 	tf2::Quaternion tf_q(
 		q.x,
@@ -135,12 +137,8 @@ void Pigeon2Device::read(const ros::Time &/*time*/, const ros::Duration &/*perio
     {
         // Fill in the full pigeon2 state using the last
         // data read from the pigeon2 read thread for this hardware
+        if (std::unique_lock l(*read_state_mutex_, std::try_to_lock); l.owns_lock())
         {
-            std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
-            if (!l.owns_lock())
-            {
-                return;
-            }
             state_->setVersionMajor(read_thread_state_->getVersionMajor());
             state_->setVersionMinor(read_thread_state_->getVersionMinor());
             state_->setVersionBugfix(read_thread_state_->getVersionBugfix());
@@ -254,6 +252,7 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         command_->resetMountPoseRPY();
         command_->resetGyroTrim();
         command_->resetPigeon2Features();
+        ROS_WARN_STREAM("Reset detected on Pigeon2 " << getName());
 
         //command_->resetSetYaw(); // TODO, not sure about this, there's no telling how long ago this value was correct
     }
@@ -348,10 +347,21 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
     }
 }
 
-#define SAFE_READ(var, function) \
-const auto var = safeRead(function, #function); \
-if (!var) { tracer->stop() ; continue; }
+// Set of macros for common code used to read 
+// all signals with error checking.
+// MAKE_SIGNAL is just an easy way to create the signal object
+// that's used for subsequent reads
+#define MAKE_SIGNAL(var, function) \
+auto var##_signal = function;
 
+// SAFE_READ takes the signal short name, passes the 
+// previously-created signal name to the base-class
+// safeRead, and checks the returned std::optional
+// var. If the var is not valid, don't run any
+// additional code in the loop.
+#define SAFE_READ(var, function) \
+const auto var = safeRead(var##_signal, #function); \
+if (!var) { tracer->stop() ; continue; }
 void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
                                 const double poll_frequency)
 {
@@ -365,6 +375,80 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
 #endif
     ROS_INFO_STREAM("Starting pigeon2 read thread for " << getName() << " at " << ros::Time::now());
     ros::Duration(2.952 + read_thread_state_->getDeviceNumber() * 0.04).sleep(); // Sleep for a few seconds to let CAN start up
+
+    MAKE_SIGNAL(version_major, pigeon2_->GetVersionMajor())
+    MAKE_SIGNAL(version_minor, pigeon2_->GetVersionMinor())
+    MAKE_SIGNAL(version_bugfix, pigeon2_->GetVersionBugfix())
+    MAKE_SIGNAL(version_build, pigeon2_->GetVersionBuild())
+
+    MAKE_SIGNAL(yaw, pigeon2_->GetYaw())
+    MAKE_SIGNAL(pitch, pigeon2_->GetPitch())
+    MAKE_SIGNAL(roll, pigeon2_->GetRoll())
+
+    MAKE_SIGNAL(quat_w, pigeon2_->GetQuatW())
+    MAKE_SIGNAL(quat_x, pigeon2_->GetQuatX())
+    MAKE_SIGNAL(quat_y, pigeon2_->GetQuatY())
+    MAKE_SIGNAL(quat_z, pigeon2_->GetQuatZ())
+
+    MAKE_SIGNAL(gravity_vector_x, pigeon2_->GetGravityVectorX())
+    MAKE_SIGNAL(gravity_vector_y, pigeon2_->GetGravityVectorY())
+    MAKE_SIGNAL(gravity_vector_z, pigeon2_->GetGravityVectorZ())
+
+    MAKE_SIGNAL(temperature, pigeon2_->GetTemperature())
+    MAKE_SIGNAL(uptime, pigeon2_->GetUpTime())
+
+    MAKE_SIGNAL(no_motion_count, pigeon2_->GetNoMotionCount())
+
+    MAKE_SIGNAL(accum_gyro_x, pigeon2_->GetAccumGyroX())
+    MAKE_SIGNAL(accum_gyro_y, pigeon2_->GetAccumGyroY())
+    MAKE_SIGNAL(accum_gyro_z, pigeon2_->GetAccumGyroZ())
+
+    MAKE_SIGNAL(angular_velocity_x, pigeon2_->GetAngularVelocityX())
+    MAKE_SIGNAL(angular_velocity_y, pigeon2_->GetAngularVelocityY())
+    MAKE_SIGNAL(angular_velocity_z, pigeon2_->GetAngularVelocityZ())
+
+    MAKE_SIGNAL(acceleration_x, pigeon2_->GetAccelerationX())
+    MAKE_SIGNAL(acceleration_y, pigeon2_->GetAccelerationY())
+    MAKE_SIGNAL(acceleration_z, pigeon2_->GetAccelerationZ())
+
+    MAKE_SIGNAL(supply_voltage, pigeon2_->GetSupplyVoltage())
+
+    MAKE_SIGNAL(magnetic_field_x, pigeon2_->GetMagneticFieldX())
+    MAKE_SIGNAL(magnetic_field_y, pigeon2_->GetMagneticFieldY())
+    MAKE_SIGNAL(magnetic_field_z, pigeon2_->GetMagneticFieldZ())
+
+    MAKE_SIGNAL(raw_magnetic_field_x, pigeon2_->GetRawMagneticFieldX())
+    MAKE_SIGNAL(raw_magnetic_field_y, pigeon2_->GetRawMagneticFieldY())
+    MAKE_SIGNAL(raw_magnetic_field_z, pigeon2_->GetRawMagneticFieldZ())
+
+    MAKE_SIGNAL(fault_hardware, pigeon2_->GetFault_Hardware())
+    MAKE_SIGNAL(fault_undervoltage, pigeon2_->GetFault_Undervoltage())
+    MAKE_SIGNAL(fault_boot_during_enable, pigeon2_->GetFault_BootDuringEnable())
+    MAKE_SIGNAL(fault_unlicensed_feature_in_use, pigeon2_->GetFault_UnlicensedFeatureInUse())
+    MAKE_SIGNAL(fault_bootup_accelerometer, pigeon2_->GetFault_BootupAccelerometer())
+    MAKE_SIGNAL(fault_bootup_gyroscope, pigeon2_->GetFault_BootupGyroscope())
+    MAKE_SIGNAL(fault_bootup_magnetometer, pigeon2_->GetFault_BootupMagnetometer())
+    MAKE_SIGNAL(fault_boot_into_motion, pigeon2_->GetFault_BootIntoMotion())
+    MAKE_SIGNAL(fault_data_acquired_late, pigeon2_->GetFault_DataAcquiredLate())
+    MAKE_SIGNAL(fault_loop_time_slow, pigeon2_->GetFault_LoopTimeSlow())
+    MAKE_SIGNAL(fault_saturated_magnetometer, pigeon2_->GetFault_SaturatedMagnetometer())
+    MAKE_SIGNAL(fault_saturated_accelometer, pigeon2_->GetFault_SaturatedAccelometer())
+    MAKE_SIGNAL(fault_saturated_gyroscope, pigeon2_->GetFault_SaturatedGyroscope())
+
+    MAKE_SIGNAL(sticky_fault_hardware, pigeon2_->GetStickyFault_Hardware())
+    MAKE_SIGNAL(sticky_fault_undervoltage, pigeon2_->GetStickyFault_Undervoltage())
+    MAKE_SIGNAL(sticky_fault_boot_during_enable, pigeon2_->GetStickyFault_BootDuringEnable())
+    MAKE_SIGNAL(sticky_fault_unlicensed_feature_in_use, pigeon2_->GetStickyFault_UnlicensedFeatureInUse())
+    MAKE_SIGNAL(sticky_fault_bootup_accelerometer, pigeon2_->GetStickyFault_BootupAccelerometer())
+    MAKE_SIGNAL(sticky_fault_bootup_gyroscope, pigeon2_->GetStickyFault_BootupGyroscope())
+    MAKE_SIGNAL(sticky_fault_bootup_magnetometer, pigeon2_->GetStickyFault_BootupMagnetometer())
+    MAKE_SIGNAL(sticky_fault_boot_into_motion, pigeon2_->GetStickyFault_BootIntoMotion())
+    MAKE_SIGNAL(sticky_fault_data_acquired_late, pigeon2_->GetStickyFault_DataAcquiredLate())
+    MAKE_SIGNAL(sticky_fault_loop_time_slow, pigeon2_->GetStickyFault_LoopTimeSlow())
+    MAKE_SIGNAL(sticky_fault_saturated_magnetometer, pigeon2_->GetStickyFault_SaturatedMagnetometer())
+    MAKE_SIGNAL(sticky_fault_saturated_accelometer, pigeon2_->GetStickyFault_SaturatedAccelometer())
+    MAKE_SIGNAL(sticky_fault_saturated_gyroscope, pigeon2_->GetStickyFault_SaturatedGyroscope())
+
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("pigeon2 read main_loop");
@@ -470,7 +554,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setGravityVectorZ(*gravity_vector_z);
 
             read_thread_state_->setTemperature(temperature->value());
-            read_thread_state_->setNoMotionCount(*no_motion_count);
+            read_thread_state_->setNoMotionCount(no_motion_count->value());
             read_thread_state_->setUptime(uptime->value());
 
             read_thread_state_->setAccumGyroX(units::radian_t{*accum_gyro_x}.value());
