@@ -9,9 +9,18 @@
 #include <nav_msgs/Odometry.h>
 #include "ros_control_boilerplate/ctre_v6_device.h"
 
-namespace ctre::phoenix6::hardware::core
+namespace ctre::phoenix6
 {
-    class CorePigeon2;
+    namespace configs
+    {
+        class MountPoseConfigs;
+        class GyroTrimConfigs;
+        class Pigeon2FeaturesConfigs;
+    }
+    namespace hardware::core
+    {
+        class CorePigeon2;
+    }
 }
 namespace hardware_interface
 {
@@ -66,6 +75,9 @@ private:
 
     std::unique_ptr<hardware_interface::pigeon2::Pigeon2HWState> state_;
     std::unique_ptr<hardware_interface::pigeon2::Pigeon2HWCommand> command_;
+    std::unique_ptr<ctre::phoenix6::configs::MountPoseConfigs> mount_pose_configs_;
+    std::unique_ptr<ctre::phoenix6::configs::GyroTrimConfigs> gyro_trim_configs_;
+    std::unique_ptr<ctre::phoenix6::configs::Pigeon2FeaturesConfigs> pigeon2_features_configs_;
     std::array<double, 4> imu_orientation_{};            // x,y,z,w
     std::array<double, 9> imu_orientation_covariance_{}; // [x,y,z] x [x,y,z]
     std::array<double, 3> imu_angular_velocity_{};       // x,y,z

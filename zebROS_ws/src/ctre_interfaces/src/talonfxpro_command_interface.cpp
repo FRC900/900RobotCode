@@ -334,9 +334,9 @@ bool TalonFXProHWCommand::motorOutputConfigChanged(Inverted &invert,
 	duty_cycle_neutral_deadband = duty_cycle_neutral_deadband_;
 	peak_forward_duty_cycle = peak_forward_duty_cycle_;
 	peak_reverse_duty_cycle = peak_reverse_duty_cycle_;
-	const auto rc = motor_output_config_changed_;
+	const auto ret = motor_output_config_changed_;
 	motor_output_config_changed_ = false;
-	return rc;
+	return ret;
 }
 
 void TalonFXProHWCommand::resetMotorOutputConfig(void)
@@ -458,9 +458,9 @@ bool TalonFXProHWCommand::voltageConfigsChanged(double &supply_voltage_time_cons
 	supply_voltage_time_constant = supply_voltage_time_constant_;
 	peak_forward_voltage = peak_forward_voltage_;
 	peak_reverse_voltage = peak_reverse_voltage_;
-	const auto rc = voltage_configs_changed_;
+	const auto ret = voltage_configs_changed_;
 	voltage_configs_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetVoltageConfigs(void)
 {
@@ -511,9 +511,9 @@ bool TalonFXProHWCommand::torqueCurrentChanged(double &peak_forward_torque_curre
 	peak_forward_torque_current = peak_forward_torque_current_;
 	peak_reverse_torque_current = peak_reverse_torque_current_;
 	torque_neutral_deadband = torque_neutral_deadband_;
-	const auto rc = torque_current_changed_;
+	const auto ret = torque_current_changed_;
 	torque_current_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetTorqueCurrent(void)
 {
@@ -596,9 +596,9 @@ bool TalonFXProHWCommand::feebackChanged(double &feedback_rotor_offset,
 	rotor_to_sensor_ratio = rotor_to_sensor_ratio_;
 	feedback_sensor_source = feedback_sensor_source_;
 	feedback_remote_sensor_id = feedback_remote_sensor_id_;
-	const auto rc = feedback_changed_;
+	const auto ret = feedback_changed_;
 	feedback_changed_ = false;
-	return rc;
+	return ret;
 }
 
 void TalonFXProHWCommand::resetFeedback(void)
@@ -658,9 +658,9 @@ bool TalonFXProHWCommand::differentialSensorsChanged(DifferentialSensorSource &d
 	differential_sensor_source = differential_sensor_source_;
 	differential_talonfx_sensor_id = differential_talonfx_sensor_id_;
 	differential_remote_sensor_id = differential_remote_sensor_id_;
-	const auto rc = differential_sensors_changed_;
+	const auto ret = differential_sensors_changed_;
 	differential_sensors_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetDifferentialSensors(void)
 {
@@ -713,9 +713,9 @@ bool TalonFXProHWCommand::differentialConstantsChanged(double &peak_differential
 	peak_differential_duty_cycle = peak_differential_duty_cycle_;
 	peak_differential_voltage = peak_differential_voltage_;
 	peak_differential_torque_current = peak_differential_torque_current_;
-	const auto rc = differential_constants_changed_;
+	const auto ret = differential_constants_changed_;
 	differential_constants_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetDifferentialConstants(void)
 {
@@ -768,9 +768,9 @@ bool TalonFXProHWCommand::openLoopRampsChanged(double &duty_cycle_open_loop_ramp
 	duty_cycle_open_loop_ramp_period = duty_cycle_open_loop_ramp_period_;
 	voltage_open_loop_ramp_period = voltage_open_loop_ramp_period_;
 	torque_open_loop_ramp_period = torque_open_loop_ramp_period_;
-	const auto rc = open_loop_ramps_changed_;
+	const auto ret = open_loop_ramps_changed_;
 	open_loop_ramps_changed_ = false;
-	return rc;	
+	return ret;
 }
 
 void TalonFXProHWCommand::resetOpenLoopRamps(void)
@@ -824,9 +824,9 @@ bool TalonFXProHWCommand::closedLoopRampsChanged(double &duty_cycle_closed_loop_
 	duty_cycle_closed_loop_ramp_period = duty_cycle_closed_loop_ramp_period_;
 	voltage_closed_loop_ramp_period = voltage_closed_loop_ramp_period_;
 	torque_closed_loop_ramp_period = torque_closed_loop_ramp_period_;
-	const auto rc = closed_loop_ramps_changed_;
+	const auto ret = closed_loop_ramps_changed_;
 	closed_loop_ramps_changed_ = false;
-	return rc;	
+	return ret;
 }
 
 void TalonFXProHWCommand::resetClosedLoopRamps(void)
@@ -1015,9 +1015,9 @@ bool TalonFXProHWCommand::limitChanged(LimitType &forward_limit_type,
 	reverse_limit_enable = reverse_limit_enable_;
 	reverse_limit_source = reverse_limit_source_;
 	reverse_limit_remote_sensor_id = reverse_limit_remote_sensor_id_;
-	const auto rc = limit_changed_;
+	const auto ret = limit_changed_;
 	limit_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetLimit(void)
 {
@@ -1067,9 +1067,9 @@ bool TalonFXProHWCommand::audioChanged(bool &beep_on_boot,
 	beep_on_boot = beep_on_boot_;
 	beep_on_config = beep_on_config_;
 	allow_music_dur_disable = allow_music_dur_disable_;
-	const auto rc = audio_changed_;
+	const auto ret = audio_changed_;
 	audio_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetAudio(void)
 {
@@ -1132,9 +1132,9 @@ bool TalonFXProHWCommand::softLimitChanged(bool &forward_enable, bool &reverse_e
 	reverse_enable = softlimit_reverse_enable_;
 	forward_threshold = softlimit_forward_threshold_;
 	reverse_threshold = softlimit_reverse_threshold_;
-	const auto rc = softlimit_changed_;
+	const auto ret = softlimit_changed_;
 	softlimit_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetSoftLimit(void)
 {
@@ -1183,9 +1183,9 @@ bool TalonFXProHWCommand::motionMagicChanged(double &motion_magic_cruise_velocit
 	motion_magic_cruise_velocity = motion_magic_cruise_velocity_;
 	motion_magic_acceleration = motion_magic_acceleration_;
 	motion_magic_jerk = motion_magic_jerk_;
-	const auto rc = motion_magic_changed_;
+	const auto ret = motion_magic_changed_;
 	motion_magic_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetMotionMagic(void)
 {
@@ -1207,9 +1207,9 @@ bool TalonFXProHWCommand::getContinuousWrap(void) const
 bool TalonFXProHWCommand::continuousWrapChanged(bool &continuous_wrap) const
 {
 	continuous_wrap = continuous_wrap_;
-	const auto rc = continuous_wrap_changed_;
+	const auto ret = continuous_wrap_changed_;
 	continuous_wrap_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetContinuousWrap(void)
 {
@@ -1226,9 +1226,9 @@ bool TalonFXProHWCommand::getClearStickyFaults(void) const
 }
 bool TalonFXProHWCommand::clearStickyFaultsChanged(void) const
 {
-	const auto rc = clear_sticky_faults_;
+	const auto ret = clear_sticky_faults_;
 	clear_sticky_faults_ = false;
-	return rc;
+	return ret;
 }
 
 void TalonFXProHWCommand::setSetPosition(const double position)
@@ -1489,9 +1489,9 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 	control_differential_position = control_differential_position_;
 	control_differential_slot = control_differential_slot_;
 	control_oppose_master_direction = control_oppose_master_direction_;
-	const auto rc = control_changed_;
+	const auto ret = control_changed_;
 	control_changed_ = false;
-	return rc;
+	return ret;
 }
 void TalonFXProHWCommand::resetControl(void)
 {

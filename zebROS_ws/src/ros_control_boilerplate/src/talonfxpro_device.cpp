@@ -1422,15 +1422,18 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     double set_rotor_position;
     if (command_->setPositionChanged(set_rotor_position))
     {
-        if (safeCall(talonfxpro_->SetPosition(units::radian_t{set_rotor_position}), "talonfxpro_->SetPosition"))
+        if (fabs(set_rotor_position - state_->getPosition()) > 1e-4)
         {
-            //ROS_INFO_STREAM("SetPosition for TalonFXPro id " << getId() << " = " << getName() << " to " << set_rotor_position << " radians successful");
-        }
-        else
-        {
-            ROS_INFO_STREAM("SetRotorPosition for TalonFXPro id " << getId() << " = " << getName() << " failed");
-            command_->resetSetPosition();
-            return;
+            if (safeCall(talonfxpro_->SetPosition(units::radian_t{set_rotor_position}), "talonfxpro_->SetPosition"))
+            {
+                ROS_INFO_STREAM("SetPosition for TalonFXPro id " << getId() << " = " << getName() << " to " << set_rotor_position << " radians successful");
+            }
+            else
+            {
+                ROS_INFO_STREAM("SetRotorPosition for TalonFXPro id " << getId() << " = " << getName() << " failed");
+                command_->resetSetPosition();
+                return;
+            }
         }
     }
 

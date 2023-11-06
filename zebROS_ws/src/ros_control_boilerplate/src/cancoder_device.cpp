@@ -122,27 +122,29 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
     double offset_radians;
     hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range;
 
-    ctre::phoenix6::configs::MagnetSensorConfigs magnet_sensor_configs;
     if (command_->magnetSensorConfigsChanged(sensor_direction,
                                              offset_radians,
-                                             absolute_sensor_range) &&
-        convertSensorDirection(sensor_direction, magnet_sensor_configs.SensorDirection) &&
-        convertAbsoluteSensorRange(absolute_sensor_range, magnet_sensor_configs.AbsoluteSensorRange))
+                                             absolute_sensor_range))
     {
-        magnet_sensor_configs.MagnetOffset = units::turn_t{units::radian_t{offset_radians}}.value();
-        if (safeCall(cancoder_->GetConfigurator().Apply(magnet_sensor_configs), "GetConfigurator().Apply(magnet_sensor_configs)"))
+        ctre::phoenix6::configs::MagnetSensorConfigs magnet_sensor_configs;
+        if (convertSensorDirection(sensor_direction, magnet_sensor_configs.SensorDirection) &&
+            convertAbsoluteSensorRange(absolute_sensor_range, magnet_sensor_configs.AbsoluteSensorRange))
         {
-            ROS_INFO_STREAM("Updated CANcoder id << " << getId() << " = " << getName() << "magnetSensorConfigs " << magnet_sensor_configs);
-            state_->setSensorDirection(sensor_direction);
-            state_->setMagnetOffset(offset_radians);
-            state_->setAbsoluteSensorRange(absolute_sensor_range);
-        }
-        else
-        {
+            magnet_sensor_configs.MagnetOffset = units::turn_t{units::radian_t{offset_radians}}.value();
+            if (safeCall(cancoder_->GetConfigurator().Apply(magnet_sensor_configs), "GetConfigurator().Apply(magnet_sensor_configs)"))
+            {
+                ROS_INFO_STREAM("Updated CANcoder id << " << getId() << " = " << getName() << "magnetSensorConfigs " << magnet_sensor_configs);
+                state_->setSensorDirection(sensor_direction);
+                state_->setMagnetOffset(offset_radians);
+                state_->setAbsoluteSensorRange(absolute_sensor_range);
+            }
+            else
+            {
 
-            ROS_INFO_STREAM("Failed to update CANcoder id " <<  getId() << " = " << getName() << " MagnetSensorConfigs " << magnet_sensor_configs);
-            command_->resetMagnetSensorConfigs();
-            return;
+                ROS_INFO_STREAM("Failed to update CANcoder id " << getId() << " = " << getName() << " MagnetSensorConfigs " << magnet_sensor_configs);
+                command_->resetMagnetSensorConfigs();
+                return;
+            }
         }
     }
 
@@ -172,7 +174,7 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
             return;
         }
     }
-}
+    }
 
 // Set of macros for common code used to read 
 // all signals with error checking.

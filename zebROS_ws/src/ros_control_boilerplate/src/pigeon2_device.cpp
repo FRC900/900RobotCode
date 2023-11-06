@@ -27,6 +27,9 @@ Pigeon2Device::Pigeon2Device(const std::string &name_space,
     , pigeon2_{nullptr}
     , state_{std::make_unique<hardware_interface::pigeon2::Pigeon2HWState>(can_id)}
     , command_{std::make_unique<hardware_interface::pigeon2::Pigeon2HWCommand>()}
+    , mount_pose_configs_{std::make_unique<ctre::phoenix6::configs::MountPoseConfigs>()}
+    , gyro_trim_configs_{std::make_unique<ctre::phoenix6::configs::GyroTrimConfigs>()}
+    , pigeon2_features_configs_{std::make_unique<ctre::phoenix6::configs::Pigeon2FeaturesConfigs>()}
     , read_thread_state_{nullptr}
     , read_state_mutex_{nullptr}
     , read_thread_{nullptr}
@@ -257,20 +260,19 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         //command_->resetSetYaw(); // TODO, not sure about this, there's no telling how long ago this value was correct
     }
 
-    if (ctre::phoenix6::configs::MountPoseConfigs mount_pose_configs;
-        command_->mountPoseRPYChanged(mount_pose_configs.MountPoseYaw,
-                                      mount_pose_configs.MountPosePitch,
-                                      mount_pose_configs.MountPoseRoll))
+    if (command_->mountPoseRPYChanged(mount_pose_configs_->MountPoseYaw,
+                                      mount_pose_configs_->MountPosePitch,
+                                      mount_pose_configs_->MountPoseRoll))
     {
-        mount_pose_configs.MountPoseYaw = angles::to_degrees(mount_pose_configs.MountPoseYaw);
-        mount_pose_configs.MountPosePitch = angles::to_degrees(mount_pose_configs.MountPosePitch);
-        mount_pose_configs.MountPoseRoll = angles::to_degrees(mount_pose_configs.MountPoseRoll);
-        if (safeCall(pigeon2_->GetConfigurator().Apply(mount_pose_configs), "ApplyConfig(MountPoseConfigs"))
+        mount_pose_configs_->MountPoseYaw = angles::to_degrees(mount_pose_configs_->MountPoseYaw);
+        mount_pose_configs_->MountPosePitch = angles::to_degrees(mount_pose_configs_->MountPosePitch);
+        mount_pose_configs_->MountPoseRoll = angles::to_degrees(mount_pose_configs_->MountPoseRoll);
+        if (safeCall(pigeon2_->GetConfigurator().Apply(*mount_pose_configs_), "ApplyConfig(MountPoseConfigs"))
         {
-            ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " MountPose " << mount_pose_configs);
-            state_->setMountPoseYaw(angles::from_degrees(mount_pose_configs.MountPoseYaw ));
-            state_->setMountPosePitch(angles::from_degrees(mount_pose_configs.MountPosePitch));
-            state_->setMountPoseRoll(angles::from_degrees(mount_pose_configs.MountPoseRoll));
+            ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " MountPose " << *mount_pose_configs_);
+            state_->setMountPoseYaw(angles::from_degrees(mount_pose_configs_->MountPoseYaw ));
+            state_->setMountPosePitch(angles::from_degrees(mount_pose_configs_->MountPosePitch));
+            state_->setMountPoseRoll(angles::from_degrees(mount_pose_configs_->MountPoseRoll));
         }
         else
         {
@@ -279,20 +281,19 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         }
     }
 
-    if (ctre::phoenix6::configs::GyroTrimConfigs gyro_trim_configs;
-        command_->gyroTrimChanged(gyro_trim_configs.GyroScalarX,
-                                  gyro_trim_configs.GyroScalarY,
-                                  gyro_trim_configs.GyroScalarZ))
+    if (command_->gyroTrimChanged(gyro_trim_configs_->GyroScalarX,
+                                  gyro_trim_configs_->GyroScalarY,
+                                  gyro_trim_configs_->GyroScalarZ))
     {
-        gyro_trim_configs.GyroScalarX = angles::to_degrees(gyro_trim_configs.GyroScalarX);
-        gyro_trim_configs.GyroScalarY = angles::to_degrees(gyro_trim_configs.GyroScalarY);
-        gyro_trim_configs.GyroScalarZ = angles::to_degrees(gyro_trim_configs.GyroScalarZ);
-        if (safeCall(pigeon2_->GetConfigurator().Apply(gyro_trim_configs), "ApplyConfig(GyroTrimConfigs"))
+        gyro_trim_configs_->GyroScalarX = angles::to_degrees(gyro_trim_configs_->GyroScalarX);
+        gyro_trim_configs_->GyroScalarY = angles::to_degrees(gyro_trim_configs_->GyroScalarY);
+        gyro_trim_configs_->GyroScalarZ = angles::to_degrees(gyro_trim_configs_->GyroScalarZ);
+        if (safeCall(pigeon2_->GetConfigurator().Apply(*gyro_trim_configs_), "ApplyConfig(GyroTrimConfigs"))
         {
-            ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " GyroTrim " << gyro_trim_configs);
-            state_->setGyroTrimScalarX(angles::from_degrees(gyro_trim_configs.GyroScalarX ));
-            state_->setGyroTrimScalarY(angles::from_degrees(gyro_trim_configs.GyroScalarY));
-            state_->setGyroTrimScalarZ(angles::from_degrees(gyro_trim_configs.GyroScalarZ));
+            ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " GyroTrim " << *gyro_trim_configs_);
+            state_->setGyroTrimScalarX(angles::from_degrees(gyro_trim_configs_->GyroScalarX ));
+            state_->setGyroTrimScalarY(angles::from_degrees(gyro_trim_configs_->GyroScalarY));
+            state_->setGyroTrimScalarZ(angles::from_degrees(gyro_trim_configs_->GyroScalarZ));
         }
         else
         {
@@ -301,17 +302,16 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         }
     }
 
-    if (ctre::phoenix6::configs::Pigeon2FeaturesConfigs pigeon2_features_configs;
-        command_->pigeon2FeaturesChanged(pigeon2_features_configs.EnableCompass,
-                                         pigeon2_features_configs.DisableTemperatureCompensation,
-                                         pigeon2_features_configs.DisableNoMotionCalibration))
+    if (command_->pigeon2FeaturesChanged(pigeon2_features_configs_->EnableCompass,
+                                         pigeon2_features_configs_->DisableTemperatureCompensation,
+                                         pigeon2_features_configs_->DisableNoMotionCalibration))
     {
-        if (safeCall(pigeon2_->GetConfigurator().Apply(pigeon2_features_configs), "ApplyConfig(Pigeon2FeaturesConfigs"))
+        if (safeCall(pigeon2_->GetConfigurator().Apply(*pigeon2_features_configs_), "ApplyConfig(Pigeon2FeaturesConfigs"))
         {
-            ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " Pigeon2Features " << pigeon2_features_configs);
-            state_->setEnableCompass(pigeon2_features_configs.EnableCompass);
-            state_->setDisableTemperatureCompensation(pigeon2_features_configs.DisableTemperatureCompensation);
-            state_->setDisableNoMotionCalibration(pigeon2_features_configs.DisableNoMotionCalibration);
+            ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " Pigeon2Features " << *pigeon2_features_configs_);
+            state_->setEnableCompass(pigeon2_features_configs_->EnableCompass);
+            state_->setDisableTemperatureCompensation(pigeon2_features_configs_->DisableTemperatureCompensation);
+            state_->setDisableNoMotionCalibration(pigeon2_features_configs_->DisableNoMotionCalibration);
         }
         else
         {
