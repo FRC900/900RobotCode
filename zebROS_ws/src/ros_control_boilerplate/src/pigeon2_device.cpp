@@ -352,7 +352,8 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
 // MAKE_SIGNAL is just an easy way to create the signal object
 // that's used for subsequent reads
 #define MAKE_SIGNAL(var, function) \
-auto var##_signal = function;
+auto var##_signal = function; \
+signals.push_back(&var##_signal);
 
 // SAFE_READ takes the signal short name, passes the 
 // previously-created signal name to the base-class
@@ -362,6 +363,7 @@ auto var##_signal = function;
 #define SAFE_READ(var, function) \
 const auto var = safeRead(var##_signal, #function); \
 if (!var) { tracer->stop() ; continue; }
+
 void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
                                 const double poll_frequency)
 {
@@ -376,6 +378,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
     ROS_INFO_STREAM("Starting pigeon2 read thread for " << getName() << " at " << ros::Time::now());
     ros::Duration(2.952 + read_thread_state_->getDeviceNumber() * 0.04).sleep(); // Sleep for a few seconds to let CAN start up
 
+    std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
     MAKE_SIGNAL(version_major, pigeon2_->GetVersionMajor())
     MAKE_SIGNAL(version_minor, pigeon2_->GetVersionMinor())
     MAKE_SIGNAL(version_bugfix, pigeon2_->GetVersionBugfix())
@@ -452,6 +455,8 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("pigeon2 read main_loop");
+
+        ctre::phoenix6::BaseStatusSignal::WaitForAll(units::second_t{0}, signals);
 
         SAFE_READ(version_major, pigeon2_->GetVersionMajor())
         SAFE_READ(version_minor, pigeon2_->GetVersionMinor())

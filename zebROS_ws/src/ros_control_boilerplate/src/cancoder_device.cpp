@@ -181,7 +181,8 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
 // MAKE_SIGNAL is just an easy way to create the signal object
 // that's used for subsequent reads
 #define MAKE_SIGNAL(var, function) \
-auto var##_signal = function;
+auto var##_signal = function; \
+signals.push_back(&var##_signal);
 
 // SAFE_READ takes the signal short name, passes the 
 // previously-created signal name to the base-class
@@ -202,6 +203,8 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 	}
 #endif
 	ros::Duration(2.452 + read_thread_state_->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
+
+    std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
 
     MAKE_SIGNAL(version_major, cancoder_->GetVersionMajor())
     MAKE_SIGNAL(version_minor, cancoder_->GetVersionMinor())
@@ -249,6 +252,8 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 			std::lock_guard l(*read_state_mutex_);
 			conversion_factor = read_thread_state_->getConversionFactor();
 		}
+
+        ctre::phoenix6::BaseStatusSignal::WaitForAll(units::second_t{0}, signals);
 
         SAFE_READ(version_major, cancoder_->GetVersionMajor())
         SAFE_READ(version_minor, cancoder_->GetVersionMinor())

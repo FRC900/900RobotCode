@@ -38,8 +38,9 @@ public:
 protected:
     bool safeCall(ctre::phoenix::StatusCode status_code, const std::string &method_name) const;
     template <class T>
-    std::optional<T> safeRead(const ctre::phoenix6::StatusSignal<T> &status_signal, const std::string &method_name)
+    std::optional<T> safeRead(const ctre::phoenix6::StatusSignal<T> &status_signal, const std::string &method_name) const
     {
+        //status_signal.Refresh();
         if (status_signal.GetStatus() == ctre::phoenix::StatusCode::OK)
         {
             can_error_count_ = 0;

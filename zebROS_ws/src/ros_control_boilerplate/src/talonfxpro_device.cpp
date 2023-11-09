@@ -160,7 +160,8 @@ void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*pe
 // MAKE_SIGNAL is just an easy way to create the signal object
 // that's used for subsequent reads
 #define MAKE_SIGNAL(var, function) \
-auto var##_signal = function;
+auto var##_signal = function; \
+signals.push_back(&var##_signal);
 
 // SAFE_READ takes the signal short name, passes the 
 // previously-created signal name to the base-class
@@ -198,6 +199,8 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 	ROS_INFO_STREAM("Starting talonfxpro " << read_thread_state_->getCANID() << " thread at " << ros::Time::now());
 
     //Construct status signal objects here once, reuse them each time through the loop
+
+    std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
 
     MAKE_SIGNAL(version_major, talonfxpro_->GetVersionMajor())
     MAKE_SIGNAL(version_minor, talonfxpro_->GetVersionMinor())
@@ -309,6 +312,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		}
         const bool in_differential_mode = differential_sensor_source != hardware_interface::talonfxpro::DifferentialSensorSource::Disabled;
 
+        ctre::phoenix6::BaseStatusSignal::WaitForAll(units::second_t{0}, signals);
         SAFE_READ(version_major, talonfxpro_->GetVersionMajor())
         SAFE_READ(version_minor, talonfxpro_->GetVersionMinor())
         SAFE_READ(version_bugfix, talonfxpro_->GetVersionBugfix())
