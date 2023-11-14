@@ -132,12 +132,14 @@ def callback(data):
         report = check_for_ends(board)
     else:
         report = 0
-
+    if report in [2, 3, 4]:
+        player = 1
+    
     publish(board, player, report)
 
     if report in [2, 3, 4]:
         board = [[0 for i in range(7)] for i in range(6)]
-        player = 1
+        
 def listener():
 
     # In ROS, nodes are uniquely named. If two nodes with the same
@@ -163,8 +165,6 @@ def publish(board, player, report):
     state.row5 = board[5]
     state.player = player
     state.report = report
-    print("about to publish...")
-    print(state)
     pub.publish(state)
 
 rospy.init_node('ct4_board_node', anonymous=True)
