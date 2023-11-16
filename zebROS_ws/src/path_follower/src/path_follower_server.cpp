@@ -41,7 +41,7 @@ class PathAction
 		double server_timeout_;
 
 		bool debug_;
-		int ros_rate_;
+		double ros_rate_;
 
 		// If true, use the subscribed pose topic for odom rather than the odom subscriber
 		bool use_pose_for_odom_;
@@ -54,13 +54,13 @@ class PathAction
 				   double final_pos_tol,
 				   double final_rot_tol,
 				   double server_timeout,
-				   int ros_rate,
+				   double ros_rate,
 				   const std::string &odom_topic,
 				   const std::string &pose_topic,
 				   bool use_pose_for_odom,
 				   double time_offset,
 				   bool debug,
-				   std::string &odom_transform_frame)
+				   const std::string &odom_transform_frame)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
@@ -348,12 +348,11 @@ class PathAction
 				// The path's have even spacing so if you find the total amount of path waypoints and then divide by which on you are on
 				// The result is pretty close to how far you are along to the next waypoint
 				// Can be off by at most by the total number of poses in the generated path / 100
-				typedef std::vector<int>::iterator iter;
-				iter low = std::lower_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
-				iter high = std::upper_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
-				int lowidx = low - waypointsIdx.begin();
-				int highidx = high - waypointsIdx.begin();
-				int waypoint_size = highidx - lowidx;
+				const auto low = std::lower_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
+				const auto  high = std::upper_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
+				const auto lowidx = low - waypointsIdx.begin();
+				const auto highidx = high - waypointsIdx.begin();
+				consti auto waypoint_size = highidx - lowidx;
 				feedback.percent_next_waypoint = double((current_index - lowidx)) / waypoint_size;
 				as_.publishFeedback(feedback);
 
@@ -521,7 +520,7 @@ class PathAction
 			return ros_rate_;
 		}
 
-		void setDebug(double debug)
+		void setDebug(bool debug)
 		{
 			debug_ = debug;
 		}
@@ -540,7 +539,7 @@ int main(int argc, char **argv)
 	double final_pos_tol = 0.01;
 	double final_rot_tol = 0.01;
 	double server_timeout = 15.0;
-	int ros_rate = 20;
+	double ros_rate = 20;
 	double time_offset = 0;
 	bool use_pose_for_odom = false;
 	bool debug = false;

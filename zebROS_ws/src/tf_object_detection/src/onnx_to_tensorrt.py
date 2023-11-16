@@ -65,6 +65,10 @@ def onnx_to_tensorrt(onnx_model,
         input_width = input_shapes[0][3]
         input_width_min = input_width
         input_width_max = input_width
+    print(f'Output channels = {input_channels}')
+    print(f'Output width = {input_width_min} {input_width} {input_width_max}')
+    print(f'Output height = {input_height_min} {input_height} {input_height_max}')
+    print(f'Output batch_size = {batch_size_min} {batch_size} {batch_size_max}')
 
     logger = trt.Logger(trt.Logger.INFO)
     builder = trt.Builder(logger)
