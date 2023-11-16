@@ -349,11 +349,11 @@ class PathAction
 				// The result is pretty close to how far you are along to the next waypoint
 				// Can be off by at most by the total number of poses in the generated path / 100
 				const auto low = std::lower_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
-				const auto  high = std::upper_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
+				const auto high = std::upper_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
 				const auto lowidx = low - waypointsIdx.begin();
 				const auto highidx = high - waypointsIdx.begin();
-				consti auto waypoint_size = highidx - lowidx;
-				feedback.percent_next_waypoint = double((current_index - lowidx)) / waypoint_size;
+				const auto waypoint_size = highidx - lowidx;
+				feedback.percent_next_waypoint = double(current_index - lowidx) / waypoint_size;
 				as_.publishFeedback(feedback);
 
 				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
