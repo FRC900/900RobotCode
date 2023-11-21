@@ -2,10 +2,11 @@
 #include <hardware_interface/robot_hw.h> // for hardware_interface::InterfaceManager
 #include "ctre_interfaces/talon_command_interface.h"
 #include "ros_control_boilerplate/ctre_v5_motor_controllers.h"
-#include "ros_control_boilerplate/ctre_v5_motor_controller.h"
+#include "ros_control_boilerplate/sim_ctre_v5_motor_controller.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 
-CTREV5MotorControllers::CTREV5MotorControllers(ros::NodeHandle &root_nh)
+template <bool SIM>
+CTREV5MotorControllers<SIM>::CTREV5MotorControllers(ros::NodeHandle &root_nh)
     : state_interface_{std::make_unique<hardware_interface::TalonStateInterface>()}
     , command_interface_{std::make_unique<hardware_interface::TalonCommandInterface>()}
     , remote_state_interface_{std::make_unique<hardware_interface::RemoteTalonStateInterface>()}
@@ -52,14 +53,16 @@ CTREV5MotorControllers::CTREV5MotorControllers(ros::NodeHandle &root_nh)
                 throw std::runtime_error("A CAN Talon SRX / Victor SPX / Talon FX can_bus was specified with local_hardware == false for joint " + joint_name);
             }
 
-            devices_.emplace_back(std::make_unique<CTREV5MotorController>(root_nh.getNamespace(), i, joint_name, joint_type, can_id, can_bus, local, read_hz_));
+            devices_.emplace_back(std::make_unique<DEVICE_TYPE>(root_nh.getNamespace(), i, joint_name, joint_type, can_id, can_bus, local, read_hz_));
         }
     }
 }
 
-CTREV5MotorControllers::~CTREV5MotorControllers() = default;
+template <bool SIM>
+CTREV5MotorControllers<SIM>::~CTREV5MotorControllers() = default;
 
-hardware_interface::InterfaceManager *CTREV5MotorControllers::registerInterface()
+template <bool SIM>
+hardware_interface::InterfaceManager *CTREV5MotorControllers<SIM>::registerInterface()
 {
     for (const auto &d : devices_)
     {
@@ -71,7 +74,8 @@ hardware_interface::InterfaceManager *CTREV5MotorControllers::registerInterface(
     return &interface_manager_;
 }
 
-void CTREV5MotorControllers::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void CTREV5MotorControllers<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("ctre v5 motor controllers");
     for (const auto &d : devices_)
@@ -80,7 +84,8 @@ void CTREV5MotorControllers::read(const ros::Time& time, const ros::Duration& pe
     }
 }
 
-void CTREV5MotorControllers::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void CTREV5MotorControllers<SIM>::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("ctre v5 motor controllers");
     CTREV5MotorController::resetCanConfigCount();
@@ -91,53 +96,111 @@ void CTREV5MotorControllers::write(const ros::Time& time, const ros::Duration& p
     prev_robot_enabled_ = isEnabled();
 }
 
-void CTREV5MotorControllers::simInit(ros::NodeHandle &nh)
+template <bool SIM>
+void CTREV5MotorControllers<SIM>::simInit(ros::NodeHandle &nh)
 {
-    if (devices_.size() > 0)
+    if constexpr (SIM)
     {
-        sim_limit_switch_srv_ = nh.advertiseService("set_limit_switch", &CTREV5MotorControllers::setlimit, this);
-        sim_current_srv_ = nh.advertiseService("set_current", &CTREV5MotorControllers::setcurrent, this);
+        if (devices_.size() > 0)
+        {
+            sim_limit_switch_srv_ = nh.advertiseService("set_limit_switch", &CTREV5MotorControllers::setlimit, this);
+            sim_current_srv_ = nh.advertiseService("set_current", &CTREV5MotorControllers::setcurrent, this);
+        }
     }
 }
 
-bool CTREV5MotorControllers::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
-                                      ros_control_boilerplate::set_limit_switch::Response & /*res*/)
+template <bool SIM>
+bool CTREV5MotorControllers<SIM>::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
+                                           ros_control_boilerplate::set_limit_switch::Response & /*res*/)
 {
-    for (const auto &d : devices_)
-	{
-        if(((req.target_joint_name.length() == 0) && (d->getId() == req.target_joint_id)) ||
-		   (req.target_joint_name == d->getName()))
-		{
-            return d->setSimLimitSwitches(req.forward, req.reverse);
+    if constexpr (SIM)
+    {
+        for (const auto &d : devices_)
+        {
+            if(((req.target_joint_name.length() == 0) && (d->getId() == req.target_joint_id)) ||
+            (req.target_joint_name == d->getName()))
+            {
+                return d->setSimLimitSwitches(req.forward, req.reverse);
+            }
         }
     }
 	return true;
 }
 
-bool CTREV5MotorControllers::setcurrent(ros_control_boilerplate::set_current::Request &req,
-                                        ros_control_boilerplate::set_current::Response & /*res*/)
+template <bool SIM>
+bool CTREV5MotorControllers<SIM>::setcurrent(ros_control_boilerplate::set_current::Request &req,
+                                             ros_control_boilerplate::set_current::Response & /*res*/)
 {
-    for (const auto &d : devices_)
-	{
-        if(((req.target_joint_name.length() == 0) && (d->getId() == req.target_joint_id)) ||
-		   (req.target_joint_name == d->getName()))
-		{
-            return d->setSimCurrent(req.current, req.current);
+    if constexpr (SIM)
+    {
+        for (const auto &d : devices_)
+        {
+            if(((req.target_joint_name.length() == 0) && (d->getId() == req.target_joint_id)) ||
+            (req.target_joint_name == d->getName()))
+            {
+                return d->setSimCurrent(req.current, req.current);
+            }
         }
     }
 	return true;
 }
 
-void CTREV5MotorControllers::simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer)
+template <bool SIM>
+void CTREV5MotorControllers<SIM>::simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer)
 {
-	tracer.start_unique("FeedEnable");
-    if (devices_.size() > 0)
+    if constexpr (SIM)
     {
-        ctre::phoenix::unmanaged::Unmanaged::FeedEnable(2 * 1000. / read_hz_);
+        tracer.start_unique("FeedEnable");
+        if (devices_.size() > 0)
+        {
+            ctre::phoenix::unmanaged::Unmanaged::FeedEnable(2 * 1000. / read_hz_);
+        }
+        tracer.start_unique("Update sim CTRE values");
+        for (const auto &d : devices_)
+        {
+            d->updateSimValues(time, period);
+        }
     }
-    tracer.start_unique("Update sim CTRE values");
-    for (const auto &d : devices_)
+}
+
+template <bool SIM>
+bool CTREV5MotorControllers<SIM>::gazeboSimInit(const ros::NodeHandle &/*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model)
+{
+    if constexpr (SIM)
     {
-        d->updateSimValues(time, period);
+        for (auto &d : devices_)
+        {
+            if (!d->gazeboInit(parent_model))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+template <bool SIM>
+void CTREV5MotorControllers<SIM>::gazeboSimRead(const ros::Time & /*time*/, const ros::Duration & /*period*/, Tracer & tracer)
+{
+    if constexpr (SIM)
+    {
+        tracer.start_unique("CTRE gazeboSimRead");
+        for (auto &d : devices_)
+        {
+            d->gazeboRead();
+        }
+    }
+}
+
+template <bool SIM>
+void CTREV5MotorControllers<SIM>::gazeboSimWrite(const ros::Time & /*time*/, const ros::Duration & /*period*/, Tracer & tracer, const bool e_stop_active_)
+{
+    if constexpr (SIM)
+    {
+        tracer.start_unique("CTRE gazeboSimWrite");
+        for (auto &d : devices_)
+        {
+            d->gazeboWrite(e_stop_active_);
+        }
     }
 }

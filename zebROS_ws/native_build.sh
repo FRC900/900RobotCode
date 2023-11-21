@@ -27,6 +27,7 @@ if [ $? -eq 1 ]; then
 		field \
 		frcrobot_description \
 		frcrobot_gazebo \
+		gazebo_frcrobot_control \
 		robot_characterization \
 		robot_visualizer \
 		rosbag_scripts \

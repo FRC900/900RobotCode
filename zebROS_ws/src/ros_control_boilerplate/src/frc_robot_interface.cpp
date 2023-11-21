@@ -49,13 +49,17 @@
 #include "ros_control_boilerplate/ros_math_shared.hpp"
 
 #include "ros_control_boilerplate/analog_input_devices.h"
+#include "ros_control_boilerplate/as726x_devices.h"
 #include "ros_control_boilerplate/cancoder_devices.h"
 #include "ros_control_boilerplate/candle_devices.h"
+#include "ros_control_boilerplate/canifier_devices.h"
 #include "ros_control_boilerplate/ctre_v5_motor_controllers.h"
 #include "ros_control_boilerplate/digital_input_devices.h"
 #include "ros_control_boilerplate/digital_output_devices.h"
 #include "ros_control_boilerplate/double_solenoid_devices.h"
+#include "ros_control_boilerplate/joystick_devices.h"
 #include "ros_control_boilerplate/latency_compensation_groups.h"
+#include "ros_control_boilerplate/match_data_devices.h"
 #include "ros_control_boilerplate/pcm_devices.h"
 #include "ros_control_boilerplate/pdh_devices.h"
 #include "ros_control_boilerplate/pdp_devices.h"
@@ -67,37 +71,38 @@
 #include "ros_control_boilerplate/ros_iterative_robot_devices.h"
 #include "ros_control_boilerplate/rumble_devices.h"
 #include "ros_control_boilerplate/solenoid_devices.h"
+#include "ros_control_boilerplate/sparkmax_devices.h"
 #include "ros_control_boilerplate/talonfxpro_devices.h"
+#include "ros_control_boilerplate/talon_orchestra_devices.h"
 
 //PURPOSE: Stuff used by to run both hw and sim interfaces
 namespace ros_control_boilerplate
 {
 
-FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model)
+template <bool SIM>
+FRCRobotInterface<SIM>::FRCRobotInterface(void)
 	: name_("generic_hw_interface")
-	, read_tracer_("FRCRobotInterface " + nh.getNamespace() + "::read()")
-	, write_tracer_("FRCRobotInterface " + nh.getNamespace() + "::write()")
 {
-	// Check if the URDF model needs to be loaded
-	if (urdf_model == nullptr)
-	{
-		loadURDF(nh, "robot_description");
-	}
-	else
-	{
-		urdf_model_ = urdf_model;
-	}
+}
 
-	// Load rosparams
-	ros::NodeHandle rpnh(nh, "hardware_interface"); // TODO(davetcoleman): change the namespace to "frc_robot_interface" aka name_
+template <bool SIM>
+FRCRobotInterface<SIM>::~FRCRobotInterface() = default;
+
+
+template <bool SIM>
+void FRCRobotInterface<SIM>::readParams(const ros::NodeHandle& root_nh, const ros::NodeHandle &/*robot_hw_nh*/)
+{
+	ros::NodeHandle rpnh(root_nh, "hardware_interface"); // TODO(davetcoleman): change the namespace to "frc_robot_interface" aka name_
 	run_hal_robot_ = rpnh.param<bool>("run_hal_robot", run_hal_robot_);
 	can_interface_ = rpnh.param<std::string>("can_interface", can_interface_);
 }
 
-FRCRobotInterface::~FRCRobotInterface() = default;
-
-bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_hw_nh*/)
+template <bool SIM>
+bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_hw_nh*/)
 {
+	read_tracer_ = std::make_unique<Tracer>("FRCRobotInterface " + root_nh.getNamespace() + "::read()");
+	write_tracer_ = std::make_unique<Tracer>("FRCRobotInterface " + root_nh.getNamespace() + "::write()");
+
 #ifdef __linux__
 #if 0
 	struct sched_param schedParam{};
@@ -147,13 +152,19 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 	ROS_INFO_STREAM("Phoenix Version String : " << ctre::phoenix::unmanaged::Unmanaged::GetPhoenixVersion());
 
 	// Create all the devices specified in the yaml joint list, one type at a time
+	// Those that need different code for sim vs real hardware are templated using
+	// the SIM template param for this class
 	devices_.emplace_back(std::make_unique<AnalogInputDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<AS726xDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANCoderDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<CANdleDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<CTREV5MotorControllers>(root_nh));
+	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));
+	devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalOutputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DoubleSolenoidDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<JoystickDevices<SIM>>(root_nh));
+	devices_.emplace_back(std::make_unique<MatchDataDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<PCMDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<PDHDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<PDPDevices>(root_nh));
@@ -167,7 +178,15 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 	}
 	devices_.emplace_back(std::make_unique<RumbleDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<SolenoidDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<TalonFXProDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SparkMaxDevices<SIM>>(root_nh));
+	devices_.emplace_back(std::make_unique<TalonFXProDevices<SIM>>(root_nh));
+	devices_.emplace_back(std::make_unique<TalonOrchestraDevices<SIM>>(root_nh));
+
+	// Create controller interfaces for all the types created above
+	for (const auto &d : devices_)
+	{
+		registerInterfaceManager(d->registerInterface());
+	}
 
 	// Grab a collection of all the ctre V6 device types, pass them
 	// into the Latency Compensation Groups constructor
@@ -181,19 +200,30 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 			device_ptr->appendDeviceMap(ctrev6_devices);
 		}
 	};
-	append_device_map.operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
-	append_device_map.operator()<Pigeon2Devices>();
-	append_device_map.operator()<TalonFXProDevices>();
+	append_device_map.template operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
+	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
+	append_device_map.template operator()<TalonFXProDevices<SIM>>();
 	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
+
+	// Orchestra needs a set of previously created TalonFXs to use as instruments
+	const auto orchestra_devices = getDevicesOfType<TalonOrchestraDevices<SIM>>(devices_);
+	const auto talonfxpro_devices = getDevicesOfType<TalonFXProDevices<SIM>>(devices_);
+	if (talonfxpro_devices && orchestra_devices)
+	{
+		std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> talonfxs;
+		talonfxpro_devices->appendDeviceMap(talonfxs);
+		orchestra_devices->setTalonFXData(talonfxs);
+	}
 
 	ROS_INFO_STREAM_NAMED("frc_robot_interface", "FRCRobotInterface Ready on " << root_nh.getNamespace());
 
 	return true;
 }
 
-void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
+template <bool SIM>
+void FRCRobotInterface<SIM>::read(const ros::Time &time, const ros::Duration &period)
 {
-	read_tracer_.start_unique("Check for ready");
+	read_tracer_->start_unique("Check for ready");
 	if (!robot_code_ready_)
 	{
 		const auto ready_device = getDevicesOfType<ReadyDevices>(devices_);
@@ -212,59 +242,27 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 
 	for (const auto &d: devices_)
 	{
-		d->read(time, period, read_tracer_);
+		d->read(time, period, *read_tracer_);
 	}
-	read_tracer_.report(60);
+	read_tracer_->report(60);
 }
 
-void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period)
+template <bool SIM>
+void FRCRobotInterface<SIM>::write(const ros::Time& time, const ros::Duration& period)
 {
 	for (const auto &d: devices_)
 	{
-		d->write(time, period, write_tracer_);
+		d->write(time, period, *write_tracer_);
 	}
 
-	write_tracer_.report(60);
+	write_tracer_->report(60);
 }
 
-bool FRCRobotInterface::prepareSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
-									  const std::list<hardware_interface::ControllerInfo> &/*stop_list*/)
+template <bool SIM>
+bool FRCRobotInterface<SIM>::prepareSwitch(const std::list<hardware_interface::ControllerInfo> & /*start_list*/,
+										   const std::list<hardware_interface::ControllerInfo> & /*stop_list*/)
 {
 	return true;
-}
-
-void FRCRobotInterface::loadURDF(ros::NodeHandle &/*nh*/, std::string /*param_name*/)
-{
-	return;
-#if 0
-	std::string urdf_string;
-	urdf_model_ = new urdf::Model();
-
-	// search and wait for robot_description on param server
-	while (urdf_string.empty() && ros::ok())
-	{
-		std::string search_param_name;
-		if (nh.searchParam(param_name, search_param_name))
-		{
-			ROS_INFO_STREAM_NAMED(name_, "Waiting for model URDF on the ROS param server at location: " <<
-								  nh.getNamespace() << search_param_name);
-			nh.getParam(search_param_name, urdf_string);
-		}
-		else
-		{
-			ROS_INFO_STREAM_NAMED(name_, "Waiting for model URDF on the ROS param server at location: " <<
-								  nh.getNamespace() << param_name);
-			nh.getParam(param_name, urdf_string);
-		}
-
-		usleep(100000);
-	}
-
-	if (!urdf_model_->initString(urdf_string))
-		ROS_ERROR_STREAM_NAMED(name_, "Unable to load URDF model");
-	else
-		ROS_DEBUG_STREAM_NAMED(name_, "Received URDF from param server");
-#endif
 }
 
 }  // namespace

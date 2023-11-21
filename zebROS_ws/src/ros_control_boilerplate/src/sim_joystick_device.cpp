@@ -17,7 +17,7 @@ SimJoystickDevice::~SimJoystickDevice() = default;
 
 void SimJoystickDevice::read(const ros::Time &time, const ros::Duration &period)
 {
-    std::unique_lock<std::mutex> l(*mutex_, std::try_to_lock);
+    std::unique_lock l(*mutex_, std::try_to_lock);
     if (l.owns_lock())
     {
         JoystickDevice::read(time, period);

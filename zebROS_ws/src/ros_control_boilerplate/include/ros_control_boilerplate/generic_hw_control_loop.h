@@ -49,6 +49,7 @@
 
 namespace ros_control_boilerplate
 {
+template <bool SIM>
 class FRCRobotInterface;
 /**
  * \brief The control loop - repeatidly calls read() and write() to the hardware interface at a
@@ -57,6 +58,7 @@ class FRCRobotInterface;
  *        See
  * http://stackoverflow.com/questions/3523442/difference-between-clock-realtime-and-clock-monotonic
  */
+template <bool SIM>
 class GenericHWControlLoop
 {
 	public:
@@ -67,7 +69,7 @@ class GenericHWControlLoop
 		 */
 		GenericHWControlLoop(
 			ros::NodeHandle &nh,
-			std::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface);
+			std::shared_ptr<ros_control_boilerplate::FRCRobotInterface<SIM>> hardware_interface);
 
 		// Run the control loop (blocking)
 		void run();
@@ -88,7 +90,7 @@ class GenericHWControlLoop
 		double cycle_time_error_threshold_;
 
 		/** \brief Abstract Hardware Interface for your robot */
-		std::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface_;
+		std::shared_ptr<ros_control_boilerplate::FRCRobotInterface<SIM>> hardware_interface_;
 
 		/** \brief ROS Controller Manager and Runner
 		 *

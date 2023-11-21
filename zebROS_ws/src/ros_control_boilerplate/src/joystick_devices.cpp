@@ -6,8 +6,8 @@
 #include "ros_control_boilerplate/joystick_device.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 
-template <class DEVICE_TYPE>
-JoystickDevices<DEVICE_TYPE>::JoystickDevices(ros::NodeHandle &root_nh)
+template <bool SIM>
+JoystickDevices<SIM>::JoystickDevices(ros::NodeHandle &root_nh)
     : state_interface_{std::make_shared<hardware_interface::JoystickStateInterface>()}
 {
  	ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop"); // TODO : this shouldn't be hard-coded?
@@ -39,11 +39,11 @@ JoystickDevices<DEVICE_TYPE>::JoystickDevices(ros::NodeHandle &root_nh)
     }
 }
 
-template <class DEVICE_TYPE>
-JoystickDevices<DEVICE_TYPE>::~JoystickDevices() = default;
+template <bool SIM>
+JoystickDevices<SIM>::~JoystickDevices() = default;
 
-template <class DEVICE_TYPE>
-hardware_interface::InterfaceManager *JoystickDevices<DEVICE_TYPE>::registerInterface()
+template <bool SIM>
+hardware_interface::InterfaceManager *JoystickDevices<SIM>::registerInterface()
 {
     for (auto &d : devices_)
     {
@@ -53,8 +53,8 @@ hardware_interface::InterfaceManager *JoystickDevices<DEVICE_TYPE>::registerInte
     return &interface_manager_;
 }
 
-template <class DEVICE_TYPE>
-void JoystickDevices<DEVICE_TYPE>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void JoystickDevices<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("joysticks");
     if (isReady())
@@ -66,8 +66,8 @@ void JoystickDevices<DEVICE_TYPE>::read(const ros::Time& time, const ros::Durati
     }
 }
 
-template <class DEVICE_TYPE>
-void JoystickDevices<DEVICE_TYPE>::simInit(ros::NodeHandle &nh)
+template <bool SIM>
+void JoystickDevices<SIM>::simInit(ros::NodeHandle &nh)
 {
     for (size_t i = 0; i < devices_.size(); i++)
     {

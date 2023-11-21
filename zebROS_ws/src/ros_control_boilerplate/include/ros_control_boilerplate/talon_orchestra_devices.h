@@ -42,7 +42,4 @@ private:
     std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> talonfxs_;
 };
 
-using HWTalonOrchestraDevices = TalonOrchestraDevices<false>;
-using SimTalonOrchestraDevices = TalonOrchestraDevices<true>;
-
 #endif

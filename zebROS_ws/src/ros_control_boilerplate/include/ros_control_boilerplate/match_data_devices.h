@@ -16,10 +16,12 @@ namespace hardware_interface
 }
 struct HAL_ControlWord;
 
-template <class DEVICE_TYPE>
+class MatchDataDevice;
+class SimMatchDataDevice;
+
+template <bool SIM>
 class MatchDataDevices : public Devices
 {
-
 public:
     explicit MatchDataDevices(ros::NodeHandle &root_nh);
     MatchDataDevices(const MatchDataDevices &) = delete;
@@ -38,15 +40,11 @@ public:
     bool getControlWord(HAL_ControlWord &cw) const;
 
 private:
+    using DEVICE_TYPE = std::conditional_t<SIM, SimMatchDataDevice, MatchDataDevice>;
     std::vector<std::unique_ptr<DEVICE_TYPE>> devices_;
     std::unique_ptr<hardware_interface::MatchStateInterface> state_interface_;
     std::unique_ptr<hardware_interface::RemoteMatchStateInterface> remote_state_interface_;
     hardware_interface::InterfaceManager interface_manager_;
 };
-
-class SimMatchDataDevice;
-
-using HWMatchDataDevices = MatchDataDevices<MatchDataDevice>;
-using SimMatchDataDevices = MatchDataDevices<SimMatchDataDevice>;;
 
 #endif

@@ -14,7 +14,7 @@ class ErrorQueue
 		ErrorQueue(void);
 		ErrorQueue(const ErrorQueue &) = delete;
 		ErrorQueue(ErrorQueue &&) noexcept = delete;
-		~ErrorQueue();
+		virtual ~ErrorQueue();
 
 		ErrorQueue &operator=(const ErrorQueue &) = delete;
 		ErrorQueue &operator=(ErrorQueue &&) noexcept = delete;

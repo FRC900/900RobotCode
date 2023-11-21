@@ -42,17 +42,21 @@
 
 #include "ros_control_boilerplate/frc_robot_interface.h"
 
+namespace gazebo::physics
+{
+    class Model;
+}
 namespace ros_control_boilerplate
 {
 /// \brief Hardware interface for a robot
-class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
+class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface<true>
 {
 	public:
 		/**
 		 * \brief Constructor
 		 * \param nh - Node handle for topics.
 		 */
-		FRCRobotSimInterface(ros::NodeHandle &nh, urdf::Model *urdf_model = NULL);
+		FRCRobotSimInterface();
 		FRCRobotSimInterface(const FRCRobotSimInterface &) = delete;
 		FRCRobotSimInterface(const FRCRobotSimInterface &&) noexcept = delete;
 		~FRCRobotSimInterface() override;
@@ -68,6 +72,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		/** \brief Write the command to the robot hardware. */
 		void write(const ros::Time& time, const ros::Duration& period) override;
+
+		bool gazeboSimInit(const ros::NodeHandle &model_nh, boost::shared_ptr<gazebo::physics::Model> parent_model);
 };  // class
 
 }  // namespace

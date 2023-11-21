@@ -37,7 +37,4 @@ private:
     hardware_interface::InterfaceManager interface_manager_;
 };
 
-using HWCANifierDevices = CANifierDevices<false>;
-using SimCANifierDevices = CANifierDevices<true>;
-
 #endif

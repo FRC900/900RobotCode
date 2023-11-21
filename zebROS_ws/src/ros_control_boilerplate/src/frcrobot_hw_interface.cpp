@@ -74,13 +74,8 @@
 #include <HALInitializer.h>
 #include <hal/DriverStation.h>
 
-#include "ros_control_boilerplate/as726x_devices.h"
-#include "ros_control_boilerplate/canifier_devices.h"
-#include "ros_control_boilerplate/joystick_devices.h"
+#include "ros_control_boilerplate/devices.h"
 #include "ros_control_boilerplate/match_data_devices.h"
-#include "ros_control_boilerplate/sparkmax_devices.h"
-#include "ros_control_boilerplate/talon_orchestra_devices.h"
-#include "ros_control_boilerplate/talonfxpro_devices.h"
 
 extern "C" { void HALSIM_SetControlWord(HAL_ControlWord); }
 void HAL_SetCANBusString(const std::string &bus);
@@ -128,16 +123,18 @@ namespace ros_control_boilerplate
 {
 // Constructor. Pass appropriate params to base class constructor,
 // initialze robot_ pointer to NULL
-FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model)
-	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
+FRCRobotHWInterface::FRCRobotHWInterface()
+	: ros_control_boilerplate::FRCRobotInterface<false>() // false == not sim, meaning real hardware
 {
 }
 
 bool FRCRobotHWInterface::init(ros::NodeHandle &root_nh, ros::NodeHandle &robot_hw_nh)
 {
+	FRCRobotInterface::readParams(root_nh, robot_hw_nh);
 	if (!run_hal_robot_)
 	{
 		errorQueue = std::make_unique<ErrorQueue>();
+		ROS_ERROR_STREAM("errorQueue = " << (unsigned long)errorQueue.get());
 		// This is for non Rio-based robots.  Call init for the wpilib HAL code we've "borrowed" before using them
 		hal::init::InitializeCANAPI();
 		hal::init::InitializeCTREPCM();
@@ -164,33 +161,12 @@ bool FRCRobotHWInterface::init(ros::NodeHandle &root_nh, ros::NodeHandle &robot_
 		HAL_SetCANBusString(can_interface_);
 	}
 
-	// Create devices which have different code for HW vs. Sim
-	// (sim interface has a similar block, but using Sim vs HW devices)
-	devices_.emplace_back(std::make_unique<HWAS726xDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<HWCANifierDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<HWJoystickDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<HWMatchDataDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<HWSparkMaxDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<HWTalonOrchestraDevices>(root_nh));
-
-	// Orchestra needs a set of previously created TalonFXs to use as instruments
-	const auto orchestra_devices = getDevicesOfType<HWTalonOrchestraDevices>(devices_);
-    const auto talonfxpro_devices = getDevicesOfType<TalonFXProDevices>(devices_);
-	if (talonfxpro_devices && orchestra_devices)
-	{
-		std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> talonfxs;
-		talonfxpro_devices->appendDeviceMap(talonfxs);
-		orchestra_devices->setTalonFXData(talonfxs);
-	}
-
+	// Handle any init specifically needed for hardware
 	for (const auto &d : devices_)
 	{
 		d->hwInit(root_nh);
 	}
-	for (const auto &d : devices_)
-	{
-		registerInterfaceManager(d->registerInterface());
-	}
+
 	ROS_INFO_STREAM(robot_hw_nh.getNamespace() << " : FRCRobotHWInterface Ready on " << root_nh.getNamespace());
 	HAL_SendError(true, 0, false, std::string("(Not an error) " + robot_hw_nh.getNamespace() + " : FRCRobotHWInterface Ready on " + root_nh.getNamespace()).c_str(), "", "", true);
 	return true;
@@ -200,7 +176,7 @@ void FRCRobotHWInterface::read(const ros::Time& time, const ros::Duration& perio
 {
 	for (const auto &d : devices_)
 	{
-		d->hwRead(time, period, read_tracer_);
+		d->hwRead(time, period, *read_tracer_);
 	}
 	FRCRobotInterface::read(time, period);
 }
@@ -225,7 +201,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 	// For the Rio, the HALSIM_SetControlWord() call does nothing, since in
 	// that case the real frc::DriverStation code is used which is actually
 	// hooked up directly to the real driver station.
-	if (HAL_ControlWord cw; read_control_word<HWMatchDataDevices>(devices_, cw))
+	if (HAL_ControlWord cw; read_control_word<MatchDataDevices<false>>(devices_, cw))
 	{
 		HALSIM_SetControlWord(cw);
 
@@ -237,7 +213,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 
 	for (const auto &d : devices_)
 	{
-		d->hwWrite(time, period, write_tracer_);
+		d->hwWrite(time, period, *write_tracer_);
 	}
 	FRCRobotInterface::write(time, period);
 }

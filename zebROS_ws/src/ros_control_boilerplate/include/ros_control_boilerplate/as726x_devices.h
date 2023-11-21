@@ -36,7 +36,4 @@ private:
     hardware_interface::InterfaceManager interface_manager_;
 };
 
-using HWAS726xDevices = AS726xDevices<false>;
-using SimAS726xDevices = AS726xDevices<true>;
-
 #endif

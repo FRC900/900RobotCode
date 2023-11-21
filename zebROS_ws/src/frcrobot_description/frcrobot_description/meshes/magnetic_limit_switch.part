@@ -1,0 +1,14 @@
+{
+    "configuration": "default",
+    "documentId": "500cb0a8f9aff28185d3c6c5",
+    "documentMicroversion": "26d92b432190f91705ee7fb3",
+    "documentVersion": "7242e353f7d46842f25f6f40",
+    "elementId": "d9d10f459759fa072a33522c",
+    "fullConfiguration": "default",
+    "id": "MCpnbj85QOeggktQB",
+    "isStandardContent": false,
+    "name": "Magnetic Limit Switch <1>",
+    "partId": "JFD",
+    "suppressed": false,
+    "type": "Part"
+}

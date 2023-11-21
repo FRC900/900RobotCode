@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<robot name="2019_compbot">
+
+	<link name="base_link"/>
+<gazebo>
+    <plugin name="gazebo_frcrobot_plugin" filename="libgazebo_frcrobot_control.so">
+        <!-- Look here for the "robot_names" array. Each entry
+             in the array is the name[space] of a sim interface 
+             to load into gazebo
+        -->
+        <robotNamespace>/</robotNamespace>
+        <robotParam>robot_description</robotParam>
+    </plugin>
+</gazebo>
+
+</robot>

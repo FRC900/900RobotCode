@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- GDB functionality -->
+
+	<arg name="joy_or_key" default="joy" />
+	<arg name="button_box" default="true"/>
+	<arg name="hw_or_sim" default="hw" />
+	<arg name="launch_prefix" default="" />
+
+	<group ns="frcrobot_rio">
+
+		<!-- Load controller settings -->
+		<rosparam file="$(find ros_control_boilerplate)/config/2023_frisbee_testing_rio.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_rio.yaml" command="load"/>
+
+		<!-- Load hardware interface -->
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+			<remap from="js0" to="joystick_states1"/>
+			<remap from="js1" to="button_box_states" if="$(arg button_box)"/>
+			<remap from="js1" to="joystick_states2" unless="$(arg button_box)"/>
+			<remap from="js2" to="joystick_states2" if="$(arg button_box)"/>
+		</node>
+
+		<!-- Load controller manager -->
+		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+			output="screen" args="spawn joint_state_controller_rio
+			                            joint_state_listener_controller_rio
+										match_state_controller
+										robot_code_ready_controller" />
+
+		<!-- Run rqt driver station for sim-->
+		<!--
+		<node name="driversim" pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" output="screen"/>
+		-->
+
+
+<!--
+		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
+
+		<include file="$(find cpu_monitor)/launch/cpu_monitor.launch">
+			<arg name="poll_period" value="10"/>
+		</include>
+-->
+	</group>
+</launch>

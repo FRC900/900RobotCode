@@ -6,6 +6,7 @@
 #include "ros_control_boilerplate/set_limit_switch.h"
 #include "ros_control_boilerplate/set_current.h"
 
+class SimTalonFXProDevice;
 class TalonFXProDevice;
 namespace hardware_interface::talonfxpro
 {
@@ -18,9 +19,9 @@ namespace ctre::phoenix6::hardware
     class ParentDevice;
 }
 
+template <bool SIM>
 class TalonFXProDevices : public Devices
 {
-
 public:
     explicit TalonFXProDevices(ros::NodeHandle &root_nh);
     TalonFXProDevices(const TalonFXProDevices &) = delete;
@@ -38,10 +39,13 @@ public:
     // simRead hooks up to CTRE simulation code and updates motor state each control cycle
     void simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer) override;
 
+    bool gazeboSimInit(const ros::NodeHandle &/*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model) override;
+
     void appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const;
 
 private:
-    std::vector<std::unique_ptr<TalonFXProDevice>> devices_;
+    using DEVICE_TYPE = std::conditional_t<SIM, SimTalonFXProDevice, TalonFXProDevice>;
+    std::vector<std::unique_ptr<DEVICE_TYPE>> devices_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProStateInterface> state_interface_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProCommandInterface> command_interface_;
     hardware_interface::InterfaceManager interface_manager_;

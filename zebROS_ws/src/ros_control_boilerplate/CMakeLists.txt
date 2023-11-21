@@ -5,6 +5,39 @@ unset(CMAKE_CXX_STANDARD CACHE)
 set(CMAKE_CXX_STANDARD 20)
 include ("../cmake_modules/CMakeOpt.cmake")
 
+# Only add gazebo to list of required packages on x86 and mac? builds
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
+	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
+		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
+find_package(catkin REQUIRED COMPONENTS
+  angles
+  as726x_interface
+  cmake_modules
+  controller_manager
+  control_msgs
+  ctre_interfaces
+  eigen_conversions
+  frc_msgs
+  frc_interfaces
+  hardware_interface
+  message_generation
+  periodic_interval_counter
+  pigeon2_interface
+  remote_joint_interface
+  roscpp
+  rosparam_shortcuts
+  sensor_msgs
+  spark_max_interface
+  std_msgs
+  trajectory_msgs
+  urdf
+  gazebo_frcrobot_control
+  gazebo_dev
+  pluginlib
+)
+ign_import_target(UUID)
+pkg_check_modules(TBB tbb)
+else()
 find_package(catkin REQUIRED COMPONENTS
   angles
   as726x_interface
@@ -28,6 +61,7 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   urdf
 )
+endif()
 
 add_service_files (
   FILES
@@ -82,8 +116,6 @@ add_library(frc_robot_interface STATIC
 	src/canifier_device.cpp
 	src/canifier_devices.cpp
     src/ctre_v5_device.cpp
-    src/ctre_v5_motor_controller.cpp
-	src/ctre_v5_motor_controllers.cpp
     src/ctre_v6_device.cpp
     src/digital_input_device.cpp
 	src/digital_input_devices.cpp
@@ -91,7 +123,6 @@ add_library(frc_robot_interface STATIC
 	src/digital_output_devices.cpp
 	src/double_solenoid_device.cpp
 	src/double_solenoid_devices.cpp
-	src/frc_robot_interface.cpp
 	src/generic_hw_control_loop.cpp
 	src/get_conversion_factor.cpp
 	src/latency_compensation_group.cpp
@@ -120,8 +151,6 @@ add_library(frc_robot_interface STATIC
 	src/rumble_devices.cpp
 	src/solenoid_device.cpp
 	src/solenoid_devices.cpp
-	src/talonfxpro_device.cpp
-	src/talonfxpro_devices.cpp
 	src/talon_orchestra_device.cpp
 	src/talon_orchestra_devices.cpp
 )
@@ -136,13 +165,16 @@ add_dependencies(frc_robot_interface
 # for - x86 has access to much less real hardware than the Jetson, so
 # some files which make sense for one case don't for the other
 set (FRCROBOT_HW_MAIN_SRCS 
+	src/frc_robot_interface_hw.cpp
 	src/as726x_hw_device.cpp
+	src/ctre_v5_motor_controller_hw_device.cpp
 	src/error_queue.cpp
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
     src/joystick_hw_device.cpp
 	src/match_data_hw_device.cpp
 	src/sparkmax_hw_device.cpp
+	src/talonfxpro_hw_devices.cpp
 )
 
 set (ALLWPILIB ../../../allwpilib)
@@ -414,15 +446,20 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
 	)
 
 	add_executable(frcrobot_sim_main 
-		src/as726x_sim_device.cpp
 		src/frcrobot_sim_main.cpp
+		src/frc_robot_interface_sim.cpp
+		src/as726x_sim_device.cpp
+		src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_sim.cpp
 		src/joystick_sim_device.cpp
 		src/match_data_sim_device.cpp
+		src/sim_ctre_v5_motor_controller.cpp
+		src/sim_talonfxpro_device.cpp
 		src/sparkmax_sim_device.cpp
+		src/talonfxpro_sim_devices.cpp
 	)
 
 	target_link_libraries(frcrobot_sim_main
@@ -441,6 +478,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
 		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
 		${REV_USER_LIBS}
 		${catkin_LIBRARIES}
+		${TBB_LIBRARIES}
 	)
 
     # Forces messages to be generated before
@@ -450,8 +488,52 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
 		${catkin_EXPORTED_TARGETS}
 	)
 
+	add_library(frcrobot_gazebosim
+		src/frcrobot_gazebosim_interface.cpp
+		src/frc_robot_interface_sim.cpp
+		src/as726x_sim_device.cpp
+		src/ctre_v5_motor_controller_sim_device.cpp
+		src/frcrobot_sim_interface.cpp
+		src/dummy_powerdistribution.cpp
+		src/dummy_wpilib_common.cpp
+		src/dummy_wpilib_sim.cpp
+		src/joystick_sim_device.cpp
+		src/match_data_sim_device.cpp
+		src/sim_ctre_v5_motor_controller.cpp
+		src/sim_talonfxpro_device.cpp
+		src/sparkmax_sim_device.cpp
+		src/talonfxpro_sim_devices.cpp
+	)
+
+	target_link_libraries(frcrobot_gazebosim
+		frc_robot_interface
+		frc_sim_wpilib
+		${FRC_COMMON_WPILIB}
+		${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
+		${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
+		${CTRE_LIB_DIR}/libCTRE_PhoenixTools_Sim.so
+		${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
+		${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
+		${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
+        ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
+		${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
+		${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
+		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
+		${REV_USER_LIBS}
+		${catkin_LIBRARIES}
+		${TBB_LIBRARIES}
+	)
+
+    # Forces messages to be generated before
+    # the target which uses them
+	add_dependencies(frcrobot_gazebosim
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+	)
+
 	install(TARGETS
 	  frcrobot_sim_main
+	  frcrobot_gazebosim
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)
@@ -474,6 +556,7 @@ target_link_libraries(frcrobot_hw_main
 	${PLATFORM_SPECIFIC_LIBS}
 	${FRC_COMMON_WPILIB}
 	${catkin_LIBRARIES}
+	${TBB_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the executable
@@ -495,6 +578,7 @@ install(TARGETS
 add_executable(q_to_rpy src/q_to_rpy.cpp)
 target_link_libraries(q_to_rpy
 	${catkin_LIBRARIES}
+	${TBB_LIBRARIES}
 )
 
 add_dependencies(q_to_rpy
@@ -570,4 +654,8 @@ install(DIRECTORY
 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 	PATTERN *~ EXCLUDE
 	PATTERN *.sw? EXCLUDE
+)
+
+install(FILES frcrobot_gazebosim_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

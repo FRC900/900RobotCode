@@ -7,7 +7,7 @@
 
 #include "ros_control_boilerplate/sim_match_data_device.h"
 
-SimMatchDataDevice::SimMatchDataDevice(ros::NodeHandle &nh)
+SimMatchDataDevice::SimMatchDataDevice(const ros::NodeHandle &nh)
     : MatchDataDevice(nh)
     , mutex_{std::make_unique<std::mutex>()}
 {

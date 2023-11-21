@@ -6,6 +6,7 @@
 #include "ros_control_boilerplate/set_current.h"
 
 class CTREV5MotorController;
+class SimCTREV5MotorController;
 namespace hardware_interface
 {
     class TalonStateInterface;
@@ -18,6 +19,7 @@ namespace ctre::phoenix::motorcontrol::can
     class TalonFX;
 }
 
+template <bool SIM>
 class CTREV5MotorControllers : public Devices
 {
 public:
@@ -36,9 +38,14 @@ public:
     void simInit(ros::NodeHandle &nh) override;
     void simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
+    bool gazeboSimInit(const ros::NodeHandle& /*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model) override;
+    void gazeboSimRead(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& tracer) override;
+    void gazeboSimWrite(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& tracer, const bool e_stop_active) override;
+
 private:
     double read_hz_{100};
-    std::vector<std::unique_ptr<CTREV5MotorController>> devices_;
+    using DEVICE_TYPE = std::conditional_t<SIM, SimCTREV5MotorController, CTREV5MotorController>;
+    std::vector<std::unique_ptr<DEVICE_TYPE>> devices_;
     std::unique_ptr<hardware_interface::TalonStateInterface> state_interface_;
     std::unique_ptr<hardware_interface::TalonCommandInterface> command_interface_;
     std::unique_ptr<hardware_interface::RemoteTalonStateInterface> remote_state_interface_;

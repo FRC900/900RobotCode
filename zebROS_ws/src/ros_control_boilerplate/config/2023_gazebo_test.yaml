@@ -1,0 +1,30 @@
+angle_test:
+    type: talonfxpro_controllers/TalonFXProMotionMagicTorqueCurrentFOCController
+    
+    joint: fl_angle
+    close_loop_values:
+        - {kP: 550, kI: 0.000, kD: 0.00, kV: 20, kS: 0}
+    invert: clockwise_positive
+
+    # linear position along 
+    #conversion_factor: 0.00626535
+    # Linear converion - radian per / m
+    sensor_to_mechanism_ratio: 159.61
+    # TODO : figure out what value this should be
+    # Only need one direction, to
+    # prevent the elevator from running off the top
+    softlimit_forward_threshold: 1.412 
+    softlimit_forward_enable: True
+
+    # CHECK THIS
+    feedback_type: IntegratedSensor
+
+    # TODO : bottom limit switch config
+    reverse_limit_switch_type: "NormallyOpen"
+    reverse_limit_enable: True
+
+    neutral_deadband: 0.001
+
+    neutral_mode: Brake
+
+    dynamic_reconfigure: True

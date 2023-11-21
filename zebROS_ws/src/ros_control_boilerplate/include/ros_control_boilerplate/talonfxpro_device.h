@@ -51,15 +51,9 @@ public:
     void read(const ros::Time& time, const ros::Duration& period);
     void write(const ros::Time& time, const ros::Duration& period, const bool curr_robot_enabled, const bool prev_robot_enabled);
 
-    // Read and write functions which add additional sim features
-    void simRead(const ros::Time& time, const ros::Duration& period);
-
     int getCANID(void) const;
 
-    bool setSimLimitSwitches(const bool forward_limit, const bool reverse_limit);
-    bool setSimCurrent(const double stator_current, const double supply_current);
-
-private:
+protected:
     const std::string can_bus_;
 
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> state_;

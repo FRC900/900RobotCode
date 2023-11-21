@@ -4,36 +4,39 @@
   <version>0.4.1</version>
   <description>Simple simulation interface and template for setting up a hardware interface for ros_control</description>
 
-  <author email="programmers@team900.org">Dave Coleman</author>
-  <maintainer email="programmers@team900.org">Dave Coleman</maintainer>
+  <author email="programmers@team900.org"></author>
+  <maintainer email="programmers@team900.org"></maintainer>
 
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>message_generation</depend>
+  <depend>message_runtime</depend>
 
-  <depend>roscpp</depend>
   <depend>angles</depend>
   <depend>as726x_interface</depend>
   <depend>cmake_modules</depend>
-  <depend>hardware_interface</depend>
+  <depend>ctre_interfaces</depend>
   <depend>controller_manager</depend>
   <depend>control_msgs</depend>
-  <depend>trajectory_msgs</depend>
-  <depend>urdf</depend>
-  <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>rosparam_shortcuts</depend>
-  <depend>ctre_interfaces</depend>
-  <depend>message_runtime</depend>
   <depend>frc_interfaces</depend>
-  <depend>spark_max_interface</depend>
   <depend>frc_msgs</depend>
-  <depend>remote_joint_interface</depend>
+  <depend>hardware_interface</depend>
   <depend>periodic_interval_counter</depend>
   <depend>pigeon2_interface</depend>
+  <depend>remote_joint_interface</depend>
+  <depend>roscpp</depend>
+  <depend>rosparam_shortcuts</depend>
+  <depend>sensor_msgs</depend>
+  <depend>spark_max_interface</depend>
+  <depend>std_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>urdf</depend>
+  <depend>gazebo_frcrobot_control</depend>
+  <depend>pluginlib</depend>
 
   <export>
+    <gazebo_ros_control plugin="${prefix}/frcrobot_gazebosim_plugins.xml"/>
   </export>
 </package>

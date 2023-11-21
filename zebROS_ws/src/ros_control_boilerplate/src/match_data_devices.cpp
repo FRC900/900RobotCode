@@ -5,19 +5,19 @@
 #include "ros_control_boilerplate/match_data_devices.h"
 #include "ros_control_boilerplate/match_data_device.h"
 
-template <class DEVICE_TYPE>
-MatchDataDevices<DEVICE_TYPE>::MatchDataDevices(ros::NodeHandle &root_nh)
+template <bool SIM>
+MatchDataDevices<SIM>::MatchDataDevices(ros::NodeHandle &root_nh)
     : state_interface_{std::make_unique<hardware_interface::MatchStateInterface>()}
     , remote_state_interface_{std::make_unique<hardware_interface::RemoteMatchStateInterface>()}
 {
     devices_.emplace_back(std::make_unique<DEVICE_TYPE>(root_nh));
 }
 
-template <class DEVICE_TYPE>
-MatchDataDevices<DEVICE_TYPE>::~MatchDataDevices() = default;
+template <bool SIM>
+MatchDataDevices<SIM>::~MatchDataDevices() = default;
 
-template <class DEVICE_TYPE>
-hardware_interface::InterfaceManager *MatchDataDevices<DEVICE_TYPE>::registerInterface()
+template <bool SIM>
+hardware_interface::InterfaceManager *MatchDataDevices<SIM>::registerInterface()
 {
     for (auto &d : devices_)
     {
@@ -28,8 +28,8 @@ hardware_interface::InterfaceManager *MatchDataDevices<DEVICE_TYPE>::registerInt
     return &interface_manager_;
 }
 
-template <class DEVICE_TYPE>
-void MatchDataDevices<DEVICE_TYPE>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void MatchDataDevices<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("match data");
     if (isReady())
@@ -41,20 +41,20 @@ void MatchDataDevices<DEVICE_TYPE>::read(const ros::Time& time, const ros::Durat
     }
 }
 
-template <class DEVICE_TYPE>
-void MatchDataDevices<DEVICE_TYPE>::simInit(ros::NodeHandle &nh)
+template <bool SIM>
+void MatchDataDevices<SIM>::simInit(ros::NodeHandle &nh)
 {
     devices_[0]->simInit(nh);
 }
 
-template <class DEVICE_TYPE>
-std::optional<bool> MatchDataDevices<DEVICE_TYPE>::isEnabled(void) const
+template <bool SIM>
+std::optional<bool> MatchDataDevices<SIM>::isEnabled(void) const
 {
     return devices_[0]->isEnabled();
 }
 
-template <class DEVICE_TYPE>
-bool MatchDataDevices<DEVICE_TYPE>::getControlWord(HAL_ControlWord &cw) const
+template <bool SIM>
+bool MatchDataDevices<SIM>::getControlWord(HAL_ControlWord &cw) const
 {
     return devices_[0]->getControlWord(cw);
     return true;

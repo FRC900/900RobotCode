@@ -8,7 +8,10 @@ namespace hardware_interface
     class JoystickStateInterface;
 }
 
-template <class DEVICE_TYPE>
+class JoystickDevice;
+class SimJoystickDevice;
+
+template <bool SIM>
 class JoystickDevices : public Devices
 {
 public:
@@ -27,15 +30,10 @@ public:
 
 private:
     double read_hz_{50};
+    using DEVICE_TYPE = std::conditional_t<SIM, SimJoystickDevice, JoystickDevice>;
     std::vector<std::unique_ptr<DEVICE_TYPE>> devices_;
     std::shared_ptr<hardware_interface::JoystickStateInterface> state_interface_;
     hardware_interface::InterfaceManager interface_manager_;
 };
-
-class JoystickDevice;
-class SimJoystickDevice;
-
-using HWJoystickDevices = JoystickDevices<JoystickDevice>;
-using SimJoystickDevices = JoystickDevices<SimJoystickDevice>;
 
 #endif

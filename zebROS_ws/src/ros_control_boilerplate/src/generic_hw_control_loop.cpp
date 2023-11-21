@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman
+/* Original Author: Dave Coleman
    Desc:   Example control loop for reading, updating, and writing commands to a hardware interface
    using MONOTOIC system time
 */
@@ -47,8 +47,9 @@
 
 namespace ros_control_boilerplate
 {
-GenericHWControlLoop::GenericHWControlLoop(
-	ros::NodeHandle &nh, std::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface)
+template <bool SIM>
+GenericHWControlLoop<SIM>::GenericHWControlLoop(
+	ros::NodeHandle &nh, std::shared_ptr<ros_control_boilerplate::FRCRobotInterface<SIM>> hardware_interface)
 	: nh_(nh)
 	, hardware_interface_(hardware_interface)
 	, controller_manager_(hardware_interface_.get(), nh_)
@@ -69,7 +70,8 @@ GenericHWControlLoop::GenericHWControlLoop(
 	desired_update_period_ = ros::Duration(1.0 / loop_hz_);
 }
 
-void GenericHWControlLoop::run(void)
+template <bool SIM>
+void GenericHWControlLoop<SIM>::run(void)
 {
 	ros::Rate rate(loop_hz_);
 	while(ros::ok())
@@ -79,7 +81,8 @@ void GenericHWControlLoop::run(void)
 	}
 }
 
-void GenericHWControlLoop::update(void)
+template <bool SIM>
+void GenericHWControlLoop<SIM>::update(void)
 {
 	// Get change in time in seconds
 	tracer_.start_unique("get_loop_time");
@@ -120,5 +123,8 @@ void GenericHWControlLoop::update(void)
 
 	tracer_.report(20);
 }
+
+template class GenericHWControlLoop<false>;
+template class GenericHWControlLoop<true>;
 
 }  // namespace

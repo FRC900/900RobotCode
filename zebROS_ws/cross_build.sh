@@ -36,6 +36,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	four_wheel_steering_controller \
 	frcrobot_description \
 	frcrobot_gazebo \
+	gazebo_frcrobot_control \
 	goal_detection \
 	navx_publisher \
 	gripper_action_controller \

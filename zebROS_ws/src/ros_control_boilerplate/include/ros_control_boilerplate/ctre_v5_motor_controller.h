@@ -1,7 +1,6 @@
 #ifndef CTRE_V5_MOTOR_CONTROLLER_INC__
 #define CTRE_V5_MOTOR_CONTROLLER_INC__
 
-#include <atomic>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -51,12 +50,7 @@ public:
     void read(const ros::Time &time, const ros::Duration &period);
     void write(const ros::Time &time, const ros::Duration &period, const bool robot_enabled, const bool prev_robot_enabled);
 
-    void updateSimValues(const ros::Time &/*time*/, const ros::Duration &period) const;
-
-    bool setSimLimitSwitches(const bool forward_limit, const bool reverse_limit) const;
-    bool setSimCurrent(const double stator_current, const double supply_current) const;
-
-private:
+protected:
     const bool local_;
 
     std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc_;
@@ -73,10 +67,6 @@ private:
     std::unique_ptr<std::jthread> read_thread_;
     void read_thread(std::unique_ptr<Tracer> tracer,
                      const double poll_frequency);
-
-    void setSimCollection(int position, int velocity, int delta_position = 0) const;
-    void setSimCollectionTalonSRX(int position, int velocity, int delta_position) const;
-    void setSimCollectionTalonFX(int position, int velocity, int delta_position) const;
 
     static constexpr int pidIdx{0};    // 0 for primary closed-loop, 1 for cascaded closed-loop
     static constexpr int timeoutMs{0}; // If nonzero, function will wait for config success and report an error if it times out. If zero, no blocking or checking is performed

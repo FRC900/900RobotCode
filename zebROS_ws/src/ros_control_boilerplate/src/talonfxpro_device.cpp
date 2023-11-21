@@ -169,7 +169,7 @@ signals.push_back(&var##_signal);
 // var. If the var is not valid, don't run any
 // additional code in the loop.
 #define SAFE_READ(var, function) \
-const auto var = safeRead(var##_signal, #function); \
+const auto var = safeRead(function, #function); \
 if (!var) { tracer->stop() ; continue; }
 
 // Similar to above, but if the value returned
@@ -178,7 +178,7 @@ if (!var) { tracer->stop() ; continue; }
 // cases where we need to e..g do unit conversion on values
 // read from the signal or convert from a ctre enum.
 #define SAFE_READ_INTO(var, function) \
-const auto foo##var = safeRead(var##_signal, #function); \
+const auto foo##var = safeRead(function, #function); \
 if (!foo##var) { tracer->stop() ; continue; } \
 var = *foo##var;
 
@@ -198,105 +198,6 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 	ros::Duration(3.25 + joint_idx * 0.05).sleep(); // Sleep for a few seconds to let CAN start up
 	ROS_INFO_STREAM("Starting talonfxpro " << read_thread_state_->getCANID() << " thread at " << ros::Time::now());
 
-    //Construct status signal objects here once, reuse them each time through the loop
-
-    std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
-
-    MAKE_SIGNAL(version_major, talonfxpro_->GetVersionMajor())
-    MAKE_SIGNAL(version_minor, talonfxpro_->GetVersionMinor())
-    MAKE_SIGNAL(version_bugfix, talonfxpro_->GetVersionBugfix())
-    MAKE_SIGNAL(version_build, talonfxpro_->GetVersionBuild())
-
-    MAKE_SIGNAL(motor_voltage, talonfxpro_->GetMotorVoltage())
-
-    MAKE_SIGNAL(forward_limit, talonfxpro_->GetForwardLimit())
-    MAKE_SIGNAL(reverse_limit, talonfxpro_->GetReverseLimit())
-
-    MAKE_SIGNAL(ctre_applied_rotor_polarity, talonfxpro_->GetAppliedRotorPolarity())
-    MAKE_SIGNAL(duty_cycle, talonfxpro_->GetDutyCycle())
-    MAKE_SIGNAL(torque_current, talonfxpro_->GetTorqueCurrent())
-    MAKE_SIGNAL(stator_current, talonfxpro_->GetStatorCurrent())
-    MAKE_SIGNAL(supply_current, talonfxpro_->GetSupplyCurrent())
-    MAKE_SIGNAL(supply_voltage, talonfxpro_->GetSupplyVoltage())
-    MAKE_SIGNAL(device_temp, talonfxpro_->GetDeviceTemp())
-    MAKE_SIGNAL(processor_temp, talonfxpro_->GetProcessorTemp())
-    MAKE_SIGNAL(rotor_velocity, talonfxpro_->GetRotorVelocity())
-    MAKE_SIGNAL(rotor_position, talonfxpro_->GetRotorPosition())
-    MAKE_SIGNAL(velocity, talonfxpro_->GetVelocity())
-    MAKE_SIGNAL(position, talonfxpro_->GetPosition())
-    MAKE_SIGNAL(acceleration, talonfxpro_->GetAcceleration())
-    MAKE_SIGNAL(device_enable, talonfxpro_->GetDeviceEnable())
-    MAKE_SIGNAL(motion_magic_is_running, talonfxpro_->GetMotionMagicIsRunning())
-    MAKE_SIGNAL(ctre_differential_control_mode, talonfxpro_->GetDifferentialControlMode());
-    MAKE_SIGNAL(differential_average_velocity, talonfxpro_->GetDifferentialAverageVelocity())
-    MAKE_SIGNAL(differential_average_position, talonfxpro_->GetDifferentialAveragePosition())
-    MAKE_SIGNAL(differential_difference_velocity, talonfxpro_->GetDifferentialDifferenceVelocity())
-    MAKE_SIGNAL(differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition())
-
-    MAKE_SIGNAL(ctre_bridge_output_value, talonfxpro_->GetBridgeOutput());
-
-    MAKE_SIGNAL(fault_hardware, talonfxpro_->GetFault_Hardware())
-    MAKE_SIGNAL(fault_proctemp, talonfxpro_->GetFault_ProcTemp())
-    MAKE_SIGNAL(fault_devicetemp, talonfxpro_->GetFault_DeviceTemp())
-    MAKE_SIGNAL(fault_undervoltage, talonfxpro_->GetFault_Undervoltage())
-    MAKE_SIGNAL(fault_bootduringenable, talonfxpro_->GetFault_BootDuringEnable())
-    MAKE_SIGNAL(fault_bridgebrownout, talonfxpro_->GetFault_BridgeBrownout())
-    MAKE_SIGNAL(fault_unlicensed_feature_in_use, talonfxpro_->GetFault_UnlicensedFeatureInUse())
-    MAKE_SIGNAL(fault_remotesensorreset, talonfxpro_->GetFault_RemoteSensorReset())
-    MAKE_SIGNAL(fault_missingdifferentialfx, talonfxpro_->GetFault_MissingDifferentialFX())
-    MAKE_SIGNAL(fault_remotesensorposoverflow, talonfxpro_->GetFault_RemoteSensorPosOverflow())
-    MAKE_SIGNAL(fault_oversupplyv, talonfxpro_->GetFault_OverSupplyV())
-    MAKE_SIGNAL(fault_unstablesupplyv, talonfxpro_->GetFault_UnstableSupplyV())
-    MAKE_SIGNAL(fault_reversehardlimit, talonfxpro_->GetFault_ReverseHardLimit())
-    MAKE_SIGNAL(fault_forwardhardlimit, talonfxpro_->GetFault_ForwardHardLimit())
-    MAKE_SIGNAL(fault_reversesoftlimit, talonfxpro_->GetFault_ReverseSoftLimit())
-    MAKE_SIGNAL(fault_forwardsoftlimit, talonfxpro_->GetFault_ForwardSoftLimit())
-    MAKE_SIGNAL(fault_remotesensordatainvalid, talonfxpro_->GetFault_RemoteSensorDataInvalid())
-    MAKE_SIGNAL(fault_fusedsensoroutofsync, talonfxpro_->GetFault_FusedSensorOutOfSync())
-    MAKE_SIGNAL(fault_statorcurrlimit, talonfxpro_->GetFault_StatorCurrLimit())
-    MAKE_SIGNAL(fault_supplycurrlimit, talonfxpro_->GetFault_SupplyCurrLimit())
-
-    MAKE_SIGNAL(sticky_fault_hardware, talonfxpro_->GetStickyFault_Hardware())
-    MAKE_SIGNAL(sticky_fault_proctemp, talonfxpro_->GetStickyFault_ProcTemp())
-    MAKE_SIGNAL(sticky_fault_devicetemp, talonfxpro_->GetStickyFault_DeviceTemp())
-    MAKE_SIGNAL(sticky_fault_undervoltage, talonfxpro_->GetStickyFault_Undervoltage())
-    MAKE_SIGNAL(sticky_fault_bootduringenable, talonfxpro_->GetStickyFault_BootDuringEnable())
-    MAKE_SIGNAL(sticky_fault_bridgebrownout, talonfxpro_->GetStickyFault_BridgeBrownout())
-    MAKE_SIGNAL(sticky_fault_unlicensed_feature_in_use, talonfxpro_->GetStickyFault_UnlicensedFeatureInUse())
-    MAKE_SIGNAL(sticky_fault_remotesensorreset, talonfxpro_->GetStickyFault_RemoteSensorReset())
-    MAKE_SIGNAL(sticky_fault_missingdifferentialfx, talonfxpro_->GetStickyFault_MissingDifferentialFX())
-    MAKE_SIGNAL(sticky_fault_remotesensorposoverflow, talonfxpro_->GetStickyFault_RemoteSensorPosOverflow())
-    MAKE_SIGNAL(sticky_fault_oversupplyv, talonfxpro_->GetStickyFault_OverSupplyV())
-    MAKE_SIGNAL(sticky_fault_unstablesupplyv, talonfxpro_->GetStickyFault_UnstableSupplyV())
-    MAKE_SIGNAL(sticky_fault_reversehardlimit, talonfxpro_->GetStickyFault_ReverseHardLimit())
-    MAKE_SIGNAL(sticky_fault_forwardhardlimit, talonfxpro_->GetStickyFault_ForwardHardLimit())
-    MAKE_SIGNAL(sticky_fault_reversesoftlimit, talonfxpro_->GetStickyFault_ReverseSoftLimit())
-    MAKE_SIGNAL(sticky_fault_forwardsoftlimit, talonfxpro_->GetStickyFault_ForwardSoftLimit())
-    MAKE_SIGNAL(sticky_fault_remotesensordatainvalid, talonfxpro_->GetStickyFault_RemoteSensorDataInvalid())
-    MAKE_SIGNAL(sticky_fault_fusedsensoroutofsync, talonfxpro_->GetStickyFault_FusedSensorOutOfSync())
-    MAKE_SIGNAL(sticky_fault_statorcurrlimit, talonfxpro_->GetStickyFault_StatorCurrLimit())
-    MAKE_SIGNAL(sticky_fault_supplycurrlimit, talonfxpro_->GetStickyFault_SupplyCurrLimit())
-
-    MAKE_SIGNAL(control_mode, talonfxpro_->GetControlMode());
-    MAKE_SIGNAL(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput())
-    MAKE_SIGNAL(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput())
-    MAKE_SIGNAL(closed_loop_feed_forward, talonfxpro_->GetClosedLoopFeedForward())
-    MAKE_SIGNAL(closed_loop_derivative_output, talonfxpro_->GetClosedLoopDerivativeOutput())
-    MAKE_SIGNAL(closed_loop_output, talonfxpro_->GetClosedLoopOutput())
-    MAKE_SIGNAL(closed_loop_reference_local, talonfxpro_->GetClosedLoopReference())
-    MAKE_SIGNAL(closed_loop_reference_slope_local, talonfxpro_->GetClosedLoopReferenceSlope())
-    MAKE_SIGNAL(closed_loop_error, talonfxpro_->GetClosedLoopError())
-
-    MAKE_SIGNAL(differential_output, talonfxpro_->GetDifferentialOutput())
-    MAKE_SIGNAL(differential_closed_loop_proportional_output, talonfxpro_->GetDifferentialClosedLoopProportionalOutput())
-    MAKE_SIGNAL(differential_closed_loop_integrated_output, talonfxpro_->GetDifferentialClosedLoopIntegratedOutput())
-    MAKE_SIGNAL(differential_closed_loop_feed_forward, talonfxpro_->GetDifferentialClosedLoopFeedForward())
-    MAKE_SIGNAL(differential_closed_loop_derivative_output, talonfxpro_->GetDifferentialClosedLoopDerivativeOutput())
-    MAKE_SIGNAL(differential_closed_loop_output, talonfxpro_->GetDifferentialClosedLoopOutput())
-    MAKE_SIGNAL(differential_closed_loop_reference_local, talonfxpro_->GetDifferentialClosedLoopReference())
-    MAKE_SIGNAL(differential_closed_loop_reference_slope_local, talonfxpro_->GetDifferentialClosedLoopReferenceSlope())
-    MAKE_SIGNAL(differential_closed_loop_error, talonfxpro_->GetDifferentialClosedLoopError())
-
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("talonfxpro read main_loop");
@@ -312,7 +213,6 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		}
         const bool in_differential_mode = differential_sensor_source != hardware_interface::talonfxpro::DifferentialSensorSource::Disabled;
 
-        ctre::phoenix6::BaseStatusSignal::WaitForAll(units::second_t{0}, signals);
         SAFE_READ(version_major, talonfxpro_->GetVersionMajor())
         SAFE_READ(version_minor, talonfxpro_->GetVersionMinor())
         SAFE_READ(version_bugfix, talonfxpro_->GetVersionBugfix())
@@ -703,96 +603,9 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
     }
 }
 
-void TalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration &period)
-{
-    auto &sim_state = talonfxpro_->GetSimState();
-    // Note - since all of these are setting raw rotor positions but setpoints
-    // are relative to mechanism positions, need to multiply the values written
-    // to the raw positions/velocities by the sensor to mechanism ratio
-    // TODO - maybe also rotor to sensor ratio?
-
-    switch (state_->getControlMode())
-    {
-    case hardware_interface::talonfxpro::TalonMode::DutyCycleOut:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::TorqueCurrentFOC:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::VoltageOut:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::PositionDutyCycle:
-    case hardware_interface::talonfxpro::TalonMode::PositionVoltage:
-    case hardware_interface::talonfxpro::TalonMode::PositionTorqueCurrentFOC:
-    {
-        const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
-        units::radian_t setpoint{invert * state_->getControlOutput() * state_->getSensorToMechanismRatio()};
-        sim_state.SetRawRotorPosition(setpoint);
-        sim_state.SetRotorVelocity(units::angular_velocity::turns_per_second_t{0});
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
-        break;
-    }
-    case hardware_interface::talonfxpro::TalonMode::VelocityDutyCycle:
-    case hardware_interface::talonfxpro::TalonMode::VelocityVoltage:
-    case hardware_interface::talonfxpro::TalonMode::VelocityTorqueCurrentFOC:
-    {
-        const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
-        units::angular_velocity::radians_per_second_t setpoint{invert * state_->getControlOutput() * state_->getSensorToMechanismRatio()};
-        sim_state.SetRotorVelocity(setpoint);
-        units::radian_t delta_position{invert * state_->getVelocity() * period.toSec() * state_->getSensorToMechanismRatio()};
-        sim_state.AddRotorPosition(delta_position);
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
-        break;
-    }
-    case hardware_interface::talonfxpro::TalonMode::MotionMagicDutyCycle:
-    case hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage:
-    case hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC:
-    // TODO : test the modes below when/if we actually use them
-    case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityDutyCycle:
-    case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityVoltage:
-    case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityTorqueCurrentFOC:
-    case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicDutyCycle:
-    case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicVoltage:
-    case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicTorqueCurrentFOC:
-    {
-        // TODO : debug, check sim Orientation field
-        const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
-        units::radian_t target_position{invert * state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
-        units::angular_velocity::radians_per_second_t target_velocity{invert * state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
-        sim_state.SetRawRotorPosition(target_position);
-        sim_state.SetRotorVelocity(target_velocity);
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
-        break;
-    }
-    case hardware_interface::talonfxpro::TalonMode::Follower:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::StrictFollower:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::NeutralOut:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::CoastOut:
-        break;
-    case hardware_interface::talonfxpro::TalonMode::StaticBrake:
-        break;
-    // TODO : support differential modes, somehow
-    }
-}
-
 int TalonFXProDevice::getCANID(void) const
 {
     return getId();
-}
-
-bool TalonFXProDevice::setSimLimitSwitches(const bool forward_limit, const bool reverse_limit)
-{
-    auto &sim_state = talonfxpro_->GetSimState();
-    sim_state.SetForwardLimit(forward_limit);
-    sim_state.SetReverseLimit(reverse_limit);
-    return true;
-}
-
-bool TalonFXProDevice::setSimCurrent(const double /*stator_current*/, const double /*supply_current*/)
-{
-    ROS_ERROR_STREAM("Error setting sim current on TalonFXPro device " << getName() << " : Not supported");
-    return false;
 }
 
 static bool convertGravityType(const hardware_interface::talonfxpro::GravityType in,

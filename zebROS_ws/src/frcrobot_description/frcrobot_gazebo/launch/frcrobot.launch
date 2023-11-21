@@ -1,12 +1,86 @@
 <?xml version="1.0"?>
 
 <launch>
-	<param name="robot_description" command="$(find xacro)/xacro $(find frcrobot_description)/urdf/frcrobot.xacro" />
-
+  <!-- Add a few params which tells gazebo which sim interfaces to load
+	   and, in each of the namespaces of those interfaces, their types
+	-->
+  <rosparam file="$(find frcrobot_gazebo)/config/robots.yaml" command="load"/>
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find frcrobot_gazebo)/worlds/frcrobot.world"/>
+    <arg name="verbose" value="True" />
     <!-- more default parameters can be changed here -->
   </include>
-  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-z 0.2 -param robot_description -urdf -model robot" />
+
+  <!-- process the xacro file into a urdf, load the text of that urdf into a ros 
+	   string parameter. This is used by gazebo to build its robot model
+	-->
+  <param name="robot_description" command="$(find xacro)/xacro $(find frcrobot_description)/urdf/robot_2023.urdf" />
+  <!-- TODO : Update me for 2023 robot-->
+  <group ns="frcrobot_jetson">
+	  <!-- publishes transforms between the various ROS joints
+		   TODO - check that this shouldn't be in the root namespace
+    -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
+
+    <rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson.yaml" command="load"/>
+    <rosparam file="$(find ros_control_boilerplate)/config/2023_swerve_drive_phoenix6.yaml" command="load"/>
+    <rosparam file="$(find ros_control_boilerplate)/config/sim_offsets.yaml" command="load"/>
+    <rosparam file="$(find ros_control_boilerplate)/config/2023_elevator_phoenix6_params.yaml" command="load"/>
+    <rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+    <rosparam file="$(find ros_control_boilerplate)/config/2023_gazebo_test.yaml" command="load"/>
+
+  </group>
+ 
+  <group ns="frcrobot_rio">
+    <rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_rio.yaml" command="load"/>
+    <rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_rio.yaml" command="load"/>
+  </group>
+
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-z 0.2 -param robot_description -urdf -model robot" output="screen" />
+
+  <group ns="frcrobot_jetson">
+    <node name="controller_spawner_jetson" pkg="controller_manager" type="controller_manager" respawn="false"
+      output="screen" args="spawn
+       joint_state_controller_jetson
+       joint_state_listener_controller_jetson
+       talon_state_controller_jetson
+       talonfxpro_state_controller
+       talon_config_controller
+       match_state_listener_controller
+       swerve_drive_controller
+       robot_code_ready_controller" />
+  </group>
+  <!-- 
+    elevator_controller_2023
+           pigeon2_imu_state_controller
+               swerve_angle_phoenix6_controller
+  -->
+  <group ns="frcrobot_rio">
+    <node name="controller_spawner_rio" pkg="controller_manager" type="controller_manager" respawn="false"
+      output="screen" args="spawn
+       joint_state_controller_rio
+       joint_state_listener_controller_rio
+       match_state_controller
+       robot_code_ready_controller" /> 
+  </group>
+
+  <!-- 
+  <include file="$(find controller_node)/launch/joysticks_sim.launch">
+    <arg name="joy_or_key" value="joy"/>
+  </include>
+  
+  <group ns="teleop">
+    <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp_2023.yaml" command="load"/>
+    <node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
+    </node>
+
+  </group>
+  <group ns="cmd_vel_mux">
+    <node name="twist_mux" pkg="twist_mux" type="twist_mux">
+      <rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
+      <remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
+    </node> 
+  </group>
+  -->
 </launch>

@@ -1,0 +1,451 @@
+
+<robot name="onshape">
+<link name="base_link"></link>
+<joint name="base_link_to_base" type="fixed">
+<parent link="base_link"/>
+<child link="central_chassis" />
+<origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+<link name="central_chassis">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/central_chassis_visual.stl"/>
+</geometry>
+<material name="central_chassis_material">
+<color rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/central_chassis_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.0019273005368477759327 0.086159516777126785025 0.32950095935229983812" rpy="0 0 0"/>
+<mass value="7.7787891582795793965" />
+<inertia ixx="0.69204932194375146093" ixy="0.0020725732451339702773"  ixz="-0.00019563921735631624259" iyy="0.6187418170131835371" iyz="0.11955242865535503638" izz="0.43424100425491879429" />
+</inertial>
+</link>
+
+<link name="fixed_stage">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_visual.stl"/>
+</geometry>
+<material name="fixed_stage_material">
+<color rgba="0.40580203232839273664 0.41204827568174379193 0.4259149895098925942 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.093086953924054055554 -0.0076968875686334982736 0.0064477325071934793455" rpy="0 0 0"/>
+<mass value="2.110237711867984256" />
+<inertia ixx="0.0072740667010466816822" ixy="-0.0005372416991320313898"  ixz="0.00257934197979136021" iyy="0.010711313332956691816" iyz="-0.0004836411101117216475" izz="0.0072293168828333562864" />
+</inertial>
+</link>
+
+<link name="first_stage">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_visual.stl"/>
+</geometry>
+<material name="first_stage_material">
+<color rgba="0.6267984952905543139 0.64535024166481913532 0.68477270271013190861 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.00065761094785689246274 0.00065772624260732580077 0.013546669400210405512" rpy="0 0 0"/>
+<mass value="0.3748554035565703213" />
+<inertia ixx="0.0003922639906470856393" ixy="-8.0584943533433756394e-05"  ixz="2.2105941443719446133e-05" iyy="0.00039226841599643497756" iyz="2.2036140493595744586e-05" izz="0.0003823667674338889844" />
+</inertial>
+</link>
+
+<link name="second_stage">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_visual.stl"/>
+</geometry>
+<material name="second_stage_material">
+<color rgba="0.43962129049865933395 0.48422362538019175782 0.58086036059590284708 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.00060219608071351599533 -0.00042989751734581120417 -0.025814159072832139341" rpy="0 0 0"/>
+<mass value="0.34193546654456347111" />
+<inertia ixx="0.00025919001370537067715" ixy="-4.3830553719888097568e-06"  ixz="9.509052302835666107e-07" iyy="0.00026221580444056905804" iyz="6.7704477026286187673e-07" izz="0.00043171455134411151336" />
+</inertial>
+</link>
+
+<joint name="fl_drive" type="continuous">
+<origin xyz="-0.014718639782432818564 -0.014718639782432485497 0.041331499999999611605" rpy="1.5707963267948974462 0.3547103969677229407 -0.78539816339744616958" />
+<parent link="first_stage" />
+<child link="second_stage" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="1.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+
+</joint>
+
+<joint name="fl_angle" type="continuous">
+<origin xyz="0.066674999999999984279 0.0075565000000000354108 -0.019843749999999937828" rpy="-1.5707963267948954478 -0.0013042609915997001487 -9.0564346581562362991e-16" />
+<parent link="fixed_stage" />
+<child link="first_stage" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+
+</joint>
+
+<joint name="XX1_center" type="fixed">
+<origin xyz="-0.23098760000000007064 0.31750000000000000444 0.097205800000000008865" rpy="-1.570796326794896558 -0 -1.570796326794896558" />
+<parent link="central_chassis" />
+<child link="fixed_stage" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="fixed_stage_2">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_2_visual.stl"/>
+</geometry>
+<material name="fixed_stage_2_material">
+<color rgba="0.40580203232839245908 0.41204827568174356989 0.42591498950989226113 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_2_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.093086953924053972287 -0.0076968875686333733735 0.0064477325071934602635" rpy="0 0 0"/>
+<mass value="2.1102377118679855883" />
+<inertia ixx="0.0072740667010466886211" ixy="-0.00053724169913203778659"  ixz="0.0025793419797913485006" iyy="0.010711313332956700489" iyz="-0.00048364111011172658061" izz="0.0072293168828333571538" />
+</inertial>
+</link>
+
+<link name="first_stage_2">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_2_visual.stl"/>
+</geometry>
+<material name="first_stage_2_material">
+<color rgba="0.6267984952905543139 0.6453502416648190243 0.68477270271013201963 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_2_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.00065761094785723192644 0.00065772624260737990246 0.013546669400210665721" rpy="0 0 0"/>
+<mass value="0.37485540355657037681" />
+<inertia ixx="0.00039226399064709106031" ixy="-8.0584943533433824156e-05"  ixz="2.2105941443718263675e-05" iyy="0.00039226841599643974805" iyz="2.203614049359630024e-05" izz="0.00038236676743389001439" />
+</inertial>
+</link>
+
+<link name="second_stage_2">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_2_visual.stl"/>
+</geometry>
+<material name="second_stage_2_material">
+<color rgba="0.43962129049865933395 0.48422362538019181333 0.58086036059590284708 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_2_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.00060219608071358061378 -0.00042989751734580675894 -0.025814159072832125463" rpy="0 0 0"/>
+<mass value="0.3419354665445634156" />
+<inertia ixx="0.00025919001370537067715" ixy="-4.3830553719887733343e-06"  ixz="9.5090523028353611752e-07" iyy="0.00026221580444056900383" iyz="6.770447702627535624e-07" izz="0.00043171455134411162178" />
+</inertial>
+</link>
+
+<joint name="bl_drive" type="continuous">
+<origin xyz="-0.014718639782431541807 -0.014718639782432388352 0.041331500000000201411" rpy="1.5707963267948981123 -0.10233292597333981666 -0.78539816339744639162" />
+<parent link="first_stage_2" />
+<child link="second_stage_2" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="1.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+
+</joint>
+
+<joint name="bl_angle" type="continuous">
+<origin xyz="0.06667500000000003979 0.007556500000000021533 -0.019843749999999965583" rpy="1.570796326794896558 0.74446276911887487859 3.141592653589793116" />
+<parent link="fixed_stage_2" />
+<child link="first_stage_2" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+
+</joint>
+
+<joint name="XX2_center" type="fixed">
+<origin xyz="-0.31750000000000011546 -0.23098760000000001513 0.097205800000000008865" rpy="-1.570796326794896558 2.8471472759711992776e-46 -1.7483827159451257974e-16" />
+<parent link="central_chassis" />
+<child link="fixed_stage_2" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="fixed_stage_3">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_3_visual.stl"/>
+</geometry>
+<material name="fixed_stage_3_material">
+<color rgba="0.40580203232839251459 0.41204827568174368091 0.42591498950989226113 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_3_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.092585482507193381241 -0.0073158875686334893379 0.0065682039240540137509" rpy="0 0 0"/>
+<mass value="2.1102377118679851442" /> 
+<inertia ixx="0.0072293168828333597559" ixy="0.00048364111011172023803"  ixz="-0.0025793419797913606437" iyy="0.010711313332956684877" iyz="-0.00053724169913203073928" izz="0.0072740667010466825496" />
+</inertial>
+</link>
+
+<link name="first_stage_3">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_3_visual.stl"/>
+</geometry>
+<material name="first_stage_3_material">
+<color rgba="0.6267984952905543139 0.6453502416648190243 0.68477270271013179759 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_3_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.0018255910263493988974 0.0018257063211000450643 0.013546669400209763665" rpy="0 0 0"/>
+<mass value="0.37485540355657037681" />
+<inertia ixx="0.00039226399064707902567" ixy="-8.05849435334343256e-05"  ixz="2.2105941443719036169e-05" iyy="0.0003922684159964287434" iyz="2.2036140493595005973e-05" izz="0.00038236676743388681599" />
+</inertial>
+</link>
+
+<link name="second_stage_3">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_3_visual.stl"/>
+</geometry>
+<material name="second_stage_3_material">
+<color rgba="0.43962129049865933395 0.48422362538019175782 0.58086036059590284708 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_3_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.00060219608071357790327 -0.00042989751734580605421 -0.025814159072832180974" rpy="0 0 0"/>
+<mass value="0.34193546654456347111" />
+<inertia ixx="0.00025919001370537083978" ixy="-4.3830553719887758754e-06"  ixz="9.5090523028371685317e-07" iyy="0.00026221580444056932909" iyz="6.7704477026274011575e-07" izz="0.00043171455134411135073" />
+</inertial>
+</link>
+
+<joint name="br_drive" type="continuous">
+<origin xyz="-0.013550659703940370893 -0.013550659703939815781 0.041331499999998508321" rpy="-1.5707963267948952257 -0.38629807207531591251 2.3561944901923501661" />
+<parent link="first_stage_3" />
+<child link="second_stage_3" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="1.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+
+</joint>
+
+<joint name="br_angle" type="continuous">
+<origin xyz="-0.066293999999999908557 0.0079375000000000278666 -0.019843749999999937828" rpy="1.570796326794896558 -1.3713290209023065724 3.1415926535897726879" />
+<parent link="fixed_stage_3" />
+<child link="first_stage_3" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+
+</joint>
+
+<joint name="XX3_center" type="fixed">
+<origin xyz="0.31749999999999983791 -0.23098760000000001513 0.097205800000000008865" rpy="-1.570796326794896558 -0 -1.7483827159451285091e-16" />
+<parent link="central_chassis" />
+<child link="fixed_stage_3" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="fixed_stage_4">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_4_visual.stl"/>
+</geometry>
+<material name="fixed_stage_4_material">
+<color rgba="0.4058020323283925701 0.4120482756817436254 0.42591498950989242767 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/fixed_stage_4_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.092705953924053868809 0.007315887568633463317 -0.0064477325071934021503" rpy="0 0 0"/>
+<mass value="2.1102377118679851442" />
+<inertia ixx="0.0072740667010466790801" ixy="0.00053724169913202922139"  ixz="-0.0025793419797913584753" iyy="0.010711313332956679673" iyz="-0.00048364111011172012961" izz="0.007229316882833352817" />
+</inertial>
+</link>
+
+<link name="fr_angle">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_4_visual.stl"/>
+</geometry>
+<material name="first_stage_4_material">
+<color rgba="0.6267984952905543139 0.6453502416648190243 0.68477270271013179759 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/first_stage_4_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.00065761094785712144624 0.00065772624260720697221 0.013546669400210591128" rpy="0 0 0"/>
+<mass value="0.37485540355657037681" />
+<inertia ixx="0.00039226399064709035558" ixy="-8.0584943533433336265e-05"  ixz="2.2105941443718338214e-05" iyy="0.00039226841599643860964" iyz="2.2036140493596639053e-05" izz="0.00038236676743388925545" />
+</inertial>
+</link>
+
+<link name="fr_drive">
+<visual>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_4_visual.stl"/>
+</geometry>
+<material name="second_stage_4_material">
+<color rgba="0.43962129049865933395 0.48422362538019175782 0.58086036059590284708 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://frcrobot_description/meshes/second_stage_4_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.00060219608071350547857 -0.00042989751734580253055 -0.02581415907283214628" rpy="0 0 0"/>
+<mass value="0.34193546654456347111" />
+<inertia ixx="0.00025919001370537051452" ixy="-4.3830553719888038275e-06"  ixz="9.5090523028351917686e-07" iyy="0.00026221580444056894962" iyz="6.7704477026273439828e-07" izz="0.00043171455134411140494" />
+</inertial>
+</link>
+
+<joint name="fr_drive_joint" type="continuous">
+<origin xyz="-0.014718639782432263452 -0.014718639782432541008 0.041331500000000041817" rpy="-1.5707963267948994446 0.53105430610586668028 2.3561944901923461693" />
+<parent link="first_stage_4" />
+<child link="second_stage_4" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="1.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+</joint>
+
+<joint name="fr_angle_joint" type="continuous">
+<origin xyz="0.066293999999999908557 -0.0079375000000000972555 0.019843750000000076605" rpy="-1.570796326794896558 1.2358944559116720185 3.141592653589793116" />
+<parent link="fixed_stage_4" />
+<child link="first_stage_4" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+<dynamics damping="0.0" friction="1.0"/>
+</joint>
+
+<joint name="XX4_center" type="fixed">
+<origin xyz="0.31749999999999989342 0.23098759999999995962 0.097205800000000092131" rpy="1.570796326794896558 -2.2204460492411462706e-16 3.141592653589793116" />
+<parent link="central_chassis" />
+<child link="fixed_stage_4" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+
+<transmission name="trans_elevator_leader">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="bl_angle">
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="bl_angle_motor">
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+</transmission>
+
+<gazebo>
+    <plugin name="gazebo_frcrobot_plugin" filename="libgazebo_frcrobot_control.so">
+        <!-- Look here for the "robot_names" array. Each entry
+             in the array is the name[space] of a sim interface 
+             to load into gazebo
+        -->
+        <robotNamespace>/</robotNamespace>
+        <robotParam>robot_description</robotParam>
+    </plugin>
+</gazebo>
+</robot>

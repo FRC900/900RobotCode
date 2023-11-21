@@ -2,11 +2,12 @@
 #include "ctre/phoenix6/unmanaged/Unmanaged.hpp"
 
 #include "ros_control_boilerplate/talonfxpro_devices.h"
-#include "ros_control_boilerplate/talonfxpro_device.h"
+#include "ros_control_boilerplate/sim_talonfxpro_device.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 #include "ctre_interfaces/talonfxpro_command_interface.h"
 
-TalonFXProDevices::TalonFXProDevices(ros::NodeHandle &root_nh) 
+template <bool SIM>
+TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh) 
     : state_interface_{std::make_unique<hardware_interface::talonfxpro::TalonFXProStateInterface>()}
     , command_interface_{std::make_unique<hardware_interface::talonfxpro::TalonFXProCommandInterface>()}
 {
@@ -37,16 +38,18 @@ TalonFXProDevices::TalonFXProDevices(ros::NodeHandle &root_nh)
             std::string can_bus;
             readStringRequired(joint_params, "can_bus", can_bus, joint_name);
 
-            devices_.emplace_back(std::make_unique<TalonFXProDevice>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_));
+            devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_));
         }
     }
 }
 
-TalonFXProDevices::~TalonFXProDevices() = default; 
+template <bool SIM>
+TalonFXProDevices<SIM>::~TalonFXProDevices() = default; 
 
 // Calling code needs to call something like
 //  registerInterfaceManager(devices->registerInterface());
-hardware_interface::InterfaceManager *TalonFXProDevices::registerInterface()
+template <bool SIM>
+hardware_interface::InterfaceManager *TalonFXProDevices<SIM>::registerInterface()
 {
     for (const auto &d : devices_)
     {
@@ -57,7 +60,8 @@ hardware_interface::InterfaceManager *TalonFXProDevices::registerInterface()
     return &interface_manager_;
 }
 
-void TalonFXProDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void TalonFXProDevices<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talonfxpro");
     for (const auto &d : devices_)
@@ -66,7 +70,8 @@ void TalonFXProDevices::read(const ros::Time& time, const ros::Duration& period,
     }
 }
 
-void TalonFXProDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void TalonFXProDevices<SIM>::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talonfxpro");
     for (const auto &d : devices_)
@@ -76,58 +81,75 @@ void TalonFXProDevices::write(const ros::Time& time, const ros::Duration& period
     prev_robot_enabled_ = isEnabled();
 }
 
-void TalonFXProDevices::simInit(ros::NodeHandle &nh)
+template <bool SIM>
+void TalonFXProDevices<SIM>::simInit(ros::NodeHandle &nh)
 {
-    if (!devices_.empty())
+    if constexpr (SIM)
     {
-        sim_limit_switch_srv_ = nh.advertiseService("set_talonfxpro_limit_switch", &TalonFXProDevices::setlimit, this);
-        sim_current_srv_ = nh.advertiseService("set_talonfxpro_current", &TalonFXProDevices::setcurrent, this);
-    }
-}
-
-void TalonFXProDevices::simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
-{
-    tracer.start_unique("talonfxpro FeedEnable");
-    if (!devices_.empty())
-    {
-        ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
-    }
-    tracer.start_unique("talonfxpro sim");
-    for (const auto &d : devices_)
-    {
-        d->simRead(time, period);
-    }
-}
-
-bool TalonFXProDevices::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
-                                 ros_control_boilerplate::set_limit_switch::Response & /*res*/)
-{
-    for (const auto &d : devices_)
-    {
-        if (((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
-            (req.target_joint_name == d->getName()))
+        if (!devices_.empty())
         {
-            return d->setSimLimitSwitches(req.forward, req.reverse);
+            sim_limit_switch_srv_ = nh.advertiseService("set_talonfxpro_limit_switch", &TalonFXProDevices::setlimit, this);
+            sim_current_srv_ = nh.advertiseService("set_talonfxpro_current", &TalonFXProDevices::setcurrent, this);
+        }
+    }
+}
+
+template <bool SIM>
+void TalonFXProDevices<SIM>::simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+{
+    if constexpr (SIM)
+    {
+        tracer.start_unique("talonfxpro FeedEnable");
+        if (!devices_.empty())
+        {
+            ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
+        }
+        tracer.start_unique("talonfxpro sim");
+        for (const auto &d : devices_)
+        {
+            d->simRead(time, period);
+        }
+    }
+}
+
+template <bool SIM>
+bool TalonFXProDevices<SIM>::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
+                                      ros_control_boilerplate::set_limit_switch::Response & /*res*/)
+{
+    if constexpr (SIM)
+    {
+        for (const auto &d : devices_)
+        {
+            if (((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
+                (req.target_joint_name == d->getName()))
+            {
+                return d->setSimLimitSwitches(req.forward, req.reverse);
+            }
         }
     }
     return true;
 }
 
-bool TalonFXProDevices::setcurrent(ros_control_boilerplate::set_current::Request &req,
-                                   ros_control_boilerplate::set_current::Response & /*res*/)
+template <bool SIM>
+bool TalonFXProDevices<SIM>::setcurrent(ros_control_boilerplate::set_current::Request &req,
+                                        ros_control_boilerplate::set_current::Response & /*res*/)
 {
-    for (const auto &d : devices_)
-	{
-        if(((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
-		   (req.target_joint_name == d->getName()))
-		{
-            return d->setSimCurrent(req.current, req.current);
+    if constexpr (SIM)
+    {
+        for (const auto &d : devices_)
+        {
+            if (((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
+                (req.target_joint_name == d->getName()))
+            {
+                return d->setSimCurrent(req.current, req.current);
+            }
         }
     }
-	return true;
+    return true;
 }
 
-void TalonFXProDevices::appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const
+template <bool SIM>
+void TalonFXProDevices<SIM>::appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const
 {
     for (auto &d : devices_)
     {
@@ -137,4 +159,20 @@ void TalonFXProDevices::appendDeviceMap(std::multimap<std::string, ctre::phoenix
             device_map.emplace(d->getName(), ptr);
         }
     }
+}
+
+template <bool SIM>
+bool TalonFXProDevices<SIM>::gazeboSimInit(const ros::NodeHandle &/*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model)
+{
+    if constexpr (SIM)
+    {
+        for (auto &d : devices_)
+        {
+            if (!d->gazeboInit(parent_model))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
