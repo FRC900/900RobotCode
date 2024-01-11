@@ -1,0 +1,84 @@
+# Top-level world file for the rapid react field stage simulation
+include "robots/2023FRC_robot.inc"
+
+# Object detection model - used as a base for each target
+# we can detect using tensorflow object detection
+# TODO - maybe also retro targets?
+define objdet_target model
+(
+ size [ 0.200 0.200 0.050 ]
+ gui_move 0
+ gui_nose 0
+ gripper_return 1
+ ranger_return -1.000
+)
+
+# Model for the basic floorplan - walls, and field obstacles
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return 1
+  fiducial_return -1
+  ranger_return 1.000
+)
+
+resolution 0.02
+interval_sim 15 # simulation timestep in milliseconds, was 5
+interval_real 15 # was 5
+threads 4
+
+window
+(
+  size [ 1768  869 ]
+  center [ 0.000 0.000 ]
+  rotate [ 0.000 0.000 ]
+  scale 60.000
+)
+
+# Size determines how pixels map to meters
+# Pose fixes the center of the field
+# PNG is black and white image
+floorplan
+(
+  name "crescendo_field"
+  bitmap "../maps/crescendo_field.png"
+  size [16.54 8.21 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  pose [ 8.27  4.105  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
+)
+
+# throw in a robot
+omnidir_robot
+(
+  # Everything but slalom
+  pose [ 1.88 4.989 0.000 180.0 ]
+  # Slalom pose [ 1.0414 .762 0.0 0.0 ]
+  name "robot"
+)
+
+# Copied from 2023_charged_up.world and I changed the numbers and added 8 more --Elias
+# Note: team update 01 is being used here since it has a correction for apriltags (transposed #s) -- from charged up file --Elias
+objdet_target ( pose [ 15.079472 0.245872 1.355852 120 ] fiducial_return 101 color "blue") # Blue source
+objdet_target ( pose [ 16.185134 0.883666 1.355852 120 ] fiducial_return 102 color "blue") # Blue source
+objdet_target ( pose [ 16.579342 4.982718 1.451102 180 ] fiducial_return 103 color "red")
+objdet_target ( pose [ 16.579342 5.547868 1.451102 180 ] fiducial_return 104 color "red")
+objdet_target ( pose [ 14.700758 8.2042 1.355852 270 ] fiducial_return 105 color "red")
+objdet_target ( pose [ 1.8415 8.2042 1.355852 270 ] fiducial_return 106 color "blue")
+objdet_target ( pose [ -0.0127 5.547868 1.451102 0 ] fiducial_return 107 color "blue")
+objdet_target ( pose [ -0.0127 4.982718 1.451102 0 ] fiducial_return 108 color "blue")
+objdet_target ( pose [ 0.356108 0.883666 1.355852 60 ] fiducial_return 109 color "red") # Red source
+objdet_target ( pose [ 1.461516 0.245872 1.355852 60 ] fiducial_return 110 color "red") # Red source
+objdet_target ( pose [ 11.904726 3.713226 1.3208 300 ] fiducial_return 111 color "red")
+objdet_target ( pose [ 11.904726 4.49834 1.3208 60 ] fiducial_return 112 color "red")
+objdet_target ( pose [ 11.220196 4.105148 1.3208 180 ] fiducial_return 113 color "red")
+objdet_target ( pose [ 5.320792 4.105148 1.3208 0 ] fiducial_return 114 color "blue")
+objdet_target ( pose [ 4.641342 4.49834 1.3208 120 ] fiducial_return 115 color "blue")
+objdet_target ( pose [ 4.641342 3.713226 1.3208 240 ] fiducial_return 116 color "blue")

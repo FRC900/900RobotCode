@@ -28,19 +28,54 @@ auto_mode_5: [""]
 auto_mode_6: ["drive_out_community", "snap_0_before_intake"]
 
 auto_mode_7: ["place_cone_high"]
-auto_mode_8: [""]
+auto_mode_8: ["drive_2m_and_turn_csv"]
 auto_mode_9: [""]
 
-auto_mode_10: ["pick_place_cone_from_grid_1"]
+auto_mode_10: ["GetCone_csv"]
+
+GetCone_csv:
+  waypoint_actions: {intake_cone: 1}
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
+drive_2m_and_turn_csv:
+  waypoint_actions: {}
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
+TwoNoteRed_csv:
+  waypoint_actions: {}
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
 auto_mode_11: ["pick_place_cube_from_grid_3"]
 auto_mode_12: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_place_cube_from_grid_3"] # just pathing for now
 
 auto_mode_13: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_engage_from_grid_3", "balance_facing_away"] # just pathing for now
 auto_mode_14: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_back_from_grid_3"] # just pathing for now
 
-auto_mode_15: ["pick_engage_from_grid_3"]
+auto_mode_15: ["PlacePickCone_csv"]
 
-auto_mode_16: ["pick_place_cone_from_grid_1"]
+PlacePickCone_csv:
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
+auto_mode_16: ["BalanceOnOtherStation_csv"]
+
+BalanceOnOtherStation_csv:
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
 auto_mode_17: ["drive_4_meters"]
 auto_mode_18: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_from_grid_3"] # 2.5 piece auto!
 

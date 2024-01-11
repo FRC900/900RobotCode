@@ -47,8 +47,8 @@ define omnidir_robot position
   drive "omni"
 
   # [ xmin xmax ymin ymax zmin zmax amin amax ]
-  velocity_bounds [-5.5 5.5 -5.5 5.5 0 0 -90 90]
-  acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -90 90]
+  velocity_bounds [-5.5 5.5 -5.5 5.5 0 0 -720 720]
+  acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -720 720]
 
   # spawn sensors
   normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )

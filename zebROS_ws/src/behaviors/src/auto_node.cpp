@@ -27,6 +27,12 @@
 #include "angles/angles.h"
 #include <std_srvs/SetBool.h>
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
+#include <fstream>
+#include <boost/algorithm/string.hpp>
+#include <geometry_msgs/TransformStamped.h>
+#include <angles/angles.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 enum AutoStates {
 			NOT_READY,
@@ -509,15 +515,77 @@ class AutoNode {
  	bool preLoadPath() {
 		for (size_t j = 0; j < auto_steps_.size(); j++) {
 			XmlRpc::XmlRpcValue action_data;
-			if(!nh_.getParam(auto_steps_[j], action_data)) {
-				continue;
-			}
-			if (!(action_data["type"] == "path")) {
-				continue;
-			}
+			// If the path was already retrieved, continue
 			if (premade_paths_.find(auto_steps_[j]) != premade_paths_.end()) {
 				continue;
 			}
+			// If the auto step doesn't exist as a yaml definition, continue
+			if(!nh_.getParam(auto_steps_[j], action_data)) {
+				continue;
+			}
+			// If the auto step's type is not a path, continue
+			if (!(action_data["type"] == "path")) {
+				continue;
+			}
+			ROS_INFO_STREAM("Path " << auto_steps_[j]);
+			if (auto_steps_[j].find("_csv") != std::string::npos) {
+				// CSV format:
+				// 0    1 2 3   4                5    6    7
+				// time,x,y,yaw,angular_velocity,xvel,yvel,waypointIdx
+				// TODO incorporate velocities, right now it's just position
+				ROS_INFO_STREAM("auto_node : Loading Choreo path located at behaviors/path/" << auto_steps_[j]);
+				std::ifstream csv("/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/" + auto_steps_[j] + ".csv");
+				std::string line;
+				std::vector<std::vector<double>> path;
+				while (std::getline(csv, line)) {
+					std::vector<std::string> v;
+					std::vector<double> doubles;
+					boost::split(v, line, boost::is_any_of(","));
+					for (const std::string& s : v) {
+						doubles.push_back(std::stod(s));
+					}
+					path.push_back(doubles);
+				}
+				geometry_msgs::TransformStamped tfs;
+				tfs.header.frame_id = "path";
+				tfs.child_frame_id = "base_link";
+				tf2::Quaternion q;
+				q.setRPY(0, 0, path[0][3]);
+				tfs.transform.rotation = tf2::toMsg(q);
+				tfs.transform.translation.x = path[0][1];
+				tfs.transform.translation.y = path[0][2];
+
+				nav_msgs::Path path_msg;
+				path_msg.header.frame_id = "base_link";
+				path_msg.header.stamp = ros::Time(0);
+				nav_msgs::Path waypoints;
+				std::vector<int> waypointsIdx;
+
+				uint64_t i = 0;
+
+				for (const auto &point : path) {
+					geometry_msgs::PoseStamped pose;
+					pose.header.frame_id = "path";
+					pose.pose.position.x = point[1];
+					pose.pose.position.y = point[2];
+					tf2::Quaternion q;
+					q.setRPY(0, 0, point[3]);
+					pose.pose.orientation = tf2::toMsg(q);
+					tf2::doTransform(pose, pose, tfs);
+					pose.header.stamp = ros::Time(point[0]);
+					pose.header.seq = i;
+					pose.header.frame_id = "base_link";
+					path_msg.poses.push_back(pose);
+					i += 1;
+					waypointsIdx.push_back(point[7]);
+				}
+
+				premade_paths_[auto_steps_[j]] = path_msg;
+				premade_waypoints_[auto_steps_[j]] = nav_msgs::Path();
+				waypointsIdxs_[auto_steps_[j]] = waypointsIdx;
+				continue;
+			}
+			// If the path has no goal, return
 			if (!action_data.hasMember("goal"))
 			{
 				ROS_ERROR_STREAM("auto_node : path " << auto_steps_[j] << " has no 'goal' data");

@@ -47,7 +47,7 @@ hardware_interface:
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
-       #- {name: babys_first_orchestra, type: orchestra, id: 1}
+       - {name: babys_first_orchestra, type: orchestra, id: 1}
        - {name: CANivore, type: can_bus_status}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}

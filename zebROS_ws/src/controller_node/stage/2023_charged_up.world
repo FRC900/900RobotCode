@@ -59,7 +59,7 @@ floorplan
 omnidir_robot
 (
   # Everything but slalom
-  pose [ 1.88 4.989 0.000 180.0 ]
+  pose [ 1.88 3.872 0.000 180.0 ]
   # Slalom pose [ 1.0414 .762 0.0 0.0 ]
   name "robot"
 )
@@ -90,29 +90,29 @@ objdet_target ( pose [ 9.47 4.56 1.0 0.0 ] fiducial_return 10 color "purple" )
 
 #white tap lines
 
-objdet_target ( pose [ 8.345 8.02 0.03 0.0 ] fiducial_return 16 color "cyan" )
-objdet_target ( pose [ 8.345 .01 0.03 0.0 ] fiducial_return 16 color "cyan" )
+objdet_target ( pose [ 8.345 8.02 1.0 0.0 ] fiducial_return 16 color "cyan" )
+objdet_target ( pose [ 8.345 .01 1.0 0.0 ] fiducial_return 16 color "cyan" )
 
 #red tape corners
 
-objdet_target ( pose [ 6.72 6.80 .03 0.0 ] fiducial_return 12 color "red" )
-objdet_target ( pose [ 3.31 6.76 .03 0.0 ] fiducial_return 12 color "red" )
-objdet_target ( pose [ 11.67 4.06 .03 0.0 ] fiducial_return 12 color "red" )
-objdet_target ( pose [ 13.17 4.12 .03 0.0 ] fiducial_return 12 color "red" )
+objdet_target ( pose [ 6.72 6.80 1.0 0.0 ] fiducial_return 12 color "red" )
+objdet_target ( pose [ 3.31 6.76 1.0 0.0 ] fiducial_return 12 color "red" )
+objdet_target ( pose [ 11.67 4.06 1.0 0.0 ] fiducial_return 12 color "red" )
+objdet_target ( pose [ 13.17 4.12 1.0 0.0 ] fiducial_return 12 color "red" )
 
 #blue tape corners
-objdet_target ( pose [ 9.82 6.8 .03 0.0 ] fiducial_return 11 color "blue" )
-objdet_target ( pose [ 13.22 6.76 .03 0.0 ] fiducial_return 11 color "blue" )
-objdet_target ( pose [ 4.89 4.11 .03 0.0 ] fiducial_return 11 color "blue" )
-objdet_target ( pose [ 3.35 4.11 .03 0.0 ] fiducial_return 11 color "blue" )
+objdet_target ( pose [ 9.82 6.8 2.0 0.0 ] fiducial_return 11 color "blue" )
+objdet_target ( pose [ 13.22 6.76 2.0 0.0 ] fiducial_return 11 color "blue" )
+objdet_target ( pose [ 4.89 4.11 2.0 0.0 ] fiducial_return 11 color "blue" )
+objdet_target ( pose [ 3.35 4.11 2.0 0.0 ] fiducial_return 11 color "blue" )
 
 #red tape walls
-objdet_target ( pose [ 6.76 8.034 .03 0.0 ] fiducial_return 23 color "red" )
-objdet_target ( pose [ 11.63 .01 .02 0.0 ] fiducial_return 23 color "red" )
+objdet_target ( pose [ 6.76 81.04 1.0 0.0 ] fiducial_return 23 color "red" )
+objdet_target ( pose [ 11.63 .01 1.0 0.0 ] fiducial_return 23 color "red" )
 
 #blue tape walls
-objdet_target ( pose [ 9.82 8.034 .03 0.0 ] fiducial_return 24 color "blue" )
-objdet_target ( pose [ 4.896 .01 .03 0.0 ] fiducial_return 24 color "blue" )
+objdet_target ( pose [ 9.82 81.04 2.0 0.0 ] fiducial_return 24 color "blue" )
+objdet_target ( pose [ 4.896 .01 2.0 0.0 ] fiducial_return 24 color "blue" )
 
 
 #black bottom substation blue

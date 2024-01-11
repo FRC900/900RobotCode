@@ -37,6 +37,10 @@
 			 talonfxpro_state_controller
 			 talonfxpro_config_controller
 			 swerve_drive_controller
+			 pigeon2_state_controller
+			 orchestra_controller
+			 orchestra_state_controller
+			 pigeon2_imu_state_controller
 			 robot_code_ready_controller" />
 			 <!--
 			-->
@@ -47,6 +51,31 @@
 			<arg name="poll_period" value="5"/>
 		</include>
 	</group>
+
+	<group ns="imu">
+		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
+			<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
+			<arg name="primary_imu" value="$(arg primary_imu)" />
+		</include>
+	</group>
+
+	<group ns="swerve_imu_ukf">
+		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
+		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_pigeon2" args="0 0 0 0 0 0 base_link pigeon2_frame" />
+	<!--
+		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
+	-->
+	</group>
+
+	<!-- TODO split teleop into driving and buttons so we can reuse driving? -->
+	<include file="$(find controller_node)/launch/teleop.launch">
+		<arg name="year" value="2023" />
+	</include>
+
+	<include file="$(find controller_node)/launch/hold_position.launch"/>
+	<include file="$(find controller_node)/launch/path_follower.launch"/>
+
+	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">

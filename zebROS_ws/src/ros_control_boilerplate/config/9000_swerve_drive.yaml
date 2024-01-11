@@ -28,7 +28,7 @@ swerve_drive_controller:
     f_v: 0.0379
 
     # TODO : move this into sensor_to_mechanism_ratio for Falcons
-    ratio_encoder_to_rotations: 0.148148148 # Test me, will show up in odom results
+    ratio_encoder_to_rotations: 0.163398693 # Test me, will show up in odom results
 
     encoder_drive_get_V_units: 1
     encoder_drive_set_V_units: 1
@@ -37,7 +37,9 @@ swerve_drive_controller:
     encoder_steering_get_units: 1
     encoder_steering_set_units: 1
 
-    wheel_coords: [[-0.250825, 0.250825], [0.250825, 0.250825], [-0.250825, -0.250825], [0.250825, -0.250825]]
+    # bl fl br fr
+    # 17.5 in (0.4445 m) long, 15.5 in (0.3937) wide
+    wheel_coords: [[-0.22225, 0.19685], [0.22225, 0.19685], [-0.22225, -0.19685], [0.22225, -0.19685]]
     parking_config_time_delay: 0.75
     drive_speed_time_delay: 0.125
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
