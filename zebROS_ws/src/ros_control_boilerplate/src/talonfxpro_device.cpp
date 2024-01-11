@@ -754,6 +754,27 @@ static bool convertLimitSource(const hardware_interface::talonfxpro::LimitSource
         out = ctre::phoenix6::signals::ForwardLimitSourceValue::LimitSwitchPin;
         return true;
     }
+    if (in == hardware_interface::talonfxpro::LimitSource::RemoteTalonFX)
+    {
+        out = ctre::phoenix6::signals::ForwardLimitSourceValue::RemoteTalonFX;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::LimitSource::RemoteCANifier)
+    {
+        out = ctre::phoenix6::signals::ForwardLimitSourceValue::RemoteCANifier;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::LimitSource::RemoteCANcoder)
+    {
+        out = ctre::phoenix6::signals::ForwardLimitSourceValue::RemoteCANcoder;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::LimitSource::Disabled)
+    {
+        out = ctre::phoenix6::signals::ForwardLimitSourceValue::Disabled;
+        return true;
+    }
+    
     ROS_ERROR_STREAM("Invalid Limit Source value in TalonFXPro convertLimitSource : in = " << static_cast<int>(in));
     return false;
 }
@@ -766,6 +787,27 @@ static bool convertLimitSource(const hardware_interface::talonfxpro::LimitSource
         out = ctre::phoenix6::signals::ReverseLimitSourceValue::LimitSwitchPin;
         return true;
     }
+    if (in == hardware_interface::talonfxpro::LimitSource::RemoteTalonFX)
+    {
+        out = ctre::phoenix6::signals::ReverseLimitSourceValue::RemoteTalonFX;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::LimitSource::RemoteCANifier)
+    {
+        out = ctre::phoenix6::signals::ReverseLimitSourceValue::RemoteCANifier;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::LimitSource::RemoteCANcoder)
+    {
+        out = ctre::phoenix6::signals::ReverseLimitSourceValue::RemoteCANcoder;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::LimitSource::Disabled)
+    {
+        out = ctre::phoenix6::signals::ReverseLimitSourceValue::Disabled;
+        return true;
+    }
+    
     ROS_ERROR_STREAM("Invalid Limit Source value in TalonFXPro convertLimitSource : in = " << static_cast<int>(in));
     return false;
 }
@@ -797,7 +839,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         command_->resetMotionMagic();
         command_->resetContinuousWrap();
         command_->setClearStickyFaults();
-        command_->resetSetPosition();
+        command_->resetRotorPosition();
         command_->resetControl();
         ROS_WARN_STREAM("Detected reset on TalonFXPro " << getName());
     }
@@ -1193,8 +1235,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         // Our units are radians/ sec (sec^2, sec^3), CTRE's are turns / sec
         config_->MotionMagic.MotionMagicCruiseVelocity = units::turns_per_second_t{units::radians_per_second_t{motion_magic_cruise_velocity}}.value();
         config_->MotionMagic.MotionMagicAcceleration = units::turns_per_second_squared_t{units::radians_per_second_squared_t{motion_magic_acceleration}}.value();
-        config_->MotionMagic.MotionMagicJerk = motion_magic_jerk / (2.0 * M_PI); // units does't have cubed?
-        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotionMagic), "GetConfigurator().Apply(config_->MotionMagic)"))
+        config_->MotionMagic.MotionMagicJerk = units::turns_per_second_cubed_t{units::radians_per_second_cubed_t{motion_magic_jerk}}.value();
+        if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotionMagic), "GetConfigurator().Apply(config.MotionMagic)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " MotionMagic " << config_->MotionMagic);
             state_->setMotionMagicCruiseVelocity(motion_magic_cruise_velocity);
@@ -1236,19 +1278,19 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         }
     }
 
-    double set_rotor_position;
-    if (command_->setPositionChanged(set_rotor_position))
+    double rotor_position;
+    if (command_->rotorPositionChanged(rotor_position))
     {
-        if (fabs(set_rotor_position - state_->getPosition()) > 1e-4)
+        if (fabs(rotor_position - state_->getPosition()) > 1e-4)
         {
-            if (safeCall(talonfxpro_->SetPosition(units::radian_t{set_rotor_position}), "talonfxpro_->SetPosition"))
+            if (safeCall(talonfxpro_->SetPosition(units::radian_t{rotor_position}), "talonfxpro_->SetPosition"))
             {
-                ROS_INFO_STREAM("SetPosition for TalonFXPro id " << getId() << " = " << getName() << " to " << set_rotor_position << " radians successful");
+                ROS_INFO_STREAM("SetRotorPosition for TalonFXPro id " << getId() << " = " << getName() << " to " << rotor_position << " radians successful");
             }
             else
             {
                 ROS_INFO_STREAM("SetRotorPosition for TalonFXPro id " << getId() << " = " << getName() << " failed");
-                command_->resetSetPosition();
+                command_->resetRotorPosition();
                 return;
             }
         }
@@ -1268,6 +1310,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     double control_deadband;
     double control_feedforward;
     int control_slot;
+    bool control_limit_forward_motion;
+    bool control_limit_reverse_motion;
     double control_differential_position;
     int control_differential_slot;
     bool control_oppose_master_direction;
@@ -1292,6 +1336,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         state_->setControlFeedforward(control_feedforward);
         state_->setControlSlot(control_slot);
         state_->setControlOpposeMasterDirection(control_oppose_master_direction);
+        state_->setControlLimitForwardMotion(control_limit_forward_motion);
+        state_->setControlLimitReverseMotion(control_limit_reverse_motion);
         state_->setControlDifferentialPosition(control_differential_position);
         state_->setControlDifferentialSlot(control_differential_slot);
     };
@@ -1308,6 +1354,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                           control_deadband,
                                                           control_feedforward,
                                                           control_slot,
+                                                          control_limit_forward_motion,
+                                                          control_limit_reverse_motion,
                                                           control_differential_position,
                                                           control_differential_slot,
                                                           control_oppose_master_direction);
@@ -1323,7 +1371,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                 if (!safeCall(talonfxpro_->SetControl(
                                   ctre::phoenix6::controls::DutyCycleOut(control_output,
                                                                          control_enable_foc,
-                                                                         control_override_brake_dur_neutral)),
+                                                                         control_override_brake_dur_neutral,
+                                                                         control_limit_forward_motion,
+                                                                         control_limit_reverse_motion)),
                               "setControl(DutyCycleOut)"))
                 {
                     command_->resetControl();
@@ -1335,7 +1385,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                   ctre::phoenix6::controls::TorqueCurrentFOC(static_cast<units::current::ampere_t>(control_output),
                                                                              control_max_abs_duty_cycle,
                                                                              static_cast<units::current::ampere_t>(control_deadband),
-                                                                             control_override_brake_dur_neutral)),
+                                                                             control_override_brake_dur_neutral,
+                                                                             control_limit_forward_motion,
+                                                                             control_limit_reverse_motion)),
                               "setControl(TorqueCurrentFOC)"))
                 {
                     command_->resetControl();
@@ -1346,7 +1398,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                 if (!safeCall(talonfxpro_->SetControl(
                                   ctre::phoenix6::controls::VoltageOut(static_cast<units::voltage::volt_t>(control_output),
                                                                        control_enable_foc,
-                                                                       control_override_brake_dur_neutral)),
+                                                                       control_override_brake_dur_neutral,
+                                                                       control_limit_forward_motion,
+                                                                       control_limit_reverse_motion)),
                               "setControl(VoltageOut)"))
                 {
                     command_->resetControl();
@@ -1360,7 +1414,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                               control_enable_foc,
                                                                               control_feedforward,
                                                                               control_slot,
-                                                                              control_override_brake_dur_neutral)),
+                                                                              control_override_brake_dur_neutral,
+                                                                              control_limit_forward_motion,
+                                                                              control_limit_reverse_motion)),
                               "setControl(PositionDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1374,7 +1430,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                             control_enable_foc,
                                                                             units::voltage::volt_t{control_feedforward},
                                                                             control_slot,
-                                                                            control_override_brake_dur_neutral)),
+                                                                            control_override_brake_dur_neutral,
+                                                                            control_limit_forward_motion,
+                                                                            control_limit_reverse_motion)),
                               "setControl(PositionVoltage)"))
                 {
                     command_->resetControl();
@@ -1387,7 +1445,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                      units::radians_per_second_t{control_velocity},
                                                                                      units::current::ampere_t{control_feedforward},
                                                                                      control_slot,
-                                                                                     control_override_brake_dur_neutral)),
+                                                                                     control_override_brake_dur_neutral,
+                                                                                     control_limit_forward_motion,
+                                                                                     control_limit_reverse_motion)),
                               "setControl(PositionTorqueCurrentFOC)"))
                 {
                     command_->resetControl();
@@ -1401,7 +1461,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                               control_enable_foc,
                                                                               control_feedforward,
                                                                               control_slot,
-                                                                              control_override_brake_dur_neutral)),
+                                                                              control_override_brake_dur_neutral,
+                                                                              control_limit_forward_motion,
+                                                                              control_limit_reverse_motion)),
                               "setControl(VelocityDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1415,7 +1477,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                             control_enable_foc,
                                                                             units::voltage::volt_t{control_feedforward},
                                                                             control_slot,
-                                                                            control_override_brake_dur_neutral)),
+                                                                            control_override_brake_dur_neutral,
+                                                                            control_limit_forward_motion,
+                                                                            control_limit_reverse_motion)),
                               "setControl(VelocityVoltage)"))
                 {
                     command_->resetControl();
@@ -1428,7 +1492,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                      units::radians_per_second_squared_t{control_acceleration},
                                                                                      units::current::ampere_t{control_feedforward},
                                                                                      control_slot,
-                                                                                     control_override_brake_dur_neutral)),
+                                                                                     control_override_brake_dur_neutral,
+                                                                                     control_limit_forward_motion,
+                                                                                     control_limit_reverse_motion)),
                               "setControl(VelocityTorqueCurrentFOC)"))
                 {
                     command_->resetControl();
@@ -1441,7 +1507,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                  control_enable_foc,
                                                                                  control_feedforward,
                                                                                  control_slot,
-                                                                                 control_override_brake_dur_neutral)),
+                                                                                 control_override_brake_dur_neutral,
+                                                                                 control_limit_forward_motion,
+                                                                                 control_limit_reverse_motion)),
                               "setControl(MotionMagicDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1454,7 +1522,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                control_enable_foc,
                                                                                units::voltage::volt_t{control_feedforward},
                                                                                control_slot,
-                                                                               control_override_brake_dur_neutral)),
+                                                                               control_override_brake_dur_neutral,
+                                                                               control_limit_forward_motion,
+                                                                               control_limit_reverse_motion)),
                               "setControl(MotionMagicVoltage)"))
                 {
                     command_->resetControl();
@@ -1466,8 +1536,54 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                   ctre::phoenix6::controls::MotionMagicTorqueCurrentFOC(units::radian_t{control_position},
                                                                                         units::ampere_t{control_feedforward},
                                                                                         control_slot,
-                                                                                        control_override_brake_dur_neutral)),
+                                                                                        control_override_brake_dur_neutral,
+                                                                                        control_limit_forward_motion,
+                                                                                        control_limit_reverse_motion)),
                               "setControl(MotionMagicTorqueCurrentFOC)"))
+                {
+                    command_->resetControl();
+                    success = false;
+                }
+                break;
+            case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
+                if (!safeCall(talonfxpro_->SetControl(
+                                  ctre::phoenix6::controls::MotionMagicExpoDutyCycle(units::radian_t{control_position},
+                                                                                     control_enable_foc,
+                                                                                     control_feedforward,
+                                                                                     control_slot,
+                                                                                     control_override_brake_dur_neutral,
+                                                                                     control_limit_forward_motion,
+                                                                                     control_limit_reverse_motion)),
+                              "setControl(MotionMagicExpoDutyCycle)"))
+                {
+                    command_->resetControl();
+                    success = false;
+                }
+                break;
+            case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
+                if (!safeCall(talonfxpro_->SetControl(
+                                  ctre::phoenix6::controls::MotionMagicExpoVoltage(units::radian_t{control_position},
+                                                                                   control_enable_foc,
+                                                                                   units::voltage::volt_t{control_feedforward},
+                                                                                   control_slot,
+                                                                                   control_override_brake_dur_neutral,
+                                                                                   control_limit_forward_motion,
+                                                                                   control_limit_reverse_motion)),
+                              "setControl(MotionMagicExpoVoltage)"))
+                {
+                    command_->resetControl();
+                    success = false;
+                }
+                break;
+            case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoTorqueCurrentFOC:
+                if (!safeCall(talonfxpro_->SetControl(
+                                  ctre::phoenix6::controls::MotionMagicExpoTorqueCurrentFOC(units::radian_t{control_position},
+                                                                                            units::ampere_t{control_feedforward},
+                                                                                            control_slot,
+                                                                                            control_override_brake_dur_neutral,
+                                                                                            control_limit_forward_motion,
+                                                                                            control_limit_reverse_motion)),
+                              "setControl(MotionMagicExpoTorqueCurrentFOC)"))
                 {
                     command_->resetControl();
                     success = false;
@@ -1480,7 +1596,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                          control_enable_foc,
                                                                                          control_feedforward,
                                                                                          control_slot,
-                                                                                         control_override_brake_dur_neutral)),
+                                                                                         control_override_brake_dur_neutral,
+                                                                                         control_limit_forward_motion,
+                                                                                         control_limit_reverse_motion)),
                               "setControl(MotionMagicVelocityDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1494,7 +1612,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                        control_enable_foc,
                                                                                        units::voltage::volt_t{control_feedforward},
                                                                                        control_slot,
-                                                                                       control_override_brake_dur_neutral)),
+                                                                                       control_override_brake_dur_neutral,
+                                                                                       control_limit_forward_motion,
+                                                                                       control_limit_reverse_motion)),
                               "setControl(MotionMagicVelocityVoltage)"))
                 {
                     command_->resetControl();
@@ -1508,7 +1628,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                                 control_enable_foc,
                                                                                                 units::ampere_t{control_feedforward},
                                                                                                 control_slot,
-                                                                                                control_override_brake_dur_neutral)),
+                                                                                                control_override_brake_dur_neutral,
+                                                                                                control_limit_forward_motion,
+                                                                                                control_limit_reverse_motion)),
                               "setControl(MotionMagicVelocityTorqueCurrentFOC)"))
                 {
                     command_->resetControl();
@@ -1520,11 +1642,13 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                   ctre::phoenix6::controls::DynamicMotionMagicDutyCycle(units::radian_t{control_position},
                                                                                         units::radians_per_second_t{control_velocity},
                                                                                         units::radians_per_second_squared_t{control_acceleration},
-                                                                                        units::dimensionless::scalar_t{control_jerk},
+                                                                                        units::radians_per_second_cubed_t{control_jerk},
                                                                                         control_enable_foc,
                                                                                         control_feedforward,
                                                                                         control_slot,
-                                                                                        control_override_brake_dur_neutral)),
+                                                                                        control_override_brake_dur_neutral,
+                                                                                        control_limit_forward_motion,
+                                                                                        control_limit_reverse_motion)),
                               "setControl(DynamicMotionMagicDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1536,11 +1660,13 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                   ctre::phoenix6::controls::DynamicMotionMagicVoltage(units::radian_t{control_position},
                                                                                       units::radians_per_second_t{control_velocity},
                                                                                       units::radians_per_second_squared_t{control_acceleration},
-                                                                                      units::dimensionless::scalar_t{control_jerk},
+                                                                                      units::radians_per_second_cubed_t{control_jerk},
                                                                                       control_enable_foc,
                                                                                       units::voltage::volt_t{control_feedforward},
                                                                                       control_slot,
-                                                                                      control_override_brake_dur_neutral)),
+                                                                                      control_override_brake_dur_neutral,
+                                                                                      control_limit_forward_motion,
+                                                                                      control_limit_reverse_motion)),
                               "setControl(DynamicMotionMagicVoltage)"))
                 {
                     command_->resetControl();
@@ -1552,10 +1678,12 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                   ctre::phoenix6::controls::DynamicMotionMagicTorqueCurrentFOC(units::radian_t{control_position},
                                                                                                units::radians_per_second_t{control_velocity},
                                                                                                units::radians_per_second_squared_t{control_acceleration},
-                                                                                               units::dimensionless::scalar_t{control_jerk},
+                                                                                               units::radians_per_second_cubed_t{control_jerk},
                                                                                                units::ampere_t{control_feedforward},
                                                                                                control_slot,
-                                                                                               control_override_brake_dur_neutral)),
+                                                                                               control_override_brake_dur_neutral,
+                                                                                               control_limit_forward_motion,
+                                                                                               control_limit_reverse_motion)),
                               "setControl(DynamicMotionMagicTorqueCurrentFOC)"))
                 {
                     command_->resetControl();
@@ -1564,7 +1692,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                 break;
             case hardware_interface::talonfxpro::TalonMode::Follower:
                 if (!safeCall(talonfxpro_->SetControl(
-                                  ctre::phoenix6::controls::Follower(control_output,
+                                  ctre::phoenix6::controls::Follower(static_cast<int>(control_output),
                                                                      control_oppose_master_direction)),
                               "setControl(Follower)"))
                 {
@@ -1574,7 +1702,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                 break;
             case hardware_interface::talonfxpro::TalonMode::StrictFollower:
                 if (!safeCall(talonfxpro_->SetControl(
-                                  ctre::phoenix6::controls::StrictFollower(control_output)),
+                                  ctre::phoenix6::controls::StrictFollower(static_cast<int>(control_output))),
                               "setControl(StrictFollower)"))
                 {
                     command_->resetControl();
@@ -1614,7 +1742,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                   units::radian_t{control_differential_position},
                                                                                   control_enable_foc,
                                                                                   control_differential_slot,
-                                                                                  control_override_brake_dur_neutral)),
+                                                                                  control_override_brake_dur_neutral,
+                                                                                  control_limit_forward_motion,
+                                                                                  control_limit_reverse_motion)),
                               "setControl(DifferentialDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1627,7 +1757,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                 units::radian_t{control_differential_position},
                                                                                 control_enable_foc,
                                                                                 control_differential_slot,
-                                                                                control_override_brake_dur_neutral)),
+                                                                                control_override_brake_dur_neutral,
+                                                                                control_limit_forward_motion,
+                                                                                control_limit_reverse_motion)),
                               "setControl(DifferentialVoltage)"))
                 {
                     command_->resetControl();
@@ -1641,7 +1773,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                           control_enable_foc,
                                                                                           control_slot,
                                                                                           control_differential_slot,
-                                                                                          control_override_brake_dur_neutral)),
+                                                                                          control_override_brake_dur_neutral,
+                                                                                          control_limit_forward_motion,
+                                                                                          control_limit_reverse_motion)),
                               "setControl(DifferentialPositionDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1655,7 +1789,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                         control_enable_foc,
                                                                                         control_slot,
                                                                                         control_differential_slot,
-                                                                                        control_override_brake_dur_neutral)),
+                                                                                        control_override_brake_dur_neutral,
+                                                                                        control_limit_forward_motion,
+                                                                                        control_limit_reverse_motion)),
                               "setControl(DifferentialPositionVoltage)"))
                 {
                     command_->resetControl();
@@ -1669,7 +1805,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                           control_enable_foc,
                                                                                           control_slot,
                                                                                           control_differential_slot,
-                                                                                          control_override_brake_dur_neutral)),
+                                                                                          control_override_brake_dur_neutral,
+                                                                                          control_limit_forward_motion,
+                                                                                          control_limit_reverse_motion)),
                               "setControl(DifferentialVelocityDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1683,7 +1821,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                         control_enable_foc,
                                                                                         control_slot,
                                                                                         control_differential_slot,
-                                                                                        control_override_brake_dur_neutral)),
+                                                                                        control_override_brake_dur_neutral,
+                                                                                        control_limit_forward_motion,
+                                                                                        control_limit_reverse_motion)),
                               "setControl(DifferentialVelocityVoltage)"))
                 {
                     command_->resetControl();
@@ -1697,7 +1837,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                              control_enable_foc,
                                                                                              control_slot,
                                                                                              control_differential_slot,
-                                                                                             control_override_brake_dur_neutral)),
+                                                                                             control_override_brake_dur_neutral,
+                                                                                             control_limit_forward_motion,
+                                                                                             control_limit_reverse_motion)),
                               "setControl(DifferentialMotionMagicDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1711,7 +1853,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                                                                                            control_enable_foc,
                                                                                            control_slot,
                                                                                            control_differential_slot,
-                                                                                           control_override_brake_dur_neutral)),
+                                                                                           control_override_brake_dur_neutral,
+                                                                                           control_limit_forward_motion,
+                                                                                           control_limit_reverse_motion)),
                               "setControl(DifferentialMotionMagicDutyCycle)"))
                 {
                     command_->resetControl();
@@ -1720,7 +1864,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                 break;
             case hardware_interface::talonfxpro::TalonMode::DifferentialFollower:
                 if (!safeCall(talonfxpro_->SetControl(
-                                  ctre::phoenix6::controls::DifferentialFollower(control_output,
+                                  ctre::phoenix6::controls::DifferentialFollower(static_cast<int>(control_output),
                                                                                  control_oppose_master_direction)),
                               "setControl(DifferentialFollower)"))
                 {
@@ -1730,7 +1874,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                 break;
             case hardware_interface::talonfxpro::TalonMode::DifferentialStrictFollower:
                 if (!safeCall(talonfxpro_->SetControl(
-                                  ctre::phoenix6::controls::DifferentialStrictFollower(control_output)),
+                                  ctre::phoenix6::controls::DifferentialStrictFollower(static_cast<int>(control_output))),
                               "setControl(DifferentialStrictFollower)"))
                 {
                     command_->resetControl();

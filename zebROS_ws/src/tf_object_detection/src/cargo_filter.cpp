@@ -35,12 +35,12 @@ void matchCallback(const frc_msgs::MatchSpecificDataConstPtr matchDataMsg) {
     const std::string blueCargo = "blue_cargo";
 
     switch(matchDataMsg->allianceColor) {
-        case 0:
+        case frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED:
             friendlyCargo = redCargo;
             opponentCargo = blueCargo;
             allianceKnown = true;
             break;
-        case 1:
+        case frc_msgs::MatchSpecificData::ALLIANCE_COLOR_BLUE:
             friendlyCargo = blueCargo;
             opponentCargo = redCargo;
             allianceKnown = true;

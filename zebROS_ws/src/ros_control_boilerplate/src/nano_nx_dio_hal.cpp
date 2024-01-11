@@ -582,10 +582,10 @@ HAL_Bool HAL_CheckRelayChannel(int32_t channel) {
 #endif
 
 #include <frc/DriverStation.h>
-double frc::DriverStation::GetMatchTime()
+units::second_t frc::DriverStation::GetMatchTime()
 {
 	ROS_ERROR("Called DriverStation::GetMatchTime() on unsupported platform");
-	return std::numeric_limits<double>::max();
+	return units::second_t{std::numeric_limits<double>::max()};
 }
 
 #if 0

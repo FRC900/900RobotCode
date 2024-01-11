@@ -78,6 +78,8 @@ public:
 			m.control_deadband.push_back(0);
 			m.control_feedforward.push_back(0);
 			m.control_slot.push_back(0);
+			m.control_limit_forward_motion.push_back(false);
+			m.control_limit_reverse_motion.push_back(false);
             m.control_differential_position.push_back(0);
 			m.control_differential_slot.push_back(0);
 			m.version_major.push_back(0);
@@ -305,6 +307,8 @@ public:
 					m.control_deadband[i] = ts->getControlDeadband();
 					m.control_feedforward[i] = ts->getControlFeedforward();
 					m.control_slot[i] = ts->getControlSlot();
+					m.control_limit_forward_motion[i] = ts->getControlLimitForwardMotion();
+					m.control_limit_reverse_motion[i] = ts->getControlLimitReverseMotion();
 					m.control_differential_position[i] = ts->getControlDifferentialPosition();
 					m.control_differential_slot[i] = ts->getControlDifferentialSlot();
 					m.version_major[i] = ts->getVersionMajor();

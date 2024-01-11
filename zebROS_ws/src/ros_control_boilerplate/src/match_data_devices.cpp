@@ -7,8 +7,8 @@
 
 template <bool SIM>
 MatchDataDevices<SIM>::MatchDataDevices(ros::NodeHandle &root_nh)
-    : state_interface_{std::make_unique<hardware_interface::MatchStateInterface>()}
-    , remote_state_interface_{std::make_unique<hardware_interface::RemoteMatchStateInterface>()}
+    : state_interface_{std::make_unique<hardware_interface::match_data::MatchStateInterface>()}
+    , remote_state_interface_{std::make_unique<hardware_interface::match_data::RemoteMatchStateInterface>()}
 {
     devices_.emplace_back(std::make_unique<DEVICE_TYPE>(root_nh));
 }

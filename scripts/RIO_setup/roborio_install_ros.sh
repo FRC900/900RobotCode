@@ -62,11 +62,13 @@ ssh -p 22 admin@$1 'rm -rf ~/.cache'
 # Copy over ROS tar.bz2 file, extract to / on the Rio
 scp -P 22 /home/ubuntu/roscore_roborio.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio.tar.bz2'
+ssh -p 22 admin@$1 'find /opt/ros/noetic --name __pycache__ | xargs rm -rf'
 ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
+ssh -p 22 admin@$1 'mkdir -p /opt/ros/noetic/local/lib/python3.10/dist-packages'
 ssh -p 22 admin@$1 'rsync -arv /opt/ros/noetic/lib/python3.10/site-packages/. /opt/ros/noetic/local/lib/python3.10/dist-packages'
 ssh -p 22 admin@$1 'rm -rf /opt/ros/noetic/lib/python3.10/site-packages'
 
-cd /home/ubuntu/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot/usr/local/lib
+cd /home/ubuntu/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot/usr/local/lib
 scp -P 22 libboost_atomic.so.1.74.0 libboost_chrono.so.1.74.0 libboost_program_options.so.1.74.0 libboost_regex.so.1.74.0 libboost_system.so.1.74.0 libboost_filesystem.so.1.74.0 libboost_thread.so.1.74.0 libboost_date_time.so.1.74.0 admin@$1:/usr/lib
 #ssh -p 22 admin@$1 ln -sf /usr/lib/libboost_atomic.so.1.74 /usr/lib/libboost_atomic.so.1.74.0
 #ssh -p 22 admin@$1 ln -sf /usr/lib/libboost_chrono.so.1.74 /usr/lib/libboost_chrono.so.1.74.0
@@ -88,16 +90,16 @@ scp -P 22 libboost_atomic.so.1.74.0 libboost_chrono.so.1.74.0 libboost_program_o
 # This will prevent weird bugs where sourcing install_isolated/setup.bash
 #   will overwrite the settings from /opt/ros/noetic/setup.bash leading
 #   to errors finding basic ROS tools
-ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2023/roborio'
-ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi'
-ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-nilrt-linux-gnueabi'
-ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot'
+ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio'
+ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi'
+ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-nilrt-linux-gnueabi'
+ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot'
 ssh -p 22 admin@$1 'ln -s /usr/include /include'
 
 # Create workspace. Do a build in the empty workspace to set
 # up various scripts for later use. TODO : See if this is needed?
 ssh -p 22 admin@$1 'mkdir -p 2023RobotCode/zebROS_ws/src'
-ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 2023RobotCode/zebROS_ws && PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages catkin_make_isolated --install'
+ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 2023RobotCode/zebROS_ws && PYTHONPATH=/opt/ros/noetic/lib/python3.10/dist-packages catkin_make_isolated --install'
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
@@ -106,11 +108,11 @@ ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 2023RobotCode/zebROS
 
 # Copy wpilib to roborio
 ssh -p 22 admin@$1 mkdir wpilib
-cd ~/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/wpilib/linux/athena/shared
+cd ~/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib/linux/athena/shared
 scp -P 22 *.so admin@$1:wpilib
-cd ~/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre/linux/athena/shared
+cd ~/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ctre/linux/athena/shared
 scp -P 22 *.so admin@$1:wpilib
-cd ~/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev/linux/athena/shared
+cd ~/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/rev/linux/athena/shared
 scp -P 22 *.so admin@$1:wpilib
 # Remove debugging versions of libraries to save space
 ssh -p 22 admin@$1 rm wpilib/*d.so wpilib/*jni.so wpilib/*java*so

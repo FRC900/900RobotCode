@@ -38,7 +38,7 @@ void SimMatchDataDevice::matchDataCallback(const frc_msgs::MatchSpecificData &ma
     std::unique_lock l(*mutex_);
 	HALSIM_SetDriverStationMatchTime(match_data.matchTimeRemaining);
 	HAL_AllianceStationID alliance_station_id = HAL_AllianceStationID_kRed1;
-	if (match_data.allianceColor == frc::DriverStation::kRed)
+	if (match_data.allianceColor == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED)
 	{
 		if (match_data.driverStationLocation == 1)
 		{
@@ -53,7 +53,7 @@ void SimMatchDataDevice::matchDataCallback(const frc_msgs::MatchSpecificData &ma
 			alliance_station_id = HAL_AllianceStationID_kRed3;
 		}
 	}
-	else if (match_data.allianceColor == frc::DriverStation::kBlue)
+	else if (match_data.allianceColor == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_BLUE)
 	{
 		if (match_data.driverStationLocation == 1)
 		{

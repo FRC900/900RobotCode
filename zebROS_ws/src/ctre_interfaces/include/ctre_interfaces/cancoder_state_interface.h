@@ -4,9 +4,7 @@
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include "state_handle/state_handle.h"
 
-namespace hardware_interface
-{
-namespace cancoder
+namespace hardware_interface::cancoder
 {
 
 enum class SensorDirection
@@ -30,7 +28,7 @@ enum class MagnetHealth
 class CANCoderHWState
 {
 	public:
-		CANCoderHWState(const int device_number);
+		explicit CANCoderHWState(const int device_number);
 		int getDeviceNumber(void) const;
 
 		SensorDirection getSensorDirection(void) const;
@@ -104,7 +102,7 @@ class CANCoderHWState
 
 		SensorDirection     sensor_direction_{SensorDirection::CounterClockwise_Positive};
 		double              magnet_offset_{0.0};
-		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Unsigned_0To1};
+		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Signed_PlusMinusHalf};
 
 		double              conversion_factor_{1.0};
 
@@ -136,12 +134,11 @@ class CANCoderHWState
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is
 // read-only, allow multiple controllers to register it.
-typedef StateHandle<const CANCoderHWState> CANCoderStateHandle;
-typedef StateHandle<CANCoderHWState>       CANCoderWritableStateHandle;
+using CANCoderStateHandle = StateHandle<const CANCoderHWState>;
+using CANCoderWritableStateHandle = StateHandle<CANCoderHWState>;
 class CANCoderStateInterface : public HardwareResourceManager<CANCoderStateHandle> {};
 class RemoteCANCoderStateInterface : public HardwareResourceManager<CANCoderWritableStateHandle, ClaimResources> {};
 
-} // namespace cancoder
-} // namespace hardware_interface
+} // namespace hardware_interface::cancoder
 
 #endif

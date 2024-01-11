@@ -197,7 +197,7 @@ void Pigeon2Device::read(const ros::Time &/*time*/, const ros::Duration &/*perio
             state_->setFaultDataAcquiredLate(read_thread_state_->getFaultDataAcquiredLate());
             state_->setFaultLoopTimeSlow(read_thread_state_->getFaultLoopTimeSlow());
             state_->setFaultSaturatedMagnetometer(read_thread_state_->getFaultSaturatedMagnetometer());
-            state_->setFaultSaturatedAccelometer(read_thread_state_->getFaultSaturatedAccelometer());
+            state_->setFaultSaturatedAccelerometer(read_thread_state_->getFaultSaturatedAccelerometer());
             state_->setFaultSaturatedGyroscope(read_thread_state_->getFaultSaturatedGyroscope());
 
             state_->setStickyFaultHardware(read_thread_state_->getStickyFaultHardware());
@@ -211,7 +211,7 @@ void Pigeon2Device::read(const ros::Time &/*time*/, const ros::Duration &/*perio
             state_->setStickyFaultDataAcquiredLate(read_thread_state_->getStickyFaultDataAcquiredLate());
             state_->setStickyFaultLoopTimeSlow(read_thread_state_->getStickyFaultLoopTimeSlow());
             state_->setStickyFaultSaturatedMagnetometer(read_thread_state_->getStickyFaultSaturatedMagnetometer());
-            state_->setStickyFaultSaturatedAccelometer(read_thread_state_->getStickyFaultSaturatedAccelometer());
+            state_->setStickyFaultSaturatedAccelerometer(read_thread_state_->getStickyFaultSaturatedAccelerometer());
             state_->setStickyFaultSaturatedGyroscope(read_thread_state_->getStickyFaultSaturatedGyroscope());
         }
 
@@ -406,9 +406,9 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
     MAKE_SIGNAL(accum_gyro_y, pigeon2_->GetAccumGyroY())
     MAKE_SIGNAL(accum_gyro_z, pigeon2_->GetAccumGyroZ())
 
-    MAKE_SIGNAL(angular_velocity_x, pigeon2_->GetAngularVelocityX())
-    MAKE_SIGNAL(angular_velocity_y, pigeon2_->GetAngularVelocityY())
-    MAKE_SIGNAL(angular_velocity_z, pigeon2_->GetAngularVelocityZ())
+    MAKE_SIGNAL(angular_velocity_x, pigeon2_->GetAngularVelocityXWorld())
+    MAKE_SIGNAL(angular_velocity_y, pigeon2_->GetAngularVelocityYWorld())
+    MAKE_SIGNAL(angular_velocity_z, pigeon2_->GetAngularVelocityZWorld())
 
     MAKE_SIGNAL(acceleration_x, pigeon2_->GetAccelerationX())
     MAKE_SIGNAL(acceleration_y, pigeon2_->GetAccelerationY())
@@ -435,7 +435,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
     MAKE_SIGNAL(fault_data_acquired_late, pigeon2_->GetFault_DataAcquiredLate())
     MAKE_SIGNAL(fault_loop_time_slow, pigeon2_->GetFault_LoopTimeSlow())
     MAKE_SIGNAL(fault_saturated_magnetometer, pigeon2_->GetFault_SaturatedMagnetometer())
-    MAKE_SIGNAL(fault_saturated_accelometer, pigeon2_->GetFault_SaturatedAccelometer())
+    MAKE_SIGNAL(fault_saturated_Accelerometer, pigeon2_->GetFault_SaturatedAccelerometer())
     MAKE_SIGNAL(fault_saturated_gyroscope, pigeon2_->GetFault_SaturatedGyroscope())
 
     MAKE_SIGNAL(sticky_fault_hardware, pigeon2_->GetStickyFault_Hardware())
@@ -449,7 +449,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
     MAKE_SIGNAL(sticky_fault_data_acquired_late, pigeon2_->GetStickyFault_DataAcquiredLate())
     MAKE_SIGNAL(sticky_fault_loop_time_slow, pigeon2_->GetStickyFault_LoopTimeSlow())
     MAKE_SIGNAL(sticky_fault_saturated_magnetometer, pigeon2_->GetStickyFault_SaturatedMagnetometer())
-    MAKE_SIGNAL(sticky_fault_saturated_accelometer, pigeon2_->GetStickyFault_SaturatedAccelometer())
+    MAKE_SIGNAL(sticky_fault_saturated_Accelerometer, pigeon2_->GetStickyFault_SaturatedAccelerometer())
     MAKE_SIGNAL(sticky_fault_saturated_gyroscope, pigeon2_->GetStickyFault_SaturatedGyroscope())
 
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
@@ -485,9 +485,9 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(accum_gyro_y, pigeon2_->GetAccumGyroY())
         SAFE_READ(accum_gyro_z, pigeon2_->GetAccumGyroZ())
 
-        SAFE_READ(angular_velocity_x, pigeon2_->GetAngularVelocityX())
-        SAFE_READ(angular_velocity_y, pigeon2_->GetAngularVelocityY())
-        SAFE_READ(angular_velocity_z, pigeon2_->GetAngularVelocityZ())
+        SAFE_READ(angular_velocity_x, pigeon2_->GetAngularVelocityXWorld())
+        SAFE_READ(angular_velocity_y, pigeon2_->GetAngularVelocityYWorld())
+        SAFE_READ(angular_velocity_z, pigeon2_->GetAngularVelocityZWorld())
 
         SAFE_READ(acceleration_x, pigeon2_->GetAccelerationX())
         SAFE_READ(acceleration_y, pigeon2_->GetAccelerationY())
@@ -514,7 +514,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(fault_data_acquired_late, pigeon2_->GetFault_DataAcquiredLate())
         SAFE_READ(fault_loop_time_slow, pigeon2_->GetFault_LoopTimeSlow())
         SAFE_READ(fault_saturated_magnetometer, pigeon2_->GetFault_SaturatedMagnetometer())
-        SAFE_READ(fault_saturated_accelometer, pigeon2_->GetFault_SaturatedAccelometer())
+        SAFE_READ(fault_saturated_Accelerometer, pigeon2_->GetFault_SaturatedAccelerometer())
         SAFE_READ(fault_saturated_gyroscope, pigeon2_->GetFault_SaturatedGyroscope())
 
         SAFE_READ(sticky_fault_hardware, pigeon2_->GetStickyFault_Hardware())
@@ -528,7 +528,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(sticky_fault_data_acquired_late, pigeon2_->GetStickyFault_DataAcquiredLate())
         SAFE_READ(sticky_fault_loop_time_slow, pigeon2_->GetStickyFault_LoopTimeSlow())
         SAFE_READ(sticky_fault_saturated_magnetometer, pigeon2_->GetStickyFault_SaturatedMagnetometer())
-        SAFE_READ(sticky_fault_saturated_accelometer, pigeon2_->GetStickyFault_SaturatedAccelometer())
+        SAFE_READ(sticky_fault_saturated_Accelerometer, pigeon2_->GetStickyFault_SaturatedAccelerometer())
         SAFE_READ(sticky_fault_saturated_gyroscope, pigeon2_->GetStickyFault_SaturatedGyroscope())
 
         // Actually update the Pigeon2HWState shared between
@@ -595,7 +595,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setFaultDataAcquiredLate(*fault_data_acquired_late);
             read_thread_state_->setFaultLoopTimeSlow(*fault_loop_time_slow);
             read_thread_state_->setFaultSaturatedMagnetometer(*fault_saturated_magnetometer);
-            read_thread_state_->setFaultSaturatedAccelometer(*fault_saturated_accelometer);
+            read_thread_state_->setFaultSaturatedAccelerometer(*fault_saturated_Accelerometer);
             read_thread_state_->setFaultSaturatedGyroscope(*fault_saturated_gyroscope);
 
             read_thread_state_->setStickyFaultHardware(*sticky_fault_hardware);
@@ -609,7 +609,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setStickyFaultDataAcquiredLate(*sticky_fault_data_acquired_late);
             read_thread_state_->setStickyFaultLoopTimeSlow(*sticky_fault_loop_time_slow);
             read_thread_state_->setStickyFaultSaturatedMagnetometer(*sticky_fault_saturated_magnetometer);
-            read_thread_state_->setStickyFaultSaturatedAccelometer(*sticky_fault_saturated_accelometer);
+            read_thread_state_->setStickyFaultSaturatedAccelerometer(*sticky_fault_saturated_Accelerometer);
             read_thread_state_->setStickyFaultSaturatedGyroscope(*sticky_fault_saturated_gyroscope);
         }
 		tracer->report(60);

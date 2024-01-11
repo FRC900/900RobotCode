@@ -35,13 +35,15 @@ private:
 public: 
 	bool init(hardware_interface::TalonStateInterface *hw,
 			  ros::NodeHandle                         &root_nh,
-			  ros::NodeHandle                         &controller_nh)
+			  ros::NodeHandle                         &controller_nh) override
 {
 	// get all joint names from the hardware interface
 	const std::vector<std::string> &joint_names = hw->getNames();
 	num_hw_joints_ = joint_names.size();
 	for (size_t i = 0; i < num_hw_joints_; i++)
-		ROS_DEBUG("Got joint %s", joint_names[i].c_str());
+	{
+		ROS_DEBUG_STREAM("Got joint " << joint_names[i]);
+	}
 
 	// get publishing period
 	if (!controller_nh.getParam("publish_rate", publish_rate_))
@@ -213,14 +215,14 @@ public:
 	return true;
 }
 
-void starting(const ros::Time &time)
+void starting(const ros::Time &time) override
 {
 	interval_counter_->reset();
 }
 
 
 
-void update(const ros::Time &time, const ros::Duration &period)
+void update(const ros::Time &time, const ros::Duration &period) override
 {
 	// limit rate of publishing
 	if (interval_counter_->update(period))
@@ -235,7 +237,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 			m.header.stamp = time;
 			for (size_t i = 0; i < num_hw_joints_; i++)
 			{
-				auto &ts = talon_state_[i];
+				auto const &ts = talon_state_[i];
 				m.can_id[i] = ts->getCANID();
 
 				m.feedback_coefficient[i] = ts->getFeedbackCoefficient();
@@ -370,7 +372,6 @@ void update(const ros::Time &time, const ros::Duration &period)
 				hardware_interface::RemoteLimitSwitchSource remote_ls_source;
 				unsigned int remote_ls_id;
 				ts->getRemoteForwardLimitSwitchSource(remote_ls_source, ls_normal, remote_ls_id);
-
 				m.limit_switch_remote_forward_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
 				m.limit_switch_remote_forward_normal[i] = limitSwitchNormalToString(ls_normal);
 				m.limit_switch_remote_forward_id[i] = remote_ls_id;
@@ -432,9 +433,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 
 				m.conversion_factor[i] = ts->getConversionFactor();
 
-
-				const auto motor_commutation = ts->getMotorCommutation();
-				switch (motor_commutation)
+				switch (ts->getMotorCommutation())
 				{
 					case hardware_interface::MotorCommutation::Trapezoidal:
 						m.motor_commutation[i] = "Trapezoidal";
@@ -444,8 +443,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 						break;
 				}
 
-				const auto absolute_sensor_range = ts->getAbsoluteSensorRange();
-				switch (absolute_sensor_range)
+				switch (ts->getAbsoluteSensorRange())
 				{
 					case hardware_interface::Unsigned_0_to_360:
 						m.absolute_sensor_range[i] = "Unsigned_0_to_360";
@@ -458,8 +456,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 						break;
 				}
 
-				const auto sensor_initialization_strategy = ts->getSensorInitializationStrategy();
-				switch (sensor_initialization_strategy)
+				switch (ts->getSensorInitializationStrategy())
 				{
 					case hardware_interface::BootToZero:
 						m.sensor_initialization_strategy[i] = "BootToZero";
@@ -490,7 +487,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 	}
 }
 
-void stopping(const ros::Time & /*time*/)
+void stopping(const ros::Time & /*time*/) override
 {}
 
 private:

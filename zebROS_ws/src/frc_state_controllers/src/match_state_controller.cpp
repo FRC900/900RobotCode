@@ -7,17 +7,17 @@
 
 namespace match_state_controller
 {
-class MatchStateController: public controller_interface::Controller<hardware_interface::MatchStateInterface>
+class MatchStateController: public controller_interface::Controller<hardware_interface::match_data::MatchStateInterface>
 {
 private:
-		hardware_interface::MatchStateHandle match_state_;
+		hardware_interface::match_data::MatchStateHandle match_state_;
 		std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData> > realtime_pub_;
 		std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
 		double publish_rate_{20};
 public:
-    bool init(hardware_interface::MatchStateInterface *hw,
-              ros::NodeHandle                         &root_nh,
-              ros::NodeHandle                         &controller_nh) override
+    bool init(hardware_interface::match_data::MatchStateInterface *hw,
+              ros::NodeHandle                                     &root_nh,
+              ros::NodeHandle                                     &controller_nh) override
 
 	{
 		ROS_INFO_STREAM_NAMED("match_state_controller", "init is running");
@@ -53,11 +53,11 @@ public:
 		m.matchTimeRemaining = 0.0;
 		m.gameSpecificData.clear();
 		m.eventName = "";
-		m.allianceColor = 0.0;
-		m.matchType = 0.0;
-		m.driverStationLocation = 0.0;
-		m.matchNumber = 0.0;
-		m.replayNumber = 0.0;
+		m.allianceColor = 0;
+		m.matchType = 0;
+		m.driverStationLocation = 0;
+		m.matchNumber = 0;
+		m.replayNumber = 0;
 		m.Enabled = false;
 		m.Disabled = false;
 		m.Autonomous = false;
@@ -97,7 +97,18 @@ public:
 				m.matchTimeRemaining = ms->getMatchTimeRemaining();
 				m.gameSpecificData = ms->getGameSpecificData();
 				m.eventName = ms->getEventName();
-				m.allianceColor = ms->getAllianceColor();
+				switch(ms->getAllianceColor())
+				{
+					case hardware_interface::match_data::AllianceColor::Red:
+						m.allianceColor = frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED;
+						break;
+					case hardware_interface::match_data::AllianceColor::Blue:
+						m.allianceColor = frc_msgs::MatchSpecificData::ALLIANCE_COLOR_BLUE;
+						break;
+					default:
+						m.allianceColor = frc_msgs::MatchSpecificData::ALLIANCE_COLOR_UNKNOWN;
+						break;
+				}
 				m.matchType = ms->getMatchType();
 				m.driverStationLocation = ms->getDriverStationLocation();
 				m.matchNumber = ms->getMatchNumber();
@@ -132,25 +143,36 @@ public:
 namespace state_listener_controller
 {
 class MatchStateListenerController :
-	public controller_interface::Controller<hardware_interface::RemoteMatchStateInterface>
+	public controller_interface::Controller<hardware_interface::match_data::RemoteMatchStateInterface>
 {
 private:
 	ros::Subscriber sub_command_;
-	hardware_interface::MatchStateWritableHandle handle_;
+	hardware_interface::match_data::MatchStateWritableHandle handle_;
 
 	// Real-time buffer holds the last command value read from the "command" topic.
-	realtime_tools::RealtimeBuffer<hardware_interface::MatchHWState> command_buffer_;
+	realtime_tools::RealtimeBuffer<hardware_interface::match_data::MatchHWState> command_buffer_;
 
     // Save data from the published message
 	void commandCB(const frc_msgs::MatchSpecificDataConstPtr &msg)
 	{
-		hardware_interface::MatchHWState data;
+		hardware_interface::match_data::MatchHWState data;
 		data.setMatchTimeRemaining(msg->matchTimeRemaining);
 
 		data.setGameSpecificData(msg->gameSpecificData);
 		data.setEventName(msg->eventName);
 
-		data.setAllianceColor(msg->allianceColor);
+		switch(msg->allianceColor)
+		{
+			case frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED:
+				data.setAllianceColor(hardware_interface::match_data::AllianceColor::Red);
+				break;
+			case frc_msgs::MatchSpecificData::ALLIANCE_COLOR_BLUE:
+				data.setAllianceColor(hardware_interface::match_data::AllianceColor::Blue);
+				break;
+			default:
+				data.setAllianceColor(hardware_interface::match_data::AllianceColor::Unknown);
+				break;
+		}
 		data.setMatchType(msg->matchType);
 		data.setDriverStationLocation(msg->driverStationLocation);
 		data.setMatchNumber(msg->matchNumber);
@@ -179,7 +201,7 @@ public:
 		sub_command_.shutdown();
 	}
 
-	bool init(hardware_interface::RemoteMatchStateInterface *hw, ros::NodeHandle &n) override
+	bool init(hardware_interface::match_data::RemoteMatchStateInterface *hw, ros::NodeHandle &n) override
 	{
 		// Read list of hw, make a list, grab handles for them, plus allocate storage space
 		auto joint_names = hw->getNames();

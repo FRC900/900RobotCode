@@ -24,17 +24,7 @@ class JoystickState
 		JoystickState(JoystickState &&other) noexcept = delete;
 		~JoystickState() = default;
 
-		JoystickState &operator=(const JoystickState &other)
-		{
-			if (this != &other)
-			{
-				axises_     = other.axises_;
-				buttons_    = other.buttons_;
-				povs_       = other.povs_;
-				raw_axises_ = other.raw_axises_;
-			}
-			return *this;
-		}
+		JoystickState &operator=(const JoystickState &other) = delete;
 		JoystickState &operator=(JoystickState &&) = delete;
 
 		size_t getId(void) const      { return id_; }

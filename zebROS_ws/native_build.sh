@@ -50,6 +50,7 @@ catkin config --skiplist \
 	controllers_2019_msgs \
 	controllers_2020 \
 	controllers_2020_msgs \
+	deeptag_ros \
 	diff_drive_controller \
 	effort_controllers \
 	force_torque_sensor_controller \
@@ -80,7 +81,7 @@ catkin config --skiplist \
 	zed_ros \
 	$EXTRA_SKIPLIST_PACKAGES
 
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF  $EXTRA_CMD_LINE "$@"
+catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -DNON_POLLING" $EXTRA_CMD_LINE "$@"
 
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status

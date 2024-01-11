@@ -41,6 +41,10 @@ enum class LimitSource
 {
 	Uninitialized,
 	LimitSwitchPin,
+	RemoteTalonFX,
+	RemoteCANifier,
+	RemoteCANcoder,
+	Disabled,
 	Last
 };
 
@@ -59,6 +63,9 @@ enum class TalonMode
 	MotionMagicDutyCycle,
 	MotionMagicVoltage,
 	MotionMagicTorqueCurrentFOC,
+	MotionMagicExpoDutyCycle,
+	MotionMagicExpoVoltage,
+	MotionMagicExpoTorqueCurrentFOC,
 	MotionMagicVelocityDutyCycle,
 	MotionMagicVelocityVoltage,
 	MotionMagicVelocityTorqueCurrentFOC,

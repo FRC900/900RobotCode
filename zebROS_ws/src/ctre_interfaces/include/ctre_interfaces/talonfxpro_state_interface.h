@@ -27,7 +27,7 @@ namespace hardware_interface::talonfxpro
 class TalonFXProHWState
 {
 public:
-	TalonFXProHWState(const int can_id);
+	explicit TalonFXProHWState(const int can_id);
 	TalonFXProHWState(const TalonFXProHWState &) = delete;
 	TalonFXProHWState(TalonFXProHWState &&) = delete;
 	~TalonFXProHWState();
@@ -252,6 +252,12 @@ public:
 
 	void setControlSlot(const int control_slot);
 	int getControlSlot(void) const;
+
+	void setControlLimitForwardMotion(const bool limit_forward_direction);
+	bool getControlLimitForwardMotion(void) const;
+
+	void setControlLimitReverseMotion(const bool limit_reverse_direction);
+	bool getControlLimitReverseMotion(void) const;
 
 	void setControlDifferentialPosition(const double control_differential_position);
 	double getControlDifferentialPosition(void) const;
@@ -585,6 +591,8 @@ private:
 	double control_deadband_{0.0};
 	double control_feedforward_{0.0};
 	int control_slot_{0};
+	bool control_limit_forward_motion_{false};
+	bool control_limit_reverse_motion_{false};
 	double control_differential_position_{0.0};
 	int control_differential_slot_{0};
 	bool control_oppose_master_direction_{false};

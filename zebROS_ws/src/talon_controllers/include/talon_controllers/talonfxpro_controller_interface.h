@@ -181,6 +181,8 @@ public:
     std::atomic<double> control_feedforward_{0.0};
     std::atomic<int>    control_slot_{0};
     std::atomic<bool>   control_oppose_master_direction_{false};
+    std::atomic<bool>   control_limit_forward_motion_{false};
+    std::atomic<bool>   control_limit_reverse_motion_{false};
     std::atomic<int>    control_differential_slot_{0};
 
     std::atomic<bool> continuous_wrap_{false};
@@ -257,7 +259,7 @@ public:
     void setStatorCurrentLimitEnable(const bool stator_current_limit_enable, const bool update_ddr = true);
     void setSupplyCurrentLimit(const double supply_current_limit, const bool update_ddr = true);
     void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable, const bool update_ddr = true);
-    void setSupplyVoltageTimeConstraint(const double supply_voltage_time_constraint, const bool update_ddr = true);
+    void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant, const bool update_ddr = true);
     void setPeakForwardVoltage(const double peak_forward_voltage, const bool update_ddr = true);
     void setPeakReverseVoltage(const double peak_reverse_voltage, const bool update_ddr = true);
     void setPeakForwardTorqueCurrent(const double peak_forward_torque_current, const bool update_ddr = true);
@@ -267,8 +269,8 @@ public:
     void setSensorToMechanismRatio(const double sensor_to_mechanism_ratio, const bool update_ddr = true);
     void setRotorToSensorRatio(const double rotor_to_sensor_ratio, const bool update_ddr = true);
     void setDifferentialSensorSource(const hardware_interface::talonfxpro::DifferentialSensorSource differential_sensor_source, const bool update_ddr = true);
-    void setDifferentialTalonFXSensorId(const int differential_talonfx_sensor_id, const bool update_ddr = true);
-    void setDifferentialRemoteSensorId(const int differential_remote_sensor_id, const bool update_ddr = true);
+    void setDifferentialTalonFXSensorID(const int differential_talonfx_sensor_id, const bool update_ddr = true);
+    void setDifferentialRemoteSensorID(const int differential_remote_sensor_id, const bool update_ddr = true);
     void setPeakDifferentialDutyCycle(const double peak_differential_duty_cycle, const bool update_ddr = true);
     void setPeakDifferentialVoltage(const double peak_differential_voltage, const bool update_ddr = true);
     void setPeakDifferentialTorqueCurrent(const double peak_differential_torque_current, const bool update_ddr = true);
@@ -278,17 +280,17 @@ public:
     void setDutyCycleClosedLoopRampPeriod(const double duty_cycle_closed_loop_ramp_period, const bool update_ddr = true);
     void setVoltageClosedLoopRampPeriod(const double voltage_closed_loop_ramp_period, const bool update_ddr = true);
     void setTorqueClosedLoopRampPeriod(const double torque_closed_loop_ramp_period, const bool update_ddr = true);
-    void setForwardLimitType(const int forward_limit_type, const bool update_ddr = true);
+    void setForwardLimitType(const hardware_interface::talonfxpro::LimitType forward_limit_type, const bool update_ddr = true);
     void setForwardLimitAutosetPositionEnable(const bool forward_limit_autoset_position_enable, const bool update_ddr = true);
     void setForwardLimitAutosetPositionValue(const double forward_limit_autoset_position_value, const bool update_ddr = true);
     void setForwardLimitEnable(const bool forward_limit_enable, const bool update_ddr = true);
-    void setForwardLimitSource(const int forward_limit_source, const bool update_ddr = true);
+    void setForwardLimitSource(const hardware_interface::talonfxpro::LimitSource forward_limit_source, const bool update_ddr = true);
     void setForwardLimitRemoteSensorID(const int forward_limit_remote_sensor_id, const bool update_ddr = true);
-    void setReverseLimitType(const int reverse_limit_type, const bool update_ddr = true);
+    void setReverseLimitType(const hardware_interface::talonfxpro::LimitType reverse_limit_type, const bool update_ddr = true);
     void setReverseLimitAutosetPositionEnable(const bool reverse_limit_autoset_position_enable, const bool update_ddr = true);
     void setReverseLimitAutosetPositionValue(const double reverse_limit_autoset_position_value, const bool update_ddr = true);
     void setReverseLimitEnable(const bool reverse_limit_enable, const bool update_ddr = true);
-    void setReverseLimitSource(const int reverse_limit_source, const bool update_ddr = true);
+    void setReverseLimitSource(const hardware_interface::talonfxpro::LimitSource reverse_limit_source, const bool update_ddr = true);
     void setReverseLimitRemoteSensorID(const int reverse_limit_remote_sensor_id, const bool update_ddr = true);
     void setBeepOnBoot(const bool beep_on_boot, const bool update_ddr = true);
     void setBeepOnConfig(const bool beep_on_config, const bool update_ddr = true);
@@ -308,6 +310,8 @@ public:
     void setControlFeedforward(const double control_feedforward, const bool update_ddr = true);
     void setControlSlot(const int control_slot, const bool update_ddr = true);
     void setControlOpposeMasterDirection(const bool control_oppose_master_direction, const bool update_ddr = true);
+    void setControlLimitForwardMotion(const bool control_limit_forward_motion, const bool update_ddr = true);
+    void setControlLimitReverseMotion(const bool control_limit_reverse_motion, const bool update_ddr = true);
     void setControlDifferentialSlot(const int control_differential_slot, const bool update_ddr = true);
     void setEnableReadThread(const bool enable_read_thread, const bool update_ddr = true);
     void setRotorPosition(const double set_position, const bool update_ddr = true);
@@ -384,6 +388,8 @@ public:
 	STATE_PASSTHRU_FN(getControlFeedforward)
 	STATE_PASSTHRU_FN(getControlSlot)
 	STATE_PASSTHRU_FN(getControlOpposeMasterDirection)
+    STATE_PASSTHRU_FN(getControlLimitForwardMotion);
+    STATE_PASSTHRU_FN(getControlLimitReverseMotion);
     STATE_PASSTHRU_FN(getControlDifferentialPosition)
 	STATE_PASSTHRU_FN(getControlDifferentialSlot)
 	STATE_PASSTHRU_FN(getEnableReadThread)
@@ -521,6 +527,10 @@ protected:
     };
     static inline const std::map<std::string, int> limit_source_enum_map_ {
         {"LimitSwitchPin", static_cast<int>(hardware_interface::talonfxpro::LimitSource::LimitSwitchPin)},
+        {"RemoteTalonFX", static_cast<int>(hardware_interface::talonfxpro::LimitSource::RemoteTalonFX)},
+        {"RemoteCANifier", static_cast<int>(hardware_interface::talonfxpro::LimitSource::RemoteCANifier)},
+        {"RemoteCANcoder", static_cast<int>(hardware_interface::talonfxpro::LimitSource::RemoteCANcoder)},
+        {"Disabled", static_cast<int>(hardware_interface::talonfxpro::LimitSource::Disabled)}
     };
 };
 
@@ -643,6 +653,9 @@ extern const char VELOCITY_TORQUE_CURRENT_FOC_NAME[];
 extern const char MOTION_MAGIC_DUTY_CYCLE_NAME[];
 extern const char MOTION_MAGIC_VOLTAGE_NAME[];
 extern const char MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME[];
+extern const char MOTION_MAGIC_EXPO_DUTY_CYCLE_NAME[];
+extern const char MOTION_MAGIC_EXPO_VOLTAGE_NAME[];
+extern const char MOTION_MAGIC_EXPO_TORQUE_CURRENT_FOC_NAME[];
 extern const char MOTION_MAGIC_VELOCITY_DUTY_CYCLE_NAME[];
 extern const char MOTION_MAGIC_VELOCITY_VOLTAGE_NAME[];
 extern const char MOTION_MAGIC_VELOCITY_TORQUE_CURRENT_FOC_NAME[];
@@ -661,6 +674,9 @@ using TalonFXProVelocityTorqueCurrentFOCControllerInterface = TalonFXProVelocity
 using TalonFXProMotionMagicDutyCycleControllerInterface = TalonFXProMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicDutyCycle, MOTION_MAGIC_DUTY_CYCLE_NAME>;
 using TalonFXProMotionMagicVoltageControllerInterface = TalonFXProMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage, MOTION_MAGIC_VOLTAGE_NAME>;
 using TalonFXProMotionMagicTorqueCurrentFOCControllerInterface = TalonFXProMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC, MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME>;
+using TalonFXProMotionMagicExpoDutyCycleControllerInterface = TalonFXProMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle, MOTION_MAGIC_EXPO_DUTY_CYCLE_NAME>;
+using TalonFXProMotionMagicExpoVoltageControllerInterface = TalonFXProMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage, MOTION_MAGIC_EXPO_VOLTAGE_NAME>;
+using TalonFXProMotionMagicExpoTorqueCurrentFOCControllerInterface = TalonFXProMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicExpoTorqueCurrentFOC, MOTION_MAGIC_EXPO_TORQUE_CURRENT_FOC_NAME>;
 using TalonFXProMotionMagicVelocityDutyCycleControllerInterface = TalonFXProMotionMagicVelocityControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityDutyCycle, MOTION_MAGIC_VELOCITY_DUTY_CYCLE_NAME>;
 using TalonFXProMotionMagicVelocityVoltageControllerInterface = TalonFXProMotionMagicVelocityControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityVoltage, MOTION_MAGIC_VELOCITY_VOLTAGE_NAME>;
 using TalonFXProMotionMagicVelocityTorqueCurrentFOCControllerInterface = TalonFXProMotionMagicVelocityControllerInterface<hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityTorqueCurrentFOC, MOTION_MAGIC_VELOCITY_TORQUE_CURRENT_FOC_NAME>;

@@ -132,7 +132,7 @@ LatencyCompensationGroup::LatencyCompensationGroup(const XmlRpc::XmlRpcValue &en
             const auto pigeon2_ptr = check_for_correct_pointer_entry.operator()<ctre::phoenix6::hardware::core::CorePigeon2>();
             if (pigeon2_ptr)
             {
-                create_group_entry(entry_name, &pigeon2_ptr->GetRoll(), &pigeon2_ptr->GetAngularVelocityX());
+                create_group_entry(entry_name, &pigeon2_ptr->GetRoll(), &pigeon2_ptr->GetAngularVelocityXWorld());
             }
             else
             {
@@ -144,7 +144,7 @@ LatencyCompensationGroup::LatencyCompensationGroup(const XmlRpc::XmlRpcValue &en
             const auto pigeon2_ptr = check_for_correct_pointer_entry.operator()<ctre::phoenix6::hardware::core::CorePigeon2>();
             if (pigeon2_ptr)
             {
-                create_group_entry(entry_name, &pigeon2_ptr->GetPitch(), &pigeon2_ptr->GetAngularVelocityY());
+                create_group_entry(entry_name, &pigeon2_ptr->GetPitch(), &pigeon2_ptr->GetAngularVelocityYWorld());
             }
             else
             {
@@ -156,7 +156,7 @@ LatencyCompensationGroup::LatencyCompensationGroup(const XmlRpc::XmlRpcValue &en
             const auto pigeon2_ptr = check_for_correct_pointer_entry.operator()<ctre::phoenix6::hardware::core::CorePigeon2>();
             if (pigeon2_ptr)
             {
-                create_group_entry(entry_name, &pigeon2_ptr->GetYaw(), &pigeon2_ptr->GetAngularVelocityZ());
+                create_group_entry(entry_name, &pigeon2_ptr->GetYaw(), &pigeon2_ptr->GetAngularVelocityZWorld());
             }
             else
             {

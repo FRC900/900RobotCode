@@ -14,6 +14,8 @@ float64[] control_max_abs_duty_cycle
 float64[] control_deadband
 float64[] control_feedforward
 int8[]    control_slot
+bool[]    control_limit_forward_motion
+bool[]    control_limit_reverse_motion
 float64[] control_differential_position
 int8[]    control_differential_slot
 

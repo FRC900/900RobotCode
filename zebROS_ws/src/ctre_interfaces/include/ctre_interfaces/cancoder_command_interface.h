@@ -4,9 +4,7 @@
 #include "ctre_interfaces/cancoder_state_interface.h"
 #include "state_handle/command_handle.h"
 
-namespace hardware_interface
-{
-namespace cancoder
+namespace hardware_interface::cancoder
 {
 class CANCoderHWCommand
 {
@@ -44,7 +42,7 @@ class CANCoderHWCommand
 		bool                set_position_changed_{false};
 		SensorDirection     sensor_direction_{SensorDirection::CounterClockwise_Positive};
 		double              magnet_offset_{0.0};
-		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Unsigned_0To1};
+		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Signed_PlusMinusHalf};
 		bool                magnet_sensor_configs_changed_{true};
 		bool                clear_sticky_faults_{false};
 		double              conversion_factor_{1.0};
@@ -53,14 +51,13 @@ class CANCoderHWCommand
 // Handle - used by each controller to get, by name of the
 // corresponding joint, an interface with which to send commands
 // to a CANCoder
-typedef CommandHandle<CANCoderHWCommand, CANCoderHWState, CANCoderStateHandle> CANCoderCommandHandle;
+using CANCoderCommandHandle = CommandHandle<CANCoderHWCommand, CANCoderHWState, CANCoderStateHandle>;
 
 
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given CANCoder at any particular time
 class CANCoderCommandInterface : public HardwareResourceManager<CANCoderCommandHandle, ClaimResources> {};
 
-} // namespace cancoder
-} // namespace hardware_interface
+} // namespace hardware_interface::cancoder
 
 #endif

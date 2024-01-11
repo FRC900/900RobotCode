@@ -226,7 +226,7 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
 
 void matchCallback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
 {
-  if (MatchData->allianceColor) // 1 = blue
+  if (MatchData->allianceColor == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_BLUE) // 1 = blue
 	{
     //ROS_INFO("Blue Alliance");
 		if (pf->allianceColorCheck(true)) {
@@ -234,7 +234,7 @@ void matchCallback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
       ROS_WARN_STREAM("PF Alliance Color Changed to Blue... reinit");
     }
 	}
-	else // 0 = red
+	else if (MatchData->allianceColor == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED)// 0 = red
 	{
     //ROS_INFO("Red Alliance");
 		// if true, means that beacons have changed so pf should reinit

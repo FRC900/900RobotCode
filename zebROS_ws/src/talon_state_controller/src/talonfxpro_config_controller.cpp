@@ -339,6 +339,14 @@ public:
 						{
 						case hardware_interface::talonfxpro::LimitSource::LimitSwitchPin:
 							return "LimitSwitchPin";
+						case hardware_interface::talonfxpro::LimitSource::RemoteTalonFX:
+							return "RemoteTalonFX";
+						case hardware_interface::talonfxpro::LimitSource::RemoteCANifier:
+							return "RemoteCANifier";
+						case hardware_interface::talonfxpro::LimitSource::RemoteCANcoder:
+							return "RemoteCANcoder";
+						case hardware_interface::talonfxpro::LimitSource::Disabled:
+							return "Disabled";
 						default:
 							return "Unknown";
 						}

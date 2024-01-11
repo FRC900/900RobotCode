@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_SYSTEM_NAME Linux)
-set(ARM_PREFIX arm-frc2023-linux-gnueabi)
+set(ARM_PREFIX arm-frc2024-linux-gnueabi)
 
 set(CMAKE_C_COMPILER ${ARM_PREFIX}-gcc)
 set(CMAKE_CXX_COMPILER ${ARM_PREFIX}-g++)
 
-set(CMAKE_SYSROOT $ENV{HOME}/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot)
+set(CMAKE_SYSROOT $ENV{HOME}/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot)
 
 # Set find_libraries and friends to only look in sysroot, ignoring host lib dirs
 set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT};$ENV{HOME}/2023RobotCode/zebROS_ws/install_isolated)
@@ -28,7 +28,7 @@ find_program(CMAKE_AR ${ARM_PREFIX}-gcc-ar)
 set(OPT_FLAGS "-O3 -flto=auto -fno-fat-lto-objects -fuse-linker-plugin -mcpu=cortex-a9 -mfpu=neon -fvect-cost-model -ffunction-sections -fdata-sections -Wl,-gc-sections -Wno-psabi")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OPT_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${OPT_FLAGS}")
-set(CMAKE_INSTALL_RPATH "$ENV{HOME}/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/melodic/lib")
+set(CMAKE_INSTALL_RPATH "$ENV{HOME}/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/melodic/lib")
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)

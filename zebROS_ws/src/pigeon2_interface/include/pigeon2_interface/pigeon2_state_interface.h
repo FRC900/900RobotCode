@@ -143,8 +143,8 @@ class Pigeon2HWState
 		bool getFaultLoopTimeSlow(void) const;
 		void setFaultSaturatedMagnetometer(const bool fault_saturated_magneter);
 		bool getFaultSaturatedMagnetometer(void) const;
-		void setFaultSaturatedAccelometer(const bool fault_saturated_accelerometometer);
-		bool getFaultSaturatedAccelometer(void) const;
+		void setFaultSaturatedAccelerometer(const bool fault_saturated_accelerometometer);
+		bool getFaultSaturatedAccelerometer(void) const;
 		void setFaultSaturatedGyroscope(const bool fault_saturated_gyroscope);
 		bool getFaultSaturatedGyroscope(void) const;
 
@@ -170,8 +170,8 @@ class Pigeon2HWState
 		bool getStickyFaultLoopTimeSlow(void) const;
 		void setStickyFaultSaturatedMagnetometer(const bool sticky_fault_saturated_magnetometer);
 		bool getStickyFaultSaturatedMagnetometer(void) const;
-		void setStickyFaultSaturatedAccelometer(const bool sticky_fault_saturated_accelerometer);
-		bool getStickyFaultSaturatedAccelometer(void) const;
+		void setStickyFaultSaturatedAccelerometer(const bool sticky_fault_saturated_accelerometer);
+		bool getStickyFaultSaturatedAccelerometer(void) const;
 		void setStickyFaultSaturatedGyroscope(const bool sticky_fault_saturated_gyrosscope);
 		bool getStickyFaultSaturatedGyroscope(void) const;
 

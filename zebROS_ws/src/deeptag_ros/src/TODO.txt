@@ -1,0 +1,75 @@
+If border is missing, fill it in?
+std::bitset 
+calib data for stage 2 int8
+stage 2 group dist based on grid size?
+tiling stage1 input
+
+fails :
+/home/ubuntu/tensorflow_workspace/2023Game/data/apriltag_videos/IMG_6392.MOV_00080.png - missing border pixels
+/home/ubuntu/tensorflow_workspace/2023Game/data/apriltag_videos/IMG_6392.MOV_00800.png ish - motion blur, stage 1 works though?
+/home/ubuntu/tensorflow_workspace/2023Game/data/apriltag_videos/IMG_6392.MOV_01124.png ish - stage 1 miss?
+/home/ubuntu/tensorflow_workspace/2023Game/data/apriltag_videos/IMG_6394.MOV_00120.png ish - missing 1 tag
+/home/ubuntu/tensorflow_workspace/2023Game/data/apriltag_videos/IMG_6394.MOV_00230.png ish - missing 1 tag
+/home/ubuntu/tensorflow_workspace/2023Game/data/combined_88_test/1674333732475372256.jpg
+
+managed memory for gpuimagewrapper?
+
+cv2 image read ->
+ -> copy to device
+ -> preprocess image into space allocated for engine input(s), either raw or using spans
+ -> run inference
+ -> get vector of device pointers with outputs, perhaps broken into spans
+
+
+ -> postprocess, as much in cuda as possible
+ -> another preproc kernel to copy from initial preprocessed image into roi buffers, which are inputs to 2nd Storage
+ -> infer, etc
+
+
+
+ Need to do image preprocessing on calibration data in onnx_to_tensorrt?
+
+
+
+ convert_locations_to_kpts
+  - uses reshaped grid_locations_pos
+  - need grid_priors in GPU memory
+
+  grid_priors : flat array of {x,y} values
+
+
+  grid_confidences_pred, grid_kpts_pred, grid_vals_pred -> reshape -> grid_confidences_pred_np and others 
+    -> returned to DetectorPredictor.predict 
+    -> returned to detect_rois 
+    -> put into features['grid_pred']
+    -> detect_center_and_corners() as part of features_set_list 
+    -> detect_keypoints_with_hms() 1st call 
+
+
+detect_keypoints_with_hms
+    create candidates list by filtering confidences with score > min_score (fn arg)
+    This should be a simple reduction, need to figure out which axises are which
+
+Kpts:
+confidences_pred_np.shape = (10880, 2)
+kpts_or_boxes_pred_np.shape = (10880, 2)
+vals_pred.shape = (10880, 4)
+
+confidences = softmax, but only needs 1 dimension?
+locations and vals are just rehaped from (batch, h, w, 2) to (batch h*w, 2)
+
+
+Boxes : 
+confidences_pred_np.shape = (86700, 2)
+kpts_or_boxes_pred_np.shape = (86700, 4)
+vals_pred.shape = (86700, 10)
+
+    ssd_confidences_pred, ssd_locations_pred, ssd_vals_pred = stages_output_engine[4:7]
+No reshaping, these are flat arrays, size defined by the SDD Box specs
+
+confidences pred -> softmax
+locations pred -> convert_locations_to_boxes -> center_form_to_corner_form -> ssd_boxes_pred 
+vals are passed through as-is
+put into features_pred['ssd_pred'], returned to detect_rois
+call detect_center_and_corners
+detect_keypoints_with_hms again

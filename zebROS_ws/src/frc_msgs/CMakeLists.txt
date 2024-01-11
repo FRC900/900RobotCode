@@ -49,6 +49,7 @@ add_message_files(
   FILES
   ButtonBoxState.msg
   ButtonBoxState2023.msg
+  CANBusStatusState.msg
   JointMode.msg
   JoystickState.msg
   MatchSpecificData.msg

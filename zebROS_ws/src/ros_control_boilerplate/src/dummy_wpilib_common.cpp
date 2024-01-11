@@ -6,7 +6,7 @@
 const char* GetWPILibVersion(void)
 {
 	ROS_ERROR("Called GetWPILibVersion on unsupported platform");
-	return "900.2023";
+	return "900.2024";
 }
 
 #if 0
@@ -138,15 +138,14 @@ frc::PWM::PWM(int, bool)
 frc::PWM::~PWM()
 {
 	ROS_ERROR("Called PWM::~PWM() on unsupported platform");
-}
-void frc::PWM::SetRaw(uint16_t)
+}  
+void frc::PWM::SetPulseTime(units::microsecond_t time)
 {
-	ROS_ERROR("Called PWM::SetRaw(uint16_t value) on unsupported platform");
+	ROS_ERROR("Called PWM::SetPulseTime() on unsupported platform");
 }
-uint16_t frc::PWM::GetRaw() const
+units::microsecond_t frc::PWM::GetPulseTime() const
 {
-	ROS_ERROR("Called PWM::GetRaw() const on unsupported platform");
-	return -1;
+	ROS_ERROR("Called PWM::GetPulseTime() on unsupported platform");
 }
 void frc::PWM::SetPosition(double)
 {
@@ -217,6 +216,7 @@ NetworkTable::~NetworkTable() = default;
 
 }
 
+#if 0
 #include "wpi/json.h"
 const char *wpi::json::type_name() const noexcept
 {
@@ -253,6 +253,7 @@ wpi::detail::exception::exception(int id_, std::string_view what_arg)
 	, m(std::string{what_arg})
 {
 }
+#endif
 
 #include <FRC_NetworkCommunication/FRCComm.h>
 

@@ -3,10 +3,10 @@
 cd ~/2023RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
-	#PATH=$PATH:$HOME/wpilib/2023/roborio/bin
-	source ~/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/setup.bash
+	#PATH=$PATH:$HOME/wpilib/2024/roborio/bin
+	source ~/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/setup.bash
 	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/site-packages
-elif [[ ! $ROS_ROOT = "$HOME/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/share/ros" ]]; then
+elif [[ ! $ROS_ROOT = "$HOME/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/share/ros" ]]; then
 	echo -e "\e[1m\e[31mROS is not configured for a cross build (maybe set up for a native build instead?)\e[0m"
 	echo -e "\e[1m\e[31mRun ./cross_build.sh in a new terminal window\e[0m"
 	exit 1
@@ -26,6 +26,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	controllers_2020 \
 	controllers_2020_msgs \
 	cuda_apriltag_ros \
+	deeptag_ros \
 	demo_tf_node \
 	diff_drive_controller \
 	effort_controllers \
@@ -72,4 +73,4 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	zed_ros \
 	zed_wrapper \
 	zms_writer
-catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCMAKE_CXX_STANDARD=17 -DCATKIN_ENABLE_TESTING=OFF -DSETUPTOOLS_DEB_LAYOUT=OFF "$@"
+catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCMAKE_CXX_STANDARD=17 -DCATKIN_ENABLE_TESTING=OFF -DSETUPTOOLS_DEB_LAYOUT=OFF -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -DNON_POLLING" "$@"

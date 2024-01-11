@@ -307,7 +307,7 @@ public:
   std::optional<int> findClosestApriltag(const field_obj::Detection &detection) {
     std::vector<uint8_t> red_visible_tags{1,2,3,4};
     std::vector<uint8_t> blue_visible_tags{5,6,7,8};
-    auto our_tags = alliance_ == 0 ? red_visible_tags : blue_visible_tags;
+    auto our_tags = alliance_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? red_visible_tags : blue_visible_tags;
     double minDistance = std::numeric_limits<double>::max();
     std::optional<int> closestTag = std::nullopt; 
     if (detection.objects.size() == 0) {

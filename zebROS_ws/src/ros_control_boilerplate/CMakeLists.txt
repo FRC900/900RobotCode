@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 include ("../cmake_modules/CMakeOpt.cmake")
 
 # Only add gazebo to list of required packages on x86 and mac? builds
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
 find_package(catkin REQUIRED COMPONENTS
@@ -115,6 +115,8 @@ add_library(frc_robot_interface STATIC
 	src/cancoder_devices.cpp
 	src/canifier_device.cpp
 	src/canifier_devices.cpp
+	src/can_bus_status_device.cpp
+	src/can_bus_status_devices.cpp
     src/ctre_v5_device.cpp
     src/ctre_v6_device.cpp
     src/digital_input_device.cpp
@@ -178,7 +180,7 @@ set (FRCROBOT_HW_MAIN_SRCS
 )
 
 set (ALLWPILIB ../../../allwpilib)
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2023/roborio/arm-frc2023-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2024/roborio/arm-frc2024-linux-gnueabi)
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
@@ -190,7 +192,7 @@ include_directories(
 set (WPI_BASE_LIB_DIR ${WPI_SYSROOT}/lib/wpilib/linux)
 
 # Rio-only code
-if ("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
+if ("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/athena/shared)
 	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/athena/shared)
 
@@ -204,11 +206,11 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libwpimath.so
 		${WPI_SHARED_LIB_DIR}/libwpinet.so
 		${WPI_SHARED_LIB_DIR}/libwpiutil.so
-		${WPI_SHARED_LIB_DIR}/libvisa.so.22.5.0
+		${WPI_SHARED_LIB_DIR}/libvisa.so.23.3.0
 		${WPI_SHARED_LIB_DIR}/libembcanshim.so
 		${WPI_SHARED_LIB_DIR}/libfpgalvshim.so
-		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.23.0.0
-		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.23.0.0
+		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.24.0.0
+		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.24.0.0
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
@@ -248,7 +250,7 @@ include_directories(${WPI_SYSROOT}/include/wpilib)
 
 # Non-rio builds are more complex - we have to grab appropriate
 # parts of WPIlib source and include it manually
-if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
+if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
 	# WPIlib code common to both hardware and sim interfaces.
 	# Create it as a library to avoid building all of these twice
 	add_library(frc_common_wpilib STATIC
@@ -272,7 +274,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/motorcontrol/MotorController.cpp
 		${ALLWPILIB}/wpimath/src/main/native/cpp/MathShared.cpp
 		${ALLWPILIB}/wpimath/src/main/native/cpp/filter/Debouncer.cpp
-		${ALLWPILIB}/wpimath/src/main/native/cpp/geometry/Rotation2d.cpp
+		#${ALLWPILIB}/wpimath/src/main/native/cpp/geometry/Rotation2d.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/StackTraceWrap.cpp
@@ -288,11 +290,11 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallPtrSet.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallVector.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringMap.cpp
+	    ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/xxhash.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
 	)
     set(FRC_COMMON_WPILIB frc_common_wpilib)
-
 	add_dependencies(frc_common_wpilib
 		${${PROJECT_NAME}_EXPORTED_TARGETS}
 		${catkin_EXPORTED_TARGETS}
@@ -323,6 +325,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/I2C.cpp
+			${ALLWPILIB}/wpilibc/src/main/native/cpp/Notifier.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTF.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTFWrapper.cpp
 		)
@@ -356,7 +359,7 @@ endif()
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will
 # never be run
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
     # Sim version of main control executable.  This hooks into
@@ -586,58 +589,6 @@ add_dependencies(q_to_rpy
   ${catkin_EXPORTED_TARGETS}
 )
 ## Install ------------------------------------------------------------
-
-if (0)
-# Test trajectory generator node
-add_executable(${PROJECT_NAME}_test_trajectory src/tools/test_trajectory.cpp)
-set_target_properties(${PROJECT_NAME}_test_trajectory PROPERTIES OUTPUT_NAME test_trajectory PREFIX "")
-target_link_libraries(${PROJECT_NAME}_test_trajectory
-  ${catkin_LIBRARIES}
-)
-
-## TOOLS ------------------------------------------------------
-
-# Tool for analyzing controller performance
-add_executable(${PROJECT_NAME}_controller_to_csv_main 
-	src/tools/controller_to_csv_main.cpp
-	src/tools/controller_to_csv.cpp)
-set_target_properties(${PROJECT_NAME}_controller_to_csv_main PROPERTIES OUTPUT_NAME controller_to_csv_main PREFIX "")
-target_link_libraries(${PROJECT_NAME}_controller_to_csv_main
-  ${Gflags_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
-
-# Tool for analyzing controller performance
-add_library(csv_to_controller src/tools/csv_to_controller.cpp)
-target_link_libraries(csv_to_controller
-  ${catkin_LIBRARIES}
-)
-add_executable(${PROJECT_NAME}_csv_to_controller_main 
-	src/tools/csv_to_controller_main.cpp
-	src/tools/csv_to_controller.cpp)
-set_target_properties(${PROJECT_NAME}_csv_to_controller_main PROPERTIES OUTPUT_NAME csv_to_controller_main PREFIX "")
-target_link_libraries(${PROJECT_NAME}_csv_to_controller_main
-  ${Gflags_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
-
-# Tool for controlling a robot from keyboard
-add_executable(${PROJECT_NAME}_keyboard_teleop src/tools/keyboard_teleop.cpp)
-set_target_properties(${PROJECT_NAME}_keyboard_teleop PROPERTIES OUTPUT_NAME keyboard_teleop PREFIX "")
-target_link_libraries(${PROJECT_NAME}_keyboard_teleop
-  ${catkin_LIBRARIES}
-
-install(TARGETS
-    ${PROJECT_NAME}_test_trajectory
-    ${PROJECT_NAME}_controller_to_csv_main
-    ${PROJECT_NAME}_csv_to_controller_main
-    ${PROJECT_NAME}_keyboard_teleop
-    
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-)
-endif()
 
 # Install header files
 install(DIRECTORY 

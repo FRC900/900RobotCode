@@ -50,6 +50,7 @@
 
 #include "ros_control_boilerplate/analog_input_devices.h"
 #include "ros_control_boilerplate/as726x_devices.h"
+#include "ros_control_boilerplate/can_bus_status_devices.h"
 #include "ros_control_boilerplate/cancoder_devices.h"
 #include "ros_control_boilerplate/candle_devices.h"
 #include "ros_control_boilerplate/canifier_devices.h"
@@ -147,7 +148,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	else
 	{
 		// Only run Phoenix tuner server on the Rio, disable it here for the Jetson
-		//ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
+		ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
 	}
 	ROS_INFO_STREAM("Phoenix Version String : " << ctre::phoenix::unmanaged::Unmanaged::GetPhoenixVersion());
 
@@ -156,6 +157,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	// the SIM template param for this class
 	devices_.emplace_back(std::make_unique<AnalogInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<AS726xDevices<SIM>>(root_nh));
+	devices_.emplace_back(std::make_unique<CANBusStatusDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<CANCoderDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<CANdleDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));

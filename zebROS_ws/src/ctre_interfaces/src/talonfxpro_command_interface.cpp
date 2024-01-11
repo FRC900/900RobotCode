@@ -1231,25 +1231,25 @@ bool TalonFXProHWCommand::clearStickyFaultsChanged(void) const
 	return ret;
 }
 
-void TalonFXProHWCommand::setSetPosition(const double position)
+void TalonFXProHWCommand::setRotorPosition(const double position)
 {
-	set_position_ = position;
-	set_position_changed_ = true;
+	rotor_position_ = position;
+	rotor_position_changed_ = true;
 }
-double TalonFXProHWCommand::getSetPosition(void) const
+double TalonFXProHWCommand::getRotorPosition(void) const
 {
-	return set_position_;
+	return rotor_position_;
 }
-bool TalonFXProHWCommand::setPositionChanged(double &position) const
+bool TalonFXProHWCommand::rotorPositionChanged(double &position) const
 {
-	position = set_position_;
-	const bool ret = set_position_changed_;
-	set_position_changed_ = false;
+	position = rotor_position_;
+	const bool ret = rotor_position_changed_;
+	rotor_position_changed_ = false;
 	return ret;
 }
-void TalonFXProHWCommand::resetSetPosition(void)
+void TalonFXProHWCommand::resetRotorPosition(void)
 {
-	set_position_changed_ = true;
+	rotor_position_changed_ = true;
 }
 
 void TalonFXProHWCommand::setControlMode(const TalonMode control_mode)
@@ -1458,6 +1458,32 @@ bool TalonFXProHWCommand::getControlOpposeMasterDirection(void) const
 	return control_oppose_master_direction_;
 }
 
+void TalonFXProHWCommand::setControlLimitForwardMotion(const bool control_limit_forward_motion)
+{
+	if (control_limit_forward_motion != control_limit_forward_motion_)
+	{
+		control_limit_forward_motion_ = control_limit_forward_motion;
+		control_changed_ = true;
+	}
+}
+bool TalonFXProHWCommand::getControlLimitForwardMotion(void) const
+{
+	return control_limit_forward_motion_;
+}
+
+void TalonFXProHWCommand::setControlLimitReverseMotion(const bool control_limit_reverse_motion)
+{
+	if (control_limit_reverse_motion != control_limit_reverse_motion_)
+	{
+		control_limit_reverse_motion_ = control_limit_reverse_motion;
+		control_changed_ = true;
+	}
+}
+bool TalonFXProHWCommand::getControlLimitReverseMotion(void) const
+{
+	return control_limit_reverse_motion_;
+}
+
 bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 										 double &control_output,
 										 double &control_position,
@@ -1470,6 +1496,8 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 										 double &control_deadband,
 										 double &control_feedforward,
 										 int &control_slot,
+										 bool &control_limit_forward_motion,
+										 bool &control_limit_reverse_motion,
 										 double &control_differential_position,
 										 int &control_differential_slot,
 										 bool &control_oppose_master_direction) const
@@ -1486,6 +1514,8 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 	control_deadband = control_deadband_;
 	control_feedforward = control_feedforward_;
 	control_slot = control_slot_;
+	control_limit_forward_motion = control_limit_forward_motion_;
+	control_limit_reverse_motion = control_limit_reverse_motion_;
 	control_differential_position = control_differential_position_;
 	control_differential_slot = control_differential_slot_;
 	control_oppose_master_direction = control_oppose_master_direction_;

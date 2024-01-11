@@ -490,11 +490,11 @@ bool Pigeon2HWState::getFaultSaturatedMagnetometer(void) const
 	return fault_saturated_magnetometer_;
 }
 
-void Pigeon2HWState::setFaultSaturatedAccelometer(const bool fault_saturated_accelerometer)
+void Pigeon2HWState::setFaultSaturatedAccelerometer(const bool fault_saturated_accelerometer)
 {
 	fault_saturated_accelerometer_ = fault_saturated_accelerometer;
 }
-bool Pigeon2HWState::getFaultSaturatedAccelometer(void) const
+bool Pigeon2HWState::getFaultSaturatedAccelerometer(void) const
 {
 	return fault_saturated_accelerometer_;
 }
@@ -607,11 +607,11 @@ bool Pigeon2HWState::getStickyFaultSaturatedMagnetometer(void) const
 	return sticky_fault_saturated_magnetometer_;
 }
 
-void Pigeon2HWState::setStickyFaultSaturatedAccelometer(const bool sticky_fault_saturated_accelerometer)
+void Pigeon2HWState::setStickyFaultSaturatedAccelerometer(const bool sticky_fault_saturated_accelerometer)
 {
 	sticky_fault_saturated_accelerometer_ = sticky_fault_saturated_accelerometer;
 }
-bool Pigeon2HWState::getStickyFaultSaturatedAccelometer(void) const
+bool Pigeon2HWState::getStickyFaultSaturatedAccelerometer(void) const
 {
 	return sticky_fault_saturated_accelerometer_;
 }

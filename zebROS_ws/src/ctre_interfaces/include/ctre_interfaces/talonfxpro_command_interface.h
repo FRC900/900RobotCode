@@ -5,9 +5,7 @@
 #include "ctre_interfaces/talonfxpro_state_types.h"
 #include "state_handle/command_handle.h"
 
-namespace hardware_interface
-{
-namespace talonfxpro
+namespace hardware_interface::talonfxpro
 {
 
 // Class to buffer data needed to set the state of the
@@ -301,10 +299,10 @@ public:
 	bool getClearStickyFaults(void) const;
 	bool clearStickyFaultsChanged(void) const;
 
-	void setSetPosition(const double position);
-	double getSetPosition(void) const;
-	bool setPositionChanged(double &position) const;
-	void resetSetPosition(void);
+	void setRotorPosition(const double position);
+	double getRotorPosition(void) const;
+	bool rotorPositionChanged(double &position) const;
+	void resetRotorPosition(void);
 
 	void setControlMode(const TalonMode mode);
 	TalonMode getControlMode(void) const;
@@ -351,6 +349,12 @@ public:
 	void setControlOpposeMasterDirection(const bool oppose_master_direction);
 	bool getControlOpposeMasterDirection(void) const;
 
+	void setControlLimitForwardMotion(const bool limit_forward_direction);
+	bool getControlLimitForwardMotion(void) const;
+
+	void setControlLimitReverseMotion(const bool limit_reverse_direction);
+	bool getControlLimitReverseMotion(void) const;
+
 	bool controlChanged(TalonMode &control_mode,
 						double &control_output,
 						double &control_position,
@@ -363,6 +367,8 @@ public:
 						double &control_deadband,
 						double &control_feedforward,
 						int &control_slot,
+						bool &control_limit_forward_motion,
+						bool &control_limit_reverse_motion,
 						double &control_differential_position,
 						int &control_differential_slot,
 						bool &oppose_master_direction) const;
@@ -471,8 +477,8 @@ private :
 
 	mutable bool clear_sticky_faults_{false};
 
-	double set_position_{0};
-	mutable bool set_position_changed_{false};
+	double rotor_position_{0};
+	mutable bool rotor_position_changed_{false};
 
 	TalonMode control_mode_{TalonMode::CoastOut}; 
 	double control_output_{0.0};
@@ -487,6 +493,8 @@ private :
 	double control_feedforward_{0.0};
 	int control_slot_{0};
 	bool control_oppose_master_direction_{false};
+	bool control_limit_forward_motion_{false};
+	bool control_limit_reverse_motion_{false};
 	double control_differential_position_{0.0};
 	int control_differential_slot_{0};
 	mutable bool control_changed_{false};
@@ -502,7 +510,6 @@ using TalonFXProCommandHandle = CommandHandle<TalonFXProHWCommand, TalonFXProHWS
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given Talon at any particular time
 class TalonFXProCommandInterface : public HardwareResourceManager<TalonFXProCommandHandle, ClaimResources> {};
-} // namespace talonfxpro
 } // namspace hardware_interface
 
 #endif

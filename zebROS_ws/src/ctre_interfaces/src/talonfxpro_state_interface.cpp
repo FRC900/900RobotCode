@@ -1,9 +1,7 @@
 #include "ctre_interfaces/talonfxpro_state_interface.h"
 #include "ctre_interfaces/talonfxpro_state_types.h"
 
-namespace hardware_interface
-{
-namespace talonfxpro
+namespace hardware_interface::talonfxpro
 {
 
 // Set up default values
@@ -17,9 +15,7 @@ TalonFXProHWState::TalonFXProHWState(const int can_id)
 {
 }
 
-TalonFXProHWState::~TalonFXProHWState()
-{
-}
+TalonFXProHWState::~TalonFXProHWState() = default;
 
 int TalonFXProHWState::getCANID(void) const
 {
@@ -812,6 +808,33 @@ int TalonFXProHWState::getControlSlot(void) const
 	return control_slot_;
 }
 
+void TalonFXProHWState::setControlOpposeMasterDirection(const bool control_oppose_master_direction)
+{
+	control_oppose_master_direction_ = control_oppose_master_direction;
+}
+bool TalonFXProHWState::getControlOpposeMasterDirection(void) const
+{
+	return control_oppose_master_direction_;
+}
+
+void TalonFXProHWState::setControlLimitForwardMotion(const bool control_limit_forward_motion)
+{
+	control_limit_forward_motion_ = control_limit_forward_motion;
+}
+bool TalonFXProHWState::getControlLimitForwardMotion(void) const
+{
+	return control_limit_forward_motion_;
+}
+
+void TalonFXProHWState::setControlLimitReverseMotion(const bool control_limit_reverse_motion)
+{
+	control_limit_reverse_motion_ = control_limit_reverse_motion;
+}
+bool TalonFXProHWState::getControlLimitReverseMotion(void) const
+{
+	return control_limit_reverse_motion_;
+}
+
 void TalonFXProHWState::setControlDifferentialPosition(const double control_differential_position)
 {
 	control_differential_position_ = control_differential_position;
@@ -834,16 +857,6 @@ int TalonFXProHWState::getControlDifferentialSlot(void) const
 {
 	return control_differential_slot_;
 }
-
-void TalonFXProHWState::setControlOpposeMasterDirection(const bool control_oppose_master_direction)
-{
-	control_oppose_master_direction_ = control_oppose_master_direction;
-}
-bool TalonFXProHWState::getControlOpposeMasterDirection(void) const
-{
-	return control_oppose_master_direction_;
-}
-
 
 void TalonFXProHWState::setEnableReadThread(const bool enable_read_thread)
 {
@@ -1350,6 +1363,4 @@ double TalonFXProHWState::getDifferentialClosedLoopError(void) const
 	return differential_closed_loop_error_;
 }
 
-} // namespace talonfxpro
-
-} // namespace hardware_interface
+} // namespace talonfxpro::hardware_interface

@@ -15,6 +15,9 @@ const char VELOCITY_TORQUE_CURRENT_FOC_NAME[] = "VelocityTorqueCurrentFOC";
 const char MOTION_MAGIC_DUTY_CYCLE_NAME[] = "MotionMagicDutyCycle";
 const char MOTION_MAGIC_VOLTAGE_NAME[] = "MotionMagicVoltage";
 const char MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME[] = "MotionMagicTorqueCurrentFOC";
+const char MOTION_MAGIC_EXPO_DUTY_CYCLE_NAME[] = "MotionMagicExpoDutyCycle";
+const char MOTION_MAGIC_EXPO_VOLTAGE_NAME[] = "MotionMagicExpoVoltage";
+const char MOTION_MAGIC_EXPO_TORQUE_CURRENT_FOC_NAME[] = "MotionMagicExpoTorqueCurrentFOC";
 const char MOTION_MAGIC_VELOCITY_DUTY_CYCLE_NAME[] = "MotionMagicVelocityDutyCycle";
 const char MOTION_MAGIC_VELOCITY_VOLTAGE_NAME[] = "MotionMagicVelocityVoltage";
 const char MOTION_MAGIC_VELOCITY_TORQUE_CURRENT_FOC_NAME[] = "MotionMagicVelocityTorqueCurrentFOC";
@@ -98,6 +101,27 @@ bool stringToLimitType(const std::string &str,
     else
     {
         ROS_ERROR_STREAM("Invalid limit switch type: " << str);
+        return false;
+    }
+    return true;
+}
+
+bool stringToLimitSource(const std::string &str,
+                       hardware_interface::talonfxpro::LimitSource &limit_source)
+{
+    if (str == "LimitSwitchPin")
+        limit_source = hardware_interface::talonfxpro::LimitSource::LimitSwitchPin;
+    else if (str == "RemoteTalonFX")
+        limit_source = hardware_interface::talonfxpro::LimitSource::RemoteTalonFX;
+    else if (str == "RemoteCANifier")
+        limit_source = hardware_interface::talonfxpro::LimitSource::RemoteCANifier;
+    else if (str == "RemoteCANcoder")
+        limit_source = hardware_interface::talonfxpro::LimitSource::RemoteCANcoder;
+    else if (str == "Disabled")
+        limit_source = hardware_interface::talonfxpro::LimitSource::Disabled;
+    else
+    {
+        ROS_ERROR_STREAM("Invalid limit switch type: " << str << ", expecting LimitSwitchPin, RemoteTalonFX, RemoteCANifier, RemoteCANcoder, or Disabled");
         return false;
     }
     return true;
@@ -198,6 +222,8 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
         control_feedforward_.store(other.control_feedforward_.load());
         control_slot_.store(other.control_slot_.load());
         control_oppose_master_direction_.store(other.control_oppose_master_direction_.load());
+        control_limit_forward_motion_.store(other.control_limit_forward_motion_.load());
+        control_limit_reverse_motion_.store(other.control_limit_reverse_motion_.load());
         control_differential_slot_.store(other.control_differential_slot_.load());
 
         continuous_wrap_.store(other.continuous_wrap_.load());
@@ -522,6 +548,15 @@ bool TalonFXProCIParams::readLimitSwitches(const ros::NodeHandle &n)
     readIntoScalar(n, "forward_limit_autoset_position_value", forward_limit_autoset_position_value_);
     readIntoScalar(n, "forward_limit_enable", forward_limit_enable_);
     readIntoScalar(n, "forward_limit_remote_sensor_id_", forward_limit_remote_sensor_id_);
+    if (n.getParam("forward_limit_switch_source", str))
+    {
+        hardware_interface::talonfxpro::LimitSource forward_limit_source;
+        if (!stringToLimitSource(str, forward_limit_source))
+        {
+            return false;
+        }
+        forward_limit_source_ = forward_limit_source;
+    }
 
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
     if (n.getParam("limit_switch_local_reverse_normal", str))
@@ -547,6 +582,15 @@ bool TalonFXProCIParams::readLimitSwitches(const ros::NodeHandle &n)
     readIntoScalar(n, "reverse_limit_autoset_position_value", reverse_limit_autoset_position_value_);
     readIntoScalar(n, "reverse_limit_enable", reverse_limit_enable_);
     readIntoScalar(n, "reverse_limit_remote_sensor_id_", reverse_limit_remote_sensor_id_);
+    if (n.getParam("reverse_limit_switch_source", str))
+    {
+        hardware_interface::talonfxpro::LimitSource reverse_limit_source;
+        if (!stringToLimitSource(str, reverse_limit_source))
+        {
+            return false;
+        }
+        reverse_limit_source_ = reverse_limit_source;
+    }
 
     return true;
 }
@@ -600,6 +644,8 @@ bool TalonFXProCIParams::readControl(const ros::NodeHandle &n)
     readIntoScalar(n, "control_feedforward", control_feedforward_);
     readIntoScalar(n, "control_slot", control_slot_);
     readIntoScalar(n, "control_oppose_master_direction", control_oppose_master_direction_);
+    readIntoScalar(n, "control_limit_forward_motion", control_limit_forward_motion_);
+    readIntoScalar(n, "control_limit_reverse_motion", control_limit_reverse_motion_);
     readIntoScalar(n, "control_differential_slot", control_differential_slot_);
     return true;
 }
@@ -942,7 +988,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         "Enable supply current limit");
             ddr_updater_->ddr_.registerVariable<double>("supply_voltage_time_constraint",
                                                         [this]() { return params_.supply_voltage_time_constant_.load();},
-                                                        boost::bind(&TalonFXProControllerInterface::setSupplyVoltageTimeConstraint, this, _1, false),
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyVoltageTimeConstant, this, _1, false),
                                                         "The time constant (in seconds) of the low-pass filter for  the supply voltage",
                                                         0, 0.1);
             ddr_updater_->ddr_.registerVariable<double>("peak_forward_voltage",
@@ -1001,12 +1047,12 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         );
             ddr_updater_->ddr_.registerVariable<int>   ("differential_talonfx_sensor_id_",
                                                         [this]() { return params_.differential_talonfx_sensor_id_.load();},
-                                                        boost::bind(&TalonFXProControllerInterface::setDifferentialTalonFXSensorId, this, _1, false),
+                                                        boost::bind(&TalonFXProControllerInterface::setDifferentialTalonFXSensorID, this, _1, false),
                                                         "differential talon fx sensor id",
                                                         0, 63);
             ddr_updater_->ddr_.registerVariable<int>   ("differential_remote_sensor_id_",
                                                         [this]() { return params_.differential_remote_sensor_id_.load();},
-                                                        boost::bind(&TalonFXProControllerInterface::setDifferentialRemoteSensorId, this, _1, false),
+                                                        boost::bind(&TalonFXProControllerInterface::setDifferentialRemoteSensorID, this, _1, false),
                                                         "differential talon fx sensor id",
                                                         0, 63);
             ddr_updater_->ddr_.registerVariable<double>("peak_differential_duty_cycle",
@@ -1056,7 +1102,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         0, 1);
             ddr_updater_->ddr_.registerEnumVariable<int>("forward_limit_type",
                                                         [this]() { return static_cast<int>(params_.forward_limit_type_.load());},
-                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitType, this, _1, false),
+                                                        [this](const int forward_limit_type) { setForwardLimitType(static_cast<hardware_interface::talonfxpro::LimitType>(forward_limit_type));},
                                                         "Forward limit switch polarity",
                                                         limit_type_enum_map_);
             ddr_updater_->ddr_.registerVariable<bool>  ("forward_limit_autoset_position_enable",
@@ -1074,7 +1120,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         "Forward Limit Enable");
             ddr_updater_->ddr_.registerEnumVariable<int>("forward_limit_source",
                                                         [this]() { return static_cast<int>(params_.forward_limit_source_.load());},
-                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitSource, this, _1, false),
+                                                        [this](const int forward_limit_source) { setForwardLimitSource(static_cast<hardware_interface::talonfxpro::LimitSource>(forward_limit_source));},
                                                         "Forward limit switch source",
                                                         limit_source_enum_map_);
             ddr_updater_->ddr_.registerVariable<int>   ("forward_limit_remote_sensor_id",
@@ -1084,7 +1130,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         0, 63);
             ddr_updater_->ddr_.registerEnumVariable<int>("reverse_limit_type",
                                                         [this]() { return static_cast<int>(params_.reverse_limit_type_.load());},
-                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitType, this, _1, false),
+                                                        [this](const int reverse_limit_type) { setReverseLimitType(static_cast<hardware_interface::talonfxpro::LimitType>(reverse_limit_type));},
                                                         "Reverse limit switch polarity",
                                                         limit_type_enum_map_);
             ddr_updater_->ddr_.registerVariable<bool>  ("reverse_limit_autoset_position_enable",
@@ -1102,7 +1148,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         "Reverse Limit Enable");
             ddr_updater_->ddr_.registerEnumVariable<int>("reverse_limit_source",
                                                         [this]() { return static_cast<int>(params_.reverse_limit_source_.load());},
-                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitSource, this, _1, false),
+                                                        [this](const int reverse_limit_source) { setReverseLimitSource(static_cast<hardware_interface::talonfxpro::LimitSource>(reverse_limit_source));},
                                                         "Reverse limit switch source",
                                                         limit_source_enum_map_);
             ddr_updater_->ddr_.registerVariable<int>   ("reverse_limit_remote_sensor_id",
@@ -1186,6 +1232,14 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.control_oppose_master_direction_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setControlOpposeMasterDirection, this, _1, false),
                                                         "Control oppose master direction");
+            ddr_updater_->ddr_.registerVariable<bool>  ("control_limit_forward_motion",
+                                                        [this]() { return params_.control_limit_forward_motion_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlLimitForwardMotion, this, _1, false),
+                                                        "Control limit forward motion");
+            ddr_updater_->ddr_.registerVariable<bool>  ("control_limit_reverse_motion",
+                                                        [this]() { return params_.control_limit_reverse_motion_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlLimitReverseMotion, this, _1, false),
+                                                        "Control limit reverse motion");
             ddr_updater_->ddr_.registerVariable<int>   ("control_differential_slot",
                                                         [this]() { return params_.control_differential_slot_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setControlDifferentialSlot, this, _1, false),
@@ -1214,7 +1268,6 @@ void TalonFXProControllerInterface::setControlOutput(const double control_output
 
 void TalonFXProControllerInterface::setControlPosition(const double control_position)
 {
-    //ROS_INFO_STREAM(__FUNCTION__ << " control_position = " << control_position);
     talon_->setControlPosition(control_position);
 }
 
@@ -1239,719 +1292,106 @@ void TalonFXProControllerInterface::setControlDifferentialPosition(const double 
 }
 
 // Functions which handle dynamic reconfigurable config vars
-void TalonFXProControllerInterface::setkP(const double kP, const size_t index, const bool update_ddr)
-{
-    params_.kP_[index] = kP;
-    talon_->setkP(kP, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-void TalonFXProControllerInterface::setkI(const double kI, const size_t index, const bool update_ddr)
-{
-    params_.kI_[index] = kI;
-    talon_->setkI(kI, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-void TalonFXProControllerInterface::setkD(const double kD, const size_t index, const bool update_ddr)
-{
-    params_.kD_[index] = kD;
-    talon_->setkD(kD, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setkS(const double kS, const size_t index, const bool update_ddr)
-{
-    params_.kS_[index] = kS;
-    talon_->setkS(kS, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setkV(const double kV, const size_t index, const bool update_ddr)
-{
-    params_.kV_[index] = kV;
-    talon_->setkV(kV, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setkA(const double kA, const size_t index, const bool update_ddr)
-{
-    params_.kA_[index] = kA;
-    talon_->setkA(kA, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setkG(const double kG, const size_t index, const bool update_ddr)
-{
-    params_.kG_[index] = kG;
-    talon_->setkG(kG, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setGravityType(const hardware_interface::talonfxpro::GravityType gravity_type, const size_t index, const bool update_ddr)
-{
-    params_.gravity_type_[index] = gravity_type;
-    talon_->setGravityType(gravity_type, index);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setInvert(const hardware_interface::talonfxpro::Inverted invert, const bool update_ddr)
-{
-    params_.invert_ = invert;
-    talon_->setInvert(invert);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setNeutralMode(const hardware_interface::talonfxpro::NeutralMode neutral_mode, const bool update_ddr)
-{
-    params_.neutral_mode_ = neutral_mode;
-    talon_->setNeutralMode(neutral_mode);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setDutyCycleNeutralDeadband(const double duty_cycle_neutral_deadband, const bool update_ddr)
-{
-    params_.duty_cycle_neutral_deadband_ = duty_cycle_neutral_deadband;
-    talon_->setDutyCycleNeutralDeadband(duty_cycle_neutral_deadband);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakForwardDutyCycle(const double peak_forward_duty_cycle, const bool update_ddr)
-{
-    params_.peak_forward_duty_cycle_ = peak_forward_duty_cycle;
-    talon_->setPeakForwardDutyCycle(peak_forward_duty_cycle);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakReverseDutyCycle(const double peak_reverse_duty_cycle, const bool update_ddr)
-{
-    params_.peak_reverse_duty_cycle_ = peak_reverse_duty_cycle;
-    talon_->setPeakReverseDutyCycle(peak_reverse_duty_cycle);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setStatorCurrentLimit(const double stator_current_limit, const bool update_ddr)
-{
-    params_.stator_current_limit_ = stator_current_limit;
-    talon_->setStatorCurrentLimit(stator_current_limit);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setStatorCurrentLimitEnable(const bool stator_current_limit_enable, const bool update_ddr)
-{
-    params_.stator_current_limit_enable_ = stator_current_limit_enable;
-    talon_->setStatorCurrentLimitEnable(stator_current_limit_enable);
-
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setSupplyCurrentLimit(const double supply_current_limit, const bool update_ddr)
-{
-    params_.supply_current_limit_ = supply_current_limit;
-    talon_->setSupplyCurrentLimit(supply_current_limit);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setSupplyCurrentLimitEnable(const bool supply_current_limit_enable, const bool update_ddr)
-{
-    params_.supply_current_limit_enable_ = supply_current_limit_enable;
-    talon_->setSupplyCurrentLimitEnable(supply_current_limit_enable);
-
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setSupplyVoltageTimeConstraint(const double supply_voltage_time_constraint, const bool update_ddr)
-{
-    params_.supply_voltage_time_constant_ = supply_voltage_time_constraint;
-    talon_->setSupplyVoltageTimeConstant(supply_voltage_time_constraint);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakForwardVoltage(const double peak_forward_voltage, const bool update_ddr)
-{
-    params_.peak_forward_voltage_ = peak_forward_voltage;
-    talon_->setPeakForwardVoltage(peak_forward_voltage);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakReverseVoltage(const double peak_reverse_voltage, const bool update_ddr)
-{
-    params_.peak_reverse_voltage_ = peak_reverse_voltage;
-    talon_->setPeakReverseVoltage(peak_reverse_voltage);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakForwardTorqueCurrent(const double peak_forward_torque_current, const bool update_ddr)
-{
-    params_.peak_forward_torque_current_ = peak_forward_torque_current;
-    talon_->setPeakForwardTorqueCurrent(peak_forward_torque_current);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakReverseTorqueCurrent(const double peak_reverse_torque_current, const bool update_ddr)
-{
-    params_.peak_reverse_torque_current_ = peak_reverse_torque_current;
-    talon_->setPeakReverseTorqueCurrent(peak_reverse_torque_current);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setTorqueNeutralDeadband(const double torque_neutral_deadband, const bool update_ddr)
-{
-    params_.torque_neutral_deadband_ = torque_neutral_deadband;
-    talon_->setTorqueNeutralDeadband(torque_neutral_deadband);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setFeedbackRotorOffset(const double feedback_rotor_offset, const bool update_ddr)
-{
-    params_.feedback_rotor_offset_ = feedback_rotor_offset;
-    talon_->setFeedbackRotorOffset(feedback_rotor_offset);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setSensorToMechanismRatio(const double sensor_to_mechanism_ratio, const bool update_ddr)
-{
-    params_.sensor_to_mechanism_ratio_ = sensor_to_mechanism_ratio;
-    talon_->setSensorToMechanismRatio(sensor_to_mechanism_ratio);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setRotorToSensorRatio(const double rotor_to_sensor_ratio, const bool update_ddr)
-{
-    params_.rotor_to_sensor_ratio_ = rotor_to_sensor_ratio;
-    talon_->setRotorToSensorRatio(rotor_to_sensor_ratio);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setDifferentialSensorSource(const hardware_interface::talonfxpro::DifferentialSensorSource differential_sensor_source, const bool update_ddr)
-{
-    params_.differential_sensor_source_ = differential_sensor_source;
-    talon_->setDifferentialSensorSource(differential_sensor_source);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setDifferentialTalonFXSensorId(const int differential_talonfx_sensor_id, const bool update_ddr)
-{
-    params_.differential_talonfx_sensor_id_ = differential_talonfx_sensor_id;
-    talon_->setDifferentialTalonFXSensorID(differential_talonfx_sensor_id);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setDifferentialRemoteSensorId(const int differential_remote_sensor_id, const bool update_ddr)
-{
-    params_.differential_remote_sensor_id_ = differential_remote_sensor_id;
-    talon_->setDifferentialRemoteSensorID(differential_remote_sensor_id);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakDifferentialDutyCycle(const double peak_differential_duty_cycle, const bool update_ddr)
-{
-    params_.peak_differential_duty_cycle_ = peak_differential_duty_cycle;
-    talon_->setPeakDifferentialDutyCycle(peak_differential_duty_cycle);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakDifferentialVoltage(const double peak_differential_voltage, const bool update_ddr)
-{
-    params_.peak_differential_voltage_ = peak_differential_voltage;
-    talon_->setPeakDifferentialVoltage(peak_differential_voltage);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setPeakDifferentialTorqueCurrent(const double peak_differential_torque_current, const bool update_ddr)
-{
-    params_.peak_differential_torque_current_ = peak_differential_torque_current;
-    talon_->setPeakDifferentialTorqueCurrent(peak_differential_torque_current);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setDutyCycleOpenLoopRampPeriod(const double duty_cycle_open_loop_ramp_period, const bool update_ddr)
-{
-    params_.duty_cycle_open_loop_ramp_period_ = duty_cycle_open_loop_ramp_period;
-    talon_->setDutyCycleOpenLoopRampPeriod(duty_cycle_open_loop_ramp_period);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setVoltageOpenLoopRampPeriod(const double voltage_open_loop_ramp_period, const bool update_ddr)
-{
-    params_.voltage_open_loop_ramp_period_ = voltage_open_loop_ramp_period;
-    talon_->setVoltageOpenLoopRampPeriod(voltage_open_loop_ramp_period);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setTorqueOpenLoopRampPeriod(const double torque_open_loop_ramp_period, const bool update_ddr)
-{
-    params_.torque_open_loop_ramp_period_ = torque_open_loop_ramp_period;
-    talon_->setTorqueOpenLoopRampPeriod(torque_open_loop_ramp_period);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setDutyCycleClosedLoopRampPeriod(const double duty_cycle_closed_loop_ramp_period, const bool update_ddr)
-{
-    params_.duty_cycle_closed_loop_ramp_period_ = duty_cycle_closed_loop_ramp_period;
-    talon_->setDutyCycleClosedLoopRampPeriod(duty_cycle_closed_loop_ramp_period);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setVoltageClosedLoopRampPeriod(const double voltage_closed_loop_ramp_period, const bool update_ddr)
-{
-    params_.voltage_closed_loop_ramp_period_ = voltage_closed_loop_ramp_period;
-    talon_->setVoltageClosedLoopRampPeriod(voltage_closed_loop_ramp_period);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setTorqueClosedLoopRampPeriod(const double torque_closed_loop_ramp_period, const bool update_ddr)
-{
-    params_.torque_closed_loop_ramp_period_ = torque_closed_loop_ramp_period;
-    talon_->setTorqueClosedLoopRampPeriod(torque_closed_loop_ramp_period);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardLimitType(const int forward_limit_type, const bool update_ddr)
-{
-    const auto forward_limit_type_enum = static_cast<hardware_interface::talonfxpro::LimitType>(forward_limit_type);
-    params_.forward_limit_type_ = forward_limit_type_enum;
-    talon_->setForwardLimitType(forward_limit_type_enum);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardLimitAutosetPositionEnable(const bool forward_limit_autoset_position_enable, const bool update_ddr)
-{
-    params_.forward_limit_autoset_position_enable_ = forward_limit_autoset_position_enable;
-    talon_->setForwardLimitAutosetPositionEnable(forward_limit_autoset_position_enable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardLimitAutosetPositionValue(const double forward_limit_autoset_position_value, const bool update_ddr)
-{
-    params_.forward_limit_autoset_position_value_ = forward_limit_autoset_position_value;
-    talon_->setForwardLimitAutosetPositionValue(forward_limit_autoset_position_value);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardLimitEnable(const bool forward_limit_enable, const bool update_ddr)
-{
-    params_.forward_limit_enable_ = forward_limit_enable;
-    talon_->setForwardLimitEnable(forward_limit_enable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardLimitSource(const int forward_limit_source, const bool update_ddr)
-{
-    const auto forward_limit_source_enum = static_cast<hardware_interface::talonfxpro::LimitSource>(forward_limit_source);
-    params_.forward_limit_source_ = forward_limit_source_enum;
-    talon_->setForwardLimitSource(forward_limit_source_enum);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardLimitRemoteSensorID(const int forward_limit_remote_sensor_id, const bool update_ddr)
-{
-    params_.forward_limit_remote_sensor_id_ = forward_limit_remote_sensor_id;
-    talon_->setForwardLimitRemoteSensorID(forward_limit_remote_sensor_id);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseLimitType(const int reverse_limit_type, const bool update_ddr)
-{
-    const auto reverse_limit_type_enum = static_cast<hardware_interface::talonfxpro::LimitType>(reverse_limit_type);
-    params_.reverse_limit_type_ = reverse_limit_type_enum;
-    talon_->setReverseLimitType(reverse_limit_type_enum);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseLimitAutosetPositionEnable(const bool reverse_limit_autoset_position_enable, const bool update_ddr)
-{
-    params_.reverse_limit_autoset_position_enable_ = reverse_limit_autoset_position_enable;
-    talon_->setReverseLimitAutosetPositionEnable(reverse_limit_autoset_position_enable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseLimitAutosetPositionValue(const double reverse_limit_autoset_position_value, const bool update_ddr)
-{
-    params_.reverse_limit_autoset_position_value_ = reverse_limit_autoset_position_value;
-    talon_->setReverseLimitAutosetPositionValue(reverse_limit_autoset_position_value);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseLimitEnable(const bool reverse_limit_enable, const bool update_ddr)
-{
-    params_.reverse_limit_enable_ = reverse_limit_enable;
-    talon_->setReverseLimitEnable(reverse_limit_enable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseLimitSource(const int reverse_limit_source, const bool update_ddr)
-{
-    const auto reverse_limit_source_enum = static_cast<hardware_interface::talonfxpro::LimitSource>(reverse_limit_source);
-    params_.reverse_limit_source_ = reverse_limit_source_enum;
-    talon_->setReverseLimitSource(reverse_limit_source_enum);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseLimitRemoteSensorID(const int reverse_limit_remote_sensor_id, const bool update_ddr)
-{
-    params_.reverse_limit_remote_sensor_id_ = reverse_limit_remote_sensor_id;
-    talon_->setReverseLimitRemoteSensorID(reverse_limit_remote_sensor_id);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setBeepOnBoot(const bool beep_on_boot, const bool update_ddr)
-{
-    params_.beep_on_boot_ = beep_on_boot;
-    talon_->setBeepOnBoot(beep_on_boot);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setBeepOnConfig(const bool beep_on_config, const bool update_ddr)
-{
-    params_.beep_on_config_ = beep_on_config;
-    talon_->setBeepOnConfig(beep_on_config);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setAllowMusicDurDisable(const bool allow_music_dur_disable, const bool update_ddr)
-{
-    params_.allow_music_dur_disable_ = allow_music_dur_disable;
-    talon_->setAllowMusicDurDisable(allow_music_dur_disable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardSoftLimitEnable(const bool forward_softlimit_enable, const bool update_ddr)
-{
-    params_.softlimit_forward_enable_ = forward_softlimit_enable;
-    talon_->setForwardSoftLimitEnable(forward_softlimit_enable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseSoftLimitEnable(const bool reverse_softlimit_enable, const bool update_ddr)
-{
-    params_.softlimit_reverse_enable_ = reverse_softlimit_enable;
-    talon_->setReverseSoftLimitEnable(reverse_softlimit_enable);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setForwardSoftLimitThreshold(const double forward_softlimit_threshold, const bool update_ddr)
-{
-    params_.softlimit_forward_threshold_ = forward_softlimit_threshold;
-    talon_->setForwardSoftLimitThreshold(forward_softlimit_threshold);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setReverseSoftLimitThreshold(const double reverse_softlimit_threshold, const bool update_ddr)
-{
-    params_.softlimit_reverse_threshold_ = reverse_softlimit_threshold;
-    talon_->setReverseSoftLimitThreshold(reverse_softlimit_threshold);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setMotionMagicCruiseVelocity(const double motion_magic_cruise_velocity, const bool update_ddr)
-{
-    params_.motion_magic_cruise_velocity_ = motion_magic_cruise_velocity;
-    talon_->setMotionMagicCruiseVelocity(motion_magic_cruise_velocity);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setMotionMagicAcceleration(const double motion_magic_acceleration, const bool update_ddr)
-{
-    params_.motion_magic_acceleration_ = motion_magic_acceleration;
-    talon_->setMotionMagicAcceleration(motion_magic_acceleration);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setMotionMagicJerk(const double motion_magic_jerk, const bool update_ddr)
-{
-    params_.motion_magic_jerk_ = motion_magic_jerk;
-    talon_->setMotionMagicJerk(motion_magic_jerk);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setContinuousWrap(const bool continuous_wrap, const bool update_ddr)
-{
-    params_.continuous_wrap_ = continuous_wrap;
-    talon_->setContinuousWrap(continuous_wrap);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlEnableFOC(const bool control_enable_foc, const bool update_ddr)
-{
-    params_.control_enable_foc_ = control_enable_foc;
-    talon_->setControlEnableFOC(control_enable_foc);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlOverrideBrakeDurNeutral(const bool control_override_brake_dur_neutral, const bool update_ddr)
-{
-    params_.control_override_brake_dur_neutral_ = control_override_brake_dur_neutral;
-    talon_->setControlOverrideBrakeDurNeutral(control_override_brake_dur_neutral);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlMaxAbsDutyCycle(const double control_max_abs_duty_cycle, const bool update_ddr)
-{
-    params_.control_max_abs_duty_cycle_ = control_max_abs_duty_cycle;
-    talon_->setControlMaxAbsDutyCycle(control_max_abs_duty_cycle);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlDeadband(const double control_deadband, const bool update_ddr)
-{
-    params_.control_deadband_ = control_deadband;
-    talon_->setControlDeadband(control_deadband);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlFeedforward(const double control_feedforward, const bool update_ddr)
-{
-    params_.control_feedforward_ = control_feedforward;
-    talon_->setControlFeedforward(control_feedforward);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlSlot(const int control_slot, const bool update_ddr)
-{
-    params_.control_slot_ = control_slot;
-    talon_->setControlSlot(control_slot);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlOpposeMasterDirection(const bool control_oppose_master_direction, const bool update_ddr)
-{
-    params_.control_oppose_master_direction_ = control_oppose_master_direction;
-    talon_->setControlOpposeMasterDirection(control_oppose_master_direction);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setControlDifferentialSlot(const int control_differential_slot, const bool update_ddr)
-{
-    params_.control_differential_slot_ = control_differential_slot;
-    talon_->setControlDifferentialSlot(control_differential_slot);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setEnableReadThread(const bool enable_read_thread, const bool update_ddr)
-{
-    params_.enable_read_thread_ = enable_read_thread;
-    talon_->setEnableReadThread(enable_read_thread);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
-
-void TalonFXProControllerInterface::setRotorPosition(const double set_position, const bool update_ddr)
-{
-    params_.set_position_ = set_position;
-    talon_->setSetPosition(set_position);
-    if (update_ddr)
-    {
-        ddr_updater_->triggerDDRUpdate();
-    }
-}
+// Template (kinda) for params which are arrays. Currently this is just
+// PID config slots
+#define SET_PARAM_IDX_FN(param, talon_fn)                                                                                                  \
+void TalonFXProControllerInterface::talon_fn(const decltype(param)::value_type::value_type val, const size_t index, const bool update_ddr) \
+{                                                                                                                                          \
+    param[index] = val;                                                                                                                    \
+    talon_->talon_fn(val, index);                                                                                                          \
+    if (update_ddr)                                                                                                                        \
+    {                                                                                                                                      \
+        ddr_updater_->triggerDDRUpdate();                                                                                                  \
+    }                                                                                                                                      \
+}
+
+SET_PARAM_IDX_FN(params_.kP_, setkP)
+SET_PARAM_IDX_FN(params_.kI_, setkI)
+SET_PARAM_IDX_FN(params_.kD_, setkD)
+SET_PARAM_IDX_FN(params_.kS_, setkS)
+SET_PARAM_IDX_FN(params_.kV_, setkV)
+SET_PARAM_IDX_FN(params_.kA_, setkA)
+SET_PARAM_IDX_FN(params_.kG_, setkG)
+SET_PARAM_IDX_FN(params_.gravity_type_, setGravityType)
+
+// Template to generate functions for normal param entries
+// Takes the param name and talon function to call to set the value
+#define SET_PARAM_FN(param, talon_fn)                                                                      \
+void TalonFXProControllerInterface::talon_fn(const decltype(param)::value_type val, const bool update_ddr) \
+{                                                                                                          \
+    param = val;                                                                                           \
+    talon_->talon_fn(val);                                                                                 \
+    if (update_ddr)                                                                                        \
+    {                                                                                                      \
+        ddr_updater_->triggerDDRUpdate();                                                                  \
+    }                                                                                                      \
+}
+
+SET_PARAM_FN(params_.invert_, setInvert);
+SET_PARAM_FN(params_.neutral_mode_, setNeutralMode)
+SET_PARAM_FN(params_.duty_cycle_neutral_deadband_, setDutyCycleNeutralDeadband)
+SET_PARAM_FN(params_.peak_forward_duty_cycle_, setPeakForwardDutyCycle)
+SET_PARAM_FN(params_.peak_reverse_duty_cycle_, setPeakReverseDutyCycle);
+SET_PARAM_FN(params_.stator_current_limit_, setStatorCurrentLimit)
+SET_PARAM_FN(params_.stator_current_limit_enable_, setStatorCurrentLimitEnable);
+SET_PARAM_FN(params_.supply_current_limit_, setSupplyCurrentLimit);
+SET_PARAM_FN(params_.supply_current_limit_enable_, setSupplyCurrentLimitEnable);
+SET_PARAM_FN(params_.supply_voltage_time_constant_, setSupplyVoltageTimeConstant);
+SET_PARAM_FN(params_.peak_forward_voltage_, setPeakForwardVoltage);
+SET_PARAM_FN(params_.peak_reverse_voltage_, setPeakReverseVoltage);
+SET_PARAM_FN(params_.peak_forward_torque_current_, setPeakForwardTorqueCurrent);
+SET_PARAM_FN(params_.peak_reverse_torque_current_, setPeakReverseTorqueCurrent);
+SET_PARAM_FN(params_.torque_neutral_deadband_, setTorqueNeutralDeadband);
+SET_PARAM_FN(params_.feedback_rotor_offset_, setFeedbackRotorOffset);
+SET_PARAM_FN(params_.sensor_to_mechanism_ratio_, setSensorToMechanismRatio);
+SET_PARAM_FN(params_.rotor_to_sensor_ratio_, setRotorToSensorRatio);
+SET_PARAM_FN(params_.differential_sensor_source_, setDifferentialSensorSource);
+SET_PARAM_FN(params_.differential_talonfx_sensor_id_, setDifferentialTalonFXSensorID);
+SET_PARAM_FN(params_.differential_remote_sensor_id_, setDifferentialRemoteSensorID);
+SET_PARAM_FN(params_.peak_differential_duty_cycle_, setPeakDifferentialDutyCycle);
+SET_PARAM_FN(params_.peak_differential_voltage_, setPeakDifferentialVoltage);
+SET_PARAM_FN(params_.peak_differential_torque_current_, setPeakDifferentialTorqueCurrent);
+SET_PARAM_FN(params_.duty_cycle_open_loop_ramp_period_, setDutyCycleOpenLoopRampPeriod);
+SET_PARAM_FN(params_.voltage_open_loop_ramp_period_, setVoltageOpenLoopRampPeriod);
+SET_PARAM_FN(params_.torque_open_loop_ramp_period_, setTorqueOpenLoopRampPeriod);
+SET_PARAM_FN(params_.duty_cycle_closed_loop_ramp_period_, setDutyCycleClosedLoopRampPeriod);
+SET_PARAM_FN(params_.voltage_closed_loop_ramp_period_, setVoltageClosedLoopRampPeriod);
+SET_PARAM_FN(params_.torque_closed_loop_ramp_period_, setTorqueClosedLoopRampPeriod);
+SET_PARAM_FN(params_.forward_limit_type_, setForwardLimitType);
+SET_PARAM_FN(params_.forward_limit_autoset_position_enable_, setForwardLimitAutosetPositionEnable);
+SET_PARAM_FN(params_.forward_limit_autoset_position_value_, setForwardLimitAutosetPositionValue);
+SET_PARAM_FN(params_.forward_limit_enable_, setForwardLimitEnable);
+SET_PARAM_FN(params_.forward_limit_source_, setForwardLimitSource);
+SET_PARAM_FN(params_.forward_limit_remote_sensor_id_, setForwardLimitRemoteSensorID);
+SET_PARAM_FN(params_.reverse_limit_type_, setReverseLimitType);
+SET_PARAM_FN(params_.reverse_limit_autoset_position_enable_, setReverseLimitAutosetPositionEnable);
+SET_PARAM_FN(params_.reverse_limit_autoset_position_value_, setReverseLimitAutosetPositionValue);
+SET_PARAM_FN(params_.reverse_limit_enable_, setReverseLimitEnable);
+SET_PARAM_FN(params_.reverse_limit_source_, setReverseLimitSource);
+SET_PARAM_FN(params_.reverse_limit_remote_sensor_id_, setReverseLimitRemoteSensorID);
+SET_PARAM_FN(params_.beep_on_boot_, setBeepOnBoot);
+SET_PARAM_FN(params_.beep_on_config_, setBeepOnConfig);
+SET_PARAM_FN(params_.allow_music_dur_disable_, setAllowMusicDurDisable);
+SET_PARAM_FN(params_.softlimit_forward_enable_, setForwardSoftLimitEnable);
+SET_PARAM_FN(params_.softlimit_reverse_enable_, setReverseSoftLimitEnable);
+SET_PARAM_FN(params_.softlimit_forward_threshold_, setForwardSoftLimitThreshold);
+SET_PARAM_FN(params_.softlimit_reverse_threshold_, setReverseSoftLimitThreshold);
+SET_PARAM_FN(params_.motion_magic_cruise_velocity_, setMotionMagicCruiseVelocity);
+SET_PARAM_FN(params_.motion_magic_acceleration_, setMotionMagicAcceleration);
+SET_PARAM_FN(params_.motion_magic_jerk_, setMotionMagicJerk);
+SET_PARAM_FN(params_.continuous_wrap_, setContinuousWrap);
+SET_PARAM_FN(params_.control_enable_foc_, setControlEnableFOC);
+SET_PARAM_FN(params_.control_override_brake_dur_neutral_, setControlOverrideBrakeDurNeutral);
+SET_PARAM_FN(params_.control_max_abs_duty_cycle_, setControlMaxAbsDutyCycle);
+SET_PARAM_FN(params_.control_deadband_, setControlDeadband);
+SET_PARAM_FN(params_.control_feedforward_, setControlFeedforward);
+SET_PARAM_FN(params_.control_slot_, setControlSlot);
+SET_PARAM_FN(params_.control_oppose_master_direction_, setControlOpposeMasterDirection);
+SET_PARAM_FN(params_.control_limit_forward_motion_, setControlLimitForwardMotion);
+SET_PARAM_FN(params_.control_limit_reverse_motion_, setControlLimitReverseMotion);
+SET_PARAM_FN(params_.control_differential_slot_, setControlDifferentialSlot);
+SET_PARAM_FN(params_.enable_read_thread_, setEnableReadThread);
+SET_PARAM_FN(params_.set_position_, setRotorPosition);
 
 void TalonFXProControllerInterface::setControlMode(const hardware_interface::talonfxpro::TalonMode control_mode)
 {
@@ -2261,6 +1701,8 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
     talon->setControlFeedforward(params.control_feedforward_);
     talon->setControlSlot(params.control_slot_);
     talon->setControlOpposeMasterDirection(params.control_oppose_master_direction_);
+    talon->setControlLimitForwardMotion(params.control_limit_forward_motion_);
+    talon->setControlLimitReverseMotion(params.control_limit_reverse_motion_);
     talon->setEnableReadThread(params.enable_read_thread_);
     talon->setControlDifferentialSlot(params.control_differential_slot_);
     // Don't call setSetRotorPosition at startup since this isn't a value read from config

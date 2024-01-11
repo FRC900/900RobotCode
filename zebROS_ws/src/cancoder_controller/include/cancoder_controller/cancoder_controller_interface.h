@@ -11,7 +11,7 @@ namespace cancoder_controller_interface
 class CANCoderCIParams : public ddr_updater::DDRUpdater
 {
 	public:
-		CANCoderCIParams(ros::NodeHandle n);
+		explicit CANCoderCIParams(ros::NodeHandle n);
 
 		void setSensorDirection(const int sensor_direction, bool update_dynamic = true);
 		void setMagnetOffset(const double magnet_offset, bool update_dynamic = true);
@@ -26,7 +26,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 	private:
 		std::atomic<hardware_interface::cancoder::SensorDirection>     sensor_direction_{hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive};
 		std::atomic<double>                                            magnet_offset_{0.0};
-		std::atomic<hardware_interface::cancoder::AbsoluteSensorRange> absolute_sensor_range_{hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1};
+		std::atomic<hardware_interface::cancoder::AbsoluteSensorRange> absolute_sensor_range_{hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf};
 		std::atomic<double>                                            conversion_factor_{1.0};
 
 		const std::map<std::string, int> sensor_direction_enum_map_ =
@@ -49,7 +49,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 		}
 
 		template <typename T>
-		bool readIntoEnum(ros::NodeHandle &n,
+		bool readIntoEnum(ros::NodeHandle const &n,
 						  const std::string &param_name,
 						  const std::map<std::string, int> &mymap,
 						  std::atomic<T> &out) const
@@ -58,8 +58,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 			if (!n.getParam(param_name, param_str))
 				return true;
 
-			const auto it = mymap.find(param_str);
-			if (it != mymap.cend())
+			if (const auto it = mymap.find(param_str); it != mymap.cend())
 			{
 				out = static_cast<T>(it->second);
 				return true;

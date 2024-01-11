@@ -232,33 +232,33 @@ sudo apt remove --purge -y thunderbird libreoffice-* nsight-graphics-for-embedde
 sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
 # Install CTRE & navX libs
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ctre
 mkdir -p /home/ubuntu/ctre
 cd /home/ubuntu/ctre
-python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix6/latest/Phoenix6And5-frc2023-latest.json 
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
+python3 /home/ubuntu/2024RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix6/latest/Phoenix6And5-frc2024-latest.json 
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include
 find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ctre
 find /home/ubuntu/ctre -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
 rm -rf /home/ubuntu/ctre
 
 cd /home/ubuntu
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-headers.zip
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/navx
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/navx
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/navx
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/navx
 unzip -o /home/ubuntu/navx-cpp-4.0.433-headers.zip
 rm /home/ubuntu/navx-cpp-4.0.433-headers.zip
 cd /home/ubuntu
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-linuxathena.zip
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/navx
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/navx
 unzip -o /home/ubuntu/navx-cpp-4.0.433-linuxathena.zip
 rm /home/ubuntu/navx-cpp-4.0.433-linuxathena.zip
 cd /home/ubuntu
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-linuxathenastatic.zip
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/navx
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/navx
 unzip -o /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 
@@ -266,32 +266,32 @@ rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 cd /home/ubuntu
 mkdir sparkmax
 cd sparkmax
-python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib-2023.json
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
+python3 /home/ubuntu/2024RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib-2024.json
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include
 find /home/ubuntu/sparkmax -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/rev
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/rev
 find /home/ubuntu/sparkmax -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
 rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2023.4.3/WPILib_Linux-2023.4.3.tar.gz
-mkdir -p /home/ubuntu/wpilib/2023
-cd /home/ubuntu/wpilib/2023
-tar -xzf /home/ubuntu/WPILib_Linux-2023.4.3.tar.gz
-tar -xzf WPILib_Linux-2023.4.3/WPILib_Linux-2023.4.3-artifacts.tar.gz
-rm /home/ubuntu/WPILib_Linux-2023.4.3.tar.gz
-cd /home/ubuntu/wpilib/2023/tools
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2024.1.1-beta-1/WPILib_Linux-2024.1.1-beta-1.tar.gz
+mkdir -p /home/ubuntu/wpilib/2024
+cd /home/ubuntu/wpilib/2024
+tar -xzf /home/ubuntu/WPILib_Linux-2024.1.1-beta-1.tar.gz
+tar -xzf WPILib_Linux-2024.1.1-beta-1/WPILib_Linux-2024.1.1-beta-1-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2024.1.1-beta-1.tar.gz
+cd /home/ubuntu/wpilib/2024/tools
 python3 ToolsUpdater.py
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/wpilib
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/wpilib
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib
 find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
-mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib
-cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2023/maven /home/ubuntu/wpilib/2023/jdk /home/ubuntu/wpilib/2023/WPILib_Linux-2023.4.3 /home/ubuntu/wpilb/2023/utility /home/ubuntu/wpilib/2023/tools /home/ubuntu/wpilib/2023/documentation /home/ubuntu/wpilib/2023/installUtils /home/ubuntu/wpilib/2023/vsCodeExtensions
-sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+rm -rf /home/ubuntu/wpilib/2024/maven /home/ubuntu/wpilib/2024/jdk /home/ubuntu/wpilib/2024/WPILib_Linux-2024.1.1-beta-1 /home/ubuntu/wpilb/2024/utility /home/ubuntu/wpilib/2024/tools /home/ubuntu/wpilib/2024/documentation /home/ubuntu/wpilib/2024/installUtils /home/ubuntu/wpilib/2024/vsCodeExtensions
+sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 find ~/wpilib -name \*.debug | xargs rm -rf
 find ~/wpilib -name athena | xargs rm -rf
 find ~/wpilib -name x86-64| xargs rm -rf
@@ -484,7 +484,7 @@ sudo ccache -c
 sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 # This is handled by the ROS*.sh scripts
-#echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev/linux/aarm64/shared:/usr/local/lib" >> /home/ubuntu/.bashrc
+#echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/rev/linux/aarm64/shared:/usr/local/lib" >> /home/ubuntu/.bashrc
 
 # Install pyserial (for 2023 intake reader)
 sudo pip3 install pyserial

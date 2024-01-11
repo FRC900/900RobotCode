@@ -207,7 +207,7 @@ public:
 					m.fault_data_acquired_late[i] = ps->getFaultDataAcquiredLate();
 					m.fault_loop_time_slow[i] = ps->getFaultLoopTimeSlow();
 					m.fault_saturated_magnetometer[i] = ps->getFaultSaturatedMagnetometer();
-					m.fault_saturated_accelerometer[i] = ps->getFaultSaturatedAccelometer();
+					m.fault_saturated_accelerometer[i] = ps->getFaultSaturatedAccelerometer();
 					m.fault_saturated_gyroscope[i] = ps->getFaultSaturatedGyroscope();
 
 					m.sticky_fault_hardware[i] = ps->getStickyFaultHardware();
@@ -221,7 +221,7 @@ public:
 					m.sticky_fault_data_acquired_late[i] = ps->getStickyFaultDataAcquiredLate();
 					m.sticky_fault_loop_time_slow[i] = ps->getStickyFaultLoopTimeSlow();
 					m.sticky_fault_saturated_magnetometer[i] = ps->getStickyFaultSaturatedMagnetometer();
-					m.sticky_fault_saturated_accelerometer[i] = ps->getStickyFaultSaturatedAccelometer();
+					m.sticky_fault_saturated_accelerometer[i] = ps->getStickyFaultSaturatedAccelerometer();
 					m.sticky_fault_saturated_gyroscope[i] = ps->getStickyFaultSaturatedGyroscope();
 				}
 				realtime_pub_->unlockAndPublish();

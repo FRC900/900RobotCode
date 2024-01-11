@@ -55,7 +55,6 @@ swerve_drive_controller:
         neutral_mode: Brake
         forward_limit_enable: False
         reverse_limit_enable: False
-        #neutral_deadband: 0.01
     speed_joint_fr:
         joint: fr_drive
         close_loop_values:
@@ -69,7 +68,6 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-        #neutral_deadband: 0.01
     speed_joint_bl:
         joint: bl_drive
         close_loop_values:
@@ -84,7 +82,6 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-        #neutral_deadband: 0.01
     speed_joint_br:
         joint: br_drive
         close_loop_values:
@@ -99,7 +96,6 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-        #neutral_deadband: 0.01
     steering_joint_fl:
         joint: fl_angle
         feedback_sensor_source: RemoteCANCoder
@@ -107,7 +103,6 @@ swerve_drive_controller:
         close_loop_values:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
-        #neutral_deadband: 0.01
         motion_magic_cruise_velocity: 35.0
         motion_magic_acceleration: 300.0
         motion_magic_jerk: 1200.0
@@ -121,7 +116,6 @@ swerve_drive_controller:
         close_loop_values:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
-        #neutral_deadband: 0.01
         motion_magic_cruise_velocity: 35.0
         motion_magic_acceleration: 300.0
         motion_magic_jerk: 1200.0
@@ -135,7 +129,6 @@ swerve_drive_controller:
         close_loop_values:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
-        #neutral_deadband: 0.01
         motion_magic_cruise_velocity: 35.0
         motion_magic_acceleration: 300.0
         motion_magic_jerk: 1200.0
@@ -146,11 +139,9 @@ swerve_drive_controller:
         joint: bl_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 13
-        #neutral_deadband: 0.01
         close_loop_values:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
-        neutral_deadband: 0.01
         motion_magic_cruise_velocity: 35.0
         motion_magic_acceleration: 300.0
         motion_magic_jerk: 1200.0
@@ -164,11 +155,9 @@ swerve_angle_phoenix6_controller:
     joint: bl_angle
     feedback_sensor_source: RemoteCANCoder
     remote_feedback_device_id0: 13
-    #neutral_deadband: 0.01
     close_loop_values:
         - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
     invert: clockwise_positive
-    neutral_deadband: 0.01
     motion_magic_cruise_velocity: 5.0
     motion_magic_acceleration: 50.0
     motion_magic_jerk: 350.0
