@@ -12,7 +12,7 @@
 // Given a list of beacons relative to the blue corner of the field,
 // generate the same list of beacons but translated so the origin is
 // the red corner of the field.
-std::vector<PositionBeacon> WorldModel::getRedBeacons(const std::vector<PositionBeacon> &blueBeacons)
+std::vector<PositionBeacon> WorldModel::getRedBeacons(const std::vector<PositionBeacon> &blueBeacons) const
 {
 	constexpr double field_width = 16.458;
 	constexpr double field_height = 8.228; 
@@ -42,7 +42,7 @@ std::vector<PositionBeacon> WorldModel::getRedBeacons(const std::vector<Position
 	return redBeacons;
 }
 
-WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries, const double camera_fov) :
+WorldModel::WorldModel(const std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries, const double camera_fov) :
   beacons_(beacons), blue_beacons_(beacons), red_beacons_(getRedBeacons(beacons)), boundaries_(boundaries), camera_fov_(camera_fov) {
     for (const auto &b: beacons) {
       beacon_names_.insert(b.type_);
@@ -149,7 +149,7 @@ double WorldModel::total_distance(const Particle& p,
       total_res *= w;
       num_matches += 1;
       const auto &b = beacons_[assignment[i]];
-      beacons_seen_.insert({b.x_, b.y_, 0});
+      beacons_seen_.emplace(b.x_, b.y_, 0);
     }
   }
   // If any measurements are filtered out, return a low weight since this

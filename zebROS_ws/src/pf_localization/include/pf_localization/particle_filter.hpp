@@ -18,14 +18,14 @@
 class ParticleFilter {
 private:
   const size_t num_particles_;
-  std::mt19937 rng_;
+  std::mt19937 rng_{std::mt19937{0}};
   std::normal_distribution<double> pos_dist_;
   std::normal_distribution<double> rot_dist_;
   size_t resetCounter_{0};
   double rotation_threshold_;
   std::vector<Particle> particles_;
-  WorldModel world_;
   std::normal_distribution<double> rot_thresh_dist_;
+  WorldModel world_;
   void normalize();
   void init(const WorldModelBoundaries &boundaries);
   void constrain_particles();

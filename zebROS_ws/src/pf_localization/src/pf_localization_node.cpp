@@ -189,6 +189,7 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
       measurement.push_back(std::make_shared<PositionBeacon>(location.x, location.y, p.id));
     }
   }
+  // ROS_INFO_STREAM("msg.objects = " << msg->objects.size() << " measurement = " << measurement.size());
 
   if (pf->assign_weights(measurement, sigmas)) {
     pf->resample();
@@ -252,18 +253,15 @@ bool handle_re_init_pf(std_srvs::Empty::Request &req, std_srvs::Empty::Response 
 
 bool readFloatVal(XmlRpc::XmlRpcValue &param, double &val)
 {
-  if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
-  {
+  if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble) {
     val = static_cast<double>(param);
     return true;
-  }
-  else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
-  {
+  } else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt) {
     val = static_cast<int>(param);
     return true;
-  }
-  else
+  } else {
     throw std::runtime_error("A non-double value was read for beacon cood");
+  }
 
   return false;
 }
@@ -389,7 +387,7 @@ int main(int argc, char **argv) {
 
   #ifdef VERBOSE
   for (const Particle& p : pf->get_particles()) {
-	ROS_INFO_STREAM(p);
+	  ROS_INFO_STREAM(p);
   }
   ROS_INFO_STREAM("\n\n");
   const auto prediction = pf->predict();

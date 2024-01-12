@@ -3,7 +3,6 @@
 #include <cstdlib>             // for free, calloc, malloc
 #include <iostream>            // for operator<<, endl, basic_ostream, cout
 #include <limits>              // for numeric_limits
-#include <memory>              // for allocator_traits<>::value_type
 
 using namespace std;
 

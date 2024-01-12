@@ -39,13 +39,13 @@ private:
 
 public:
   //std::vector<PositionBeacon> particle_relative(const Particle& p) const;
-  WorldModel(std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries, const double camera_fov);
+  WorldModel(const std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries, const double camera_fov);
   const WorldModelBoundaries &get_boundaries() const;
   //bool is_in_world(const Particle& p) const;
   void constrain_to_world(Particle& p) const;
   void init_particle(Particle& p, const WorldModelBoundaries &boundaries);
   bool allianceColorCheck(bool amIBlueAlliance);
-  std::vector<PositionBeacon> getRedBeacons(const std::vector<PositionBeacon> &blueBeacons);
+  std::vector<PositionBeacon> getRedBeacons(const std::vector<PositionBeacon> &blueBeacons) const;
   std::optional<PositionBeacon> particle_relative_beacon(const Particle &p, const PositionBeacon &b) const;
   double total_distance(const Particle &p, const std::vector<std::shared_ptr<BeaconBase>> &measurements, const std::vector<double> &sigmas) const;
   const std::set<Particle> &get_beacons_seen() const;

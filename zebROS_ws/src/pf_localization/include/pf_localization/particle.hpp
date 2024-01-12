@@ -7,10 +7,10 @@ struct Particle {
   double x_;
   double y_;
   double rot_;
-  double weight_;
+  double weight_{1.0};
 
-  Particle(double x, double y, double rot): x_(x), y_(y), rot_(rot), weight_(1) {}
-  Particle() : x_(0), y_(0), rot_(0), weight_(1) {}
+  Particle(double x, double y, double rot): x_(x), y_(y), rot_(rot) {}
+  Particle() : x_(0), y_(0), rot_(0) {}
   bool isValid(void) const
   {
 	  const double sum = x_ + y_ + rot_ + weight_;

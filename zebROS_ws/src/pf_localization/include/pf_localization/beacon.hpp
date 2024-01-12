@@ -22,7 +22,14 @@ constexpr double WRONG_BEACON_TYPE_DISTANCE = std::numeric_limits<double>::max()
 struct PositionBeacon;
 struct BeaconBase {
 	const std::string type_;
-	BeaconBase(const std::string &type) : type_(type) {}
+	explicit BeaconBase(const std::string &type) : type_(type) {}
+    BeaconBase(const BeaconBase &other) = default;
+    BeaconBase(BeaconBase &&other) noexcept = default;
+
+    BeaconBase &operator=(const BeaconBase &other) = default;
+    BeaconBase &operator=(BeaconBase &&other) noexcept = default;
+
+    virtual ~BeaconBase() = default;
 	// Get the distance from this beacon (a detected field object) to a list of
 	// measured beacon locations (the rel vector, for camera-relative measurements).  Returns
 	// a vector with a distance value, each one corresponding to the distance from
@@ -41,6 +48,13 @@ struct PositionBeacon : BeaconBase {
   const double x_;
   const double y_;
   PositionBeacon(double x, double y, const std::string& type) : BeaconBase(type), x_(x), y_(y) {}
+  PositionBeacon(const PositionBeacon &other) = default;
+  PositionBeacon(PositionBeacon &&other) noexcept = default;
+
+  PositionBeacon &operator=(const PositionBeacon &other) = default;
+  PositionBeacon &operator=(PositionBeacon &&other) noexcept = default;
+
+  ~PositionBeacon() override = default;
   std::vector<double> distances(const std::vector<std::optional<PositionBeacon>>& rel) const override
   {
 	  std::vector<double> res;
@@ -81,6 +95,13 @@ struct PositionBeacon : BeaconBase {
 struct BearingBeacon : BeaconBase {
   const double angle_;
   BearingBeacon(double x, double y, const std::string& type) : BeaconBase(type), angle_(atan2(y, x)) {}
+  BearingBeacon(const BearingBeacon &other) = default;
+  BearingBeacon(BearingBeacon &&other) noexcept = default;
+
+  BearingBeacon &operator=(const BearingBeacon &other) = default;
+  BearingBeacon &operator=(BearingBeacon &&other) noexcept = default;
+
+  ~BearingBeacon() override = default;
   std::vector<double> distances(const std::vector<std::optional<PositionBeacon>>& rel) const override
   {
 	  std::vector<double> res;

@@ -12,7 +12,6 @@ ParticleFilter::ParticleFilter(const WorldModel& w,
                                const WorldModelBoundaries &boundaries,
                                double ns, double rs, double rt, size_t n) :
                                num_particles_(n),
-                               rng_(std::mt19937(0)),
                                pos_dist_(0, ns),
                                rot_dist_(0, rs),
                                rotation_threshold_(rt),
@@ -33,15 +32,15 @@ void ParticleFilter::init(const WorldModelBoundaries &boundaries) {
   const double x_u = std::min(boundaries.x_max_, worldBoundaries.x_max_);
   const double y_l = std::max(boundaries.y_min_, worldBoundaries.y_min_);
   const double y_u = std::min(boundaries.y_max_, worldBoundaries.y_max_);
-  std::uniform_real_distribution<double> x_distribution(x_l, x_u);
-  std::uniform_real_distribution<double> y_distribution(y_l, y_u);
-  std::uniform_real_distribution<double> rot_distribution(0, 2 * M_PI);
+  std::uniform_real_distribution x_distribution(x_l, x_u);
+  std::uniform_real_distribution y_distribution(y_l, y_u);
+  std::uniform_real_distribution rot_distribution(0.0, 2.0 * M_PI);
   particles_.clear();
   for (size_t i = 0; i < num_particles_; i++) {
     const double x = x_distribution(rng_);
     const double y = y_distribution(rng_);
     const double rot = rot_distribution(rng_);
-    particles_.emplace_back(Particle{x, y, rot});
+    particles_.emplace_back(x, y, rot);
   }
   normalize();
 }
@@ -138,10 +137,10 @@ std::optional<geometry_msgs::PoseWithCovariance> ParticleFilter::predict() {
   s /= weight;
   const double rot = atan2(s, c);
 
-  double covariance[9] = {0};
+  std::array<double, 9> covariance{0, 0, 0, 0, 0, 0, 0, 0, 0};
   for (const Particle& p : particles_) {
     // Put distances into an array so they can be accessed in a loop
-    double differences[3] = {p.x_ - x, p.y_ - y, angles::shortest_angular_distance(p.rot_, rot)};
+    const std::array<double, 3> differences{p.x_ - x, p.y_ - y, angles::shortest_angular_distance(p.rot_, rot)};
 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
