@@ -3,6 +3,7 @@
 
 #install basic dependencies
 sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
+sudo apt-add-repository ppa:borglab/gtsam-release-4.1 -y
 sudo apt update
 sudo apt -y upgrade
 
@@ -39,6 +40,8 @@ sudo apt install -y \
     libeigen3-dev \
     libflann-dev \
     libgflags-dev \
+    libgtsam-dev \
+    libgtsam-unstable-dev \
     libgoogle-glog-dev \
     libgoogle-perftools-dev \
     libgpiod-dev \
@@ -94,6 +97,7 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9
 sudo update-alternatives --auto gcc
+
 
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd

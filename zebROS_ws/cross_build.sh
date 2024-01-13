@@ -12,6 +12,7 @@ elif [[ ! $ROS_ROOT = "$HOME/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot
 	exit 1
 fi
 
+# REMOVE JOINT TRAJECTORY CONTORLLER FROM THIS 
 catkin config --profile cross -x _isolated --install --skiplist \
 	ackermann_steering_controller \
 	adi_driver \
@@ -19,7 +20,16 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	ar_track_alvar \
 	apriltag_launch \
     apriltag_ros \
+	tagslam \
+	tagslam_viz \
+	tagslam_test \
+	joint_trajectory_controller \
+	compressed_image_transport \
+	compressed_depth_image_transport \
+	theora_image_transport \
+	image_transport_plugins \
 	base_trajectory \
+	spline_util \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
