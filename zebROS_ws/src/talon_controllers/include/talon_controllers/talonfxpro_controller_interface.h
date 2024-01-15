@@ -568,9 +568,6 @@ public:
     TalonFXProPositionControllerInterface(const TalonFXProPositionControllerInterface &) = delete;
     TalonFXProPositionControllerInterface(TalonFXProPositionControllerInterface&&) noexcept = default;
     virtual ~TalonFXProPositionControllerInterface() = default;
-    //Sequence(const Sequence&) = delete;
-    //TalonFXProPositionControllerInterface(TalonFXProPositionControllerInterface&&) = default;
-
 
     TalonFXProPositionControllerInterface &operator=(const TalonFXProPositionControllerInterface &other) = default;
     TalonFXProPositionControllerInterface &operator=(TalonFXProPositionControllerInterface &&other) noexcept = default;

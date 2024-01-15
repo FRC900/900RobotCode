@@ -243,6 +243,33 @@ public:
 					case hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC:
 						m.control_mode[i] = "MotionMagicTorqueCurrentFOC";
 						break;
+					case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
+						m.control_mode[i] = "MotionMagicExpoDutyCycle";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
+						m.control_mode[i] = "MotionMagicExpoVoltage";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoTorqueCurrentFOC:
+						m.control_mode[i] = "MotionMagicExpoTorqueCurrentFOC";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityDutyCycle:
+						m.control_mode[i] = "MotionMagicVelocityDutyCycle";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityVoltage:
+						m.control_mode[i] = "MotionMagicVelocityVoltage";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityTorqueCurrentFOC:
+						m.control_mode[i] = "MotionMagicVelocityTorqueCurrentFOC";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicDutyCycle:
+						m.control_mode[i] = "DynamicMotionMagicDutyCycle";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicVoltage:
+						m.control_mode[i] = "DynamicMotionMagicVoltage";
+						break;
+					case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicTorqueCurrentFOC:
+						m.control_mode[i] = "DynamicMotionMagicTorqueCurrentFOC";
+						break;
 					case hardware_interface::talonfxpro::TalonMode::Follower:
 						m.control_mode[i] = "Follower";
 						break;
