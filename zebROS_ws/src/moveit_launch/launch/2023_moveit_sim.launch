@@ -1,0 +1,15 @@
+<launch>
+  <rosparam file="$(find minifrc_arm_moveit_config)/config/ros_controllers.yaml" command="load" ns="move_group" />
+
+  <include file="$(find minifrc_arm_moveit_config)/launch/demo.launch">
+    <arg name="use_rviz" value="true" />
+  </include>
+
+  <param name="robot_description"
+    command="$(find xacro)/xacro '$(find minifrcrobot_description)/urdf/robot.urdf'" />
+  
+  <!-- hopefully only does 1 controller manager -->
+  <node name="$(anon ros_control_controller_manager)" pkg="controller_manager" type="controller_manager"
+    respawn="false"
+    output="screen" args="spawn minifrc_moveit_controller" />
+</launch>

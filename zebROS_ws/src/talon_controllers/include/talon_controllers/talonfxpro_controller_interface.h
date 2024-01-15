@@ -57,11 +57,14 @@ class TalonFXProCIParams
 public:
     TalonFXProCIParams() =default;
     TalonFXProCIParams(const TalonFXProCIParams &) = delete;
-    TalonFXProCIParams(TalonFXProCIParams &&) noexcept = delete;
+
+    //TalonFXProCIParams(TalonFXProCIParams &&) noexcept = default;
+    TalonFXProCIParams& operator=(TalonFXProCIParams &&other) noexcept = default;
+
     ~TalonFXProCIParams() = default;
 
     TalonFXProCIParams& operator=(const TalonFXProCIParams &other);
-    TalonFXProCIParams& operator=(TalonFXProCIParams &&other) noexcept = delete;
+    TalonFXProCIParams(TalonFXProCIParams &&other) noexcept;
 
     bool readJointName(const ros::NodeHandle &n);
     bool readCloseLoopParams(const ros::NodeHandle &n);
@@ -196,11 +199,12 @@ class TalonFXProControllerInterface
 public:
     TalonFXProControllerInterface();
     TalonFXProControllerInterface(const TalonFXProControllerInterface &) = delete;
-    TalonFXProControllerInterface(TalonFXProControllerInterface &&) noexcept = delete;
+    TalonFXProControllerInterface(TalonFXProControllerInterface &&) noexcept = default;
     virtual ~TalonFXProControllerInterface() = default;
 
-    TalonFXProControllerInterface& operator=(const TalonFXProControllerInterface &other) = delete;
-    TalonFXProControllerInterface& operator=(TalonFXProControllerInterface &&other) noexcept = delete;
+    TalonFXProControllerInterface& operator=(const TalonFXProControllerInterface &other) = default;
+    // end up needing 
+    TalonFXProControllerInterface& operator=(TalonFXProControllerInterface &&other) noexcept = default;
     // Read params from config file and use them to
     // initialize the Talon hardware
     virtual bool initWithNode(hardware_interface::talonfxpro::TalonFXProCommandInterface *tci,
@@ -540,12 +544,12 @@ class TalonFXProFixedModeControllerInterface : public TalonFXProControllerInterf
 {
 public:
     TalonFXProFixedModeControllerInterface() : TalonFXProControllerInterface() {}
-    TalonFXProFixedModeControllerInterface(const TalonFXProFixedModeControllerInterface &) = delete; 
-    TalonFXProFixedModeControllerInterface(TalonFXProFixedModeControllerInterface &&) noexcept = delete;
+    TalonFXProFixedModeControllerInterface(const TalonFXProFixedModeControllerInterface &) = default; 
+    TalonFXProFixedModeControllerInterface(TalonFXProFixedModeControllerInterface &&) noexcept = default;
     ~TalonFXProFixedModeControllerInterface() override = default;
 
-    TalonFXProFixedModeControllerInterface &operator=(const TalonFXProFixedModeControllerInterface &other) = delete;
-    TalonFXProFixedModeControllerInterface &operator=(TalonFXProFixedModeControllerInterface &&other) noexcept = delete;
+    TalonFXProFixedModeControllerInterface &operator=(const TalonFXProFixedModeControllerInterface &other) = default;
+    TalonFXProFixedModeControllerInterface &operator=(TalonFXProFixedModeControllerInterface &&other) noexcept = default;
 
     void setControlMode(const hardware_interface::talonfxpro::TalonMode mode) override;
     void setControlJerk(const double control_jerk) override;
@@ -561,12 +565,15 @@ class TalonFXProPositionControllerInterface : public TalonFXProFixedModeControll
 {
 public:
     TalonFXProPositionControllerInterface() : TalonFXProFixedModeControllerInterface<TALON_MODE, TALON_MODE_NAME>() {}
-    TalonFXProPositionControllerInterface(const TalonFXProPositionControllerInterface &) = delete; 
-    TalonFXProPositionControllerInterface(TalonFXProPositionControllerInterface &&) noexcept = delete;
+    TalonFXProPositionControllerInterface(const TalonFXProPositionControllerInterface &) = delete;
+    TalonFXProPositionControllerInterface(TalonFXProPositionControllerInterface&&) noexcept = default;
     virtual ~TalonFXProPositionControllerInterface() = default;
+    //Sequence(const Sequence&) = delete;
+    //TalonFXProPositionControllerInterface(TalonFXProPositionControllerInterface&&) = default;
 
-    TalonFXProPositionControllerInterface &operator=(const TalonFXProPositionControllerInterface &other) = delete;
-    TalonFXProPositionControllerInterface &operator=(TalonFXProPositionControllerInterface &&other) noexcept = delete;
+
+    TalonFXProPositionControllerInterface &operator=(const TalonFXProPositionControllerInterface &other) = default;
+    TalonFXProPositionControllerInterface &operator=(TalonFXProPositionControllerInterface &&other) noexcept = default;
 
     void setControlMode(const hardware_interface::talonfxpro::TalonMode mode) override;
     void setControlOutput(const double control_output) override;
@@ -596,12 +603,12 @@ class TalonFXProMotionMagicControllerInterface : public TalonFXProFixedModeContr
 {
 public:
     TalonFXProMotionMagicControllerInterface() : TalonFXProFixedModeControllerInterface<TALON_MODE, TALON_MODE_NAME>() {}
-    TalonFXProMotionMagicControllerInterface(const TalonFXProMotionMagicControllerInterface &) = delete; 
-    TalonFXProMotionMagicControllerInterface(TalonFXProMotionMagicControllerInterface &&) noexcept = delete;
+    TalonFXProMotionMagicControllerInterface(const TalonFXProMotionMagicControllerInterface &) = default; 
+    TalonFXProMotionMagicControllerInterface(TalonFXProMotionMagicControllerInterface &&) noexcept = default;
     virtual ~TalonFXProMotionMagicControllerInterface() = default;
 
-    TalonFXProMotionMagicControllerInterface &operator=(const TalonFXProMotionMagicControllerInterface &other) = delete;
-    TalonFXProMotionMagicControllerInterface &operator=(TalonFXProMotionMagicControllerInterface &&other) noexcept = delete;
+    TalonFXProMotionMagicControllerInterface &operator=(const TalonFXProMotionMagicControllerInterface &other) = default;
+    TalonFXProMotionMagicControllerInterface &operator=(TalonFXProMotionMagicControllerInterface &&other) noexcept = default;
 
     void setControlOutput(const double control_output) override;
     void setControlVelocity(const double control_velocity) override;
@@ -692,6 +699,7 @@ public:
     TalonFXProFollowerControllerInterfaceBase(const TalonFXProFollowerControllerInterfaceBase &) = delete;
     TalonFXProFollowerControllerInterfaceBase(TalonFXProFollowerControllerInterfaceBase &&) noexcept = delete;
     ~TalonFXProFollowerControllerInterfaceBase() override = default;
+    
 
     TalonFXProFollowerControllerInterfaceBase &operator=(const TalonFXProFollowerControllerInterfaceBase &other) = delete;
     TalonFXProFollowerControllerInterfaceBase &operator=(TalonFXProFollowerControllerInterfaceBase &&other) noexcept = delete;

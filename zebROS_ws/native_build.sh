@@ -41,6 +41,12 @@ if [ $? -eq 1 ]; then
 fi
 
 catkin config --skiplist \
+    moveit_ros_robot_interaction \
+    moveit_ros_benchmarks \
+    moveit_ros_manipulation \
+	moveit_chomp_optimizer_adapter \
+    moveit_planners_chomp \
+    chomp_motion_planner \
 	ackermann_steering_controller \
 	adi_driver \
 	adi_pico_driver \
@@ -59,7 +65,6 @@ catkin config --skiplist \
 	gripper_action_controller \
 	navx_publisher \
 	robot_characterization \
-	rqt_joint_trajectory_controller \
 	realsense2_camera \
 	realsense2_description \
 	robot_visualizer \

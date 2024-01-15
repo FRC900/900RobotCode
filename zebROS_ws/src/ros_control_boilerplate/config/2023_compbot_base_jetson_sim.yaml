@@ -42,6 +42,8 @@ hardware_interface:
        - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
        - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
        - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
+       - {name: base_arm, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
+       - {name: second_stage_arm, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
        - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
        - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
        - {name: four_bar, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}

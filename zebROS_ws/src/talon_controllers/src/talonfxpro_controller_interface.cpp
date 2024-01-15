@@ -127,6 +127,108 @@ bool stringToLimitSource(const std::string &str,
     return true;
 }
 
+TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept { 
+    for (size_t i = 0; i < hardware_interface::talonfxpro::TALON_PIDF_SLOTS; i++)
+    {
+        kP_[i].exchange(other.kP_[i]);
+        kI_[i].exchange(other.kI_[i]);
+        kD_[i].exchange(other.kD_[i]);
+        kS_[i].exchange(other.kS_[i]);
+        kV_[i].exchange(other.kV_[i]);
+        kA_[i].exchange(other.kA_[i]);
+        kG_[i].exchange(other.kG_[i]);
+        gravity_type_[i].exchange(other.gravity_type_[i]);
+    }
+
+    invert_.exchange(other.invert_);
+    neutral_mode_.exchange(other.neutral_mode_);
+
+    duty_cycle_neutral_deadband_.exchange(other.duty_cycle_neutral_deadband_);
+    peak_forward_duty_cycle_.exchange(other.peak_forward_duty_cycle_);
+    peak_reverse_duty_cycle_.exchange(other.peak_reverse_duty_cycle_);
+
+    stator_current_limit_.exchange(other.stator_current_limit_);
+    stator_current_limit_enable_.exchange(other.stator_current_limit_enable_);
+
+    supply_current_limit_.exchange(other.supply_current_limit_);
+    supply_current_limit_enable_.exchange(other.supply_current_limit_enable_);
+
+    supply_voltage_time_constant_.exchange(other.supply_voltage_time_constant_);
+    peak_forward_voltage_.exchange(other.peak_forward_voltage_);
+    peak_reverse_voltage_.exchange(other.peak_reverse_voltage_);
+
+    peak_forward_torque_current_.exchange(other.peak_forward_torque_current_);
+    peak_reverse_torque_current_.exchange(other.peak_reverse_torque_current_);
+    torque_neutral_deadband_.exchange(other.torque_neutral_deadband_);
+
+    feedback_rotor_offset_.exchange(other.feedback_rotor_offset_);
+    sensor_to_mechanism_ratio_.exchange(other.sensor_to_mechanism_ratio_);
+    rotor_to_sensor_ratio_.exchange(other.rotor_to_sensor_ratio_);
+    feedback_sensor_source_.exchange(other.feedback_sensor_source_);
+    feedback_remote_sensor_id_.exchange(other.feedback_remote_sensor_id_);
+
+    differential_sensor_source_.exchange(other.differential_sensor_source_);
+    differential_talonfx_sensor_id_.exchange(other.differential_talonfx_sensor_id_);
+    differential_remote_sensor_id_.exchange(other.differential_remote_sensor_id_);
+
+    peak_differential_duty_cycle_.exchange(other.peak_differential_duty_cycle_);
+    peak_differential_voltage_.exchange(other.peak_differential_voltage_);
+    peak_differential_torque_current_.exchange(other.peak_differential_torque_current_);
+
+    duty_cycle_open_loop_ramp_period_.exchange(other.duty_cycle_open_loop_ramp_period_);
+    voltage_open_loop_ramp_period_.exchange(other.voltage_open_loop_ramp_period_);
+    torque_open_loop_ramp_period_.exchange(other.torque_open_loop_ramp_period_);
+
+    duty_cycle_closed_loop_ramp_period_.exchange(other.duty_cycle_closed_loop_ramp_period_);
+    voltage_closed_loop_ramp_period_.exchange(other.voltage_closed_loop_ramp_period_);
+    torque_closed_loop_ramp_period_.exchange(other.torque_closed_loop_ramp_period_);
+
+    forward_limit_type_.exchange(other.forward_limit_type_);
+    forward_limit_autoset_position_enable_.exchange(other.forward_limit_autoset_position_enable_);
+    forward_limit_autoset_position_value_.exchange(other.forward_limit_autoset_position_value_);
+    forward_limit_enable_.exchange(other.forward_limit_enable_);
+    forward_limit_source_.exchange(other.forward_limit_source_);
+    forward_limit_remote_sensor_id_.exchange(other.forward_limit_remote_sensor_id_);
+
+    reverse_limit_type_.exchange(other.reverse_limit_type_);
+    reverse_limit_autoset_position_enable_.exchange(other.reverse_limit_autoset_position_enable_);
+    reverse_limit_autoset_position_value_.exchange(other.reverse_limit_autoset_position_value_);
+    reverse_limit_enable_.exchange(other.reverse_limit_enable_);
+    reverse_limit_source_.exchange(other.reverse_limit_source_);
+    reverse_limit_remote_sensor_id_.exchange(other.reverse_limit_remote_sensor_id_);
+
+    beep_on_boot_.exchange(other.beep_on_boot_);
+    beep_on_config_.exchange(other.beep_on_config_);
+    allow_music_dur_disable_.exchange(other.allow_music_dur_disable_);
+
+    softlimit_forward_enable_.exchange(other.softlimit_forward_enable_);
+    softlimit_reverse_enable_.exchange(other.softlimit_reverse_enable_);
+    softlimit_forward_threshold_.exchange(other.softlimit_forward_threshold_);
+    softlimit_reverse_threshold_.exchange(other.softlimit_reverse_threshold_);
+
+    motion_magic_cruise_velocity_.exchange(other.motion_magic_cruise_velocity_);
+    motion_magic_acceleration_.exchange(other.motion_magic_acceleration_);
+    motion_magic_jerk_.exchange(other.motion_magic_jerk_);
+
+    control_enable_foc_.exchange(other.control_enable_foc_);
+    control_override_brake_dur_neutral_.exchange(other.control_override_brake_dur_neutral_);
+    control_max_abs_duty_cycle_.exchange(other.control_max_abs_duty_cycle_);
+    control_deadband_.exchange(other.control_deadband_);
+    control_feedforward_.exchange(other.control_feedforward_);
+    control_slot_.exchange(other.control_slot_);
+    control_oppose_master_direction_.exchange(other.control_oppose_master_direction_);
+    //does not appear to exist in the params struct but keeping here anyway
+    //control_limit_forward_motion_.exchange(other.control_limit_forward_motion_);
+    //control_limit_reverse_motion_.exchange(other.control_limit_reverse_motion_);
+    control_differential_slot_.exchange(other.control_differential_slot_);
+
+    continuous_wrap_.exchange(other.continuous_wrap_);
+    enable_read_thread_.exchange(other.enable_read_thread_);
+
+    set_position_.exchange(other.set_position_);
+} 
+
+
 TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &other)
 {
     if (this != &other)

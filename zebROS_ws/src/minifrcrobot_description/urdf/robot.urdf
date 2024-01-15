@@ -1,0 +1,302 @@
+<robot name="onshape">
+<link name="base_link"></link>
+<joint name="base_link_to_base" type="fixed">
+<parent link="base_link"/>
+<child link="arm_holder" />
+<origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+<link name="arm_holder">
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/arm_holder_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.0030347716063039422915 0 0.022929778891249467943" rpy="0 0 0"/>
+<mass value="0.040789137895993712868" />
+<inertia ixx="2.8456060455347142459e-05" ixy="0"  ixz="2.6824956727997271258e-06" iyy="5.1206896571550939508e-05" iyz="0" izz="3.0040412295945922994e-05" />
+</inertial>
+<visual><geometry><box size="0 0 0" /></geometry></visual>
+</link>
+
+<link name="arm_holder_1">
+<inertial>
+<origin xyz="0 0 0" rpy="0 0 0" />
+<mass value="1e-9" />
+<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+</inertial>
+<visual>
+<origin xyz="-8.6736173798840354721e-18 0.015875000000000000222 0.0019049999999999952388" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/arm_holder.stl"/>
+</geometry>
+<material name="arm_holder_1_visual_material">
+<color rgba="0.61568627450980395466 0.81176470588235294379 0.92941176470588238168 1.0"/>
+</material>
+</visual>
+</link>
+<joint name="arm_holder_1_fixing" type="fixed">
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<parent link="arm_holder" />
+<child link="arm_holder_1" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="_hs-322hd">
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/_hs-322hd_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.019787117234778824754 -0.01184625467725158518 -2.4519802017576592367e-09" rpy="0 0 0"/>
+<mass value="0.049980665650601885375" />
+<inertia ixx="7.0131811608219737849e-06" ixy="-1.5101767013654875547e-07"  ixz="-5.6367497207651434684e-12" iyy="8.3052763995078660925e-06" iyz="4.1885363798789197346e-13" izz="1.2153241500714573236e-05" />
+</inertial>
+<visual><geometry><box size="0 0 0" /></geometry></visual>
+</link>
+
+<link name="_hs-322hd_1">
+<inertial>
+<origin xyz="0 0 0" rpy="0 0 0" />
+<mass value="1e-9" />
+<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+</inertial>
+<visual>
+<origin xyz="-0.020000000000000000416 -0.027500000000000000139 -1.6359650383255208305e-09" rpy="1.1112366654875553104e-10 -0 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/_hs-322hd.stl"/>
+</geometry>
+<material name="_hs-322hd_1_visual_material">
+<color rgba="0.2313725490196078538 0.38039215686274507888 0.7058823529411765163 1.0"/>
+</material>
+</visual>
+</link>
+<joint name="_hs-322hd_1_fixing" type="fixed">
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<parent link="_hs-322hd" />
+<child link="_hs-322hd_1" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="base_arm_part">
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/base_arm_part_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.0027165783034797750389 -0.12967315748884689075 -0.016202102233383582769" rpy="0 0 0"/>
+<mass value="0.035980036837035156427" />
+<inertia ixx="0.00028078037166058957084" ixy="-1.5296132519564194545e-06"  ixz="8.3712522197761434003e-09" iyy="1.0821935419361622443e-05" iyz="3.8997682877549844402e-08" izz="0.000275500153471930939" />
+</inertial>
+<visual><geometry><box size="0 0 0" /></geometry></visual>
+</link>
+
+<link name="base_arm_part_1">
+<inertial>
+<origin xyz="0 0 0" rpy="0 0 0" />
+<mass value="1e-9" />
+<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+</inertial>
+<visual>
+<origin xyz="0.012699999999999997749 0.012699999999999968259 0.0036195000000000705775" rpy="1.570796326794896558 1.5707963267948961139 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/base_arm_part.stl"/>
+</geometry>
+<material name="base_arm_part_1_visual_material">
+<color rgba="0.61568627450980395466 0.81176470588235294379 0.92941176470588238168 1.0"/>
+</material>
+</visual>
+</link>
+<joint name="base_arm_part_1_fixing" type="fixed">
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<parent link="base_arm_part" />
+<child link="base_arm_part_1" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="part_1">
+<collision>
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/part_1_collision.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.0030652254965877860637 -0.058360607838242435641 0.0090169999999999781576" rpy="0 0 0"/>
+<mass value="0.023127123465820405984" />
+<inertia ixx="5.6647965796974961605e-05" ixy="3.1153604514067870833e-08"  ixz="6.5125424834559927129e-31" iyy="3.4536765799298167839e-06" iyz="1.098083017497512774e-34" izz="5.6507798808386068676e-05" />
+</inertial>
+<visual><geometry><box size="0 0 0" /></geometry></visual>
+</link>
+
+<link name="part_1_1">
+<inertial>
+<origin xyz="0 0 0" rpy="0 0 0" />
+<mass value="1e-9" />
+<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+</inertial>
+<visual>
+<origin xyz="0.012700000000000696843 0.019914204896853582305 0.019811999999999978933" rpy="1.570796326794896558 1.570796326794896558 0" />
+<geometry>
+<mesh filename="package://minifrcrobot_description/urdf/part_1.stl"/>
+</geometry>
+<material name="part_1_1_visual_material">
+<color rgba="0.61568627450980395466 0.81176470588235294379 0.92941176470588238168 1.0"/>
+</material>
+</visual>
+</link>
+<joint name="part_1_1_fixing" type="fixed">
+<origin xyz="0 0 0" rpy="0 -0 0" />
+<parent link="part_1" />
+<child link="part_1_1" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="second_stage_arm" type="revolute">
+<origin xyz="4.336808689942017736e-19 -0.26589736000000008254 -0.028257499999999977081" rpy="1.1408386409076440936e-16 8.8940818644187655745e-17 0.0016804094650094574849" />
+<parent link="base_arm_part" />
+<child link="part_1" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="5.0" lower="-2.2" upper="1.6" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="base_arm" type="revolute">
+<origin xyz="-0.010000000000000997674 0.011599999999999995731 -1.6316197924818519188e-09" rpy="-1.5707963793909751615 1.5686835501809441862 3.1415926009938330843" />
+<parent link="_hs-322hd" />
+<child link="base_arm_part" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="3.14" lower="-1.22" upper="1.6" />
+<joint_properties friction="0.0"/>
+</joint>                
+
+<joint name="servo_link" type="fixed">
+<origin xyz="0.028574999999999999706 -6.9388939039072283776e-18 0.025400000000000016315" rpy="-1.570796326794896558 1.5707963267948961139 0" />
+<parent link="arm_holder" />
+<child link="_hs-322hd" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="bl_drive_link"></link>
+
+<joint name="bl_drive" type="fixed">
+    <parent link="base_link"/>
+    <child link="bl_drive_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="br_drive_link"></link>
+
+<joint name="br_drive" type="fixed">
+    <parent link="base_link"/>
+    <child link="br_drive_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="fl_drive_link"></link>
+
+<joint name="fl_drive" type="fixed">
+    <parent link="base_link"/>
+    <child link="fl_drive_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="fr_drive_link"></link>
+
+<joint name="fr_drive" type="fixed">
+    <parent link="base_link"/>
+    <child link="fr_drive_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="intake_link"></link>
+
+<joint name="intake" type="fixed">
+    <parent link="base_link"/>
+    <child link="intake_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="auto_motor_link"></link>
+
+<joint name="auto_motor" type="fixed">
+    <parent link="base_link"/>
+    <child link="auto_motor_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+<link name="robot_code_ready_link" ></link>
+<joint name="robot_code_ready_jetson" type="fixed">
+    <parent link="base_link"/>
+    <child link="robot_code_ready_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+<link name="robot_code_ready_rio_link" ></link>
+
+<joint name="robot_code_ready_rio" type="fixed">
+    <parent link="base_link"/>
+    <child link="robot_code_ready_rio_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<!-- 
+       - {name: pcm, type: pcm, pcm_id: 0}
+       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
+
+       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
+
+       - {name: babys_first_orchestra, type: orchestra, id: 1}
+
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+
+-->
+<link name="pcm_link" ></link>
+
+<joint name="pcm" type="fixed">
+    <parent link="base_link"/>
+    <child link="pcm_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="pigeon2_link" ></link>
+
+<joint name="pigeon2" type="fixed">
+    <parent link="base_link"/>
+    <child link="pigeon2_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="candle1_link" ></link>
+
+<joint name="candle1" type="fixed">
+    <parent link="base_link"/>
+    <child link="candle1_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="babys_first_orchestra_link" ></link>
+
+<joint name="babys_first_orchestra" type="fixed">
+    <parent link="base_link"/>
+    <child link="babys_first_orchestra_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+</joint>
+
+
+
+</robot>

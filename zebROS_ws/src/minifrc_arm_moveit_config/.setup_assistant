@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: minifrcrobot_description
+    relative_path: urdf/robot.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/onshape.srdf
+  CONFIG:
+    author_name: chris and ben
+    author_email: todo@todo.com
+    generated_timestamp: 1698530174

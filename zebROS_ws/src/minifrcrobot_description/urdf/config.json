@@ -1,0 +1,16 @@
+{
+    "documentId": "234d32b09c8bb569104a7caf",
+    "outputFormat": "urdf",
+    "drawFrames": false,
+    "drawCollisions": false,
+    "useScads": false,
+    "mergeSTLs": "all",
+    "simplifySTLs": "all",
+    "useCollisionsConfigurations": true,
+    "COMMENT":"Yes I know I have API keys here, just makes it way easier for everyone kinda",
+    "onshape_access_key":"Fw444NIbJZE8gKqUpLRKq9bt",
+    "onshape_secret_key":"B7LTLtbvkUuEf58U4PxnJ6eQ7Oy69YDh3ZREWMrVjvrcM7le",
+    "addDummyBaseLink": true,
+    "assemblyName":"ARM_ASSEMBLY_2",
+    "useFixedLinks": true
+}
