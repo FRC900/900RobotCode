@@ -48,7 +48,7 @@ hardware_interface:
 
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
        
-       - {name: pcm, type: pcm, pcm_id: 0}
+       #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
        - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
