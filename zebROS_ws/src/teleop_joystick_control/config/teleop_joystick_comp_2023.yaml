@@ -3,7 +3,7 @@ teleop_params:
     max_rot: 5.5
     max_rot_slow: 2.355
     rotation_axis_scale: 1.0
-    rotation_epsilon: 0.1 # Z-velocities lower than this indicate robot is stopped  # WAS 0.2 if things look wrong!! 
+    rotation_epsilon: 0.05 # Z-velocities lower than this indicate robot is stopped  # WAS 0.2 if things look wrong!! 
     min_speed: 0.0  # Smallest linear speed which get the robot moving at all
     max_speed: 2.5
     max_speed_slow: 1.7
@@ -11,7 +11,7 @@ teleop_params:
     rotation_pow: 1.0   #Scaling factors used in teleop_joystick_comp
     joystick_deadzone: 0.05
     drive_rate_limit_time: 200
-    rotate_rate_limit_time: 500
+    rotate_rate_limit_time: 100
     climber_align_angle: 3.14159265 # Intake facing DS wall
     trigger_threshold: 0.5
     stick_threshold: 0.5

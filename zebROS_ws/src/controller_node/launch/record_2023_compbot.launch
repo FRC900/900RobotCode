@@ -421,5 +421,10 @@
 		/zed_objdetect/temperature/imu
 		/zed_objdetect/temperature/left
 		/zed_objdetect/temperature/right
+		/frcrobot_jetson/talonfxpro_states
+		/frcrobot_jetson/talonfxpro_configs
+		/frcrobot_jetson/swerve_drive_state_controller/odom
+		/vroom
+		/wpilib_odom/odom
 		"/>
 </launch>

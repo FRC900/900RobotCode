@@ -77,16 +77,16 @@ steering_param = 0
 
 
 if joints.steering_option == True:
-    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/steering_joint_fr', timeout=5))
-    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/steering_joint_fl', timeout=9))
-    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/steering_joint_br', timeout=7))
-    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/steering_joint_bl', timeout=6))
+    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/fr_angle', timeout=5))
+    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/fl_angle', timeout=9))
+    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/br_angle', timeout=7))
+    Joints.steering_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/bl_angle', timeout=6))
 
 if joints.speed_option == True:
-    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/speed_joint_fr', timeout=4))
-    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/speed_joint_fl', timeout=3))
-    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/speed_joint_br', timeout=1))
-    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/speed_joint_bl', timeout=2))
+    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/fr_drive', timeout=4))
+    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/fl_drive', timeout=3))
+    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/br_drive', timeout=1))
+    Joints.speed_joints.append(DynamicReconfigureClient('/frcrobot_jetson/swerve_drive_controller/bl_drive', timeout=2))
 
 def print_config(config):
     for k, v in config.items():

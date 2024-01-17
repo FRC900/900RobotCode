@@ -5,15 +5,12 @@
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include "state_handle/state_handle.h"
 
-namespace hardware_interface
+namespace hardware_interface::pigeon2
 {
-namespace pigeon2
-{
-
 class Pigeon2HWState
 {
 	public:
-		Pigeon2HWState(const int device_number);
+		explicit Pigeon2HWState(const int device_number);
 		int getDeviceNumber(void) const;
 
 		void   setMountPoseYaw(const double direction);
@@ -251,12 +248,11 @@ class Pigeon2HWState
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is
 // read-only, allow multiple controllers to register it.
-typedef StateHandle<const Pigeon2HWState> Pigeon2StateHandle;
-typedef StateHandle<Pigeon2HWState>       Pigeon2WritableStateHandle;
+using Pigeon2StateHandle = StateHandle<const Pigeon2HWState>;
+using Pigeon2WritableStateHandle = StateHandle<Pigeon2HWState>;
 class Pigeon2StateInterface : public HardwareResourceManager<Pigeon2StateHandle> {};
 class RemotePigeon2StateInterface : public HardwareResourceManager<Pigeon2WritableStateHandle, ClaimResources> {};
 
-} // namespace cancoder
-} // namespace hardware_interface
+} // namespace
 
 #endif

@@ -1,8 +1,8 @@
 # ros_control_boilerplate Settings -----------------------
 # Settings for ros_control control loop
 generic_hw_control_loop:
-  loop_hz: 100
-  cycle_time_error_threshold: 0.01
+  loop_hz: 250
+  cycle_time_error_threshold: 0.004
   canifier_read_hz: 100
   cancoder_read_hz: 100
   #some processes have lower frequencies than the main control loop
@@ -29,29 +29,31 @@ generic_hw_control_loop:
 # For future expansion, change hw_id to specify one
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
-   # Identify this as a non-Rio controller using Linux
-   # socketCan device can0 to communicate
-   run_hal_robot: false
-   can_interface: can0
+    # Identify this as a non-Rio controller using Linux
+    # socketCan device can0 to communicate
+    run_hal_robot: false
+    can_interface: can0
 
-   joints:
-       - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
-       - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
-       - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
-       - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
-       - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
-       - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
-       - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
-       - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
+    joints:
+        - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
+        - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
+        - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
+        - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
+        - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
+        - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
+        - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
+        - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
 
-       #- {name: pcm, type: pcm, pcm_id: 0}
-       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
+        #- {name: pcm, type: pcm, pcm_id: 0}
+        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
-       - {name: babys_first_orchestra, type: orchestra, id: 1}
-       - {name: CANivore, type: can_bus_status}
+        - {name: babys_first_orchestra, type: orchestra, id: 1}
+        - {name: CANivore, type: can_bus_status}
 
-       - {name: robot_code_ready_jetson, local: true, type: ready}
-       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+        - {name: robot_code_ready_jetson, local: true, type: ready}
+        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+        - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
+
 
 
 # Create controllers for each joint
@@ -147,3 +149,36 @@ talonfxpro_controller:
     neutral_mode: Coast
     forward_limit_type: RemoteCanCoder
     forward_limit_remote_sensor_id: 50
+
+swerve_drive_state_controller:
+    type: talon_swerve_drive_controller/SwerveDriveStateController
+
+    publish_rate: 250
+
+    latency_compensation_group: latency_compensation # joint name
+
+    # These joint names must match the joint names declared for the latency compensation group
+    speed: ['fl_drive', 'fr_drive', 'bl_drive', 'br_drive']
+    steering: ['fl_angle', 'fr_angle', 'bl_angle', 'br_angle']
+
+    wheel_radius: 0.048 # m
+    cmd_vel_timout: 0.5
+    max_speed: 7 # Potentially raise, otherwise swerve math will limit max motor speed
+
+    # TODO : move this into sensor_to_mechanism_ratio for Falcons
+    ratio_encoder_to_rotations: 0.163398693 # Test me, will show up in odom results
+
+    wheel_coords: [[-0.22225, 0.19685], [0.22225, 0.19685], [-0.22225, -0.19685], [0.22225, -0.19685]]
+
+    bl_angle:
+        offset: 1.99418
+    br_angle:
+        offset: -3.03268
+    fl_angle:
+        offset: -0.98635
+    fr_angle:
+        offset: 2.98052
+
+latency_compensation_state_controller:
+    type: latency_compensation_state_controller/LatencyCompensationStateController
+    publish_rate: 250

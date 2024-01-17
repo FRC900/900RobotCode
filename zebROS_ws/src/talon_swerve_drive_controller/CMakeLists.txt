@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf
     trajectory_msgs
     urdf
+    periodic_interval_counter
 )
 
 find_package(Eigen3 REQUIRED)
@@ -56,6 +57,7 @@ include_directories(
 
 add_library(${PROJECT_NAME} 
 	src/swerve_drive_controller.cpp 
+  src/swerve_drive_state_controller.cpp
 	#src/odometry.cpp 
 	#src/speed_limiter.cpp
 	src/900Math.cpp
@@ -94,6 +96,20 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi") OR
 		${${PROJECT_NAME}_EXPORTED_TARGETS}
 		${catkin_EXPORTED_TARGETS}
 	)
+
+  add_executable(swervebot test/swervebot.cpp src/Swerve.cpp src/SwerveMath.cpp src/900Math.cpp)
+	target_link_libraries(swervebot ${catkin_LIBRARIES})
+	add_dependencies(swervebot
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+	)
+
+  add_executable(swervebot_from_bag test/swervebot_from_bag.cpp src/Swerve.cpp src/SwerveMath.cpp src/900Math.cpp)
+  target_link_libraries(swervebot_from_bag ${catkin_LIBRARIES})
+  add_dependencies(swervebot_from_bag
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+  )
 endif()
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

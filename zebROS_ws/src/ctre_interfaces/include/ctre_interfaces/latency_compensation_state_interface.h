@@ -15,7 +15,7 @@ class CTRELatencyCompensationEntry;
 class CTRELatencyCompensationState
 {
 public:
-    CTRELatencyCompensationState(const std::string &name);
+    explicit CTRELatencyCompensationState(const std::string &name);
     CTRELatencyCompensationState(const CTRELatencyCompensationState &) = delete;
     CTRELatencyCompensationState(CTRELatencyCompensationState &&) noexcept = delete;
     ~CTRELatencyCompensationState();

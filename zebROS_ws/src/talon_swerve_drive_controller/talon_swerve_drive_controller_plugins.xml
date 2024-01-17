@@ -11,4 +11,10 @@
     </description>
   </class>
 
+  <class name="talon_swerve_drive_controller/SwerveDriveStateController" type="swerve_drive_state_controller::SwerveDriveStateController<4>" base_class_type="controller_interface::ControllerBase">
+    <description>
+      The SwerveDriveStateController uses latency compensation, rigid-body physics, and linear algebra to calculate the chassis speeds from the swerve drive modules' speeds.
+    </description>
+  </class>
+
 </library>

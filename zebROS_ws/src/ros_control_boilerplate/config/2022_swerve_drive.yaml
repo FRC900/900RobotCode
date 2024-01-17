@@ -5,8 +5,10 @@ swerve_drive_controller:
     speed: ['speed_joint_fl', 'speed_joint_fr', 'speed_joint_bl', 'speed_joint_br']
     steering: ['steering_joint_fl', 'steering_joint_fr', 'steering_joint_bl', 'steering_joint_br']
     publish_cmd: True
-    pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
-    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    pose_covariance_diagonal: [0.01, 0.01, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    twist_covariance_diagonal: [0.01, 0.01, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+
+    odometry_publishing_frequency: 250
 
     wheel_radius: 0.050 # m
     cmd_vel_timout: 0.5
@@ -15,6 +17,14 @@ swerve_drive_controller:
     max_brake_accel: 2.5 # TODO
     ang_accel_conv: 2.0
     max_rotational_vel: 10 # TODO
+
+    x_sd: 0.001
+    y_sd: 0.001
+    yaw_sd: 0.001
+
+    x_speed_sd: 0.001
+    y_speed_sd: 0.001
+    yaw_sd: 0.001
 
     f_s: 0.0175
     stopping_ff: 0.0175
@@ -67,7 +77,7 @@ swerve_drive_controller:
         #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
-        #status_2_feedback0_period: 20
+        status_2_feedback0_period: 4
         status_3_quadrature_period: 250
         #status_4_aintempvbat_period: 160
         #status_6_misc_period: 0
@@ -105,7 +115,7 @@ swerve_drive_controller:
         #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
-        #status_2_feedback0_period: 20
+        status_2_feedback0_period: 4
         status_3_quadrature_period: 250
         #status_4_aintempvbat_period: 160
         #status_6_misc_period: 0
@@ -141,7 +151,7 @@ swerve_drive_controller:
         velocity_measurement_period: Period_10Ms
         velocity_measurement_window: 4
         #status_1_general_period: 100
-        #status_2_feedback0_period: 100
+        status_2_feedback0_period: 4
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -178,7 +188,7 @@ swerve_drive_controller:
         velocity_measurement_period: Period_10Ms
         velocity_measurement_window: 4
         #status_1_general_period: 100
-        #status_2_feedback0_period: 100
+        status_2_feedback0_period: 4
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250

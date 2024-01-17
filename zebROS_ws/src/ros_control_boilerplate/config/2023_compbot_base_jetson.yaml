@@ -1,7 +1,7 @@
 # ros_control_boilerplate Settings -----------------------
 # Settings for ros_control control loop
 generic_hw_control_loop:
-  loop_hz: 100
+  loop_hz: 250
   cycle_time_error_threshold: 0.01
   canifier_read_hz: 100
   cancoder_read_hz: 100
@@ -58,6 +58,8 @@ hardware_interface:
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
 
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
+    #    - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: intake, type: talonfx} ]}
 
 # Create controllers for each joint
 #
@@ -186,3 +188,36 @@ pigeon2_imu_state_controller:
 candle_controller:
     type: candle_controller/CANdleController
     name: candle1
+
+latency_compensation_state_controller:
+  type: latency_compensation_state_controller/LatencyCompensationStateController
+  publish_rate: 250
+
+swerve_drive_state_controller:
+    type: talon_swerve_drive_controller/SwerveDriveStateController
+
+    publish_rate: 250
+
+    latency_compensation_group: latency_compensation # joint name
+
+    # These joint names must match the joint names declared for the latency compensation group
+    speed: ['fl_drive', 'fr_drive', 'bl_drive', 'br_drive']
+    steering: ['fl_angle', 'fr_angle', 'bl_angle', 'br_angle']
+
+    wheel_radius: 0.0475 # m
+    cmd_vel_timout: 0.5
+    max_speed: 7 # Potentially raise, otherwise swerve math will limit max motor speed
+
+    # TODO : move this into sensor_to_mechanism_ratio for Falcons
+    ratio_encoder_to_rotations: 0.148148148 # Test me, will show up in odom results
+
+    wheel_coords: [[-0.250825, 0.250825], [0.250825, 0.250825], [-0.250825, -0.250825], [0.250825, -0.250825]]
+
+    bl_angle:
+        offset: 7.53
+    br_angle:
+        offset: 9.041
+    fl_angle:
+        offset: 6.000
+    fr_angle:
+        offset: 12.9

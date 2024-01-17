@@ -1,0 +1,11 @@
+<launch>
+	<group ns="frcrobot_jetson">
+		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2023_swerve_drive.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+    </group>
+
+    <node name="wpilib_swerve_node" pkg="wpilib_swerve_odom" type="node" output="screen"/>
+    <!-- launch wpilib swerve node -->
+</launch>

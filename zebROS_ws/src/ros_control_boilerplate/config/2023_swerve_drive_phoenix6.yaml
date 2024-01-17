@@ -1,14 +1,17 @@
 swerve_drive_controller:
     type: talon_swerve_drive_controller/TalonFXProSwerveDriveController
 
-    speed: ['speed_joint_fl', 'speed_joint_fr', 'speed_joint_bl', 'speed_joint_br']
-    steering: ['steering_joint_fl', 'steering_joint_fr', 'steering_joint_bl', 'steering_joint_br']
+    latency_compensation_group: latency_compensation # joint name
+
+    speed: ['fl_drive', 'fr_drive', 'bl_drive', 'br_drive']
+    steering: ['fl_angle', 'fr_angle', 'bl_angle', 'br_angle']
     publish_cmd: True
+    odometry_publishing_frequency: 250.0
     publish_odometry_to_base_transform: True
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
-    wheel_radius: 0.050 # m
+    wheel_radius: 0.0475 # m
     cmd_vel_timout: 0.5
     max_speed: 7 # Potentially raise, otherwise swerve math will limit max motor speed
 
@@ -42,7 +45,7 @@ swerve_drive_controller:
     drive_speed_time_delay: 0.125
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     use_cos_scaling: True # scale motor speed by how close angle motors are to setpoints
-    speed_joint_fl:
+    fl_drive:
         joint: fl_drive
         close_loop_values:
             - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
@@ -55,7 +58,8 @@ swerve_drive_controller:
         neutral_mode: Brake
         forward_limit_enable: False
         reverse_limit_enable: False
-    speed_joint_fr:
+        #neutral_deadband: 0.01
+    fr_drive:
         joint: fr_drive
         close_loop_values:
             - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
@@ -68,7 +72,8 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-    speed_joint_bl:
+        #neutral_deadband: 0.01
+    bl_drive:
         joint: bl_drive
         close_loop_values:
             - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
@@ -82,7 +87,8 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-    speed_joint_br:
+        #neutral_deadband: 0.01
+    br_drive:
         joint: br_drive
         close_loop_values:
             - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
@@ -96,7 +102,8 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-    steering_joint_fl:
+        #neutral_deadband: 0.01
+    fl_angle:
         joint: fl_angle
         feedback_sensor_source: RemoteCANCoder
         feedback_remote_sensor_id: 11
@@ -109,7 +116,7 @@ swerve_drive_controller:
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
-    steering_joint_fr:
+    fr_angle:
         joint: fr_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 12
@@ -122,7 +129,7 @@ swerve_drive_controller:
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
-    steering_joint_br:
+    br_angle:
         joint: br_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 14
@@ -135,7 +142,7 @@ swerve_drive_controller:
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
-    steering_joint_bl:
+    bl_angle:
         joint: bl_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 13

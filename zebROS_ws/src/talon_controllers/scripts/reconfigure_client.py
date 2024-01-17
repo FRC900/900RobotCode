@@ -29,19 +29,19 @@ steering_param = 0
 
 if joints.speed_option == True:
 
-    speed_fr = Client('/frcrobot_jetson/swerve_drive_controller/speed_joint_fr')
-    speed_fl = Client('/frcrobot_jetson/swerve_drive_controller/speed_joint_fl')
-    speed_br = Client('/frcrobot_jetson/swerve_drive_controller/speed_joint_br')
-    speed_bl = Client('/frcrobot_jetson/swerve_drive_controller/speed_joint_bl')
+    speed_fr = Client('/frcrobot_jetson/swerve_drive_controller/fr_drive')
+    speed_fl = Client('/frcrobot_jetson/swerve_drive_controller/fl_drive')
+    speed_br = Client('/frcrobot_jetson/swerve_drive_controller/br_drive')
+    speed_bl = Client('/frcrobot_jetson/swerve_drive_controller/bl_drive')
 
 
 
 #setting up steering stuff for hte steering joints
 if joints.steering_option == True:
-    steering_fr = Client('/frcrobot_jetson/swerve_drive_controller/steering_joint_fr')
-    steering_fl = Client('/frcrobot_jetson/swerve_drive_controller/steering_joint_fl')
-    steering_br = Client('/frcrobot_jetson/swerve_drive_controller/steering_joint_br')
-    steering_bl = Client('/frcrobot_jetson/swerve_drive_controller/steering_joint_bl')
+    steering_fr = Client('/frcrobot_jetson/swerve_drive_controller/fr_angle')
+    steering_fl = Client('/frcrobot_jetson/swerve_drive_controller/fl_angle')
+    steering_br = Client('/frcrobot_jetson/swerve_drive_controller/br_angle')
+    steering_bl = Client('/frcrobot_jetson/swerve_drive_controller/bl_angle')
 
 
 

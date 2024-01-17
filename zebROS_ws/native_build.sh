@@ -84,6 +84,7 @@ catkin config --skiplist \
 	turing_smart_screen \
 	velocity_controllers \
 	zed_ros \
+	wpilib_swerve_odom \
 	$EXTRA_SKIPLIST_PACKAGES
 
 catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -DNON_POLLING" $EXTRA_CMD_LINE "$@"

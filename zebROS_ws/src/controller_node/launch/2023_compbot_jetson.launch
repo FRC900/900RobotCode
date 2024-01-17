@@ -60,7 +60,8 @@
 			 orchestra_controller
 			 orchestra_state_controller
 			 pigeon2_imu_state_controller
-			 pigeon2_state_controller
+			 latency_compensation_state_controller
+			 swerve_drive_state_controller
 			 robot_code_ready_controller" />
 			 <!--
 			-->
@@ -87,9 +88,7 @@
 	<group ns="swerve_imu_ukf">
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_pigeon2" args="0 0 0 0 0.0096 0 base_link pigeon2_frame" />
-	<!--
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
-	-->
 	</group>
 
 	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>
@@ -156,6 +155,10 @@
 	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
 		<arg name="input_type" value="live_camera" if="$(eval hw_or_sim == 'hw')"/>
 	</include>
-	
+
+	<group ns="wpilib_odom">
+		<node name="odom_integrate_velocity_test" pkg="controller_node" type="odom_integrate_velocity_test.py"/>
+	</group>
+
 	<!--  <include file="$(find controller_node)/launch/rosbridge_websocket.launch"> -->
 </launch>

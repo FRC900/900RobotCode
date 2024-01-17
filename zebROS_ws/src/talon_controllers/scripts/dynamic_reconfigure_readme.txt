@@ -5,7 +5,7 @@ Run rosrun rqt_reconfigure rqt_reconfigure in zebros/src
 This launches a menu that allows you to dynamically reconfigure topics.
 
 cd in zebros/src/controller_node
-and run "roslaunch controller_node arg_launch.launch steering_option:=True" [in order to dynamically reconfigure steering related motors properties]
+and run "roslaunch controller_node dynamic_swervedrive.launch steering_option:=True" [in order to dynamically reconfigure steering related motors properties]
 or arg "speed_option:=True"  [in order to dynamically reconfigure speed related motor properties]
 [or use both args in the same line, this enables you to reconfigure the properties of the steering and speed motors]
 

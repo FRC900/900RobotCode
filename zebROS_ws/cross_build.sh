@@ -82,5 +82,6 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	zed_nodelets \
 	zed_ros \
 	zed_wrapper \
-	zms_writer
+	zms_writer \
+	wpilib_swerve_odom
 catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCMAKE_CXX_STANDARD=17 -DCATKIN_ENABLE_TESTING=OFF -DSETUPTOOLS_DEB_LAYOUT=OFF -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -DNON_POLLING" "$@"

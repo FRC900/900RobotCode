@@ -184,12 +184,6 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<TalonFXProDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<TalonOrchestraDevices<SIM>>(root_nh));
 
-	// Create controller interfaces for all the types created above
-	for (const auto &d : devices_)
-	{
-		registerInterfaceManager(d->registerInterface());
-	}
-
 	// Grab a collection of all the ctre V6 device types, pass them
 	// into the Latency Compensation Groups constructor
 	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices;
@@ -206,6 +200,12 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
 	append_device_map.template operator()<TalonFXProDevices<SIM>>();
 	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
+
+	// Create controller interfaces for all the types created above
+	for (const auto &d : devices_)
+	{
+		registerInterfaceManager(d->registerInterface());
+	}
 
 	// Orchestra needs a set of previously created TalonFXs to use as instruments
 	const auto orchestra_devices = getDevicesOfType<TalonOrchestraDevices<SIM>>(devices_);

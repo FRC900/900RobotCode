@@ -45,3 +45,6 @@
 - git:
     local-name: zed-ros-wrapper
     uri: https://github.com/FRC900/zed-ros-wrapper.git
+- git:
+    local-name: ddynamic_reconfigure_python
+    uri: https://github.com/pal-robotics/ddynamic_reconfigure_python.git

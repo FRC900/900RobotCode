@@ -175,6 +175,7 @@ void moveDirection(int x, int y, int z) {
 	cmd_vel.angular.y = 0.0;
 	cmd_vel.angular.z = 0.0;
 
+	robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation(), false);
 	JoystickRobotVel.publish(cmd_vel);
 }
 
@@ -187,6 +188,7 @@ void sendDirection() {
 	cmd_vel.angular.y = 0.0;
 	cmd_vel.angular.z = 0.0;
 
+	robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation(), false);
 	JoystickRobotVel.publish(cmd_vel);
 }
 
@@ -755,7 +757,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				cmd_vel.angular.z = robot_orientation_driver->getOrientationVelocityPIDOutput();
 				if (fabs(cmd_vel.angular.z) < config.rotation_epsilon) {
-					cmd_vel.angular.z = 0.0;
+					// COAST MODE
+					cmd_vel.angular.z = 0.001 * (cmd_vel.angular.z > 0 ? 1 : -1);
 				}
 			}
 
