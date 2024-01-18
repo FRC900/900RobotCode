@@ -106,10 +106,10 @@ swerve_drive_controller:
         feedback_sensor_source: RemoteCANCoder
         feedback_remote_sensor_id: 11
         close_loop_values:
-            - {kP: 40, kI: 0.000, kD: 2.0, kV: 2.85, kS: 0}
-        motion_magic_cruise_velocity: 45.0
-        motion_magic_expo_kV: 0.0
-        motion_magic_expo_kA: 0.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -118,10 +118,10 @@ swerve_drive_controller:
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 12
         close_loop_values:
-            - {kP: 40, kI: 0.000, kD: 2.0, kV: 2.85, kS: 0}
-        motion_magic_cruise_velocity: 45.0
-        motion_magic_expo_kV: 0.0
-        motion_magic_expo_kA: 0.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -130,10 +130,10 @@ swerve_drive_controller:
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 14
         close_loop_values:
-            - {kP: 40, kI: 0.000, kD: 2.0, kV: 2.85, kS: 0}
-        motion_magic_cruise_velocity: 45.0
-        motion_magic_expo_kV: 0.0
-        motion_magic_expo_kA: 0.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -142,10 +142,10 @@ swerve_drive_controller:
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 13
         close_loop_values:
-            - {kP: 40, kI: 0.000, kD: 2.0, kV: 2.85, kS: 0}
-        motion_magic_cruise_velocity: 45.0
-        motion_magic_expo_kV: 0.0
-        motion_magic_expo_kA: 0.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -157,10 +157,10 @@ swerve_angle_phoenix6_controller:
     feedback_sensor_source: RemoteCANCoder
     remote_feedback_device_id0: 13
     close_loop_values:
-        - {kP: 40, kI: 0.000, kD: 2.0, kV: 2.85, kS: 0}
-    motion_magic_cruise_velocity: 45.0
-    motion_magic_expo_kV: 0.0
-    motion_magic_expo_kA: 0.0
+        - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0}
+    motion_magic_cruise_velocity: 0.0
+    motion_magic_expo_kV: 0.5
+    motion_magic_expo_kA: 0.5
     forward_limit_enable: False
     reverse_limit_enable: False
     dynamic_reconfigure: True

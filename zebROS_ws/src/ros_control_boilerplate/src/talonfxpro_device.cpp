@@ -450,6 +450,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVoltageFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityTorqueCurrentFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicTorqueCurrentFOC) ||
+#if 0 // TODO : fix me once CTRE updates their code
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityDutyCycle) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityDutyCycleFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityVoltage) ||
@@ -459,7 +460,9 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoDutyCycleFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoVoltage) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoVoltageFOC) ||
-            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoTorqueCurrentFOC) )
+#endif
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoTorqueCurrentFOC)
+             )
         {
             SAFE_READ_INTO(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput())
             SAFE_READ_INTO(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput())
