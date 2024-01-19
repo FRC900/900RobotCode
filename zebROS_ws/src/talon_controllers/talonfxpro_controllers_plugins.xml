@@ -19,7 +19,7 @@
      Configure and run a TalonFX pro in position duty cycle mode
     </description>
   </class>
-  <class name="talonfxpro_controllers/TalonFXProPositionVoltageController" type="talonfxpro_controllers::TalonFXProPositionVoltageontroller" base_class_type="controller_interface::ControllerBase">
+  <class name="talonfxpro_controllers/TalonFXProPositionVoltageController" type="talonfxpro_controllers::TalonFXProPositionVoltageController" base_class_type="controller_interface::ControllerBase">
     <description>
      Configure and run a TalonFX pro in position voltage mode
     </description>
@@ -34,7 +34,7 @@
      Configure and run a TalonFX pro in velocity duty cycle mode
     </description>
   </class>
-  <class name="talonfxpro_controllers/TalonFXProVelocityVoltageController" type="talonfxpro_controllers::TalonFXProVelocityVoltageontroller" base_class_type="controller_interface::ControllerBase">
+  <class name="talonfxpro_controllers/TalonFXProVelocityVoltageController" type="talonfxpro_controllers::TalonFXProVelocityVoltageController" base_class_type="controller_interface::ControllerBase">
     <description>
      Configure and run a TalonFX pro in velocity voltage mode
     </description>
