@@ -27,7 +27,6 @@
         return fxpro_fn(); \
     }
 
-
 /*
 There are several paths used to set config values
 
@@ -57,14 +56,11 @@ class TalonFXProCIParams
 public:
     TalonFXProCIParams() =default;
     TalonFXProCIParams(const TalonFXProCIParams &) = delete;
-
-    //TalonFXProCIParams(TalonFXProCIParams &&) noexcept = default;
-    TalonFXProCIParams& operator=(TalonFXProCIParams &&other) noexcept = default;
-
+    TalonFXProCIParams(TalonFXProCIParams &&other) noexcept;
     ~TalonFXProCIParams() = default;
 
     TalonFXProCIParams& operator=(const TalonFXProCIParams &other);
-    TalonFXProCIParams(TalonFXProCIParams &&other) noexcept;
+    TalonFXProCIParams& operator=(TalonFXProCIParams &&other) noexcept = delete;
 
     bool readJointName(const ros::NodeHandle &n);
     bool readCloseLoopParams(const ros::NodeHandle &n);
@@ -119,6 +115,8 @@ public:
 
     std::atomic<double> supply_current_limit_{0.};
     std::atomic<bool>   supply_current_limit_enable_{false};
+    std::atomic<double> supply_current_threshold_{0.};
+    std::atomic<double> supply_time_threshold_{0.};
 
     std::atomic<double> supply_voltage_time_constant_{0.};
     std::atomic<double> peak_forward_voltage_{16.};
@@ -176,6 +174,8 @@ public:
     std::atomic<double> motion_magic_cruise_velocity_{0.0};
     std::atomic<double> motion_magic_acceleration_{0.0};
     std::atomic<double> motion_magic_jerk_{0.0};
+    std::atomic<double> motion_magic_expo_kV_{0.0};
+    std::atomic<double> motion_magic_expo_kA_{0.0};
 
     std::atomic<bool>   control_enable_foc_{true};
     std::atomic<bool>   control_override_brake_dur_neutral_{false};
@@ -263,6 +263,8 @@ public:
     void setStatorCurrentLimitEnable(const bool stator_current_limit_enable, const bool update_ddr = true);
     void setSupplyCurrentLimit(const double supply_current_limit, const bool update_ddr = true);
     void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable, const bool update_ddr = true);
+    void setSupplyCurrentThreshold(const double supply_current_threshold, const bool update_ddr = true);
+    void setSupplyTimeThreshold(const double supply_time_threshold, const bool update_ddr = true);
     void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant, const bool update_ddr = true);
     void setPeakForwardVoltage(const double peak_forward_voltage, const bool update_ddr = true);
     void setPeakReverseVoltage(const double peak_reverse_voltage, const bool update_ddr = true);
@@ -306,6 +308,8 @@ public:
     void setMotionMagicCruiseVelocity(const double motion_magic_cruise_velocity, const bool update_ddr = true);
     void setMotionMagicAcceleration(const double motion_magic_acceleration, const bool update_ddr = true);
     void setMotionMagicJerk(const double motion_magic_jerk, const bool update_ddr = true);
+    void setMotionMagicExpoKV(const double motion_magic_expo_kV, const bool update_ddr = true);
+    void setMotionMagicExpoKA(const double motion_magic_expo_kA, const bool update_ddr = true);
     void setContinuousWrap(const bool continuous_wrap, const bool update_ddr = true);
     void setControlEnableFOC(const bool control_enable_foc, const bool update_ddr = true);
     void setControlOverrideBrakeDurNeutral(const bool control_override_brake_dur_neutral, const bool update_ddr = true);
@@ -339,6 +343,8 @@ public:
 	STATE_PASSTHRU_FN(getStatorCurrentLimitEnable)
 	STATE_PASSTHRU_FN(getSupplyCurrentLimit)
 	STATE_PASSTHRU_FN(getSupplyCurrentLimitEnable)
+	STATE_PASSTHRU_FN(getSupplyCurrentThreshold)
+	STATE_PASSTHRU_FN(getSupplyTimeThreshold)
 	STATE_PASSTHRU_FN(getSupplyVoltageTimeConstant)
 	STATE_PASSTHRU_FN(getPeakForwardVoltage)
 	STATE_PASSTHRU_FN(getPeakReverseVoltage)
@@ -378,6 +384,8 @@ public:
 	STATE_PASSTHRU_FN(getMotionMagicCruiseVelocity)
 	STATE_PASSTHRU_FN(getMotionMagicAcceleration)
 	STATE_PASSTHRU_FN(getMotionMagicJerk)
+	STATE_PASSTHRU_FN(getMotionMagicExpoKV)
+	STATE_PASSTHRU_FN(getMotionMagicExpoKA)
 	STATE_PASSTHRU_FN(getContinuousWrap)
 	STATE_PASSTHRU_FN(getClearStickyFaults)
 	STATE_PASSTHRU_FN(getControlMode)

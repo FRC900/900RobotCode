@@ -59,6 +59,51 @@
      Configure and run a TalonFX pro in motion magic torque current FOC mode
     </description>
   </class>
+  <class name="talonfxpro_controllers/TalonFXProMotionMagicExpoDutyCycleController" type="talonfxpro_controllers::TalonFXProMotionMagicExpoDutyCycleController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic duty cycle mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProMotionMagicExpoVoltageController" type="talonfxpro_controllers::TalonFXProMotionMagicExpoVoltageController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic voltage mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProMotionMagicExpoTorqueCurrentFOCController" type="talonfxpro_controllers::TalonFXProMotionMagicExpoTorqueCurrentFOController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic torque current FOC mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProMotionMagicVelocityDutyCycleController" type="talonfxpro_controllers::TalonFXProMotionMagicVelocityDutyCycleController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic duty cycle mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProMotionMagicVelocityVoltageController" type="talonfxpro_controllers::TalonFXProMotionMagicVelocityVoltageController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic voltage mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProMotionMagicVelocityTorqueCurrentFOCController" type="talonfxpro_controllers::TalonFXProMotionMagicVelocityTorqueCurrentFOController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic torque current FOC mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProDynamicMagicDutyCycleController" type="talonfxpro_controllers::TalonFXProDynamicMagicDutyCycleController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic duty cycle mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProDynamicMagicVoltageController" type="talonfxpro_controllers::TalonFXProDynamicMagicVoltageController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic voltage mode
+    </description>
+  </class>
+  <class name="talonfxpro_controllers/TalonFXProDynamicMagicTorqueCurrentFOCController" type="talonfxpro_controllers::TalonFXProDynamicMagicTorqueCurrentFOController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in motion magic torque current FOC mode
+    </description>
+  </class>
   <class name="talonfxpro_controllers/TalonFXProFollowerController" type="talonfxpro_controllers::TalonFXProFollowerController" base_class_type="controller_interface::ControllerBase">
     <description>
      Configure and run a TalonFX pro in follower mode

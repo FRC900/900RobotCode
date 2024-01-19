@@ -83,6 +83,10 @@ public:
 	double getSupplyCurrentLimit(void) const;
 	void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable);
 	bool getSupplyCurrentLimitEnable(void) const;
+	void setSupplyCurrentThreshold(const double supply_current_threshold);
+	double getSupplyCurrentThreshold(void) const;
+	void setSupplyTimeThreshold(const double supply_time_threshold);
+	double getSupplyTimeThreshold(void) const;
 
 	void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant);
 	double getSupplyVoltageTimeConstant(void) const;
@@ -210,6 +214,10 @@ public:
 	double getMotionMagicAcceleration(void) const;
 	void setMotionMagicJerk(const double motion_magic_jerk);
 	double getMotionMagicJerk(void) const;
+	void setMotionMagicExpoKV(const double motion_magic_expo_kV);
+	double getMotionMagicExpoKV(void) const;
+	void setMotionMagicExpoKA(const double motion_magic_expo_kA);
+	double getMotionMagicExpoKA(void) const;
 
 	void setContinuousWrap(const bool continuous_wrap);
 	bool getContinuousWrap(void) const;
@@ -517,6 +525,8 @@ private:
 
 	double supply_current_limit_{0.};
 	bool   supply_current_limit_enable_{false};
+	double supply_current_threshold_{0.};
+	double supply_time_threshold_{0.};
 
 	double supply_voltage_time_constant_{0.};
 	double peak_forward_voltage_{16.};
@@ -574,6 +584,8 @@ private:
 	double motion_magic_cruise_velocity_{0.0};
 	double motion_magic_acceleration_{0.0};
 	double motion_magic_jerk_{0.0};
+	double motion_magic_expo_kV_{0.0};
+	double motion_magic_expo_kA_{0.0};
 
 	bool continuous_wrap_{true};
 

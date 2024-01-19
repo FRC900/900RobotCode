@@ -272,6 +272,22 @@ bool TalonFXProHWState::getSupplyCurrentLimitEnable(void) const
 {
 	return supply_current_limit_enable_;
 }
+void TalonFXProHWState::setSupplyCurrentThreshold(const double supply_current_threshold)
+{
+	supply_current_threshold_ = supply_current_threshold;
+}
+double TalonFXProHWState::getSupplyCurrentThreshold(void) const
+{
+	return supply_current_threshold_;
+}
+void TalonFXProHWState::setSupplyTimeThreshold(const double supply_time_threshold)
+{
+	supply_time_threshold_ = supply_time_threshold;
+}
+double TalonFXProHWState::getSupplyTimeThreshold(void) const
+{
+	return supply_time_threshold_;
+}
 
 void TalonFXProHWState::setSupplyVoltageTimeConstant(const double supply_voltage_time_constant) 
 {
@@ -675,6 +691,22 @@ void TalonFXProHWState::setMotionMagicJerk(const double motion_magic_jerk)
 double TalonFXProHWState::getMotionMagicJerk(void) const
 {
 	return motion_magic_jerk_;
+}
+void TalonFXProHWState::setMotionMagicExpoKV(const double motion_magic_expo_kV)
+{
+	motion_magic_expo_kV_ = motion_magic_expo_kV;
+}
+double TalonFXProHWState::getMotionMagicExpoKV(void) const
+{
+	return motion_magic_expo_kV_;
+}
+void TalonFXProHWState::setMotionMagicExpoKA(const double motion_magic_expo_kA)
+{
+	motion_magic_expo_kA_ = motion_magic_expo_kA;
+}
+double TalonFXProHWState::getMotionMagicExpoKA(void) const
+{
+	return motion_magic_expo_kA_;
 }
 
 void TalonFXProHWState::setContinuousWrap(const bool continuous_wrap)

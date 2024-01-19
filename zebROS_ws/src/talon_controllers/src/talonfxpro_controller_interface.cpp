@@ -127,7 +127,8 @@ bool stringToLimitSource(const std::string &str,
     return true;
 }
 
-TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept { 
+TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept 
+{ 
     for (size_t i = 0; i < hardware_interface::talonfxpro::TALON_PIDF_SLOTS; i++)
     {
         kP_[i].exchange(other.kP_[i]);
@@ -152,6 +153,8 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept {
 
     supply_current_limit_.exchange(other.supply_current_limit_);
     supply_current_limit_enable_.exchange(other.supply_current_limit_enable_);
+    supply_current_threshold_.exchange(other.supply_current_threshold_);
+    supply_time_threshold_.exchange(other.supply_time_threshold_);
 
     supply_voltage_time_constant_.exchange(other.supply_voltage_time_constant_);
     peak_forward_voltage_.exchange(other.peak_forward_voltage_);
@@ -209,6 +212,8 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept {
     motion_magic_cruise_velocity_.exchange(other.motion_magic_cruise_velocity_);
     motion_magic_acceleration_.exchange(other.motion_magic_acceleration_);
     motion_magic_jerk_.exchange(other.motion_magic_jerk_);
+    motion_magic_expo_kV_.exchange(other.motion_magic_expo_kV_);
+    motion_magic_expo_kA_.exchange(other.motion_magic_expo_kA_);
 
     control_enable_foc_.exchange(other.control_enable_foc_);
     control_override_brake_dur_neutral_.exchange(other.control_override_brake_dur_neutral_);
@@ -227,7 +232,6 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept {
 
     set_position_.exchange(other.set_position_);
 } 
-
 
 TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &other)
 {
@@ -259,6 +263,8 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
 
         supply_current_limit_.store(other.supply_current_limit_.load());
         supply_current_limit_enable_.store(other.supply_current_limit_enable_.load());
+        supply_current_threshold_.store(other.supply_current_threshold_.load());
+        supply_time_threshold_.store(other.supply_time_threshold_.load());
 
         supply_voltage_time_constant_.store(other.supply_voltage_time_constant_.load());
         peak_forward_voltage_.store(other.peak_forward_voltage_.load());
@@ -316,6 +322,8 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
         motion_magic_cruise_velocity_.store(other.motion_magic_cruise_velocity_.load());
         motion_magic_acceleration_.store(other.motion_magic_acceleration_.load());
         motion_magic_jerk_.store(other.motion_magic_jerk_.load());
+        motion_magic_expo_kV_.store(other.motion_magic_expo_kV_.load());
+        motion_magic_expo_kA_.store(other.motion_magic_expo_kA_.load());
 
         control_enable_foc_.store(other.control_enable_foc_.load());
         control_override_brake_dur_neutral_.store(other.control_override_brake_dur_neutral_.load());
@@ -467,6 +475,8 @@ bool TalonFXProCIParams::readSupplyCurrentLimits(const ros::NodeHandle &n)
         ROS_WARN_STREAM("Supply current limit not set for " << joint_name_
                         << " before enabling - using defaults might not work as expected");
     }
+    readIntoScalar(n, "supply_current_threshold", supply_current_threshold_);
+    readIntoScalar(n, "supply_time_threshold", supply_time_threshold_);
     return true;
 }
 
@@ -731,6 +741,8 @@ bool TalonFXProCIParams::readMotionMagic(const ros::NodeHandle &n)
     readIntoScalar(n, "motion_magic_cruise_velocity", motion_magic_cruise_velocity_);
     readIntoScalar(n, "motion_magic_acceleration", motion_magic_acceleration_);
     readIntoScalar(n, "motion_magic_jerk", motion_magic_jerk_);
+    readIntoScalar(n, "motion_magic_expo_kV", motion_magic_expo_kV_);
+    readIntoScalar(n, "motion_magic_expo_kA", motion_magic_expo_kA_);
     return true;
 }
 bool TalonFXProCIParams::readControl(const ros::NodeHandle &n)
@@ -1088,6 +1100,16 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.supply_current_limit_enable_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLimitEnable, this, _1, false),
                                                         "Enable supply current limit");
+            ddr_updater_->ddr_.registerVariable<double>("supply_current_threshold",
+                                                        [this]() { return params_.supply_current_threshold_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyCurrentThreshold, this, _1, false),
+                                                        "Supply current threshold in amps",
+                                                        0, 511);
+            ddr_updater_->ddr_.registerVariable<double>("supply_time_threshold",
+                                                        [this]() { return params_.supply_time_threshold_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyTimeThreshold, this, _1, false),
+                                                        "Supply time threshold in amps",
+                                                        0, 1.275);
             ddr_updater_->ddr_.registerVariable<double>("supply_voltage_time_constraint",
                                                         [this]() { return params_.supply_voltage_time_constant_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setSupplyVoltageTimeConstant, this, _1, false),
@@ -1139,7 +1161,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this](const int differential_sensor_source_int) { this->setDifferentialSensorSource(static_cast<hardware_interface::talonfxpro::DifferentialSensorSource>(differential_sensor_source_int), false);},
                                                         "Differential sensor source", 
                                                         std::map<std::string, int>{
-                                                            {"Diabled", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::Disabled)},
+                                                            {"Disabled", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::Disabled)},
                                                             {"RemoteTalonFX_Diff", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemoteTalonFX_Diff)},
                                                             {"RemotePigeon2_Yaw", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Yaw)},
                                                             {"RemotePigeon2_Pitch", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Pitch)},
@@ -1303,6 +1325,16 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         boost::bind(&TalonFXProControllerInterface::setMotionMagicJerk, this, _1, false),
                                                         "Motion Magic Jerk",
                                                         0, 9999);
+            ddr_updater_->ddr_.registerVariable<double>("motion_magic_expo_kV",
+                                                        [this]() { return params_.motion_magic_expo_kV_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setMotionMagicExpoKV, this, _1, false),
+                                                        "Motion Magic Expo kV",
+                                                        0, 100);
+            ddr_updater_->ddr_.registerVariable<double>("motion_magic_expo_kA",
+                                                        [this]() { return params_.motion_magic_expo_kA_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setMotionMagicExpoKA, this, _1, false),
+                                                        "Motion Magic Expo kA",
+                                                        0, 100);
             ddr_updater_->ddr_.registerVariable<bool>  ("continuous_wrap",
                                                         [this]() { return params_.continuous_wrap_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setContinuousWrap, this, _1, false),
@@ -1438,6 +1470,8 @@ SET_PARAM_FN(params_.stator_current_limit_, setStatorCurrentLimit)
 SET_PARAM_FN(params_.stator_current_limit_enable_, setStatorCurrentLimitEnable);
 SET_PARAM_FN(params_.supply_current_limit_, setSupplyCurrentLimit);
 SET_PARAM_FN(params_.supply_current_limit_enable_, setSupplyCurrentLimitEnable);
+SET_PARAM_FN(params_.supply_current_threshold_, setSupplyCurrentThreshold);
+SET_PARAM_FN(params_.supply_time_threshold_, setSupplyTimeThreshold);
 SET_PARAM_FN(params_.supply_voltage_time_constant_, setSupplyVoltageTimeConstant);
 SET_PARAM_FN(params_.peak_forward_voltage_, setPeakForwardVoltage);
 SET_PARAM_FN(params_.peak_reverse_voltage_, setPeakReverseVoltage);
@@ -1481,6 +1515,8 @@ SET_PARAM_FN(params_.softlimit_reverse_threshold_, setReverseSoftLimitThreshold)
 SET_PARAM_FN(params_.motion_magic_cruise_velocity_, setMotionMagicCruiseVelocity);
 SET_PARAM_FN(params_.motion_magic_acceleration_, setMotionMagicAcceleration);
 SET_PARAM_FN(params_.motion_magic_jerk_, setMotionMagicJerk);
+SET_PARAM_FN(params_.motion_magic_expo_kV_, setMotionMagicExpoKV);
+SET_PARAM_FN(params_.motion_magic_expo_kA_, setMotionMagicExpoKA);
 SET_PARAM_FN(params_.continuous_wrap_, setContinuousWrap);
 SET_PARAM_FN(params_.control_enable_foc_, setControlEnableFOC);
 SET_PARAM_FN(params_.control_override_brake_dur_neutral_, setControlOverrideBrakeDurNeutral);
@@ -1657,6 +1693,12 @@ void TalonFXProControllerInterface::setControlMode(const hardware_interface::tal
         case hardware_interface::talonfxpro::TalonMode::MotionMagicDutyCycle:
         case hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage:
         case hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC:
+        case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
+        case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
+        case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoTorqueCurrentFOC:
+        case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicDutyCycle:
+        case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicVoltage:
+        case hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicTorqueCurrentFOC:
             talon_->setControlOutput(0);
             talon_->setControlPosition(command);
             talon_->setControlVelocity(0);
@@ -1750,6 +1792,8 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
     talon->setStatorCurrentLimitEnable(params.stator_current_limit_enable_);
     talon->setSupplyCurrentLimit(params.supply_current_limit_);
     talon->setSupplyCurrentLimitEnable(params.supply_current_limit_enable_);
+    talon->setSupplyCurrentThreshold(params.supply_current_threshold_);
+    talon->setSupplyTimeThreshold(params.supply_time_threshold_);
     talon->setSupplyVoltageTimeConstant(params.supply_voltage_time_constant_);
     talon->setPeakForwardVoltage(params.peak_forward_voltage_);
     talon->setPeakReverseVoltage(params.peak_reverse_voltage_);
@@ -1795,6 +1839,8 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
     talon->setMotionMagicCruiseVelocity(params.motion_magic_cruise_velocity_);
     talon->setMotionMagicAcceleration(params.motion_magic_acceleration_);
     talon->setMotionMagicJerk(params.motion_magic_jerk_);
+    talon->setMotionMagicExpoKV(params.motion_magic_expo_kV_);
+    talon->setMotionMagicExpoKA(params.motion_magic_expo_kA_);
     talon->setContinuousWrap(params.continuous_wrap_);
     talon->setControlEnableFOC(params.control_enable_foc_);
     talon->setControlOverrideBrakeDurNeutral(params.control_override_brake_dur_neutral_);

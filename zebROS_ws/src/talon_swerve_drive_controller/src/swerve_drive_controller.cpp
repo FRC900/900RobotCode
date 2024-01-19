@@ -475,7 +475,14 @@ void update(const ros::Time &time, const ros::Duration &period)
 		if (!dont_set_angle_mode_)
 		{
 			steering_joints_[i].setPIDFSlot(0);
-			steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
+			if constexpr (std::is_same_v<COMMAND_INTERFACE_TYPE, hardware_interface::TalonCommandInterface>)
+			{
+				steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
+			}
+			else
+			{
+				steering_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage);
+			}
 			// TODO - don't think this is ever set to any other value, might be OK to move it
 			// to init or starting or something
 			steering_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);

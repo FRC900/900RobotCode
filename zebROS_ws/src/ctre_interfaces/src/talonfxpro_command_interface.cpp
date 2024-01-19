@@ -393,16 +393,44 @@ bool TalonFXProHWCommand::getSupplyCurrentLimitEnable(void) const
 {
 	return supply_current_limit_enable_;
 }
+void TalonFXProHWCommand::setSupplyCurrentThreshold(const double supply_current_threshold)
+{
+	if (fabs(supply_current_threshold_ - supply_current_threshold) > double_value_epsilon)
+	{
+		supply_current_threshold_ = supply_current_threshold;
+		current_limit_changed_ = true;
+	}
+}
+double TalonFXProHWCommand::getSupplyCurrentThreshold(void) const
+{
+	return supply_current_threshold_;
+}
+void TalonFXProHWCommand::setSupplyTimeThreshold(const double supply_time_threshold)
+{
+	if (fabs(supply_time_threshold_ - supply_time_threshold) > double_value_epsilon)
+	{
+		supply_time_threshold_ = supply_time_threshold;
+		current_limit_changed_ = true;
+	}
+}
+double TalonFXProHWCommand::getSupplyTimeThreshold(void) const
+{
+	return supply_time_threshold_;
+}
 
 bool TalonFXProHWCommand::currentLimitChanged(double &stator_current_limit,
 											  bool &stator_current_limit_enable,
 											  double &supply_current_limit,
-											  bool &supply_current_limit_enable) const
+											  bool &supply_current_limit_enable,
+											  double &supply_current_threshold,
+											  double &supply_time_threshold) const
 {
 	stator_current_limit = stator_current_limit_;
 	stator_current_limit_enable = stator_current_limit_enable_;
 	supply_current_limit = supply_current_limit_;
 	supply_current_limit_enable = supply_current_limit_enable_;
+	supply_current_threshold = supply_current_threshold_;
+	supply_time_threshold = supply_time_threshold_;
 	const bool ret = current_limit_changed_;
 	current_limit_changed_ = false;
 	return ret;
@@ -1178,11 +1206,43 @@ double TalonFXProHWCommand::getMotionMagicJerk(void) const
 	return motion_magic_jerk_;
 }
 
-bool TalonFXProHWCommand::motionMagicChanged(double &motion_magic_cruise_velocity, double &motion_magic_acceleration, double &motion_magic_jerk) const
+void TalonFXProHWCommand::setMotionMagicExpoKV(const double motion_magic_expo_kV)
+{
+	if (fabs(motion_magic_expo_kV - motion_magic_expo_kV_) > double_value_epsilon)
+	{
+		motion_magic_expo_kV_ = motion_magic_expo_kV;
+		motion_magic_changed_ = true;
+	}
+}
+double TalonFXProHWCommand::getMotionMagicExpoKV(void) const
+{
+	return motion_magic_expo_kV_;
+}
+
+void TalonFXProHWCommand::setMotionMagicExpoKA(const double motion_magic_expo_kA)
+{
+	if (fabs(motion_magic_expo_kA - motion_magic_expo_kA_) > double_value_epsilon)
+	{
+		motion_magic_expo_kA_ = motion_magic_expo_kA;
+		motion_magic_changed_ = true;
+	}
+}
+double TalonFXProHWCommand::getMotionMagicExpoKA(void) const
+{
+	return motion_magic_expo_kA_;
+}
+
+bool TalonFXProHWCommand::motionMagicChanged(double &motion_magic_cruise_velocity,
+											 double &motion_magic_acceleration,
+											 double &motion_magic_jerk,
+											 double &motion_magic_expo_kV,
+											 double &motion_magic_expo_kA) const
 {
 	motion_magic_cruise_velocity = motion_magic_cruise_velocity_;
 	motion_magic_acceleration = motion_magic_acceleration_;
 	motion_magic_jerk = motion_magic_jerk_;
+	motion_magic_expo_kV = motion_magic_expo_kV_;
+	motion_magic_expo_kA = motion_magic_expo_kA_;
 	const auto ret = motion_magic_changed_;
 	motion_magic_changed_ = false;
 	return ret;

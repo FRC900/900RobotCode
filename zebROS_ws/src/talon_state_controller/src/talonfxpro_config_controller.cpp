@@ -100,6 +100,8 @@ public:
 
 			m.supply_current_limit.push_back(0);
 			m.supply_current_limit_enable.push_back(false);
+			m.supply_current_threshold.push_back(0);
+			m.supply_time_threshold.push_back(0);
 
 			m.supply_voltage_time_constant.push_back(0);
 			m.peak_forward_voltage.push_back(0);
@@ -155,6 +157,8 @@ public:
 			m.motion_magic_cruise_velocity.push_back(0);
 			m.motion_magic_acceleration.push_back(0);
 			m.motion_magic_jerk.push_back(0);
+			m.motion_magic_expo_kV.push_back(0);
+			m.motion_magic_expo_kA.push_back(0);
 
 			m.continuous_wrap.push_back(false);
 			m.enable_read_thread.push_back(false);
@@ -276,6 +280,8 @@ public:
 
 					m.supply_current_limit[i] = ts->getSupplyCurrentLimit();
 					m.supply_current_limit_enable[i] = ts->getSupplyCurrentLimitEnable();
+					m.supply_current_threshold[i] = ts->getSupplyCurrentThreshold();
+					m.supply_time_threshold[i] = ts->getSupplyTimeThreshold();
 
 					m.supply_voltage_time_constant[i] = ts->getSupplyVoltageTimeConstant();
 					m.peak_forward_voltage[i] = ts->getPeakForwardVoltage();
@@ -375,6 +381,8 @@ public:
 					m.motion_magic_cruise_velocity[i] = ts->getMotionMagicCruiseVelocity();
 					m.motion_magic_acceleration[i] = ts->getMotionMagicAcceleration();
 					m.motion_magic_jerk[i] = ts->getMotionMagicJerk();
+					m.motion_magic_expo_kV[i] = ts->getMotionMagicExpoKV();
+					m.motion_magic_expo_kA[i] = ts->getMotionMagicExpoKA();
 
 					m.continuous_wrap[i] = ts->getContinuousWrap();
 					m.enable_read_thread[i] = ts->getEnableReadThread();

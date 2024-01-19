@@ -37,6 +37,8 @@ bool[]    stator_current_limit_enable
 
 float64[] supply_current_limit
 bool[]    supply_current_limit_enable
+float64[] supply_current_threshold
+float64[] supply_time_threshold
 
 float64[] supply_voltage_time_constant
 float64[] peak_forward_voltage
@@ -92,6 +94,8 @@ float64[] softlimit_reverse_threshold
 float64[] motion_magic_cruise_velocity
 float64[] motion_magic_acceleration
 float64[] motion_magic_jerk
+float64[] motion_magic_expo_kV
+float64[] motion_magic_expo_kA
 
 bool[]    continuous_wrap
 bool[]    enable_read_thread

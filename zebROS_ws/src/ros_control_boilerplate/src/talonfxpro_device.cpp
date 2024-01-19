@@ -435,6 +435,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 
         SAFE_READ(control_mode, talonfxpro_->GetControlMode())
 
+        // TODO : is it easier to list non-closed loop control modes?
         if ((*control_mode == ctre::phoenix6::signals::ControlModeValue::PositionDutyCycle) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityDutyCycle) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicDutyCycle) ||
@@ -447,9 +448,18 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::PositionVoltageFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityVoltageFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVoltageFOC) ||
-            (*control_mode == ctre::phoenix6::signals::ControlModeValue::PositionTorqueCurrentFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityTorqueCurrentFOC) ||
-            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicTorqueCurrentFOC))
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicTorqueCurrentFOC) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityDutyCycle) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityDutyCycleFOC) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityVoltage) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityVoltageFOC) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityTorqueCurrentFOC) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoDutyCycle) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoDutyCycleFOC) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoVoltage) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoVoltageFOC) ||
+            (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoTorqueCurrentFOC) )
         {
             SAFE_READ_INTO(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput())
             SAFE_READ_INTO(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput())
@@ -976,7 +986,9 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     if (command_->currentLimitChanged(config_->CurrentLimits.StatorCurrentLimit,
                                       config_->CurrentLimits.StatorCurrentLimitEnable,
                                       config_->CurrentLimits.SupplyCurrentLimit,
-                                      config_->CurrentLimits.SupplyCurrentLimitEnable))
+                                      config_->CurrentLimits.SupplyCurrentLimitEnable,
+                                      config_->CurrentLimits.SupplyCurrentThreshold,
+                                      config_->CurrentLimits.SupplyTimeThreshold))
     {
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->CurrentLimits), "GetConfigurator().Apply(config_->CurrentLimits)"))
         {
@@ -985,6 +997,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
             state_->setStatorCurrentLimitEnable(config_->CurrentLimits.StatorCurrentLimitEnable);
             state_->setSupplyCurrentLimit(config_->CurrentLimits.SupplyCurrentLimit);
             state_->setSupplyCurrentLimitEnable(config_->CurrentLimits.SupplyCurrentLimitEnable);
+            state_->setSupplyCurrentThreshold(config_->CurrentLimits.SupplyCurrentThreshold);
+            state_->setSupplyTimeThreshold(config_->CurrentLimits.SupplyTimeThreshold);
         }
         else
         {
@@ -1228,20 +1242,28 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     double motion_magic_cruise_velocity;
     double motion_magic_acceleration;
     double motion_magic_jerk;
+    double motion_magic_expo_kV;
+    double motion_magic_expo_kA;
     if (command_->motionMagicChanged(motion_magic_cruise_velocity,
                                      motion_magic_acceleration,
-                                     motion_magic_jerk))
+                                     motion_magic_jerk,
+                                     motion_magic_expo_kV,
+                                     motion_magic_expo_kA))
     {
         // Our units are radians/ sec (sec^2, sec^3), CTRE's are turns / sec
         config_->MotionMagic.MotionMagicCruiseVelocity = units::turns_per_second_t{units::radians_per_second_t{motion_magic_cruise_velocity}}.value();
         config_->MotionMagic.MotionMagicAcceleration = units::turns_per_second_squared_t{units::radians_per_second_squared_t{motion_magic_acceleration}}.value();
         config_->MotionMagic.MotionMagicJerk = units::turns_per_second_cubed_t{units::radians_per_second_cubed_t{motion_magic_jerk}}.value();
+        config_->MotionMagic.MotionMagicExpo_kV = motion_magic_expo_kV;
+        config_->MotionMagic.MotionMagicExpo_kA = motion_magic_expo_kA;
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotionMagic), "GetConfigurator().Apply(config.MotionMagic)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " << getId() << " = " << getName() << " MotionMagic " << config_->MotionMagic);
             state_->setMotionMagicCruiseVelocity(motion_magic_cruise_velocity);
             state_->setMotionMagicAcceleration(motion_magic_acceleration);
             state_->setMotionMagicJerk(motion_magic_jerk);
+            state_->setMotionMagicExpoKV(motion_magic_expo_kV);
+            state_->setMotionMagicExpoKA(motion_magic_expo_kA);
         }
         else
         {

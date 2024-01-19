@@ -98,10 +98,16 @@ public:
 	double getSupplyCurrentLimit(void) const;
 	void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable);
 	bool getSupplyCurrentLimitEnable(void) const;
+	void setSupplyCurrentThreshold(const double supply_current_threshold);
+	double getSupplyCurrentThreshold(void) const;
+	void setSupplyTimeThreshold(const double supply_time_threshold);
+	double getSupplyTimeThreshold(void) const;
 	bool currentLimitChanged(double &stator_current_limit,
 							 bool &stator_current_limit_enable,
 							 double &supply_current_limit,
-							 bool &supply_current_limit_enable) const;
+							 bool &supply_current_limit_enable,
+							 double &supply_current_threshold,
+							 double &supply_time_threshold) const;
 	void resetCurrentLimit(void);
 
 	void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant);
@@ -286,8 +292,16 @@ public:
 	double getMotionMagicAcceleration(void) const;
 	void setMotionMagicJerk(const double motion_magic_jerk);
 	double getMotionMagicJerk(void) const;
+	void setMotionMagicExpoKV(const double motion_magic_expo_kV);
+	double getMotionMagicExpoKV(void) const;
+	void setMotionMagicExpoKA(const double motion_magic_expo_kA);
+	double getMotionMagicExpoKA(void) const;
 
-	bool motionMagicChanged(double &motion_magic_cruise_velocity, double &motion_magic_acceleration, double &motion_magic_jerk) const;
+	bool motionMagicChanged(double &motion_magic_cruise_velocity,
+							double &motion_magic_acceleration,
+							double &motion_magic_jerk,
+							double &motion_magic_expo_kV,
+							double &motion_magic_expo_kA) const;
 	void resetMotionMagic(void);
 
 	void setContinuousWrap(const bool continuous_wrap);
@@ -403,6 +417,8 @@ private :
 	bool   stator_current_limit_enable_{false};
 	double supply_current_limit_{0.};
 	bool   supply_current_limit_enable_{false};
+	double supply_current_threshold_{0.};
+	double supply_time_threshold_{0.};
 	mutable bool current_limit_changed_{true};
 
 	double supply_voltage_time_constant_{0.};
@@ -470,6 +486,8 @@ private :
 	double motion_magic_cruise_velocity_{0.0};
 	double motion_magic_acceleration_{0.0};
 	double motion_magic_jerk_{0.0};
+	double motion_magic_expo_kV_{0.0};
+	double motion_magic_expo_kA_{0.0};
 	mutable bool motion_magic_changed_{true};
 
 	bool continuous_wrap_{false};
