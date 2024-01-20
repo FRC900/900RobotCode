@@ -62,6 +62,9 @@
 	</group>
 
 	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" >
+		<!-- rosparam won't load this yaml because there are numeric-only keys (TypeError: can only concatenate str (not "int") to str)
+			 so fake_goal_detect just loads the file and parses it using a regex :| -->
+		<!-- <rosparam command="load" file="$(find tf_object_detection)/src/FRC2024.yaml" ns="yolo_yaml" /> -->
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 	<!-- 

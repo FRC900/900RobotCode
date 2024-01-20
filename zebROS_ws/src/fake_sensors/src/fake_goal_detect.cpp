@@ -18,7 +18,7 @@
 
 std::map<int, std::string> parsePBTXT(std::string filename) {
 	std::map<int, std::string> pbtxtMap;
-	std::regex pbtxtRegex("id:[^\\d]*(\\d+)[\\w\\d\\s]+name:.*['\"](.+)['\"]"); // this feels like an evil thing to do, but whatever
+	std::regex pbtxtRegex("(\\d+): *(.+)"); // this feels like an evil thing to do, but whatever
 	// regexr.com/6dql5
 	std::ifstream t(filename);
 	std::stringstream fileContents;
@@ -29,6 +29,7 @@ std::map<int, std::string> parsePBTXT(std::string filename) {
 	std::string::const_iterator searchStart(str.cbegin());
 	while (std::regex_search(searchStart, str.cend(), res, pbtxtRegex))
 	{
+		std::cout << res[1] << " = " << res[2] << std::endl;
 		pbtxtMap[std::stoi(res[1])] = res[2];
 		searchStart = res.suffix().first;
 	}
@@ -144,7 +145,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "fake_goal_detect");
 
 	ros::NodeHandle nh;
-	FakeGoalDetection fakeGoalDetection(nh, parsePBTXT("/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/2023Game_label_map.pbtxt"));
+	FakeGoalDetection fakeGoalDetection(nh, parsePBTXT("/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024.yaml"));
 
 	ros::spin();
 	return 0;
