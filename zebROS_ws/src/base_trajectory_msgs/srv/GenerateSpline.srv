@@ -12,5 +12,6 @@ float64[]     end_points
 nav_msgs/Path path
 nav_msgs/Path path_velocity
 nav_msgs/Path path_acceleration
-nav_msgs/Path waypoints
+nav_msgs/Path position_waypoints
+nav_msgs/Path velocity_waypoints
 int32[] waypointsIdx

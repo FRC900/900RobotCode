@@ -10,6 +10,7 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
 #include <string>
+#include <optional>
 #include <geometry_msgs/Pose.h>
 
 namespace tf2
@@ -76,11 +77,16 @@ void doTransform(const nav_msgs::Odometry &t_in, nav_msgs::Odometry &t_out, cons
 }
 }
 
+struct PositionVelocity {
+	geometry_msgs::Pose position; // Rename this?
+	geometry_msgs::Vector3 velocity; // FIXME: Change this
+};
 
 class PathFollower
 {
 	private:
 		nav_msgs::Path path_;
+		nav_msgs::Path velocities_; // Issues #419 says this can be the same type 
 
 		size_t num_waypoints_ = 0;
 		double path_length_ = 0.0;
@@ -95,7 +101,7 @@ class PathFollower
 		}
 
 		// load nav_msgs::Path
-		bool loadPath(const nav_msgs::Path &path, double &final_distace);
+		bool loadPath(const nav_msgs::Path &path, const nav_msgs::Path &velocites, double &final_distace);
 
 		// get yaw from geometry_msgs quaternion
 		double getYaw(const geometry_msgs::Quaternion &q) const;
@@ -107,6 +113,6 @@ class PathFollower
 		double interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const;
 
 		// contains the main control loop
-		geometry_msgs::Pose run(double &distance_travelled, int &current_index);
+		std::optional<PositionVelocity> run(double &distance_travelled, int &current_index);
 };
 

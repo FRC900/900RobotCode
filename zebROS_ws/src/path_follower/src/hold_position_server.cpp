@@ -31,7 +31,7 @@ class holdPosition
 
 		ros::Publisher orientation_command_pub_;
 
-		std::map<std::string, AlignActionAxisState> axis_states_;
+		std::map<std::string, AlignActionAxisStatePosition> axis_states_;
 		ros::Publisher combine_cmd_vel_pub_;
 
 		double server_timeout_;
@@ -141,7 +141,7 @@ class holdPosition
 			}
 
 			axis_states_.emplace(std::make_pair(axis_config.name_,
-												AlignActionAxisState(nh_,
+												AlignActionAxisStatePosition(nh_,
 														axis_config.enable_pub_topic_,
 														axis_config.command_pub_topic_,
 														axis_config.state_pub_topic_)));

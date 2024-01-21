@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os
+import sys, os, math
 
 import tf2_geometry_msgs
 from tf import transformations
@@ -37,6 +37,7 @@ for path_key in paths:
     transform.transform.rotation.y = transformations.quaternion_from_matrix(inversed_transform_mat)[1]
     transform.transform.rotation.z = transformations.quaternion_from_matrix(inversed_transform_mat)[2]
     transform.transform.rotation.w = transformations.quaternion_from_matrix(inversed_transform_mat)[3]
+    initial_yaw = trajectory[0]['heading']
     # init stuff
     csv = ""
     idx = -1
@@ -55,7 +56,10 @@ for path_key in paths:
         untransformed_pose.pose.orientation.w = transformations.quaternion_from_euler(0, 0, t['heading'])[3]
         # transform the pose to be relative to first point
         transformed_pose = tf2_geometry_msgs.do_transform_pose(untransformed_pose, transform)
-        csv += f"{t['timestamp']},{transformed_pose.pose.position.x},{transformed_pose.pose.position.y},{transformations.euler_from_quaternion([transformed_pose.pose.orientation.x,transformed_pose.pose.orientation.y,transformed_pose.pose.orientation.z,transformed_pose.pose.orientation.w])[2]},{t['angularVelocity']},{t['velocityX']},{t['velocityY']},{idx}\n"
+        # also transform velocity to be relative to initial orientation
+        rotated_x_velocity = t['velocityX'] * math.cos(initial_yaw) - t['velocityY'] * math.sin(initial_yaw)
+        rotated_y_velocity = t['velocityX'] * math.sin(initial_yaw) + t['velocityY'] * math.cos(initial_yaw)
+        csv += f"{t['timestamp']},{transformed_pose.pose.position.x},{transformed_pose.pose.position.y},{transformations.euler_from_quaternion([transformed_pose.pose.orientation.x,transformed_pose.pose.orientation.y,transformed_pose.pose.orientation.z,transformed_pose.pose.orientation.w])[2]},{t['angularVelocity']},{rotated_x_velocity},{rotated_y_velocity},{idx}\n"
     
     with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/{path_key}_csv.csv", "w") as csv_file:
         print(csv)

@@ -19,7 +19,7 @@
 - git:
     local-name: pid
     uri: https://github.com/FRC900/pid.git
-    version: feed_forward
+    version: velocity_feed_forward
 - git:
     local-name: realtime_tools
     uri: https://github.com/FRC900/realtime_tools.git

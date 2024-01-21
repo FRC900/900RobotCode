@@ -229,6 +229,7 @@ public:
         }
 
         nav_msgs::Path path = spline_gen_srv.response.path;
+        nav_msgs::Path velocity_path = spline_gen_srv.response.path_velocity;
 
         ROS_INFO("Waiting for action server to start.");
         // wait for the action server to start
@@ -237,9 +238,11 @@ public:
         ROS_INFO("Action server started, sending goal.");
         // send a goal to the action
         path_follower_msgs::PathGoal pathGoal;
-        pathGoal.path = path;
+        pathGoal.position_path = path;
+        pathGoal.velocity_path = velocity_path;
         pathGoal.waypointsIdx = spline_gen_srv.response.waypointsIdx;
-        pathGoal.waypoints = spline_gen_srv.response.waypoints;
+        pathGoal.position_waypoints = spline_gen_srv.response.position_waypoints;
+        pathGoal.velocity_waypoints = spline_gen_srv.response.velocity_waypoints;
         ac_.sendGoal(pathGoal, /* Done cb */ NULL, /*Active*/ NULL, boost::bind(&PathToAprilTagAction::feedbackCb, this, _1));
 
 

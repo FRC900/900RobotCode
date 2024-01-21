@@ -13,7 +13,7 @@ path_follower:
     dynamic_reconfigure: True
     final_pos_tol: 0.08 # was 8cm
     final_rot_tol: 0.034 # was 0.2 ~1deg = 0.017
-    ros_rate: 100
+    ros_rate: 250
     server_timeout: 15
     time_offset: 0.0
     # will transform the odom and pose messages from this frame to base link before being used, to make odom appear to come from base_link

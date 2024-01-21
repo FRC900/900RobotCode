@@ -1189,7 +1189,8 @@ bool evaluateTrajectory(T &cost,
 ros::Publisher local_plan_pub;
 template <class T>
 void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Response &out_msg,
-								   const nav_msgs::Path &input_waypoints_msg,
+								   const nav_msgs::Path &input_position_waypoints_msg,
+								   const nav_msgs::Path &input_velocity_waypoints_msg,
 								   const XYTTrajectory<T> &trajectory,
 								   const std::vector<std::string> &jointNames,
 								   const geometry_msgs::TransformStamped &pathToMapTransform,
@@ -2003,22 +2004,33 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		tf2::convert(invtf.inverse(), inversePathToMapTransform.transform);
 		ROS_INFO_STREAM("pathToMapTransform = " << pathToMapTransform);
 	}
-	nav_msgs::Path input_waypoints;
+	nav_msgs::Path input_position_waypoints;
+	nav_msgs::Path input_velocity_waypoints;
 	// might not need to add header at all
-	input_waypoints.header = header;
+	input_position_waypoints.header = header;
+	input_velocity_waypoints.header = header;
 	for (size_t i = 1; i < msg.points.size(); i++)
 	{
-		geometry_msgs::PoseStamped input_pose;
-		input_pose.header = header;
-		input_pose.pose.position.x = msg.points[i].positions[0];
-		input_pose.pose.position.y = msg.points[i].positions[1];
+		geometry_msgs::PoseStamped input_position_pose;
+		input_position_pose.header = header;
+		input_position_pose.pose.position.x = msg.points[i].positions[0];
+		input_position_pose.pose.position.y = msg.points[i].positions[1];
 		tf2::Quaternion quaternion;
 		quaternion.setRPY(0,0,msg.points[i].positions[2]);
-		input_pose.pose.orientation = tf2::toMsg(quaternion);
-		input_waypoints.poses.push_back(input_pose);
+		input_position_pose.pose.orientation = tf2::toMsg(quaternion);
+		input_position_waypoints.poses.push_back(input_position_pose);
+
+		geometry_msgs::PoseStamped input_velocity_pose;
+		input_velocity_pose.header = header;
+		input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
+		input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
+		tf2::Quaternion velocity_quaternion;
+		velocity_quaternion.setRPY(0,0,msg.points[i].velocities[2]);
+		input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		input_velocity_waypoints.poses.push_back(input_velocity_pose);
 
 		if (msg.header.frame_id == "map")
-		{
+		{	
 			// If the path is specified in terms of the map, use the transform read above
 			// This is mostly useful for reusing the hard-coded pathToMapTransform when
 			// we want to test the code (the #if 0 block above)
@@ -2050,7 +2062,8 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		}
 	}
 
-	out_msg.waypoints = input_waypoints;
+	out_msg.position_waypoints = input_position_waypoints;
+	out_msg.velocity_waypoints = input_velocity_waypoints;
 	// Need to also transform kinematic constraints from whatever frame they're
 	// specified in into the path frame.
 	kinematicConstraints.resetConstraints();
@@ -2132,7 +2145,7 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		}
 
 		base_trajectory_msgs::GenerateSpline::Response tmp_msg;
-		trajectoryToSplineResponseMsg(tmp_msg, input_waypoints, trajectory, jointNames, pathToMapTransform, optParams);
+		trajectoryToSplineResponseMsg(tmp_msg, input_position_waypoints, input_velocity_waypoints, trajectory, jointNames, pathToMapTransform, optParams);
 		writeMatlabSplines(trajectory, 1, "Initial Splines");
 		messageFilter.disable();
 		fflush(stdout);
@@ -2154,7 +2167,7 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		messageFilter.enable();
 	}
 
-	trajectoryToSplineResponseMsg(out_msg, input_waypoints, trajectory, jointNames, pathToMapTransform, optParams);
+	trajectoryToSplineResponseMsg(out_msg, input_position_waypoints, input_velocity_waypoints, trajectory, jointNames, pathToMapTransform, optParams);
 	writeMatlabSplines(trajectory, 2, "Optimized Splines");
 	fflush(stdout);
 	const auto t2 = high_resolution_clock::now();

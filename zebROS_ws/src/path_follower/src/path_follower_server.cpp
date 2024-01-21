@@ -15,6 +15,8 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
 
+// #define DEBUG
+
 class PathAction
 {
 	protected:
@@ -30,7 +32,7 @@ class PathAction
 
 		ros::Publisher orientation_command_pub_;
 
-		std::map<std::string, AlignActionAxisState> axis_states_;
+		std::map<std::string, AlignActionAxisStatePositionVelocity> axis_states_;
 		ros::Publisher combine_cmd_vel_pub_;
 
 		ros::Publisher robot_relative_yaw_pub_;
@@ -64,9 +66,9 @@ class PathAction
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
-			, odom_sub_(nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this))
-			, pose_sub_(nh_.subscribe(pose_topic, 1, &PathAction::poseCallback, this))
-			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this))
+			, odom_sub_(nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this, ros::TransportHints().tcpNoDelay()))
+			, pose_sub_(nh_.subscribe(pose_topic, 1, &PathAction::poseCallback, this, ros::TransportHints().tcpNoDelay()))
+			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this, ros::TransportHints().tcpNoDelay()))
 			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
@@ -229,7 +231,7 @@ class PathAction
 		bool addAxis(const AlignActionAxisConfig &axis_config)
 		{
 			axis_states_.emplace(std::make_pair(axis_config.name_,
-												AlignActionAxisState(nh_,
+												AlignActionAxisStatePositionVelocity(nh_,
 														axis_config.enable_pub_topic_,
 														axis_config.command_pub_topic_,
 														axis_config.state_pub_topic_)));
@@ -248,7 +250,7 @@ class PathAction
 			bool timed_out = false;
 			bool succeeded = false;
 
-			const size_t num_waypoints = goal->path.poses.size();
+			const size_t num_waypoints = goal->position_path.poses.size();
 
 			std::vector<int> waypointsIdx = goal->waypointsIdx;
 			// Spin once to get the most up to date odom and yaw info
@@ -279,19 +281,19 @@ class PathAction
 			// Transform the final point from robot to odom coordinates. Used each iteration to
 			// see if we've reached the end point, so do it once here rather than each time through
 			// the loop
-			geometry_msgs::Pose final_pose_transformed = goal->path.poses.back().pose;
+			geometry_msgs::Pose final_pose_transformed = goal->position_path.poses.back().pose;
 			tf2::doTransform(final_pose_transformed, final_pose_transformed, odom_to_base_link_tf);
 
 			const auto starting_odom = odom_;
 			const auto starting_pose = pose_;
 
 			//debug
-			ROS_INFO_STREAM(goal->path.poses[num_waypoints - 1].pose.position.x << ", " << goal->path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->path.poses[num_waypoints - 1].pose.orientation));
+			ROS_INFO_STREAM(goal->position_path.poses[num_waypoints - 1].pose.position.x << ", " << goal->position_path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->position_path.poses[num_waypoints - 1].pose.orientation));
 
 			ROS_INFO_STREAM("Current odom values X = " << odom_.pose.pose.position.x << " Y = " << odom_.pose.pose.position.y << " Rot " << path_follower_.getYaw(odom_.pose.pose.orientation)); 
 			for (size_t i = 0; i < num_waypoints - 1; i++) {
-				ROS_INFO_STREAM("Untransformed waypoint: X = " << goal->path.poses[i].pose.position.x << " Y = " << goal->path.poses[i].pose.position.y << " rotation = " << path_follower_.getYaw(goal->path.poses[i].pose.orientation));
-				geometry_msgs::Pose temp_pose = goal->path.poses[i].pose;
+				ROS_INFO_STREAM("Untransformed waypoint: X = " << goal->position_path.poses[i].pose.position.x << " Y = " << goal->position_path.poses[i].pose.position.y << " rotation = " << path_follower_.getYaw(goal->position_path.poses[i].pose.orientation));
+				geometry_msgs::Pose temp_pose = goal->position_path.poses[i].pose;
 				geometry_msgs::Pose new_pose;
 				tf2::doTransform(temp_pose, new_pose, odom_to_base_link_tf);
 				tf2::Quaternion q;
@@ -303,9 +305,9 @@ class PathAction
 			}
 			ROS_INFO_STREAM("========End path follower logs ==========");
 			ros::Rate r(ros_rate_);
-			double final_distace = 0;
+			double final_distance = 0;
 			// send path to initialize path follower
-			if (!path_follower_.loadPath(goal->path, final_distace))
+			if (!path_follower_.loadPath(goal->position_path, goal->velocity_path, final_distance))
 			{
 				ROS_ERROR_STREAM("Failed to load path");
 				preempted = true;
@@ -314,7 +316,7 @@ class PathAction
 			int current_index = 0;
 
 			std_msgs::Bool enable_msg;
-			std_msgs::Float64 command_msg;
+			std_msgs::Float64 command_msg; 
 			auto x_axis_it = axis_states_.find("x");
 			auto &x_axis = x_axis_it->second;
 			auto y_axis_it = axis_states_.find("y");
@@ -326,24 +328,34 @@ class PathAction
 
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
-				path_follower_msgs::PathFeedback feedback;
+				auto start_time_ = std::chrono::high_resolution_clock::now();
+				path_follower_msgs::PathFeedback feedback; // FIXME: Add velocity (probably?)
 				// Spin once to get the most up to date odom and yaw info
 				ros::spinOnce();
-
+#ifdef DEBUG
 				// This gets the point closest to current time plus lookahead distance
 				// on the path. We use this to generate a target for the x,y,orientation
 				ROS_INFO_STREAM("----------------------------------------------");
 				ROS_INFO_STREAM("current_position = " << odom_.pose.pose.position.x
 					<< " " << odom_.pose.pose.position.y
 					<< " " << path_follower_.getYaw(odom_.pose.pose.orientation));	// PID controllers.
+#endif
+				std::optional<PositionVelocity> next_waypoint_opt = path_follower_.run(distance_travelled, current_index); 
+				PositionVelocity next_waypoint = *next_waypoint_opt;
 
-				geometry_msgs::Pose next_waypoint = path_follower_.run(distance_travelled, current_index);
+				// The velocity needs to be transformed from path-relative to odom-relative to be fed into publish_pid_cmd_vel,
+				// which just makes it robot-relative again. /shrug
+				double rotate_angle = initial_pose_yaw;
+				double odom_relative_x_velocity = next_waypoint.velocity.x * cos(rotate_angle) - next_waypoint.velocity.y * sin(rotate_angle);
+				double odom_relative_y_velocity = next_waypoint.velocity.x * sin(rotate_angle) + next_waypoint.velocity.y * cos(rotate_angle);
+				next_waypoint.velocity.x = odom_relative_x_velocity;
+				next_waypoint.velocity.y = odom_relative_y_velocity;
 
 				int current_waypoint = waypointsIdx[current_index];
 				feedback.current_waypoint = current_waypoint;
 
 				// gets total distance of the path, then finds how far we have traveled so far
-				feedback.percent_complete = (distance_travelled != 0) ? (distance_travelled / final_distace) : 0.0;
+				feedback.percent_complete = (distance_travelled != 0) ? (distance_travelled / final_distance) : 0.0;
 
 				// The path's have even spacing so if you find the total amount of path waypoints and then divide by which on you are on
 				// The result is pretty close to how far you are along to the next waypoint
@@ -355,11 +367,13 @@ class PathAction
 				const auto waypoint_size = highidx - lowidx;
 				feedback.percent_next_waypoint = double(current_index - lowidx) / waypoint_size;
 				as_.publishFeedback(feedback);
-
-				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
-				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
-				ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
-
+#ifdef DEBUG
+				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.position.x << ", " << next_waypoint.position.position.y << ", " << path_follower_.getYaw(next_waypoint.position.orientation) << ")");
+#endif
+				tf2::doTransform(next_waypoint.position, next_waypoint.position, odom_to_base_link_tf);
+#ifdef DEBUG
+				ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.position.x << ", " << next_waypoint.position.position.y << ", " << path_follower_.getYaw(next_waypoint.position.orientation) << ")");
+#endif
 				enable_msg.data = true;
 				combine_cmd_vel_pub_.publish(enable_msg);
 
@@ -367,16 +381,18 @@ class PathAction
 				// waypoint coordinate to each of the PID controllers
 				// And also make sure they continue to be enabled
 				x_axis.setEnable(true);
-				x_axis.setCommand(next_waypoint.position.x);
+				x_axis.setCommand(next_waypoint.position.position.x, next_waypoint.velocity.x); 
 
 				y_axis.setEnable(true);
-				y_axis.setCommand(next_waypoint.position.y);
+				y_axis.setCommand(next_waypoint.position.position.y, next_waypoint.velocity.y); 
 
-				command_msg.data = path_follower_.getYaw(next_waypoint.orientation) - initial_pose_yaw + initial_field_relative_yaw;
-				if (std::isfinite(command_msg.data))
+				command_msg.data = path_follower_.getYaw(next_waypoint.position.orientation) - initial_pose_yaw + initial_field_relative_yaw;
+				if (std::isfinite(command_msg.data)) 
 				{
 					orientation_command_pub_.publish(command_msg);
+					#ifdef DEBUG
 					ROS_INFO_STREAM("Orientation: " << command_msg.data);
+					#endif
 				}
 
 				if (as_.isPreemptRequested() || !ros::ok())
@@ -392,11 +408,13 @@ class PathAction
 
 				const double orientation_state = path_follower_.getYaw(odom_.pose.pose.orientation);
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
-
+				
+				auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_).count();
+				ROS_INFO_STREAM("Path follower calculations took " << duration);
 				if ((fabs(final_pose_transformed.position.x - odom_.pose.pose.position.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - odom_.pose.pose.position.y) < final_pos_tol) &&
 					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol) &&
-					(current_index >= (goal->path.poses.size() - 2)))
+					(current_index >= (goal->position_path.poses.size() - 2)))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
 					ROS_INFO_STREAM("    endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << odom_.pose.pose.position.x);
@@ -437,11 +455,12 @@ class PathAction
 					r.sleep();
 				}
 			}
-
+			#ifdef DEBUG
 			ROS_INFO_STREAM("    final delta odom_ = " << odom_.pose.pose.position.x - starting_odom.pose.pose.position.x
 					<< ", " << odom_.pose.pose.position.y - starting_odom.pose.pose.position.y);
 			ROS_INFO_STREAM("    final delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 					<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
+			#endif
 
 			// Shut off publishing both combined x+y+rotation messages
 			// along with the combined cmd_vel output generated from them

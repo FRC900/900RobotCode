@@ -1,3 +1,4 @@
 string path_name
-nav_msgs/Path dynamic_path
+nav_msgs/Path dynamic_position_path
+nav_msgs/Path dynamic_velocity_path
 ---

@@ -28,10 +28,24 @@ auto_mode_5: [""]
 auto_mode_6: ["drive_out_community", "snap_0_before_intake"]
 
 auto_mode_7: ["drive_2m_csv"]
-auto_mode_8: ["drive_2m_and_turn_csv"]
-auto_mode_9: ["drive_2m_and_back_csv"]
+auto_mode_8: ["three_note_csv"]
+auto_mode_9: ["four_note_csv"]
 
 auto_mode_10: ["GetCone_csv"]
+
+three_note_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+four_note_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
 
 drive_2m_csv:
   waypoint_actions: {}

@@ -127,6 +127,10 @@
         "numbers": "cpp",
         "stop_token": "cpp",
         "cfenv": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "stdfloat": "cpp",
+        "valarray": "cpp"
     }
 }

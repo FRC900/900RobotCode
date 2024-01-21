@@ -1,5 +1,7 @@
-nav_msgs/Path path
-nav_msgs/Path waypoints
+nav_msgs/Path position_path
+nav_msgs/Path position_waypoints
+nav_msgs/Path velocity_path
+nav_msgs/Path velocity_waypoints
 int32[] waypointsIdx
 
 # Linear and angular tolerances for finishing path
