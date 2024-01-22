@@ -8,13 +8,14 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   angles
-  rospy
-  roscpp
+  ddynamic_reconfigure
   field_obj
   geometry_msgs
   marker_msgs
   message_generation
   nav_msgs
+  rospy
+  roscpp
   sensor_msgs
   std_msgs
   std_srvs

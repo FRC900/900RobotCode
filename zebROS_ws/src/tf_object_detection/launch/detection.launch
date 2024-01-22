@@ -113,5 +113,6 @@
   <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
 		<arg name="camera_name"            value="/zed_objdetect/left" />
 		<arg name="image_topic"            value="/image_rect_gray" />
+		<arg name="tag_type"               value="36h11" />
 	</include>
 </launch>

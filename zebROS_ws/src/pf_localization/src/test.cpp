@@ -25,10 +25,10 @@ void test1(void)
 	const std::vector<double> sigmas = {0.025, 0.025};
 	// Hard-code map beacon (tag) positions
 	std::vector<PositionBeacon> beacons;
-	beacons.emplace_back(PositionBeacon{10.0, 10.0, "2"});
-	beacons.emplace_back(PositionBeacon{2.0, 2.0, "1"});
-	beacons.emplace_back(PositionBeacon{0.0, 0.0, "1"});
-	beacons.emplace_back(PositionBeacon{1.0, 1.0, "1"});
+	beacons.emplace_back(10.0, 10.0, "2");
+	beacons.emplace_back(2.0, 2.0, "1");
+	beacons.emplace_back(0.0, 0.0, "1");
+	beacons.emplace_back(1.0, 1.0, "1");
 
 	WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max), 2 * M_PI);
 	auto pf = std::make_unique<ParticleFilter>(world,
@@ -84,9 +84,9 @@ void test2()
 	const std::vector<double> sigmas = {0.025, 0.025};
 	// Hard-code map beacon (tag) positions
 	std::vector<PositionBeacon> beacons;
-	beacons.emplace_back(PositionBeacon{0.0, -0.24, "51"});
-	beacons.emplace_back(PositionBeacon{0.0, -0.24, "17"});
-	beacons.emplace_back(PositionBeacon{-0.68, 1.55, "3"});
+	beacons.emplace_back(0.0, -0.24, "51");
+	beacons.emplace_back(0.0, -0.24, "17");
+	beacons.emplace_back(-0.68, 1.55, "3");
 
 	WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max), 2 * M_PI);
 	auto pf = std::make_unique<ParticleFilter>(world,
@@ -108,18 +108,18 @@ void test2()
 		pf->set_rotation(0);
 		pf->set_rotation(0);
 		pf->motion_update(0, 0, 0);
-		pf->noise_pos();
-		pf->noise_rot();
+		pf->noise_pos(1.0);
+		pf->noise_rot(1.0);
 		pf->set_rotation(0);
 		pf->set_rotation(0);
 		pf->motion_update(0, 0, 0);
-		pf->noise_pos();
-		pf->noise_rot();
+		pf->noise_pos(1.0);
+		pf->noise_rot(1.0);
 		pf->set_rotation(0);
 		pf->set_rotation(0);
 		pf->motion_update(0, 0, 0);
-		pf->noise_pos();
-		pf->noise_rot();
+		pf->noise_pos(1.0);
+		pf->noise_rot(1.0);
 		if (pf->assign_weights(measurement, sigmas))
 		{
 			pf->resample();
@@ -158,12 +158,12 @@ void test3()
 	const std::vector<double> sigmas = {0.100, 0.100};
 	// Hard-code map beacon (tag) positions
 	std::vector<PositionBeacon> beacons;
-	beacons.emplace_back(PositionBeacon{13.2516346, 0.269104, "red_launchpad"});
-	beacons.emplace_back(PositionBeacon{13.2516346, 2.720204, "red_launchpad"});
+	beacons.emplace_back(13.2516346, 0.269104, "red_launchpad");
+	beacons.emplace_back(13.2516346, 2.720204, "red_launchpad");
 
-	beacons.emplace_back(PositionBeacon{16.468, 2.509, "ds_numbers"});
-	beacons.emplace_back(PositionBeacon{16.468, 3.7425, "ds_numbers"});
-	beacons.emplace_back(PositionBeacon{16.468, 5.613, "ds_numbers"});
+	beacons.emplace_back(16.468, 2.509, "ds_numbers");
+	beacons.emplace_back(16.468, 3.7425, "ds_numbers");
+	beacons.emplace_back(16.468, 5.613, "ds_numbers");
 	WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max), 2 * M_PI);
 	auto pf = std::make_unique<ParticleFilter>(world,
 			WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
@@ -190,18 +190,18 @@ void test3()
 		#if 1
 		pf->set_rotation(robot_rotation);
 		pf->motion_update(0, 0, 0);
-		pf->noise_pos();
-		pf->noise_rot();
+		pf->noise_pos(1.0);
+		pf->noise_rot(1.0);
 		pf->set_rotation(robot_rotation);
 		pf->set_rotation(robot_rotation);
 		pf->motion_update(0, 0, 0);
-		pf->noise_pos();
-		pf->noise_rot();
+		pf->noise_pos(1.0);
+		pf->noise_rot(1.0);
 		pf->set_rotation(robot_rotation);
 		pf->set_rotation(robot_rotation);
 		pf->motion_update(0, 0, 0);
-		pf->noise_pos();
-		pf->noise_rot();
+		pf->noise_pos(1.0);
+		pf->noise_rot(1.0);
 		#endif
 		if (pf->assign_weights(measurement, sigmas))
 		{
@@ -241,10 +241,10 @@ void test4()
 	const std::vector<double> sigmas = {1.000, 1.000};
 	// Hard-code map beacon (tag) positions
 	std::vector<PositionBeacon> beacons;
-	beacons.emplace_back(PositionBeacon{ 0, 1, "a01"});
-	beacons.emplace_back(PositionBeacon{ 1, 0, "b10"});
-	beacons.emplace_back(PositionBeacon{-1, 0, "c-10"});
-	beacons.emplace_back(PositionBeacon{ 0,-1, "d0-1"});
+	beacons.emplace_back(0, 1, "a01");
+	beacons.emplace_back(1, 0, "b10");
+	beacons.emplace_back(-1, 0, "c-10");
+	beacons.emplace_back(0,-1, "d0-1");
 	WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max), M_PI / 2.);
 	auto pf = std::make_unique<ParticleFilter>(world,
 			WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),

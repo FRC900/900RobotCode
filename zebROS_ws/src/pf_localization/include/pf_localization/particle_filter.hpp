@@ -35,8 +35,8 @@ public:
                  const WorldModelBoundaries &boundaries,
                  double ns, double rs, double rt, size_t n);
   std::optional<geometry_msgs::PoseWithCovariance> predict();
-  void noise_rot();
-  void noise_pos();
+  void noise_rot(const double multiplier);
+  void noise_pos(const double multiplier);
   bool motion_update(double delta_x, double delta_y, double delta_rot);
   bool set_rotation(double rot);
   bool assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &measurements, const std::vector<double> &sigmas);
@@ -51,6 +51,9 @@ public:
   }
   void reinit();
   bool is_valid_beacon(const std::string &beacon_name) const;
+  void set_pos_stddev(const double ns);
+  void set_rot_stddev(const double rs);
+  void set_rotation_threshold(const double rotation_threshold);
 };
 
 #endif

@@ -1,0 +1,52 @@
+noise_delta_t: 10.0
+map_frame_id: 'map'
+#odom_frame_id: 'odom'
+odom_frame_id: 'zed_objdet_odom'
+field_dims:
+  x_min: 0.0
+  x_max: 16.458
+  y_min: 0.0
+  y_max: 8.228
+
+init_dims:
+  x_min: 0.0
+  x_max: 16.458
+  y_min: 0.0
+  y_max: 8.228
+
+num_particles: 200
+
+noise_stdev:
+  position: 0.025
+  rotation: 0.005
+  # Modifiers for noise stddev when robot is moving or stopped
+  # Allows for more accurate localization when stopped by using
+  # a lower stddev for noise when the robot is at rest.
+  stopped_pos_noise_multiplier: 1.0
+  stopped_rot_noise_multiplier: 1.0
+  moving_pos_noise_multiplier: 1.0
+  moving_rot_noise_multiplier: 1.0
+
+rotation_threshold: 0.25
+
+camera_sigmas: [ 1.000, 1.000 ]
+
+bearing_only: false
+
+beacons:
+  - [15.079472, 0.245872, "1" ]
+  - [16.185134, 0.883666, "2" ]
+  - [16.579342, 4.982718, "3" ]
+  - [16.579342, 5.547868, "4" ]
+  - [14.700758, 8.2042, "5" ]
+  - [1.8415, 8.2042, "6" ]
+  - [-0.0127, 5.547868, "7" ]
+  - [-0.0127, 4.982718, "8" ]
+  - [0.356108, 0.883666, "9" ]
+  - [1.461516, 0.245872, "10" ]
+  - [11.904726, 3.713226, "11" ]
+  - [11.904726, 4.49834, "12" ]
+  - [11.220196, 4.105148, "13" ]
+  - [5.320792, 4.105148, "14" ]
+  - [4.641342, 4.49834, "15" ]
+  - [4.641342, 3.713226, "16" ]

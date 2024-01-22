@@ -17,6 +17,13 @@ num_particles: 200
 noise_stdev:
   position: 0.025
   rotation: 0.001
+  # Modifiers for noise stddev when robot is moving or stopped
+  # Allows for more accurate localization when stopped by using
+  # a lower stddev for noise when the robot is at rest.
+  stopped_pos_noise_multiplier: 1.0
+  stopped_rot_noise_multiplier: 1.0
+  moving_pos_noise_multiplier: 1.0
+  moving_rot_noise_multiplier: 1.0
 
 rotation_threshold: 0.25
 

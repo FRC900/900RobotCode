@@ -9,9 +9,15 @@
 	<!-- Should be false -->
 	<arg name="vis" default="True" />
 
-	<!-- Run ZED camera + tensorflow object detection + cuda apriltags, etc etc etc -->
-	<include file="$(find tf_object_detection)/launch/detection.launch">
+	<!-- Run ZED camera + YOLO object detection + cuda apriltags, etc etc etc -->
+	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
 		<arg name="input_type" value="live_camera" />
+		<arg name="cam_pos_x"       default="0.0" />
+		<arg name="cam_pos_y"       default="0.0" />
+		<arg name="cam_pos_z"       default="0.0" />
+		<arg name="cam_roll"        default="0.0" />
+		<arg name="cam_pitch"       default="0.0" />
+		<arg name="cam_yaw"         default="0.0" />
 	</include>
 
 	<group ns="imu">
@@ -22,14 +28,15 @@
 		</include>
 	</group>
 	<group ns="pf_localization">
-		<rosparam command="load" file="$(find pf_localization)/config/2022Rumble_params.yaml" />
+		<rosparam command="load" file="$(find pf_localization)/config/2024_params.yaml" />
 		<node name="pf_localization" pkg="pf_localization" type="pf_localization_node" output= "screen">
+			<remap from="/goal_detection/goal_detect_msg" to="/tf_object_detection/tag_detection_world" />
 		</node>
 		<node name="pf_visualization" pkg="pf_localization" type="pf_vis.py" output="screen" if="$(arg vis)">
 		</node>
 		<node name="pf_dummy_cmd_vel" pkg="pf_localization" type="dummy_cmd_vel.py" output="screen" if="$(arg vis)">
 		</node>
 	</group>
-
+	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="1 0 0 0 0 0 1 zed_objdet_odom base_link 100" />
 
 </launch>

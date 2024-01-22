@@ -16,6 +16,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
+#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 #include <sensor_msgs/Imu.h>
 #include <iostream>
 #include <ros/ros.h>
@@ -53,8 +54,21 @@ ros::Time last_camera_data;
 ros::Time last_camera_stamp;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
 std::vector<double> sigmas; // std.dev for each dimension of detected beacon position (x&y for depth camera, angle for bearing-only)
-double min_detection_confidence = 0;
+double min_detection_confidence{0};
 std::unique_ptr<ParticleFilter> pf;
+double stopped_pos_noise_multiplier{1.0};
+double stopped_rot_noise_multiplier{1.0};
+double moving_pos_noise_multiplier{1.0};
+double moving_rot_noise_multiplier{1.0};
+
+// How long the transition from moving to stopped should
+// take. This transition is for scaling between the moving
+// and stopped multipliers above. There's a linear scaling
+// between moving and stopped multiplers during this time to 
+// let the localization converge.  0.0 means no transition and
+// make a step transition between moving and stopped multipliers.
+double    stopped_transition_time{0.0};
+ros::Time last_moving_stamp{};
 
 void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   double roll, pitch, yaw;
@@ -93,8 +107,8 @@ void publish_prediction(const ros::TimerEvent &event)
     prediction.pose.position.y,
     0.0);
 
-  const double tmp = pos.getX() + pos.getY() + pos.getZ() + q.getX() + q.getY() + q.getZ() + q.getW();
-  if (std::isfinite(tmp))
+  if (const double tmp = pos.getX() + pos.getY() + pos.getZ() + q.getX() + q.getY() + q.getZ() + q.getW();
+      std::isfinite(tmp))
   {
     geometry_msgs::PoseStamped odom_to_map;
     try {
@@ -133,9 +147,9 @@ void publish_prediction(const ros::TimerEvent &event)
   if(pub_debug.getNumSubscribers() > 0){
     pf_localization::PFDebug debug;
 
-    const auto part = pf->get_particles();
-    for (const Particle& p : part) {
-      debug.poses.push_back(toPose(p));
+    const auto particles = pf->get_particles();
+    for (const Particle& particle : particles) {
+      debug.poses.push_back(toPose(particle));
     }
 
     const auto beacons = pf->get_beacons_seen();
@@ -203,21 +217,45 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
 
 void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   double timestep = (msg->header.stamp - last_cmd_vel).toSec();
-  double x_vel = msg->twist.linear.x;
-  double y_vel = msg->twist.linear.y;
-  double z_ang_velocity = msg->twist.angular.z;
+  const double x_vel = msg->twist.linear.x;
+  const double y_vel = msg->twist.linear.y;
+  const double z_ang_velocity = msg->twist.angular.z;
 
   // TODO - use the average of the previous and current velocity?
-  double delta_x = x_vel * timestep;
-  double delta_y = y_vel * timestep;
-  double delta_angular_z = z_ang_velocity * timestep;
+  const double delta_x = x_vel * timestep;
+  const double delta_y = y_vel * timestep;
+  const double delta_angular_z = z_ang_velocity * timestep;
 
   last_cmd_vel = msg->header.stamp;
   // TODO - check return code
   pf->motion_update(delta_x, delta_y, delta_angular_z);
+
+  const bool stopped = (x_vel == 0.0) && (y_vel == 0.0) && (z_ang_velocity == 0.0);
+  // Stop applying noise after enough time has passed since the last camera measurement
   if ((ros::Time::now() - last_camera_data).toSec() < noise_delta_t) {
-    pf->noise_pos();
-    pf->noise_rot();
+    // How far along are we in the transition from moving to stopped noise multipliers
+    // 0 = still moving, apply only moving noise multipliers
+    // 1 = stopped, apply only stopped noise multipliers
+    // in between = linear interpolation between moving and stopped noise multipliers
+    double stopped_scale;
+
+    if (!stopped) {
+      stopped_scale = 0.0;
+    } else {
+      if (stopped_transition_time == 0.0) { // avoid divide by zero
+        stopped_scale = 1.0;
+      } else {
+        stopped_scale = (msg->header.stamp - last_moving_stamp).toSec() / stopped_transition_time;
+        stopped_scale = std::min(stopped_scale, 1.0);
+      }
+    }
+
+    pf->noise_pos(stopped_scale * stopped_pos_noise_multiplier + (1.0 - stopped_scale) * moving_pos_noise_multiplier);
+    pf->noise_rot(stopped_scale * stopped_rot_noise_multiplier + (1.0 - stopped_scale) * moving_rot_noise_multiplier);
+  }
+
+  if (!stopped) {
+    last_moving_stamp = msg->header.stamp;
   }
 
   #ifdef EXTREME_VERBOSE
@@ -276,7 +314,17 @@ int main(int argc, char **argv) {
   #endif
 
   XmlRpc::XmlRpcValue xml_beacons;
-  double f_x_min, f_x_max, f_y_min, f_y_max, i_x_min, i_x_max, i_y_min, i_y_max, p_stdev, r_stdev, rotation_threshold;
+  double f_x_min;
+  double f_x_max;
+  double f_y_min;
+  double f_y_max;
+  double i_x_min;
+  double i_x_max;
+  double i_y_min;
+  double i_y_max;
+  double p_stdev;
+  double r_stdev;
+  double rotation_threshold;
   int num_particles;
   double tmp_tolerance = 0.1;
   bool bearing_only = false;
@@ -341,6 +389,21 @@ int main(int argc, char **argv) {
   if (!nh_.param("noise_stdev/rotation", r_stdev, 0.1)) {
     ROS_WARN("no rotation stdev specified, using default");
   }
+  if (!nh_.param("noise_stdev/stopped_pos_multiplier", stopped_pos_noise_multiplier, 1.0)) {
+    ROS_WARN("no stopped_pos_noise_multiplier specified, using default");
+  }
+  if (!nh_.param("noise_stdev/stopped_rot_multiplier", stopped_rot_noise_multiplier, 1.0)) {
+    ROS_WARN("no stopped_rot_noise_multiplier specified, using default");
+  }
+  if (!nh_.param("noise_stdev/moving_pos_multiplier", moving_pos_noise_multiplier, 1.0)) {
+    ROS_WARN("no moving_pos_noise_multiplier specified, using default");
+  }
+  if (!nh_.param("noise_stdev/moving_rot_multiplier", moving_rot_noise_multiplier, 1.0)) {
+    ROS_WARN("no moving_rot_noise_multiplier specified, using default");
+  }
+  if (!nh_.param("stopped_transition_time", stopped_transition_time, 1.0)) {
+    ROS_WARN("no stopped_transition_time specified, using default");
+  }
   if (!nh_.param("rotation_threshold", rotation_threshold, 0.25)) {
     ROS_WARN("no rotation_threshold specified, using default");
   }
@@ -359,6 +422,7 @@ int main(int argc, char **argv) {
   if (!nh_.param("camera_fov", camera_fov, camera_fov)) {
     ROS_WARN("no camera_fov specified, using default");
   }
+
 
   tf_tolerance.fromSec(tmp_tolerance);
 
@@ -384,6 +448,22 @@ int main(int argc, char **argv) {
                                         WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
                                         p_stdev, r_stdev, rotation_threshold,
                                         num_particles);
+
+  ddynamic_reconfigure::DDynamicReconfigure ddr(nh_);
+  ddr.registerVariable<double>("p_stdev", &p_stdev, [](double ns){pf->set_pos_stddev(ns); }, "Position noise standard deviation", 0.0, 5.0);
+  ddr.registerVariable<double>("r_stdev", &r_stdev, [](double rs){pf->set_rot_stddev(rs); }, "Rotation noise standard deviation", 0.0, 5.0);
+  ddr.registerVariable<double>("stopped_pos_noise_multiplier", &stopped_pos_noise_multiplier, "Multiplier for position noise when robot is stopped ", 0.0, 100.0);
+  ddr.registerVariable<double>("stopped_rot_noise_multiplier", &stopped_rot_noise_multiplier, "Multiplier for rotation noise when robot is stopped ", 0.0, 100.0);
+  ddr.registerVariable<double>("moving_pos_noise_multiplier", &moving_pos_noise_multiplier, "Multiplier for position noise when robot is moving ", 0.0, 100.0);
+  ddr.registerVariable<double>("moving_rot_noise_multiplier", &moving_rot_noise_multiplier, "Multiplier for rotation noise when robot is moving ", 0.0, 100.0);
+  ddr.registerVariable<double>("stopped_transition_time", &stopped_transition_time, "Time in seconds after stopping to lineraly interpolate between moving and stopped multipliers", 0.0, 10.);
+  ddr.registerVariable<double>("rotation_threshold", &rotation_threshold, [](double rt){pf->set_rotation_threshold(rt); }, "Particle rotations more than this far away from imu angle are set to IMU + noise", 0.0, angles::from_degrees(360.0));
+  ddr.registerVariable<double>("camera_sigma_x", &sigmas[0], "camera_sigma_x", 0.0, 5.0);
+  ddr.registerVariable<double>("camera_sigma_y", &sigmas[1], "camera_sigma_x", 0.0, 5.0);
+  ddr.registerVariable<double>("noise_delta_t", &noise_delta_t, "noise_delta_t", 0.0, 5.0);
+  ddr.registerVariable<double>("tf_tolerance", &tmp_tolerance, "tf_tolerance", 0.0, 5.0);
+  ddr.registerVariable<double>("camera_fov", &camera_fov, "camera_fov", 0.0, angles::from_degrees(360.0));
+  ddr.publishServicesTopics();
 
   #ifdef VERBOSE
   for (const Particle& p : pf->get_particles()) {

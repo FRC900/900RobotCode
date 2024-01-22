@@ -33,6 +33,10 @@ standalone_tags:
      {id: 10, size: .152, name: "10"},
      {id: 11, size: .152, name: "11"},
      {id: 12, size: .152, name: "12"},
+     {id: 13, size: .152, name: "13"},
+     {id: 14, size: .152, name: "14"},
+     {id: 15, size: .152, name: "15"},
+     {id: 16, size: .152, name: "16"},
   ]
 # ## Tag bundle definitions
 # ### Remarks

@@ -131,7 +131,6 @@ def main(args: argparse.Namespace) -> None:
           voc.objects.append(PascalObject(label, "Unspecified", truncated=False, difficult=False, bndbox=BndBox(rect[0], rect[1], rect[2], rect[3])))
           added_labels = True
 
-
       if added_labels:
         voc.save(xml_path)
         formatted_xml_str = formatter.format_file(xml_path) 
@@ -148,7 +147,7 @@ def main(args: argparse.Namespace) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='FRC2023m.py', help='Model .pt file')
+    parser.add_argument('--model', type=str, default='FRC2023m.pt', help='Model .pt file')
     parser.add_argument('--input-files', type=str, help='Input files to process')
     parser.add_argument('--show',
                         action='store_true',
@@ -163,4 +162,3 @@ def parse_args() -> argparse.Namespace:
 if __name__ == '__main__':
     args = parse_args()
     main(args)
-

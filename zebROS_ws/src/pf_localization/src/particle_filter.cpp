@@ -45,6 +45,18 @@ void ParticleFilter::init(const WorldModelBoundaries &boundaries) {
   normalize();
 }
 
+void ParticleFilter::set_pos_stddev(const double ns) {
+  pos_dist_ = std::normal_distribution<double>(0, ns);
+}
+
+void ParticleFilter::set_rot_stddev(const double rs) {
+  rot_dist_ = std::normal_distribution<double>(0, rs);
+}
+
+void ParticleFilter::set_rotation_threshold(const double rotation_threshold) {
+  rotation_threshold_ = rotation_threshold;
+}
+
 void ParticleFilter::reinit(){
   particles_.clear();
   init(world_.get_boundaries());
@@ -78,16 +90,16 @@ void ParticleFilter::normalize() {
   }
 }
 
-void ParticleFilter::noise_rot() {
+void ParticleFilter::noise_rot(const double multiplier) {
   for (Particle& p : particles_) {
-    p.rot_ += rot_dist_(rng_);
+    p.rot_ += rot_dist_(rng_) * multiplier;
   }
 }
 
-void ParticleFilter::noise_pos() {
+void ParticleFilter::noise_pos(const double multiplier) {
   for (Particle& p : particles_) {
-    p.x_ += pos_dist_(rng_);
-    p.y_ += pos_dist_(rng_);
+    p.x_ += pos_dist_(rng_) * multiplier;
+    p.y_ += pos_dist_(rng_) * multiplier;
   }
 }
 
@@ -216,7 +228,7 @@ bool ParticleFilter::set_rotation(double rot) {
       p.rot_ = rot + rot_thresh_dist_(rng_);
     }
   }
-  noise_rot();
+  noise_rot(1.0);
   return true;
 }
 
