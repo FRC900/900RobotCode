@@ -2,13 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
-#include <unordered_map>
 #include <string>
-#include <utility>
 #include "pf_localization/world_model.hpp"
 #include "geometry_msgs/PoseStamped.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "pf_localization/particle_filter.hpp"
+
 // Given a list of beacons relative to the blue corner of the field,
 // generate the same list of beacons but translated so the origin is
 // the red corner of the field.

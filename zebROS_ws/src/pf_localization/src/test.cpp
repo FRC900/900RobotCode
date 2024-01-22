@@ -1,7 +1,5 @@
 // TODO - make me use gtests to actually test
 // the output is correct
-#include "geometry_msgs/PoseStamped.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "pf_localization/particle_filter.hpp"
 
 // Test 1 iteration with 1 particle at 0,0
