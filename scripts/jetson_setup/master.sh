@@ -29,10 +29,10 @@ ulimit -r unlimited
 #ssh 10.9.0.2 date -s @$(date -u +"%s")
 #ssh 10.9.0.2 /etc/init.d/ntpd start
 
-/home/ubuntu/2023RobotCode/scripts/jetson_setup/wait_for_ssh.sh 10.9.0.9 5801 >> /home/ubuntu/bagfiles/mounted.txt
-echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl stop ntp.service
-echo ubuntu | ssh -tt 10.9.0.9 sudo -kS date -s @$(date -u +"%s")
-echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl start ntp.service
+#/home/ubuntu/2023RobotCode/scripts/jetson_setup/wait_for_ssh.sh 10.9.0.9 5801 >> /home/ubuntu/bagfiles/mounted.txt
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl stop ntp.service
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS date -s @$(date -u +"%s")
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl start ntp.service
 
 #echo 1100-1200,443,80,554,1735 > /proc/sys/net/ipv4/ip_local_reserved_ports
 
