@@ -9,8 +9,8 @@
 int main(int argc, char *argv[])
 {
     // Parse the command line arguments
-    const std::string detectOnnxModelPath = "/home/ubuntu/deeptag-pytorch/models/arucotag_roi_detector.onnx";
-    const std::string decodeOnnxModelPath = "/home/ubuntu/deeptag-pytorch/models/arucotag_decoder.onnx";
+    const std::string detectOnnxModelPath = "/home/ubuntu/2023RobotCode/zebROS_ws/src/deeptag_ros/models/arucotag_roi_detector.onnx";
+    const std::string decodeOnnxModelPath = "/home/ubuntu/2023RobotCode/zebROS_ws/src/deeptag_ros/models/arucotag_decoder.onnx";
 
     // Read the input image
     const std::string inputImage = argv[1];

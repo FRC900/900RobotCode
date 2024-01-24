@@ -14,7 +14,7 @@
 				<param name="pose_topic" value="$(arg pose_topic)"/>
 				<param name="use_pose_for_odom" value="$(arg use_pose_for_odom)"/>
 			</group>
-            <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen">
+            <node name="path_follower_server" pkg="path_follower" type="map_rel_path_follower_server" output="screen">
 			</node>
 			<!--
 			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/box_test.yaml" output="screen">

@@ -27,13 +27,27 @@ auto_mode_4: ["drive_out_community", "snap_0_before_intake"] # we now face the p
 auto_mode_5: [""]
 auto_mode_6: ["drive_out_community", "snap_0_before_intake"]
 
-auto_mode_7: ["drive_2m_csv"]
-auto_mode_8: ["three_note_csv"]
-auto_mode_9: ["four_note_csv"]
+auto_mode_7: ["map_rel_two_note_csv"]
+auto_mode_8: ["drive_2m_and_turn_csv"]
+auto_mode_9: ["map_rel_four_note_csv"]
 
 auto_mode_10: ["GetCone_csv"]
 
-three_note_csv:
+map_rel_two_note_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+two_note_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_csv:
   waypoint_actions: {}
   type: path
   goal:
@@ -54,6 +68,14 @@ drive_2m_csv:
     points:
       - [0.0, 0.0, 0.0]
 
+two_note_csv:
+  waypoint_actions: {intake_cone: 1}
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
+
 GetCone_csv:
   waypoint_actions: {intake_cone: 1}
   type: "path"
@@ -62,6 +84,20 @@ GetCone_csv:
       - [0, 0, 0]
 
 drive_2m_and_turn_csv:
+  waypoint_actions: {}
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
+one_note_csv:
+  waypoint_actions: {}
+  type: "path"
+  goal:
+    points:
+      - [0, 0, 0]
+
+three_note_csv:
   waypoint_actions: {}
   type: "path"
   goal:

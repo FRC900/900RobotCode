@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    
+	<node pkg="tf2_ros" type="static_transform_publisher" name="map_to_frcrobot" args="3 2 0 0 0 0 1 map frc_robot" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_base_link" args="1 1 0 0 0 0 1 odom base_link" />
+	<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="0 0 0 0 0 0 1 odom map" /> -->
+	<node pkg="tagslam_launch" type="tagslam_launch_node" name="map_odom_pub"/>
+</launch>

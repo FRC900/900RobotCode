@@ -19,7 +19,7 @@
     <arg name="cam_pos_y"            value="-0.224" />
     <arg name="cam_pos_z"            value="0.802" />
     <arg name="cam_roll"             value="0.0" />
-	  <arg name="cam_pitch"            value="0.477" /> <!-- 0.436 expected, 0.477 measured -->
+	  <arg name="cam_pitch"            value="0.0" /> <!-- 0.436 expected, 0.477 measured -->
     <arg name="cam_yaw"              value="0.0" />
   </include>
 

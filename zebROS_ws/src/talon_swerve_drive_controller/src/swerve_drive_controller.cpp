@@ -1067,7 +1067,7 @@ std::atomic<bool> percent_out_drive_mode_{false}; // run drive wheels in open-lo
 
 // Switch between brake and coast mode for speed wheels when stopping the robot
 ros::ServiceServer set_neutral_mode_serv_;
-std::atomic<hardware_interface::NeutralMode> neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Coast;
+std::atomic<hardware_interface::NeutralMode> neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Brake;
 
 // Used to toggle parking mode when stopped
 ros::ServiceServer park_serv_;

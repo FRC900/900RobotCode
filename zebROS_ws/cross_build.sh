@@ -23,6 +23,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	tagslam \
 	tagslam_viz \
 	tagslam_test \
+	tagslam_launch \
 	joint_trajectory_controller \
 	compressed_image_transport \
 	compressed_depth_image_transport \

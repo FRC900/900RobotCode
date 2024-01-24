@@ -16,7 +16,7 @@
     <arg name="cam_pos_y"            value="0.0" />
     <arg name="cam_pos_z"            value="0.0" />
     <arg name="cam_roll"             value="0.0" />
-	<arg name="cam_pitch"            value="0.83" />
+	  <arg name="cam_pitch"            value="0.83" />
     <arg name="cam_yaw"              value="0.0" />
   </include>
 </launch>

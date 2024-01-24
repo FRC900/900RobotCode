@@ -3,9 +3,6 @@
     local-name: actionlib
     uri: https://github.com/FRC900/actionlib.git
 - git:
-    local-name: apriltag_ros
-    uri: https://github.com/FRC900/apriltag_ros.git
-- git:
     local-name: control_toolbox
     uri: https://github.com/ros-gbp/control_toolbox-release.git
     version: release/noetic/control_toolbox/1.19.0-1
@@ -31,6 +28,22 @@
 - git:
     local-name: stage_ros
     uri: https://github.com/FRC900/stage_ros
+- git:
+    local-name: tagslam
+    uri: https://github.com/berndpfrommer/tagslam.git
+    version: master
+- git:
+    local-name: tagslam_viz
+    uri: https://github.com/berndpfrommer/tagslam_viz.git
+    version: master
+- git:
+    local-name: flex_sync
+    uri: https://github.com/daniilidis-group/flex_sync.git
+    version: master
+- git:
+    local-name: apriltag 
+    uri: https://github.com/versatran01/apriltag.git
+    version: master 
 - git:
     local-name: teraranger
     uri: https://github.com/Terabee/teraranger-release.git

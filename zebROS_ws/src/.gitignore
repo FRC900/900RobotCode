@@ -4,6 +4,7 @@
 actionlib
 adi_driver
 adi_pico_driver
+apriltag
 apriltag_ros
 ar_track_alvar
 control_toolbox
@@ -17,10 +18,13 @@ ros_bridge
 ros_controllers
 rospy_message_converter
 rosserial
+flex_sync
 rplidar_ros
 sick_tim
 stage_ros
 steered_wheel_base_controller
+tagslam*/
+!tagslam_launch
 teleop_twist_joy
 teraranger
 teraranger_array

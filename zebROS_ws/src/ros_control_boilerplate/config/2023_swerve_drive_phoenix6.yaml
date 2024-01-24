@@ -108,53 +108,53 @@ swerve_drive_controller:
         feedback_sensor_source: RemoteCANCoder
         feedback_remote_sensor_id: 11
         close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        motion_magic_cruise_velocity: 35.0
-        motion_magic_acceleration: 300.0
-        motion_magic_jerk: 1200.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
+        invert: clockwise_positive
     fr_angle:
         joint: fr_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 12
         close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        motion_magic_cruise_velocity: 35.0
-        motion_magic_acceleration: 300.0
-        motion_magic_jerk: 1200.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
+        invert: clockwise_positive
     br_angle:
         joint: br_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 14
         close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        motion_magic_cruise_velocity: 35.0
-        motion_magic_acceleration: 300.0
-        motion_magic_jerk: 1200.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
+        invert: clockwise_positive
     bl_angle:
         joint: bl_angle
         feedback_sensor_source: RemoteCANCoder
         remote_feedback_device_id0: 13
         close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        motion_magic_cruise_velocity: 35.0
-        motion_magic_acceleration: 300.0
-        motion_magic_jerk: 1200.0
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.5
+        motion_magic_expo_kA: 0.5
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
+        invert: clockwise_positive
 
 # Stand-alone controller used to tune PID constants
 swerve_angle_phoenix6_controller:

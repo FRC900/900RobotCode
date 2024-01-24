@@ -88,7 +88,9 @@
 	<group ns="swerve_imu_ukf">
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_pigeon2" args="0 0 0 0 0.0096 0 base_link pigeon2_frame" />
-		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
+		<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="tagslam_odom_to_base_link" args="0 0 0 0 0 0 frc_robot base_link" /> -->
+
+		<!-- <include file="$(find controller_node)/launch/fuse_odom.launch"/> -->
 	</group>
 
 	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>

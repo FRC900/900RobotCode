@@ -35,7 +35,7 @@ define omnidir_robot position
   update_interval 5
   pose [ 0.0 0.0 0.0 0.0 ]
 
-  localization "odom"
+  localization "gps"
   odom_error [ 0.02 0.02 0.0 0.0 ]
 
   size [ 0.889 0.889 0.60 ]

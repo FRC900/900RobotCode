@@ -2,8 +2,8 @@
 import rospy
 from field_obj.msg import TFDetection, TFObject
 #from cuda_apriltag_ros.msg import AprilTagDetectionArray as CUDAAprilTagDetectionArray
-from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
-
+#from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
+from apriltag_msgs.msg import ApriltagPoseStamped, ApriltagArrayStamped, Apriltag
 
 global pub
 
@@ -52,7 +52,7 @@ def regular_main():
     pub_topic = "tag_detection_msg"
     rospy.init_node('tag_depth', anonymous=True)
 
-    sub = rospy.Subscriber(sub_topic, AprilTagDetectionArray, depth_check_cb)
+    sub = rospy.Subscriber(sub_topic, ApriltagPoseStamped, depth_check_cb)
     pub = rospy.Publisher(pub_topic, TFDetection, queue_size=3)
 
     try:

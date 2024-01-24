@@ -752,17 +752,21 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation() + multiplier * config.angle_to_add , true /* from telop */);
 				sendSetAngle = true;
 			}
+			ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z" << cmd_vel.angular.z);
 
 			if (cmd_vel.angular.z == 0.0)
 			{
 				cmd_vel.angular.z = robot_orientation_driver->getOrientationVelocityPIDOutput();
 				if (fabs(cmd_vel.angular.z) < config.rotation_epsilon) {
 					// COAST MODE
-					cmd_vel.angular.z = 0.001 * (cmd_vel.angular.z > 0 ? 1 : -1);
+					//cmd_vel.angular.z = 0.001 * (cmd_vel.angular.z > 0 ? 1 : -1);
+					cmd_vel.angular.z = 0.0;
 				}
 			}
-
-			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (original_angular_z == 0.0) && !sendRobotZero)
+			ROS_WARN_STREAM("2023-Publishing " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.angular.z << " " << original_angular_z);
+			
+			/*original_angular_z == 0.0*/ 
+			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && ( cmd_vel.angular.z == 0.0 ) && !sendRobotZero)
 			{
 				no_driver_input = true;
 				if (std_srvs::Empty empty; !BrakeSrv.call(empty))
@@ -774,9 +778,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				JoystickRobotVel.publish(cmd_vel);
 				sendRobotZero = true;
 			}
-			else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
+			// 0.002 is slightly more than the 0.001 we set for coast mode
+			else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (fabs(cmd_vel.angular.z) >= 0.002))
 			{
-				//ROS_INFO_STREAM("2023-Publishing " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
 				JoystickRobotVel.publish(cmd_vel);
 				sendRobotZero = false;
 				no_driver_input = false;

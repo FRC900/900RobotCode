@@ -127,8 +127,9 @@
 	</include>
 
 	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>
+	<!--  
 	<include file="$(find tf_object_detection)/launch/detection.launch">
 		<arg name="cpu" value="true"/>
 	</include>
-
+	-->
 </launch>

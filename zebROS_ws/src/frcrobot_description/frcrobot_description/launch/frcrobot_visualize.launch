@@ -2,7 +2,7 @@
 <launch>
 
   <!-- Load example URDF -->
-  <param name="robot_description" command="$(find xacro)/xacro '$(find frcrobot_description)/urdf/frcrobot.xacro'" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find frcrobot_description)/urdf/2024_field.urdf'" />
     
   <!-- Show in Rviz  -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find frcrobot_description)/launch/frcrobot.rviz"/>
@@ -11,4 +11,3 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
 </launch>
-

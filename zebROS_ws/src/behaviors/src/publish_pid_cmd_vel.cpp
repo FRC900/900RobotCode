@@ -142,7 +142,7 @@ int main(int argc, char ** argv)
 
 	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(name + "/swerve_drive_controller/cmd_vel", 1);
 
-	ros::Rate r(100);
+	ros::Rate r(250); // "free" performance 
 
 	time_since_pid_enable = ros::Time::now();
 	while(ros::ok())

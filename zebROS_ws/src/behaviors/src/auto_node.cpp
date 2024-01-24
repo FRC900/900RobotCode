@@ -534,7 +534,6 @@ class AutoNode {
 				// CSV format:
 				// 0    1 2 3   4                5    6    7
 				// time,x,y,yaw,angular_velocity,xvel,yvel,waypointIdx
-				// TODO incorporate velocities, right now it's just position
 				ROS_INFO_STREAM("auto_node : Loading Choreo path located at behaviors/path/" << auto_steps_[j]);
 				std::ifstream csv("/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/" + auto_steps_[j] + ".csv");
 				std::string line;
@@ -548,21 +547,13 @@ class AutoNode {
 					}
 					path.push_back(doubles);
 				}
-				geometry_msgs::TransformStamped tfs;
-				tfs.header.frame_id = "path";
-				tfs.child_frame_id = "base_link";
-				tf2::Quaternion q;
-				q.setRPY(0, 0, path[0][3]);
-				tfs.transform.rotation = tf2::toMsg(q);
-				tfs.transform.translation.x = path[0][1];
-				tfs.transform.translation.y = path[0][2];
 
 				nav_msgs::Path pos_path_msg;
-				pos_path_msg.header.frame_id = "base_link";
+				pos_path_msg.header.frame_id = "map";
 				pos_path_msg.header.stamp = ros::Time(0);
 
 				nav_msgs::Path vel_path_msg;
-				vel_path_msg.header.frame_id = "base_link";
+				vel_path_msg.header.frame_id = "map";
 				vel_path_msg.header.stamp = ros::Time(0);
 				nav_msgs::Path waypoints;
 				std::vector<int> waypointsIdx;
@@ -571,20 +562,18 @@ class AutoNode {
 
 				for (const auto &point : path) {
 					geometry_msgs::PoseStamped pose;
-					pose.header.frame_id = "path";
+					pose.header.frame_id = "map";
 					pose.pose.position.x = point[1];
 					pose.pose.position.y = point[2];
 					tf2::Quaternion q;
 					q.setRPY(0, 0, point[3]);
 					pose.pose.orientation = tf2::toMsg(q);
-					tf2::doTransform(pose, pose, tfs);
 					pose.header.stamp = ros::Time(point[0]);
 					pose.header.seq = i;
-					pose.header.frame_id = "base_link";
 					pos_path_msg.poses.push_back(pose);
 
 					geometry_msgs::PoseStamped vel_pose;
-					vel_pose.header.frame_id = "path";
+					vel_pose.header.frame_id = "map";
 					vel_pose.pose.position.x = point[5];
 					vel_pose.pose.position.y = point[6];
 					tf2::Quaternion velQ;
@@ -592,7 +581,6 @@ class AutoNode {
 					vel_pose.pose.orientation = tf2::toMsg(velQ);
 					vel_pose.header.stamp = ros::Time(point[0]);
 					vel_pose.header.seq = i;
-					vel_pose.header.frame_id = "base_link";
 					vel_path_msg.poses.push_back(vel_pose);
 
 					i += 1;

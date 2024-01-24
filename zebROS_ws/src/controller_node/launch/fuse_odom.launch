@@ -24,40 +24,31 @@
 		<param name="standard_deviation/x_rotation" value="0.001"/>
 		<param name="standard_deviation/y_rotation" value="0.001"/>
 		<param name="standard_deviation/z_rotation" value="0.001"/>
+		<!--
 		<param name="standard_deviation/x_velocity" value="0.1"/>
 		<param name="standard_deviation/y_velocity" value="0.1"/>
 		<param name="standard_deviation/z_velocity" value="0.1"/>
+		 
 		<param name="standard_deviation/x_acceleration" value="0.5"/>
 		<param name="standard_deviation/y_acceleration" value="0.5"/>
 		<param name="standard_deviation/z_acceleration" value="0.5"/>
-	</node>
-	<node name="override_covariance_zed" pkg="controller_node" type="override_covariance.py" output="screen">
-		<param name="topic" value="/zed_objdetect/odom"/>
-		<param name="type" value="Odometry"/>
-		<param name="standard_deviation/x" value="1.0"/>
-		<param name="standard_deviation/y" value="1.0"/>
-		<param name="standard_deviation/z" value="1.0"/>
-		<param name="standard_deviation/x_rotation" value="10"/>
-		<param name="standard_deviation/y_rotation" value="10"/>
-		<param name="standard_deviation/z_rotation" value="10"/>
+		-->
 	</node>
 	<node name="override_covariance_odom" pkg="controller_node" type="override_covariance.py" output="screen">
 		<param name="topic" value="/frcrobot_jetson/swerve_drive_state_controller/odom"/>
 		<param name="type" value="Odometry"/>
-		<param name="standard_deviation/x_velocity" value="0.0001"/>
-		<param name="standard_deviation/y_velocity" value="0.0001"/>
-		<param name="standard_deviation/z_velocity" value="0.0001"/>
+		<param name="standard_deviation/x_velocity" value="0.01"/>
+		<param name="standard_deviation/y_velocity" value="0.01"/>
+		<param name="standard_deviation/z_velocity" value="0.01"/>
 	</node>
-	<node name="override_covariance_zedpose" pkg="controller_node" type="override_covariance.py" output="screen">
-		<param name="topic" value="/zed_objdetect/pose"/>
-		<param name="type" value="PoseWithCovarianceStamped"/>
-		<param name="standard_deviation/x" value="100000.0"/>
-		<param name="standard_deviation/y" value="100000.0"/>
-		<param name="standard_deviation/z" value="100000.0"/>
-		<param name="standard_deviation/x_rotation" value="100000.0"/>
-		<param name="standard_deviation/y_rotation" value="100000.0"/>
-		<param name="standard_deviation/z_rotation" value="100000.0"/>
+	<node name="override_covariance_tagslam" pkg="controller_node" type="override_covariance.py" output="screen">
+		<param name="topic" value="/tagslam/odom/body_frc_robot"/>
+		<param name="type" value="Odometry"/>
+		<param name="standard_deviation/x" value="0.01"/>
+		<param name="standard_deviation/y" value="0.01"/>
+		<param name="standard_deviation/z" value="0.01"/>
 	</node>
+    
 	<node name="swerve_imu_ekf_node" pkg="robot_localization" type="ekf_localization_node" output="screen"> 
 		<param name="cmd_vel" value="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"/>
 		<param name="use_control" value="false"/>
@@ -65,7 +56,7 @@
                                           false, false, false]</rosparam>
 
 		<param name="frequency" value="250" />
-		<param name="sensor_timeout" value="0.005" />
+		<param name="sensor_timeout" value="0.0001" />
 		<!-- 
 			Change the frame parametrs when re-localization
 			is implementated
@@ -74,13 +65,13 @@
 		-->
 		<param name="base_link_frame" value="base_link" />
 		<param name="odom_frame" value="odom" />
-		<param name="world_frame" value="odom" />
+		<param name="world_frame" value="map" />
 
 		<param name="two_d_mode" value="true" />
 		<param name="publish_tf" value="false" />
 		<param name="reset_on_time_jump" value="false" />
 
-		<param name="smooth_lagged_data" value="true" />
+		<param name="smooth_lagged_data" value="false" />
 		<param name="history_length" value="0.25" />
 
 		<param name="dynamic_process_noise_covariance" value="false" />
@@ -106,7 +97,7 @@
 		<param name="odom0" value="/frcrobot_jetson/swerve_drive_state_controller/odom_overridden" />
 		<rosparam param="odom0_config"> [false,  false,  false,
                                          false, false, false, 
-                                         true, true, true,
+                                         true, true, false,
                                          false, false, false,
                                          false, false, false]
         </rosparam>
@@ -114,18 +105,29 @@
 		<param name="odom0_relative"     value="false" />
 		<param name="odom0_nodelay"      value="true" />
 
+		<param name="odom1" value="/tagslam/odom/body_frc_robot_overridden" />
+		<rosparam param="odom1_config"> [true, true,  false,
+                                         false, false, false, 
+                                         false, false, false,
+                                         false, false, false,
+                                         false, false, false]
+        </rosparam>
+		<param name="odom1_differential" value="false" />
+		<param name="odom1_relative"     value="false" />
+		<param name="odom1_nodelay"      value="true" />
+
 		<!-- imu0 (IMU attached to Jetson via USB): 
 			 roll, pitch, yaw, x-acc, y-acc, z-acc -->
 		<!-- probably won't use roll or pitch but no harm fusing them -->
 		<param name="imu0" value="/imu/zeroed_imu_overridden" />
 		<rosparam param="imu0_config"> [false, false, false,
                                         true, true, true,
-                                        true, true, true,
                                         false, false, false,
-                                        true, true, true]
+                                        false, false, false,
+                                        false, false, false]
         </rosparam>
 		<param name="imu0_differential" value="false"/>
-		<param name="imu0_relative"     value="true" />
+		<param name="imu0_relative"     value="false" />
 		<param name="imu0_nodelay"      value="true" />
 		<param name="imu0_remove_gravitational_acceleration" value="false" />
 <!-- 
@@ -169,7 +171,7 @@
 		<param name="twist0_nodelay"      value="true" /> -->
 
 		<!-- we might want to republish this as odom where child frame is zed_base_link -->
-		<!-- since when we rotate in place ZED's position moves -->
+		<!-- since when we rotate in place ZED's position moves 
 		<param name="pose0" value="/zed_objdetect/pose_overridden" />
 		<rosparam param="pose0_config"> [true,  true,  false,
                                          false, false, false, 
@@ -180,7 +182,7 @@
 		<param name="pose0_differential" value="false" />
 		<param name="pose0_relative"     value="true" />
 		<param name="pose0_nodelay"      value="true" />
-
+		-->
 		<!-- x, y, z, r, p, y, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az --> 
         <!-- <rosparam param="process_noise_covariance"> [0.1, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0.1, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,

@@ -5,17 +5,16 @@
   <arg name="node_namespace" default="apriltag_ros_continuous_node" />
   <arg name="camera_name" default="/camera_rect" />
   <arg name="image_topic" default="image_rect" />
-  <arg name="tag_type" default="16h5" />
+  <arg name="tag_type" default="36h11" />
+  <arg name="black_border" default="1"/>
 
-  <!-- Set parameters -->
-  <rosparam command="load" file="$(find apriltag_launch)/config/apriltag_settings_$(arg tag_type).yaml" ns="$(arg node_namespace)" />
-  <rosparam command="load" file="$(find apriltag_launch)/config/apriltag_tags_$(arg tag_type).yaml" ns="$(arg node_namespace)" />
-  
-  <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_namespace)" clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)" >
-    <!-- Remap topics from those used in code to those on the ROS network -->
-    <remap from="image_rect" to="$(arg camera_name)/$(arg image_topic)" />
-    <remap from="camera_info" to="$(arg camera_name)/camera_info" />
-
-    <param name="publish_tag_detections_image" type="bool" value="true" />      <!-- default: false -->
+  <!-- Will publish debug if image if there are subscribers -->
+  <node pkg="apriltag_ros" type="apriltag_detector_node" name="apriltag_detection" output="screen">
+    <param name="refine" type="bool" value="true"/>
+    <param name="family" type="int" value="0"/> <!-- type is umich, family == 36h11  -->
+    <param name="type"   type="int" value="1"/>
+    <param name="black_border" type="int" value="$(arg black_border)"/>
+    <param name="image_transport" value="raw"/>
+    <remap from="~image" to="$(arg camera_name)/$(arg image_topic)"/> <!-- check this -->
   </node>
 </launch>

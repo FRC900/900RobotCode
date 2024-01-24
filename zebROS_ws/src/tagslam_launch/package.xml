@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>tagslam_launch</name>
+  <version>1.0.0</version>
+  <description>slam with fiducial tags</description>
+  <maintainer email="todo@todo.com">900</maintainer>
+
+  <license>Apache-2.0</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_modules</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+  
+  <depend>roscpp</depend>
+  <depend>nodelet</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>image_transport</depend>
+  <depend>cv_bridge</depend>
+  <depend>apriltag</depend>
+  <depend>apriltag_ros</depend>
+  <depend>apriltag_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>rosgraph_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>flex_sync</depend>
+  <depend>eigen</depend>
+  <depend>rosbag</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+</package>

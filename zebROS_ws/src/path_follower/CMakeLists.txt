@@ -129,6 +129,12 @@ target_link_libraries(convert_distance_to_pose
   ${catkin_LIBRARIES}
 )
 
+add_executable(map_rel_path_follower_server src/map_rel_path_follower_server.cpp src/path_follower.cpp)
+add_dependencies(map_rel_path_follower_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(map_rel_path_follower_server
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
