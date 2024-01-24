@@ -80,16 +80,16 @@ def main(args: argparse.Namespace) -> None:
         
 
         if not args.cpu_preprocess:
-            detections = DETECTRON.gpu_preprocess(bgr, debug=args.show).infer() 
+            detections = DETECTRON.gpu_preprocess(original_bgr, debug=args.show).infer() 
         else:
-            detections = DETECTRON.cpu_preprocess(bgr, debug=False).infer()  
+            detections = DETECTRON.cpu_preprocess(original_bgr, debug=False).infer()  
 
 
         t.start("viz")
         if args.show:
             cv2.imshow('result', DETECTRON.draw_bboxes())
             t.end('viz')
-            key = cv2.waitKey(1) & 0x000000ff
+            key = cv2.waitKey(0) & 0x000000ff
             if key == 27:
                 break
             if key == 99: # 'c'
@@ -100,6 +100,7 @@ def main(args: argparse.Namespace) -> None:
 
         t.end('frame')
         time.sleep(0.001)
+        break
 
 
 def parse_args() -> argparse.Namespace:

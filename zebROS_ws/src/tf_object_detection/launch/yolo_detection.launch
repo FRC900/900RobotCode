@@ -34,10 +34,10 @@
   -->
 
 	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
-    <!--
+    
     <node pkg="tf_object_detection" name="tf_object_detection" type="fastYOLO.py" output="screen">
     </node>
-    -->
+   
 
     <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">
     </node>
@@ -57,11 +57,11 @@
     </node>
     -->
 	   <!--Possible that this should not be in namespace?-->
-    <!-- 
+    
     <node pkg="tf_object_detection" name="pub_video" type="pub_video.py" output="screen" if="$(eval input_type == 'video')">
       <rosparam command="load" file="$(find tf_object_detection)/config/pub_video_config.yaml" />
     </node>
-    -->
+   
   </group>
 	<!--
   <arg name="cam_image_topic" default="left/image_rect_gray" />

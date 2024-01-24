@@ -30,7 +30,7 @@ def main(args: argparse.Namespace) -> None:
         if args.show:
             cv2.imshow('result', DETECTRON.draw_bboxes())
             t.end('viz')
-            key = cv2.waitKey(1) & 0x000000ff
+            key = cv2.waitKey(20) & 0x000000ff
             if key == 27:
                 break
             if key == 99: # 'c'

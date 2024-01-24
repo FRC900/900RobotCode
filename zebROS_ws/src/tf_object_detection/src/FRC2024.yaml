@@ -4,7 +4,8 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: /home/ubuntu/tensorflow_workspace/2023Game/datasets/FRC2023
+path: /home/ubuntu/tensorflow_workspace/2024Game/datasets/FRC2024
+  
 train: # train images (relative to 'path')
   - images/train
 val: # val images (relative to 'path')
@@ -15,31 +16,25 @@ test: # test images (optional)
 # Classes
 names:
   0: note
-  1: blue_crescendo_logo
-  2: red_crescendo_logo
-  3: blue_amp
-  4: red_amp
-  5: blue_subwoofer
-  6: red_subwoofer
-  7: blue_left_triangle
-  8: blue_right_triangle
-  9: red_left_triangle
-  10: red_right_triangle
-  11: blue_tape_to_wall
-  12: red_tape_to_wall
-  13: white_tape_to_wall
-  14: red_tape_corner
-  15: blue_tape_corner
-  16: blue_ds_light
-  17: red_ds_light
-  18: blue_ds_number
-  19: red_ds_number
-  20: blue_robot
-  21: red_robot
-  22: green_crescendo_logo
-  23: blue_podium
-  24: red_podium
-  25: high_note
+  1: crescendo_logo
+  2: blue_triangle_text
+  3: red_triangle_text
+  4: blue_tape_to_wall
+  5: red_tape_to_wall
+  6: white_tape_to_wall
+  7: red_tape_corner
+  8: blue_tape_corner
+  9: blue_ds_light
+  10: red_ds_light
+  11: blue_ds_number
+  12: red_ds_number
+  13: blue_robot
+  14: red_robot
+  15: green_crescendo_logo
+  16: blue_podium
+  17: red_podium
+  18: high_note
+  19: ds_light
 
 
 # Download script/URL (optional) ---------------------------------------------------------------------------------------
@@ -97,6 +92,8 @@ download: |
           "/home/ubuntu/tensorflow_workspace/2023Game/data/apriltag_videos",
           "/home/ubuntu/tensorflow_workspace/2023Game/data/combined_88_test",
           "/home/ubuntu/tensorflow_workspace/2023Game/data/videos",
+          "/home/ubuntu/tensorflow_workspace/2024Game/data/videos",
+          "/home/ubuntu/tensorflow_workspace/2024Game/data/FRC2024"
   ]
 
   input_xmls = []

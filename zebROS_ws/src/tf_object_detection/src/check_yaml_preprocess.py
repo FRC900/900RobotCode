@@ -5,7 +5,7 @@
 
 import yaml as y
 
-with open("FRC2023.yaml", 'r') as file:
+with open("FRC2024.yaml", 'r') as file:
     yaml = y.safe_load(file)
 
 exec(yaml['download'])

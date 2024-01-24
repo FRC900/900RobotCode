@@ -12,7 +12,7 @@ from pathlib import Path
 import pytorch_pfn_extras as ppe
 from collections import namedtuple
 from onnx_to_tensorrt import onnx_to_tensorrt
-from config_frc2023 import OBJECT_CLASSES, COLORS
+from config_frc2024 import OBJECT_CLASSES, COLORS
 
 # working nearest neighbor
 '''
@@ -143,7 +143,7 @@ def iDivUp(a, b):
 class YOLO900:
 
 
-    def __init__(self, engine_path="FRC2023m.engine", device_str="cuda:0", use_timings=False, onnx_path="FRC2023m.onnx", regen_trt=True) -> None:
+    def __init__(self, engine_path="FRC2024m.engine", device_str="cuda:0", use_timings=False, onnx_path="FRC2024m.onnx", regen_trt=True) -> None:
         self.device = torch.device(device_str)
 
         # @TODO check if this will ever not be 0's
@@ -182,13 +182,13 @@ class YOLO900:
         tensorrt_path = Path(onnx_path).with_suffix(".engine")
         tensorrt_path = tensorrt_path.with_name(tensorrt_path.name)        
         print(f"Tensorrt path {tensorrt_path}")
-        calibration_path = tensorrt_path.with_name("calib_FRC2023m.bin")
+        calibration_path = tensorrt_path.with_name("calib_FRC2024m.bin")
 
         onnx_to_tensorrt(onnx_path,
                         tensorrt_path,
                         int8=True,
                         fp16=True,
-                        dataset_path='/home/ubuntu', # just give it a real path that  
+                        dataset_path='/home/ubuntu/', # just give it a real path to get past checks for existing before using the .calib file
                         calibration_file=calibration_path)
         
         

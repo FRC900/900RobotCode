@@ -28,8 +28,8 @@ def onnx_to_tensorrt(onnx_model,
                      input_height_max=None,
                      gpu_fallback=False,
                      input_tensor='input',
-                     dataset_path='datasets/FRC2023/images/train',
-                     calibration_file='calib_FRC2023m.bin') -> None:
+                     dataset_path='datasets/FRC2024/images/train',
+                     calibration_file='calib_FRC2024m.bin') -> None:
     import pycuda.autoinit # causes problems with multiple contexts if imported in global scope
 
     print(f"Onnx model {onnx_model}\nOutput {output}\nInt8 {int8}\nfp16 {fp16}\nDla core {dla_core}\nDataset {dataset_path}\nCalibration {calibration_file}")
@@ -149,8 +149,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--input-height-min', type=int, default=None)
     parser.add_argument('--gpu-fallback', action='store_true')
     parser.add_argument('--input-tensor', type=str, default='input')
-    parser.add_argument('--dataset-path', type=str, default='datasets/FRC2023/images/train')
-    parser.add_argument('--calibration-file', type=str, default='calib_FRC2023m.bin')
+    parser.add_argument('--dataset-path', type=str, default='datasets/FRC2024/images/train')
+    parser.add_argument('--calibration-file', type=str, default='calib_FRC2024m.bin')
     args = parser.parse_args()
     return args
 

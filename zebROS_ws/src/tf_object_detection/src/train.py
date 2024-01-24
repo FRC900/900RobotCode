@@ -60,7 +60,7 @@ def train_yolo(args: argparse.Namespace) -> None:
                      tensorrt_path,
                      int8=True,
                      fp16=True,
-                     dataset_path='datasets/FRC2023/images/train',
+                     dataset_path='datasets/FRC2024/images/train',
                      calibration_file=calibration_path)
     new_pt_file_path = Path(pt_file_path).with_stem(args.output_stem)
     new_onnx_path = onnx_path.with_stem(args.output_stem)
@@ -73,11 +73,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--yolo-model',
                         type=str,
-                        default='/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/yolov8m.pt',
+                        default='/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024m.pt',
                         help='Engine file')
     parser.add_argument('--config',
                         type=str,
-                        default='/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2023.yaml',
+                        default='/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024.yaml',
                         help='Config file')
     parser.add_argument('--output_stem',
                         type=str,
@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
                         help='Number of epochs to train')
     parser.add_argument('--batch-size',
                         type=int,
-                        default=8,
+                        default=12,
                         help='Number of images to batch')
     parser.add_argument('--postprocess-model',
                         type=str,

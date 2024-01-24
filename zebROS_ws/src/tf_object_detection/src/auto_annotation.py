@@ -147,7 +147,7 @@ def main(args: argparse.Namespace) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='FRC2023m.pt', help='Model .pt file')
+    parser.add_argument('--model', type=str, default='FRC2024m.pt', help='Model .pt file')
     parser.add_argument('--input-files', type=str, help='Input files to process')
     parser.add_argument('--show',
                         action='store_true',
