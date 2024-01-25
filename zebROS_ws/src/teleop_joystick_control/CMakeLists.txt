@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	behavior_actions
 	cmake_modules
 	control_msgs
-	controllers_2022_msgs
+	# controllers_2022_msgs
 	ddynamic_reconfigure
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
@@ -53,9 +53,9 @@ generate_messages (
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
 	cfg/TeleopJoystickComp.cfg
-	cfg/TeleopJoystickComp2022.cfg
+	# cfg/TeleopJoystickComp2022.cfg
 	cfg/TeleopJoystickCompDiagnostics.cfg
-	cfg/TeleopJoystickCompDiagnostics2022.cfg
+	# cfg/TeleopJoystickCompDiagnostics2022.cfg
 	)
 
 ## System dependencies are found with CMake's conventions
@@ -91,13 +91,14 @@ add_dependencies(teleop_joystick_comp_2023
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
+if(0)
 add_executable(teleop_joystick_comp_2022 src/teleop_joystick_comp_2022.cpp src/robot_orientation_driver.cpp)
-
 target_link_libraries(teleop_joystick_comp_2022
 	${catkin_LIBRARIES})
 add_dependencies(teleop_joystick_comp_2022
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
+endif()
 
 if (0) # 2019 code, left for reference if needed
 	add_executable(teleop_joystick_comp src/teleop_joystick_comp.cpp)
@@ -126,11 +127,6 @@ add_executable(teleop_joystick_comp_2020 src/teleop_joystick_comp_2020.cpp src/r
 target_link_libraries(teleop_joystick_comp_2020
 	${catkin_LIBRARIES}
 	)
-
-# Add cmake target dependencies of the executable
-# same as for the library above. This is needed to force
-# talon controller messages to be built before the
-# talon controller code tries to use them
 add_dependencies(teleop_joystick_comp_2020
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
@@ -146,11 +142,11 @@ add_dependencies(teleop_joints_keyboard
 	${catkin_EXPORTED_TARGETS}
 	)
 
+if(0)
 add_executable(basic_mechanism_test_node src/basic_mechanism_test.cpp src/robot_orientation_driver.cpp)
 target_link_libraries(basic_mechanism_test_node
 	${catkin_LIBRARIES}
 	)
-
 add_dependencies(basic_mechanism_test_node
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
@@ -173,6 +169,7 @@ add_dependencies(snap_to_cargo_node_2022
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
+endif()
 
 add_executable(snap_to_conecube_node_2023 src/2023_snap_to_nearest_conecube.cpp)
 target_link_libraries(snap_to_conecube_node_2023
@@ -194,7 +191,7 @@ add_dependencies(snap_to_conecube_node_2023
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp_2022 teleop_joystick_comp_2023 teleop_joints_keyboard snap_to_conecube_node_2023
+install(TARGETS teleop_joystick_comp_2023 teleop_joints_keyboard snap_to_conecube_node_2023
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

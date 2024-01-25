@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   #color_spin
   #controllers_2019_msgs
   #controllers_2020_msgs
-  controllers_2022_msgs
+  #controllers_2022_msgs
   controllers_2023_msgs
   ddynamic_reconfigure
   dynamic_reconfigure
@@ -197,11 +197,11 @@ target_link_libraries(2023_align_to_substation_server ${catkin_LIBRARIES})
 add_dependencies(2023_align_to_substation_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2022 actionlib servers
+if (0)
 add_executable(2022_shooting_server_node src/2022_shooting_server.cpp)
 target_link_libraries(2022_shooting_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_shooting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-if (0)
 add_executable(2022_apriltag_shooting_server_pf_node src/2022_apriltag_shooting_server_pf.cpp)
 target_link_libraries(2022_apriltag_shooting_server_pf_node ${catkin_LIBRARIES})
 add_dependencies(2022_apriltag_shooting_server_pf_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -213,7 +213,6 @@ add_dependencies(2022_apriltag_shooting_server_node ${behaviors_EXPORTED_TARGETS
 add_executable(2022_climb_server_node src/2022_climb_server.cpp)
 target_link_libraries(2022_climb_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_climb_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-endif()
 
 add_executable(2022_shooter_server_node src/2022_shooter_server.cpp)
 target_link_libraries(2022_shooter_server_node ${catkin_LIBRARIES})
@@ -234,6 +233,7 @@ add_dependencies(2022_intaking_server_node ${behaviors_EXPORTED_TARGETS} ${catki
 add_executable(2022_ejecting_server_node src/2022_ejecting_server.cpp)
 target_link_libraries(2022_ejecting_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_ejecting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
 
 if (0)
 add_executable(game_piece_path_server src/game_piece_path_gen.cpp)

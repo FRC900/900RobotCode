@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<group ns="climber">
-		<rosparam file="$(find behaviors)/config/2022_climb_config.yaml" command="load"/>
-		<node name="climb_server_2022" pkg="behaviors" type="2022_climb_server_node" output="screen"/>
-	</group>
-</launch>
