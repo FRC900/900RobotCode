@@ -50,7 +50,6 @@ std::string map_frame_id = "map";
 std::string tagslam_baselink = "frc_robot";
 
 std::unique_ptr<tf2_ros::StaticTransformBroadcaster> tfbr;
-ros::Duration tf_tolerance = ros::Duration(0.1);
 tf2_ros::Buffer tf_buffer;
 geometry_msgs::TransformStamped map_odom_tf;
 
@@ -129,8 +128,9 @@ void updateMapOdomTf() {
 }
 
 void timerCallback(const ros::TimerEvent &event) {
-  map_odom_tf.header.stamp = ros::Time::now();
-  // tfbr->sendTransform(map_odom_tf);
+  updateMapOdomTf();
+  // map_odom_tf.header.stamp = ros::Time::now();
+  tfbr->sendTransform(map_odom_tf);
   ROS_WARN_STREAM_THROTTLE(2, "Publishing map odom tf in timer");
 }
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
   tfbr = std::make_unique<tf2_ros::StaticTransformBroadcaster>();
   
   // write a timer that gets called at 25Hz
-  // ros::Timer timer = nh_.createTimer(ros::Duration(0.1), timerCallback);
+  // ros::Timer timer = nh_.createTimer(ros::Duration(0.004), timerCallback);
   // write a service that takes in an empty message and publishes the tf
   ros::ServiceServer service = nh_.advertiseService("tagslam_pub_map_to_odom", service_cb);
   updateMapOdomTf();

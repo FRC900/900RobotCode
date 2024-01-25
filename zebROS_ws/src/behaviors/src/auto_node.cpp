@@ -62,6 +62,7 @@ class AutoNode {
 		ros::Publisher cmd_vel_pub_;
 		ros::ServiceClient brake_srv_;
 		ros::ServiceClient park_srv_;
+		ros::ServiceClient tagslam_relocalize_srv_;
 		bool park_enabled = false;
 
 		//subscribers
@@ -137,6 +138,8 @@ class AutoNode {
 		cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 		brake_srv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 		park_srv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
+		tagslam_relocalize_srv_ = nh_.serviceClient<std_srvs::Empty>("/tagslam_pub_map_to_odom", false, service_connection_header);
+
 		//subscribers
 		//rio match data (to know if we're in auto period)
 		match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &AutoNode::matchDataCallback, this);
@@ -181,6 +184,7 @@ class AutoNode {
 
 		// START change year to year
 		// better way to initalize?
+		functionMap_["relocalize"] = &AutoNode::relocalizefn;
 		functionMap_["pause"] = &AutoNode::pausefn;
 		functionMap_["intaking_actionlib_server"] = &AutoNode::intakefn;
 		functionMap_["placing_actionlib_server"] = &AutoNode::placefn;
@@ -816,6 +820,25 @@ class AutoNode {
 			ros::spinOnce();
 			r_.sleep();
 		}
+		return true;
+	}
+
+	bool relocalizefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		const double start_time = ros::Time::now().toSec();
+		// wait for like 0.2 seconds
+		double duration = 0.2;
+		ros::Time::sleepUntil(ros::Time::now() + ros::Duration(duration));
+
+		// make a std_srvs::Empty request
+		std_srvs::Empty srv;
+		// call the relocalize service
+		ros::Duration(0.2).sleep();
+
+		if (!tagslam_relocalize_srv_.call(srv)) {
+			shutdownNode(ERROR, "Auto node - relocalize service call failed");
+			return false;
+		}
+		ROS_INFO_STREAM("Auto node - relocalize service call succeeded");
 		return true;
 	}
 

@@ -4,7 +4,9 @@
 
   <node name="rosbag_record_node" pkg="rosbag" type="record"
 	  launch-prefix="nice"
-	  args="record -o /home/ubuntu/bagfiles/
+	  args="record --tcpnodelay -o /home/ubuntu/bagfiles/
+		/apriltag_detection/tags
+	    /tagslam/odom/body_frc_robot
 		/align/cmd_vel
 		/align_and_place_grid/cancel
         /align_and_place_grid/feedback

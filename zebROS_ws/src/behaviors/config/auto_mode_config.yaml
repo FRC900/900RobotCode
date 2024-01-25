@@ -28,10 +28,45 @@ auto_mode_5: [""]
 auto_mode_6: ["drive_out_community", "snap_0_before_intake"]
 
 auto_mode_7: ["map_rel_two_note_csv"]
-auto_mode_8: ["drive_2m_and_turn_csv"]
-auto_mode_9: ["map_rel_four_note_csv"]
+auto_mode_8: ["map_rel_four_note1_csv", "map_rel_four_note2_csv", "map_rel_four_note3_csv"]
+auto_mode_9: ["relocalize", "map_rel_four_note1_csv", "relocalize", "map_rel_four_note2_csv", "relocalize", "map_rel_four_note3_csv", "relocalize"]
 
 auto_mode_10: ["GetCone_csv"]
+
+map_rel_four_note1_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note2_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note3_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note4_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note5_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
 
 map_rel_two_note_csv:
   waypoint_actions: {}
@@ -172,6 +207,9 @@ auto_mode_26: ["drive_across_charge_station"]
 ros_rate: 10 # in ms, used for all ros rate calls
 angle_tolerance: 0.00872665 # 0.5 degrees
 
+relocalize:
+    type: "relocalize"
+    
 snap_180_before_intake:
     type: snap_to_orientation
     angle: 3.14159268 # radians, and i love sig figs
@@ -728,6 +766,8 @@ path_to_trench_after_drive_back:
         points:
             - [-2.3, -1.69938, 0.0]
             - [-3.5, -1.69938, 0.0]
+
+
 
 pause_tiny:
     type: "pause"

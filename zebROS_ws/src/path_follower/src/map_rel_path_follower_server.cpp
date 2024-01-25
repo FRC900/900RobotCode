@@ -35,6 +35,7 @@ class PathAction
 		ros::Publisher combine_cmd_vel_pub_;
 
 		ros::Publisher robot_relative_yaw_pub_;
+		ros::Publisher zero_cmd_vel_pub_;
 
 		PathFollower path_follower_;
 		double final_pos_tol_;
@@ -350,6 +351,13 @@ class PathAction
 			x_axis.setEnable(false);
 			y_axis.setEnable(false);
 
+			ROS_WARN_STREAM("Path follower finished, publishing zero cmd_vel");
+			geometry_msgs::Twist zero_msg = geometry_msgs::Twist();
+			zero_msg.linear.x = 0.0;
+			zero_msg.linear.y = 0.0;
+			zero_msg.angular.z = 0.0;
+			zero_cmd_vel_pub_.publish(zero_msg);
+			
 			//log result and set actionlib server state appropriately
 			path_follower_msgs::PathResult result;
 
@@ -465,6 +473,8 @@ int main(int argc, char **argv)
 	// Set up structs to access PID nodes tracking x and y position
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
 	AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");
+	
+	ros::Publisher zero_cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("path_follower/swerve_drive_controller/cmd_vel", 1);
 
 	if (!path_action_server.addAxis(x_axis))
 	{
