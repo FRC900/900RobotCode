@@ -68,7 +68,7 @@ left_top_shooter_voltage_velocity_controller:
    joint: left_top_shooter_joint
    invert: clockwise_positive
    close_loop_values:
-      - {kP: 0.3, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
+      - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
    #current_limit_continuous_amps: 15
    #current_limit_peak_amps: 25
    #current_limit_peak_msec: 50
@@ -86,7 +86,7 @@ right_top_shooter_voltage_velocity_controller:
    joint: right_top_shooter_joint
    #invert: clockwise_positive
    close_loop_values:
-      - {kP: 0.3, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
+      - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
    #current_limit_continuous_amps: 15
    #current_limit_peak_amps: 25
    #current_limit_peak_msec: 50
@@ -104,7 +104,7 @@ left_bottom_shooter_voltage_velocity_controller:
    joint: left_bottom_shooter_joint
    #invert: clockwise_positive
    close_loop_values:
-      - {kP: 0.3, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
+      - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
    #current_limit_continuous_amps: 15
    #current_limit_peak_amps: 25
    #current_limit_peak_msec: 50
@@ -122,7 +122,7 @@ right_bottom_shooter_voltage_velocity_controller:
    joint: right_bottom_shooter_joint
    invert: clockwise_positive
    close_loop_values:
-      - {kP: 0.3, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
+      - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
    #current_limit_continuous_amps: 15
    #current_limit_peak_amps: 25
    #current_limit_peak_msec: 50
