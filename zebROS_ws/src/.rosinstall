@@ -42,7 +42,7 @@
     version: master
 - git:
     local-name: apriltag 
-    uri: https://github.com/versatran01/apriltag.git
+    uri: https://github.com/FRC900/apriltag.git
     version: master 
 - git:
     local-name: teraranger
