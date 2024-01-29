@@ -29,14 +29,14 @@ hardware_interface:
        #- {name: pdp, local: true, type: pdp }
        #- {name: pcm, local: true, type: pcm, pcm_id: 0}
        #- {name: as726x, local: true, type: as726x, port: mxp, address: 73 } # 73 = 0x49
-       - {name: do1, local: true, type: digital_output, dio_channel: 1}
-       - {name: do2, local_update: false, local_hardware: true, type: digital_output, dio_channel: 2}
+       #- {name: do1, local: true, type: digital_output, dio_channel: 1}
+       #- {name: do2, local_update: false, local_hardware: true, type: digital_output, dio_channel: 2}
+       - {name: servo, local: true, type: servo, servo_channel: 0}
        - {name: joystick0, type: joystick, id: 0 }
-       - {name: green_led, local: true, type: digital_output, dio_channel: 4}
+       - {name: button_box, type: joystick, id: 1, local: true}
 
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
-       - {name: button_box, type: joystick, id: 1, local: true}
 
 button_box_controller:
     type: button_box_state_controller_2023/ButtonBoxStateController_2023
@@ -92,6 +92,10 @@ joint_state_listener_controller:
 do1_controller:
     type: position_controllers/JointPositionController
     joint: do1
+
+servo_controller:
+    type: position_controllers/JointPositionController
+    joint: servo
 
 talon3_controller:
     type: talon_controllers/TalonPercentOutputController

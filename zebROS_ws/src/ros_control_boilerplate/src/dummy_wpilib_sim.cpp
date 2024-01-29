@@ -18,9 +18,11 @@ Topic NetworkTable::GetTopic(std::string_view) const {
   return Topic{};
 }
 
+#if 0
 void Release(NT_Handle)
 {
 }
+#endif
 
 bool SetBoolean(unsigned int, bool, long)
 {

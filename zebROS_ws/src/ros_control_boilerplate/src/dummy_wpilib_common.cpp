@@ -130,50 +130,6 @@ void frc::NidecBrushless::InitSendable(wpi::SendableBuilder&)
 	ROS_ERROR("Called ::NidecBrushless::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
 
-#include <frc/PWM.h>
-frc::PWM::PWM(int, bool)
-{
-	ROS_ERROR("Called PWM::PWM(int) on unsupported platform");
-}
-frc::PWM::~PWM()
-{
-	ROS_ERROR("Called PWM::~PWM() on unsupported platform");
-}  
-void frc::PWM::SetPulseTime(units::microsecond_t time)
-{
-	ROS_ERROR("Called PWM::SetPulseTime() on unsupported platform");
-}
-units::microsecond_t frc::PWM::GetPulseTime() const
-{
-	ROS_ERROR("Called PWM::GetPulseTime() on unsupported platform");
-}
-void frc::PWM::SetPosition(double)
-{
-	ROS_ERROR("Called PWM::SetPosition(double pos) on unsupported platform");
-}
-double frc::PWM::GetPosition() const
-{
-	ROS_ERROR("Called PWM::GetPosition() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-void frc::PWM::SetSpeed(double)
-{
-	ROS_ERROR("Called PWM::SetSpeed(double speed) on unsupported platform");
-}
-double frc::PWM::GetSpeed() const
-{
-	ROS_ERROR("Called PWM::GetSpeed() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-void frc::PWM::SetDisabled()
-{
-	ROS_ERROR("Called PWM::SetDisabled() on unsupported platform");
-}
-void frc::PWM::InitSendable(wpi::SendableBuilder&)
-{
-	ROS_ERROR("Called PWM::InitSendable(wpi::SendableBuilder& builder) on unsupported platform");
-}
-
 // Code to stub out various Senable implementations. These should quietly do nothing.
 // The plan is bypassing the default WPIlib code will let us get rid of a lot of other
 // unused functions - networktables, etc.
@@ -214,6 +170,9 @@ NetworkTable::NetworkTable(NT_Inst /*inst*/, std::string_view /*path*/, NetworkT
 
 NetworkTable::~NetworkTable() = default;
 
+void Release(NT_Handle)
+{
+}
 }
 
 #if 0
@@ -261,4 +220,19 @@ int FRC_NetworkCommunication_getJoystickAxes(uint8_t joystickNum, struct Joystic
 {
 	axes->count = 0;
 	return 1;
+}
+
+#include "hal/LEDs.h"
+extern "C"
+{
+void HAL_SetRadioLEDState(HAL_RadioLEDState state, int32_t* status)
+{
+	ROS_WARN("HAL_SetRaiodLEDState called on unsupported platform");
+}
+
+HAL_RadioLEDState HAL_GetRadioLEDState(int32_t *status)
+{
+	ROS_WARN("HAL_GetRadioLEDState called on unsupported platform");
+	return HAL_RadioLED_kOff;
+}
 }

@@ -71,6 +71,7 @@
 #include "ros_control_boilerplate/robot_controller_devices.h"
 #include "ros_control_boilerplate/ros_iterative_robot_devices.h"
 #include "ros_control_boilerplate/rumble_devices.h"
+#include "ros_control_boilerplate/servo_devices.h"
 #include "ros_control_boilerplate/solenoid_devices.h"
 #include "ros_control_boilerplate/sparkmax_devices.h"
 #include "ros_control_boilerplate/talonfxpro_devices.h"
@@ -179,6 +180,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 		devices_.emplace_back(std::make_unique<RobotControllerDevices>(root_nh));
 	}
 	devices_.emplace_back(std::make_unique<RumbleDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<ServoDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<SolenoidDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<SparkMaxDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<TalonFXProDevices<SIM>>(root_nh));

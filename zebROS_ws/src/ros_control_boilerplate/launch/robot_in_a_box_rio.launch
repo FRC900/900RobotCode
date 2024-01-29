@@ -11,7 +11,7 @@
 
 		<!-- Load hardware interface -->
 		<node name="frcrobot_rio_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
-			output="screen" launch-prefix="">
+			output="screen" launch-prefix="$(arg launch_prefix)">
 			<remap from="js0" to="joystick_states1"/>
 		</node>
 
@@ -21,6 +21,11 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller robot_controller_state_controller match_state_controller joint_state_listener_controller robot_code_ready_controller" />
+			output="screen" args="spawn joint_state_controller
+									servo_controller
+									robot_controller_state_controller
+									match_state_controller
+									joint_state_listener_controller
+									robot_code_ready_controller" />
 	</group>
 </launch>

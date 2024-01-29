@@ -151,6 +151,8 @@ add_library(frc_robot_interface STATIC
 	src/ready_devices.cpp
 	src/rumble_device.cpp
 	src/rumble_devices.cpp
+	src/servo_device.cpp
+	src/servo_devices.cpp
 	src/solenoid_device.cpp
 	src/solenoid_devices.cpp
 	src/talon_orchestra_device.cpp
@@ -266,6 +268,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticsBase.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticsControlModule.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticHub.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/PWM.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Solenoid.cpp

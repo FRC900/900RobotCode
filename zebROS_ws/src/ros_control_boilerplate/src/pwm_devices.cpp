@@ -26,13 +26,20 @@ PWMDevices::PWMDevices(ros::NodeHandle &root_nh)
         readStringRequired(joint_params, "name", joint_name);
         readStringRequired(joint_params, "type", joint_type, joint_name);
 
-        if (joint_type == "ipwm")
+        if (joint_type == "pwm")
         {
             bool local = true;
             const bool saw_local_keyword = readBooleanOptional(joint_params, "local", local, joint_name);
             bool local_update;
             bool local_hardware;
             int pwm_channel = 0;
+            // Sensible defaults from allwpilib/hal/src/main/native/athena/PWM.cpp
+            double output_max = 2000.;
+            double deadband_max = 1501.;
+            double center = 1500.;
+            double deadband_min = 1499.;
+            double output_min = 100.;
+            int period_multiplier = 1;
             readJointLocalParams(joint_params, joint_name, local, saw_local_keyword, local_update, local_hardware);
             const bool has_pwm_channel = readIntOptional(joint_params, "pwm_channel", pwm_channel, joint_name);
             if (!local && has_pwm_channel)
@@ -55,13 +62,49 @@ PWMDevices::PWMDevices(ros::NodeHandle &root_nh)
                 */
             }
 
+            if (readDoubleOptional(joint_params, "output_max", output_max, joint_name) && !local)
+            {
+                throw std::runtime_error("A PWM output_max was specified for non-local hardware for joint " + joint_name);
+            }
+            if (readDoubleOptional(joint_params, "deadband_max", deadband_max, joint_name) && !local)
+            {
+                throw std::runtime_error("A PWM deadband_max was specified for non-local hardware for joint " + joint_name);
+            }
+            if (readDoubleOptional(joint_params, "output_min", output_min, joint_name) && !local)
+            {
+                throw std::runtime_error("A PWM output_min was specified for non-local hardware for joint " + joint_name);
+            }
+            if (readDoubleOptional(joint_params, "deadband_min", deadband_min, joint_name) && !local)
+            {
+                throw std::runtime_error("A PWM deadband_min was specified for non-local hardware for joint " + joint_name);
+            }
+            if (readDoubleOptional(joint_params, "center", center, joint_name) && !local)
+            {
+                throw std::runtime_error("A PWM center was specified for non-local hardware for joint " + joint_name);
+            }
+            if (readIntOptional(joint_params, "period_multiplier", period_multiplier, joint_name) && !local)
+            {
+                throw std::runtime_error("A PWM period_multiplier was specified for non-local hardware for joint " + joint_name);
+            }
+
 			bool invert = false;
             if (readBooleanOptional(joint_params, "invert", invert, joint_name) && !local)
 			{
                 throw std::runtime_error("A PWM joint invert was specified for non-local hardware for joint " + joint_name);
             }
 
-            devices_.emplace_back(std::make_unique<PWMDevice>(i, joint_name, pwm_channel, invert, local_update, local_hardware));
+            devices_.emplace_back(std::make_unique<PWMDevice>(i,
+                                                              joint_name,
+                                                              pwm_channel,
+                                                              output_max,
+                                                              deadband_max,
+                                                              center,
+                                                              output_min,
+                                                              deadband_min,
+                                                              period_multiplier,
+                                                              invert,
+                                                              local_update,
+                                                              local_hardware));
         }
     }
 }

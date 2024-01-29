@@ -503,6 +503,44 @@ int32_t HAL_SetJoystickOutputs(int32_t, int64_t,
 	ROS_ERROR("Called HAL_SetJoystickOutputs(int32_t joystickNum, int64_t outputs, int32_t leftRumble, int32_t rightRumble) on unsupported device");
 	return -1;
 }
+
+int32_t HAL_GetTeamNumber(void)
+{
+	ROS_WARN("HAL_GetTeamNumber() called on unsupported platform");
+	return -1;
+}
+
+HAL_Bool HAL_GetRSLState(int32_t *status)
+{
+	*status = -1;
+	ROS_WARN("HAL_GetRSLState() called on unsupported platform");
+	return false;
+}
+HAL_Bool HAL_GetSystemTimeValid(int32_t *status)
+{
+	*status = -1;
+	ROS_WARN("HAL_GetSystemTimeValid() called on unsupported platform");
+	return false;
+}
+
+void HAL_SetUserRailEnabled6V(HAL_Bool, int32_t* status) {
+	*status = -1;
+	ROS_WARN("HAL_SetUserRailEnabled6V() called on unsupported platform");
+}
+void HAL_SetUserRailEnabled5V(HAL_Bool, int32_t* status) {
+	*status = -1;
+	ROS_WARN("HAL_SetUserRailEnabled5V() called on unsupported platform");
+}
+void HAL_SetUserRailEnabled3V3(HAL_Bool, int32_t* status) {
+	*status = -1;
+	ROS_WARN("HAL_SetUserRailEnabled3V3() called on unsupported platform");
+}
+double HAL_GetCPUTemp(int32_t *status)
+{
+	*status = -1;
+	ROS_WARN("HAL_GetCPUTemp() called on unsupported platform");
+	return -1;
+}
 } /// extern "C"
 
 #include <ros_control_boilerplate/error_queue.h>
@@ -515,7 +553,12 @@ int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCo
 			<< " = \"" <<  HAL_GetErrorMessage(errorCode)
 			<< "\" : details = \"" << details << "\"");
 
-	errorQueue->enqueue(errorCode, std::string(details));
+	// errorQueue will be null if we're running Rio hardware (non-sim) interface
+	// on a laptop. This is a really uncommon except for obscure debugging cases
+	if (errorQueue)
+	{
+		errorQueue->enqueue(errorCode, std::string(details));
+	}
 	return 0;
 }
 }
@@ -705,4 +748,60 @@ size_t HAL_GetSerialNumber(char* buffer, size_t size) {
 size_t HAL_GetComments(char* buffer, size_t size) {
 		*buffer = '\0';
 		return 0;
+}
+
+#include <frc/PWM.h>
+frc::PWM::PWM(int, bool)
+{
+	ROS_ERROR("Called PWM::PWM(int) on unsupported platform");
+}
+frc::PWM::~PWM()
+{
+	ROS_ERROR("Called PWM::~PWM() on unsupported platform");
+}  
+void frc::PWM::SetPulseTime(units::microsecond_t time)
+{
+	ROS_ERROR("Called PWM::SetPulseTime() on unsupported platform");
+}
+units::microsecond_t frc::PWM::GetPulseTime() const
+{
+	ROS_ERROR("Called PWM::GetPulseTime() on unsupported platform");
+	return units::microsecond_t{0};
+}
+void frc::PWM::SetPosition(double)
+{
+	ROS_ERROR("Called PWM::SetPosition(double pos) on unsupported platform");
+}
+double frc::PWM::GetPosition() const
+{
+	ROS_ERROR("Called PWM::GetPosition() const on unsupported platform");
+	return std::numeric_limits<double>::max();
+}
+void frc::PWM::SetSpeed(double)
+{
+	ROS_ERROR("Called PWM::SetSpeed(double speed) on unsupported platform");
+}
+double frc::PWM::GetSpeed() const
+{
+	ROS_ERROR("Called PWM::GetSpeed() const on unsupported platform");
+	return std::numeric_limits<double>::max();
+}
+void frc::PWM::SetDisabled()
+{
+	ROS_ERROR("Called PWM::SetDisabled() on unsupported platform");
+}
+void frc::PWM::InitSendable(wpi::SendableBuilder&)
+{
+	ROS_ERROR("Called PWM::InitSendable(wpi::SendableBuilder& builder) on unsupported platform");
+}
+void frc::PWM::SetBounds(units::microsecond_t, units::microsecond_t,
+						 units::microsecond_t, units::microsecond_t,
+						 units::microsecond_t)
+{
+	ROS_ERROR("Called PWM::SetBounds()) on unsupported platform");
+}
+
+void frc::PWM::SetPeriodMultiplier(PeriodMultiplier)
+{
+	ROS_ERROR("Called PWM::SetPeriodMultipler()) on unsupported platform");
 }
