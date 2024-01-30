@@ -3,10 +3,7 @@
 
 #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
-//#define NEED_JOINT_STATES
-#ifdef NEED_JOINT_STATES
-#include "sensor_msgs/JointState.h"
-#endif
+
 #include "geometry_msgs/Twist.h"
 #include <string>
 #include <cmath>
@@ -39,6 +36,8 @@
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 #include <talon_state_msgs/TalonFXProState.h>
 #include <std_srvs/SetBool.h>
+
+#include "teleop_joystick_control/teleop_joystick_comp_general.h"
 
 struct DynamicReconfigVars
 {
