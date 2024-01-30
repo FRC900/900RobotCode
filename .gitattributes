@@ -8,6 +8,7 @@ libnccl-dev_2.7.6-1+cuda10.2_arm64.deb filter=lfs diff=lfs merge=lfs -text
 *.onnx filter=lfs diff=lfs merge=lfs -text
 *.pth filter=lfs diff=lfs merge=lfs -text
 *.calib filter=lfs diff=lfs merge=lfs -text
+*.chrp filter=lfs diff=lfs merge=lfs -text
 *.bz2 filter=lfs diff=lfs merge=lfs -text
 *.tbz2 filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
