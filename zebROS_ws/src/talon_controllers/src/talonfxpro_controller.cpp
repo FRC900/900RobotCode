@@ -6,6 +6,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <std_msgs/Float64.h>
 #include <talon_controllers/talonfxpro_controller_interface.h>
+#include <talon_controller_msgs/Command.h>
 #include <talon_controller_msgs/PidfSlot.h>
 
 namespace talonfxpro_controllers
@@ -24,12 +25,17 @@ namespace talonfxpro_controllers
  *
  * Subscribes to:
  * - \b command (std_msgs::Float64) : The joint setpoint to apply
+ * Service servers:
+ * - \b command (std_msgs::Float64) : The joint setpoint to apply
  */
 
 // Since most controllers are going to share a lot of common code,
 // create a base class template. The big difference between controllers
 // will be the mode the Talon is run in. This is specificed by the type
 // of talon interface, so make this the templated parameter.
+// The function used to update the Talon is also a template parameter.
+// This would be e.g. setControlOutput, setControlPosition, etc depending
+// on the mode selected for the particular controller in question.
 template <typename TALON_IF, auto UPDATE_FN>
 class TalonFXProController:
 	public controller_interface::Controller<hardware_interface::talonfxpro::TalonFXProCommandInterface>
@@ -49,16 +55,15 @@ class TalonFXProController:
 			if (!talon_if_.initWithNode(hw, nullptr, n))
 				return false;
 
-			// Might want to make message type a template
-			// parameter as well?
-			sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &TalonFXProController::commandCB, this);
+			// Might want to make message type a template parameter as well?
+			sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &TalonFXProController::commandCB, this, ros::TransportHints().tcpNoDelay());
+			service_command_ = n.advertiseService("command", &TalonFXProController::commandService, this);
 			return true;
 		}
 
 		void starting(const ros::Time & /*time*/) override
 		{
-			// Start controller with motor stopped
-			// for great safety
+			// Start controller with motor stopped for great safety
 			command_buffer_.writeFromNonRT(0.0);
 		}
 		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
@@ -74,6 +79,7 @@ class TalonFXProController:
 
 	private:
 		ros::Subscriber sub_command_;
+		ros::ServiceServer service_command_;
 
 		// Real-time buffer holds the last command value read from the
 		// "command" topic.  This buffer is read in each call to update()
@@ -90,6 +96,14 @@ class TalonFXProController:
 		void commandCB(const std_msgs::Float64ConstPtr &msg)
 		{
 			command_buffer_.writeFromNonRT(msg->data);
+		}
+
+		// Same as above, but this time the command is sent via a service
+		bool commandService(talon_controller_msgs::Command::Request &req, talon_controller_msgs::Command::Response &res)
+		{
+			command_buffer_.writeFromNonRT(req.command);
+			res.success = true;
+			return true;
 		}
 };
 
