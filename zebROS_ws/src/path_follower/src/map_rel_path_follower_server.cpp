@@ -2,7 +2,6 @@
 #include <actionlib/server/simple_action_server.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <geometry_msgs/Quaternion.h>
-#include <nav_msgs/Odometry.h>
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathGoal.h>
 #include <path_follower/axis_state.h>
@@ -12,8 +11,8 @@
 #include <std_msgs/Bool.h>
 #include <vector>
 #include <algorithm>
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
+#include "pid_velocity_msg/PIDVelocity.h"
 
 // #define DEBUG
 
@@ -63,7 +62,7 @@ class PathAction
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
 			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this, ros::TransportHints().tcpNoDelay()))
-			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
+			, orientation_command_pub_(nh_.advertise<pid_velocity_msg::PIDVelocity>("/teleop/velocity_orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
 			, path_follower_(time_offset)
@@ -152,7 +151,7 @@ class PathAction
 			const double initial_field_relative_yaw = path_follower_.getYaw(orientation_);
 			ROS_INFO_STREAM("==== initial_field_relative_yaw = " << initial_field_relative_yaw);
 
-			const double initial_pose_yaw = path_follower_.getYaw(map_to_baselink_.transform.rotation);
+			const double initial_pose_yaw = path_follower_.getYaw(orientation_);
 			ROS_INFO_STREAM("==== initial_pose_yaw = " << initial_pose_yaw);
 
 			// Transform the final point from robot to odom coordinates. Used each iteration to
@@ -166,11 +165,11 @@ class PathAction
 			//debug
 			ROS_INFO_STREAM(goal->position_path.poses[num_waypoints - 1].pose.position.x << ", " << goal->position_path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->position_path.poses[num_waypoints - 1].pose.orientation));
 
-			ROS_INFO_STREAM("Current odom values X = " << map_to_baselink_.transform.translation.x << " Y = " << map_to_baselink_.transform.translation.y << " Rot " << path_follower_.getYaw(map_to_baselink_.transform.rotation)); 
+			ROS_INFO_STREAM("Current odom values X = " << map_to_baselink_.transform.translation.x << " Y = " << map_to_baselink_.transform.translation.y << " Rot " << path_follower_.getYaw(orientation_)); 
 			for (size_t i = 0; i < num_waypoints - 1; i++) {
 				ROS_INFO_STREAM("Untransformed waypoint: X = " << goal->position_path.poses[i].pose.position.x << " Y = " << goal->position_path.poses[i].pose.position.y << " rotation = " << path_follower_.getYaw(goal->position_path.poses[i].pose.orientation));
-				geometry_msgs::Pose temp_pose = goal->position_path.poses[i].pose;
-				geometry_msgs::Pose new_pose;
+				// geometry_msgs::Pose temp_pose = goal->position_path.poses[i].pose;
+				// geometry_msgs::Pose new_pose;
 				// tf2::doTransform(temp_pose, new_pose, map_to_base_link_tf);
 				// tf2::Quaternion q;
 				// tf2::fromMsg(map_to_base_link_tf.transform.rotation, q);
@@ -180,7 +179,74 @@ class PathAction
 				// ROS_INFO_STREAM("Transformed waypoint: X = " << new_pose.position.x << " Y = " << new_pose.position.y << " rotation = " << path_follower_.getYaw(new_pose.orientation));
 			}
 			ROS_INFO_STREAM("========End path follower logs ==========");
+
 			ros::Rate r(ros_rate_);
+
+			size_t current_index = 0;
+
+			std_msgs::Bool enable_msg;
+			pid_velocity_msg::PIDVelocity command_msg; 
+			auto x_axis_it = axis_states_.find("x");
+			auto &x_axis = x_axis_it->second;
+			auto y_axis_it = axis_states_.find("y");
+			auto &y_axis = y_axis_it->second;
+
+			// Align to first waypoint (within tolerance)
+			x_axis.setEnable(true);
+			x_axis.setCommand(goal->position_path.poses[0].pose.position.x, 0); 
+			ROS_WARN_STREAM("Setting inital command to pos:" << goal->position_path.poses[0].pose.position.x << " Velocity: " << goal->velocity_path.poses[0].pose.position.x);
+			y_axis.setEnable(true);
+			y_axis.setCommand(goal->position_path.poses[0].pose.position.y, 0); 
+			ROS_WARN_STREAM("Setting inital command to pos:" << goal->position_path.poses[0].pose.position.x << " Velocity: " << goal->velocity_path.poses[0].pose.position.x);
+
+			while (ros::ok() && !preempted && !timed_out && !succeeded)
+			
+			{
+				ros::spinOnce();
+				try{
+					// This gives us the transform from a point in base_link to map.
+					// This is correct, although counterintuitive and we don't know why
+					// Because it feels like it should be the opposite, but breaks when we do what is "correct".
+					map_to_baselink_ = tf_buffer_.lookupTransform(map_frame_, "base_link", ros::Time(0));
+				}
+				catch (tf2::TransformException &ex) {
+					ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
+					continue;
+				}
+				enable_msg.data = true;
+				combine_cmd_vel_pub_.publish(enable_msg);
+				x_axis.setEnable(true);
+				x_axis.setCommand(goal->position_path.poses[0].pose.position.x, 0); 
+				y_axis.setEnable(true);
+				y_axis.setCommand(goal->position_path.poses[0].pose.position.y, 0);
+				x_axis.setState(map_to_baselink_.transform.translation.x);
+				y_axis.setState(map_to_baselink_.transform.translation.y);
+				const double orientation_state = path_follower_.getYaw(orientation_);
+
+				std_msgs::Float64 yaw_msg;
+				yaw_msg.data = orientation_state;
+				robot_relative_yaw_pub_.publish(yaw_msg);
+
+				command_msg.position = path_follower_.getYaw(goal->position_path.poses[0].pose.orientation);
+				command_msg.velocity = path_follower_.getYaw(goal->velocity_path.poses[0].pose.orientation);
+				if (std::isfinite(command_msg.position)) 
+				{
+					orientation_command_pub_.publish(command_msg);
+					#ifdef DEBUG
+					ROS_INFO_STREAM("Orientation: " << command_msg.position << " at angular velocity " << command_msg.velocity);
+					#endif
+				}
+
+				if ((fabs(goal->position_path.poses[0].pose.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
+					(fabs(goal->position_path.poses[0].pose.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
+					(fabs(command_msg.position - orientation_state) < final_rot_tol))
+				{
+					ROS_INFO_STREAM("path_follower: successfully aligned to initial waypoint");
+					break;
+				}
+				r.sleep();
+			}
+
 			double final_distance = 0;
 			// send path to initialize path follower
 			if (!path_follower_.loadPath(goal->position_path, goal->velocity_path, final_distance))
@@ -188,15 +254,7 @@ class PathAction
 				ROS_ERROR_STREAM("Failed to load path");
 				preempted = true;
 			}
-			
-			int current_index = 0;
 
-			std_msgs::Bool enable_msg;
-			std_msgs::Float64 command_msg; 
-			auto x_axis_it = axis_states_.find("x");
-			auto &x_axis = x_axis_it->second;
-			auto y_axis_it = axis_states_.find("y");
-			auto &y_axis = y_axis_it->second;
 			//in loop, send PID enable commands to rotation, x, y
 			double distance_travelled = 0;
 
@@ -227,7 +285,7 @@ class PathAction
 				ROS_INFO_STREAM("----------------------------------------------");
 				ROS_INFO_STREAM("current_position = " << map_to_baselink_.transform.translation.x
 					<< " " << map_to_baselink_.transform.translation.y
-					<< " " << path_follower_.getYaw(map_to_baselink_.transform.rotation));	// PID controllers.
+					<< " " << path_follower_.getYaw(orientation_));	// PID controllers.
 #endif
 				std::optional<PositionVelocity> next_waypoint_opt = path_follower_.run(distance_travelled, current_index); 
 				PositionVelocity next_waypoint = *next_waypoint_opt;
@@ -262,17 +320,18 @@ class PathAction
 				// waypoint coordinate to each of the PID controllers
 				// And also make sure they continue to be enabled
 				x_axis.setEnable(true);
-				x_axis.setCommand(next_waypoint.position.position.x, next_waypoint.velocity.x); 
+				x_axis.setCommand(next_waypoint.position.position.x, next_waypoint.velocity.linear.x); 
 
 				y_axis.setEnable(true);
-				y_axis.setCommand(next_waypoint.position.position.y, next_waypoint.velocity.y); 
+				y_axis.setCommand(next_waypoint.position.position.y, next_waypoint.velocity.linear.y); 
 
-				command_msg.data = path_follower_.getYaw(next_waypoint.position.orientation) - initial_pose_yaw + initial_field_relative_yaw;
-				if (std::isfinite(command_msg.data)) 
+				command_msg.position = path_follower_.getYaw(next_waypoint.position.orientation) - initial_pose_yaw + initial_field_relative_yaw;
+				command_msg.velocity = next_waypoint.velocity.angular.z;
+				if (std::isfinite(command_msg.position)) 
 				{
 					orientation_command_pub_.publish(command_msg);
 					#ifdef DEBUG
-					ROS_INFO_STREAM("Orientation: " << command_msg.data);
+					ROS_INFO_STREAM("Orientation: " << command_msg.position << " at angular velocity " << command_msg.velocity);
 					#endif
 				}
 
@@ -287,7 +346,7 @@ class PathAction
 					timed_out = true;
 				}
 
-				const double orientation_state = path_follower_.getYaw(map_to_baselink_.transform.rotation);
+				const double orientation_state = path_follower_.getYaw(orientation_);
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
 				
 				auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_).count();

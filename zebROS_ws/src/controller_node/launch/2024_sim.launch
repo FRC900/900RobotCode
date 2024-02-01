@@ -56,6 +56,7 @@
 	-->
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_mapodom" args="0 0 0 0 0 0 map odom" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2023_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />

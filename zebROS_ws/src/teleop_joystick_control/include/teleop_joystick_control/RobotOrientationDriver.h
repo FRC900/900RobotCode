@@ -36,6 +36,7 @@
 #include <std_msgs/Float64.h>
 #include <teleop_joystick_control/AlignToOrientation.h>
 #include "frc_msgs/MatchSpecificData.h"
+#include "pid_velocity_msg/PIDVelocity.h"
 
 constexpr double INITIAL_ROBOT_ORIENTATION = M_PI / 2.0;
 
@@ -62,13 +63,13 @@ class RobotOrientationDriver
 public:
 	explicit RobotOrientationDriver(const ros::NodeHandle &nh);
 
-	void setTargetOrientation(double angle, bool from_teleop = true);
+	void setTargetOrientation(const double angle, const bool from_teleop = true, const double velocity = 0.0);
 	void stopRotation(void);
 	// subscriber to read setTargetOrientation as needed
 
 	// Called from callbacks in teleop code
-	void setRobotOrientation(double angle);
-	void setRobotEnabled(bool enabled);
+	void setRobotOrientation(const double angle);
+	void setRobotEnabled(const bool enabled);
 
 	// For debugging?
 	double getTargetOrientation(void) const;
@@ -88,6 +89,7 @@ public:
 private:
 	ros::NodeHandle nh_;
 	ros::Subscriber orientation_command_sub_;
+	ros::Subscriber velocity_orientation_command_sub_;
 	ros::Publisher  pid_enable_pub_;
 	ros::Publisher  pid_state_pub_;    // current IMU orientation
 	ros::Publisher  pid_setpoint_pub_; // desired robot orientation
@@ -114,6 +116,7 @@ private:
 	ros::Timer most_recent_teleop_timer_;
 
 	void orientationCmdCallback(const std_msgs::Float64::ConstPtr &orientation_cmd);
+	void velocityOrientationCmdCallback(const pid_velocity_msg::PIDVelocity::ConstPtr &orient_msg);
 	void controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort);
 	void imuCallback(const sensor_msgs::Imu &imuState);
 	void matchStateCallback(const frc_msgs::MatchSpecificData &msg);

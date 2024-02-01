@@ -79,7 +79,7 @@ minifrc_moveit_controller:
         - base_arm
         - second_stage_arm
     base_arm:
-        type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+        type: talonfxpro_controllers/TalonFXProPositionVoltageController
         joint: base_arm
         # DONT SET THIS FOR SIM !!! 
         #feedback_sensor_source: RemoteCANCoder
@@ -96,7 +96,7 @@ minifrc_moveit_controller:
         reverse_limit_enable: False
         dynamic_reconfigure: True
     second_stage_arm:
-        type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+        type: talonfxpro_controllers/TalonFXProPositionVoltageController
         joint: second_stage_arm
         # DONT SET THIS FOR SIM !!! 
         #feedback_sensor_source: RemoteCANCoder
@@ -112,6 +112,46 @@ minifrc_moveit_controller:
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
+
+# minifrc_moveit_controller:
+#     type: talon_position_controllers/JointTrajectoryController
+#     joints:
+#         - base_arm
+#         - second_stage_arm
+#     base_arm:
+#         type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+#         joint: base_arm
+#         # DONT SET THIS FOR SIM !!! 
+#         #feedback_sensor_source: RemoteCANCoder
+#         #remote_feedback_device_id0: 21
+#         #neutral_deadband: 0.01
+#         close_loop_values:
+#             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
+#         invert: clockwise_positive
+#         neutral_deadband: 0.01
+#         motion_magic_cruise_velocity: 5.0
+#         motion_magic_acceleration: 50.0
+#         motion_magic_jerk: 350.0
+#         forward_limit_enable: False
+#         reverse_limit_enable: False
+#         dynamic_reconfigure: True
+#     second_stage_arm:
+#         type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+#         joint: second_stage_arm
+#         # DONT SET THIS FOR SIM !!! 
+#         #feedback_sensor_source: RemoteCANCoder
+#         #remote_feedback_device_id0: 21
+#         #neutral_deadband: 0.01
+#         close_loop_values:
+#             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
+#         invert: clockwise_positive
+#         neutral_deadband: 0.01
+#         motion_magic_cruise_velocity: 5.0
+#         motion_magic_acceleration: 50.0
+#         motion_magic_jerk: 350.0
+#         forward_limit_enable: False
+#         reverse_limit_enable: False
+#         dynamic_reconfigure: True
 
 
 intake_talonfxpro_controller:

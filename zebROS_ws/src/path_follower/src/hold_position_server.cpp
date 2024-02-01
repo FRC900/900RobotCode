@@ -15,7 +15,7 @@
 
 #define SEND_Y_STRAFE
 
-class holdPosition
+class HoldPosition
 {
 	protected:
 		ros::NodeHandle nh_;
@@ -37,7 +37,7 @@ class holdPosition
 		double server_timeout_;
 
 		bool debug_;
-		int ros_rate_;
+		double ros_rate_;
 
 		// If true, use odom for x and y position and a separate yaw topic
 		// (from an IMU, perhaps) for the orientation.
@@ -51,7 +51,7 @@ class holdPosition
 
 		double angle_threshold_;
 	public:
-		holdPosition(const std::string &name, const ros::NodeHandle &nh,
+		HoldPosition(const std::string &name, const ros::NodeHandle &nh,
 				   double server_timeout,
 				   int ros_rate,
 				   const std::string &odom_topic,
@@ -61,10 +61,10 @@ class holdPosition
 				   double dist_threshold,
 				   double angle_threshold)
 			: nh_(nh)
-			, as_(nh_, name, boost::bind(&holdPosition::executeCB, this, _1), false)
+			, as_(nh_, name, boost::bind(&HoldPosition::executeCB, this, _1), false)
 			, action_name_(name)
-			, odom_sub_(nh_.subscribe(odom_topic, 1, &holdPosition::odomCallback, this))
-			, pose_sub_(nh_.subscribe(pose_topic, 1, &holdPosition::poseCallback, this))
+			, odom_sub_(nh_.subscribe(odom_topic, 1, &HoldPosition::odomCallback, this))
+			, pose_sub_(nh_.subscribe(pose_topic, 1, &HoldPosition::poseCallback, this))
 			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("hold_position_pid/pid_enable", 1, true))
 			, server_timeout_(server_timeout)
@@ -77,7 +77,7 @@ class holdPosition
 		{
 			if (!use_odom_orientation_)
 			{
-				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &holdPosition::yawCallback, this);
+				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &HoldPosition::yawCallback, this);
 			}
 
 			std_msgs::Bool bool_msg;
@@ -122,24 +122,6 @@ class holdPosition
 
 		bool addAxis(const AlignActionAxisConfig &axis_config)
 		{
-			// TODO - give defaults so these aren't random values if getParam fails
-			double timeout = 10;
-			if (!nh_.getParam(axis_config.timeout_param_, timeout))
-			{
-				ROS_ERROR_STREAM("Could not read param "
-								 << axis_config.timeout_param_
-								 << " in align_server");
-				//return false;
-			}
-			double error_threshold = 1; //TODO this is not being used
-			if (!nh_.getParam(axis_config.error_threshold_param_, error_threshold))
-			{
-				ROS_ERROR_STREAM("Could not read param "
-								 << axis_config.error_threshold_param_
-								 << " in align_server");
-				//return false;
-			}
-
 			axis_states_.emplace(std::make_pair(axis_config.name_,
 												AlignActionAxisStatePosition(nh_,
 														axis_config.enable_pub_topic_,
@@ -214,8 +196,10 @@ class holdPosition
 			auto y_axis_it = axis_states_.find("y");
 			auto &y_axis = y_axis_it->second;
 
+#if 0
 			auto z_axis_it = axis_states_.find("z");
 			auto &z_axis = z_axis_it->second;
+#endif
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
 				ros::spinOnce();
@@ -280,7 +264,7 @@ class holdPosition
 
 				// Spin once to get the most up to date odom and yaw info
 
-				const double orientation_state = getYaw(odom_.pose.pose.orientation);
+				// const double orientation_state = getYaw(odom_.pose.pose.orientation);
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
 
 				if (!preempted && !timed_out)
@@ -379,7 +363,7 @@ int main(int argc, char **argv)
 	nh.getParam("/hold_position/hold_position/dist_threshold", dist_threshold);
 	nh.getParam("/hold_position/hold_position/angle_threshold", angle_threshold);
 	ROS_WARN_STREAM("DistanceThreshold: " << dist_threshold << " Angle Thresh:" << angle_threshold);
-	holdPosition hold_position_server("hold_position_server", nh,
+	HoldPosition hold_position_server("hold_position_server", nh,
 								  server_timeout,
 								  ros_rate,
 								  odom_topic,
@@ -406,13 +390,13 @@ int main(int argc, char **argv)
 	ddynamic_reconfigure::DDynamicReconfigure ddr;
 	ddr.registerVariable<double>
 		("server_timeout",
-		 boost::bind(&holdPosition::getServerTimeout, &hold_position_server),
-		 boost::bind(&holdPosition::setServerTimeout, &hold_position_server, _1),
+		 boost::bind(&HoldPosition::getServerTimeout, &hold_position_server),
+		 boost::bind(&HoldPosition::setServerTimeout, &hold_position_server, _1),
 		 "how long to wait before timing out", 0, 150);
 	ddr.registerVariable<int>
 		("ros_rate",
-		 boost::bind(&holdPosition::getRosRate, &hold_position_server),
-		 boost::bind(&holdPosition::setRosRate, &hold_position_server, _1),
+		 boost::bind(&HoldPosition::getRosRate, &hold_position_server),
+		 boost::bind(&HoldPosition::setRosRate, &hold_position_server, _1),
 		 "how far ahead the path follower looks to pick the next point to drive to", 0, 100);
     ddr.publishServicesTopics();
 

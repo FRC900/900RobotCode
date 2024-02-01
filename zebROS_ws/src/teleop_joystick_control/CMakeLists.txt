@@ -9,21 +9,21 @@ find_package(catkin REQUIRED COMPONENTS
 	behavior_actions
 	cmake_modules
 	control_msgs
-	# controllers_2022_msgs
 	ddynamic_reconfigure
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
 	field_obj
 	frc_msgs
+	geometry_msgs
 	imu_zero_msgs
 	path_follower_msgs
+	pid_velocity_msg
 	std_srvs
 	roscpp
+	talon_state_msgs
+	talon_swerve_drive_controller_msgs
 	tf2_ros
 	tf2
-	talon_state_msgs
-	geometry_msgs
-	talon_swerve_drive_controller_msgs
 	)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -84,7 +84,7 @@ include_directories(
 	${Eigen3_INCLUDE_DIRS}
 	)
 
-add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp src/robot_orientation_driver.cpp)
+add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp src/robot_orientation_driver.cpp src/store_xy.cpp)
 target_link_libraries(teleop_joystick_comp_2023
 	${catkin_LIBRARIES})
 add_dependencies(teleop_joystick_comp_2023

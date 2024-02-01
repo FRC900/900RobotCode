@@ -70,7 +70,7 @@ double PathFollower::interpolate(double start_t, double end_t, double start_x, d
 // orientation) and whoever called run would be responsible for sending that
 // where it needs to go.
 
-std::optional<PositionVelocity> PathFollower::run(double &total_distance_travelled, int &current_index)
+std::optional<PositionVelocity> PathFollower::run(double &total_distance_travelled, size_t &current_index)
 {
 	if (num_waypoints_ == 0)
 	{
@@ -194,11 +194,13 @@ std::optional<PositionVelocity> PathFollower::run(double &total_distance_travell
 	ROS_INFO_STREAM("now velocity: " << now_index << " (" << now_x_velocity << ", " << now_y_velocity << ", " << now_velocities_orientation << ")");
 #endif
 	// Convert back to quaternion
-	tf2::Quaternion q_final_tf = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_orientation));
+	const tf2::Quaternion q_final_tf = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_orientation));
 	geometry_msgs::Quaternion q_final = tf2::toMsg(q_final_tf);
 
-	tf2::Quaternion q_final_tf_velocity = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_velocities_orientation));
+#if 0
+	const tf2::Quaternion q_final_tf_velocity = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_velocities_orientation));
 	geometry_msgs::Quaternion q_final_velocity = tf2::toMsg(q_final_tf_velocity);
+#endif
 
 	// Return Pose of target position
 	geometry_msgs::Pose target_pos;
@@ -207,11 +209,10 @@ std::optional<PositionVelocity> PathFollower::run(double &total_distance_travell
 	target_pos.position.z = 0;
 	target_pos.orientation = q_final;
 
-	geometry_msgs::Vector3 target_velocity;
-	target_velocity.x = final_x_velocity;
-	target_velocity.y = final_y_velocity;
-	target_velocity.z = 0;
-	// TODO incorporate angular velocity somehow
+	geometry_msgs::Twist target_velocity;
+	target_velocity.linear.x = final_x_velocity;
+	target_velocity.linear.y = final_y_velocity;
+	target_velocity.angular.z = final_velocities_orientation;
 
 	PositionVelocity target;
 	target.position = target_pos;

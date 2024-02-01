@@ -7,12 +7,13 @@
     <node name="teleop_joystick_comp_$(arg year)" pkg="teleop_joystick_control" type="teleop_joystick_comp_$(arg year)" output="screen"/>
 
     <group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
-      <node name="orient_strafing_pid" pkg="pid" type="controller" >
+      <node name="orient_strafing_pid" pkg="pid" type="velocity_controller" >
         <param name="node_name" value="orient_strafing_pid" />
         <!-- <param name="Kp" value="-1.2" /> DEFINITELY SHOULD NOT BE NEGATIVE (unless you want angular acceleration) -->
         <param name="Kp" value="3.5" />
         <param name="Ki" value="0.0" />
         <param name="Kd" value="0.2" />
+        <param name="Kf" value="1.0" />
         <param name="upper_limit" value="10.00" />
         <param name="lower_limit" value="-10.00" />
         <param name="windup_limit" value="0.5" />

@@ -76,42 +76,59 @@ hardware_interface:
 minifrc_moveit_controller:
     type: talon_position_controllers/JointTrajectoryController
     joints:
-        - base_arm
-        - second_stage_arm
-    base_arm:
-        type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
-        joint: base_arm
+        - elevator_leader
+        - elevator_follower
+    elevator_leader:
+        type: talonfxpro_controllers/TalonFXProPositionVoltageController
+        joint: elevator_leader
+        close_loop_values:
+            - {kP: 550, kI: 0.000, kD: 0.00, kV: 19, kS: 0, kA: 0, kG: 0.0, gravity_type: elevator_static}
+        invert: clockwise_positive
+
+        # linear position along 
+        #conversion_factor: 0.00626535
+        # Linear converion - radian per / m
+        sensor_to_mechanism_ratio: 159.61
+        # TODO : figure out what value this should be
+        # Only need one direction, to
+        # prevent the elevator from running off the top
+        softlimit_forward_threshold: 1.412 
+        softlimit_forward_enable: True
+
+        # CHECK THIS
+        #feedback_type: IntegratedSensor
+
+        # TODO : bottom limit switch config
+        reverse_limit_switch_type: "NormallyOpen"
+        reverse_limit_enable: True
+        forward_limit_enable: False
+
+        #neutral_deadband: 0.001
+
+        neutral_mode: Brake
+
+        dynamic_reconfigure: True
+
+    elevator_follower:
+        type: talonfxpro_controllers/TalonFXProPositionVoltageController
+        joint: elevator_follower
         # DONT SET THIS FOR SIM !!! 
         #feedback_sensor_source: RemoteCANCoder
         #remote_feedback_device_id0: 21
         #neutral_deadband: 0.01
         close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
+            - {kP: 550, kI: 0.000, kD: 0.00, kV: 19, kS: 0, kA: 0, kG: 0.0, gravity_type: elevator_static}
+        #invert: clockwise_positive
         neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
+        motion_magic_cruise_velocity: 0.5
+        motion_magic_acceleration: 1.0
+        motion_magic_jerk: 50.0
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
-    second_stage_arm:
-        type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
-        joint: second_stage_arm
-        # DONT SET THIS FOR SIM !!! 
-        #feedback_sensor_source: RemoteCANCoder
-        #remote_feedback_device_id0: 21
-        #neutral_deadband: 0.01
-        close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
-        forward_limit_enable: False
-        reverse_limit_enable: False
-        dynamic_reconfigure: True
+        sensor_to_mechanism_ratio: 159.61
+        neutral_mode: Brake
+
 
 
 intake_talonfxpro_controller:

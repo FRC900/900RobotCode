@@ -313,7 +313,7 @@ class PathAction
 				preempted = true;
 			}
 			
-			int current_index = 0;
+			size_t current_index = 0;
 
 			std_msgs::Bool enable_msg;
 			std_msgs::Float64 command_msg; 
@@ -346,10 +346,10 @@ class PathAction
 				// The velocity needs to be transformed from path-relative to odom-relative to be fed into publish_pid_cmd_vel,
 				// which just makes it robot-relative again. /shrug
 				double rotate_angle = initial_pose_yaw;
-				double odom_relative_x_velocity = next_waypoint.velocity.x * cos(rotate_angle) - next_waypoint.velocity.y * sin(rotate_angle);
-				double odom_relative_y_velocity = next_waypoint.velocity.x * sin(rotate_angle) + next_waypoint.velocity.y * cos(rotate_angle);
-				next_waypoint.velocity.x = odom_relative_x_velocity;
-				next_waypoint.velocity.y = odom_relative_y_velocity;
+				double odom_relative_x_velocity = next_waypoint.velocity.linear.x * cos(rotate_angle) - next_waypoint.velocity.linear.y * sin(rotate_angle);
+				double odom_relative_y_velocity = next_waypoint.velocity.linear.x * sin(rotate_angle) + next_waypoint.velocity.linear.y * cos(rotate_angle);
+				next_waypoint.velocity.linear.x = odom_relative_x_velocity;
+				next_waypoint.velocity.linear.y = odom_relative_y_velocity;
 
 				int current_waypoint = waypointsIdx[current_index];
 				feedback.current_waypoint = current_waypoint;
@@ -381,10 +381,10 @@ class PathAction
 				// waypoint coordinate to each of the PID controllers
 				// And also make sure they continue to be enabled
 				x_axis.setEnable(true);
-				x_axis.setCommand(next_waypoint.position.position.x, next_waypoint.velocity.x); 
+				x_axis.setCommand(next_waypoint.position.position.x, next_waypoint.velocity.linear.x); 
 
 				y_axis.setEnable(true);
-				y_axis.setCommand(next_waypoint.position.position.y, next_waypoint.velocity.y); 
+				y_axis.setCommand(next_waypoint.position.position.y, next_waypoint.velocity.linear.y); 
 
 				command_msg.data = path_follower_.getYaw(next_waypoint.position.orientation) - initial_pose_yaw + initial_field_relative_yaw;
 				if (std::isfinite(command_msg.data)) 

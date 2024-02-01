@@ -3,15 +3,17 @@
 #include <std_msgs/Bool.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include "pid_velocity_msg/PIDVelocity.h"
 
 #include "teleop_joystick_control/RobotOrientationDriver.h"
 
 RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	: nh_(nh)
 	, orientation_command_sub_{nh_.subscribe("orientation_command", 1, &RobotOrientationDriver::orientationCmdCallback, this)}
+	, velocity_orientation_command_sub_{nh_.subscribe("velocity_orientation_command", 1, &RobotOrientationDriver::velocityOrientationCmdCallback, this)}
 	, pid_enable_pub_{nh_.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1, true)} // latching
 	, pid_state_pub_{nh_.advertise<std_msgs::Float64>("orient_strafing/state", 1)}
-	, pid_setpoint_pub_{nh_.advertise<std_msgs::Float64>("orient_strafing/setpoint", 1)}
+	, pid_setpoint_pub_{nh_.advertise<pid_velocity_msg::PIDVelocity>("orient_strafing/setpoint", 1)}
 	, pid_control_effort_sub_{nh_.subscribe("orient_strafing/control_effort", 1, &RobotOrientationDriver::controlEffortCallback, this)}
 	, imu_sub_{nh_.subscribe("/imu/zeroed_imu", 1, &RobotOrientationDriver::imuCallback, this)}
 	, match_data_sub_{nh_.subscribe("/frcrobot_rio/match_data", 1, &RobotOrientationDriver::matchStateCallback, this)}
@@ -26,7 +28,7 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 }
 
 
-void RobotOrientationDriver::setTargetOrientation(double angle, bool from_teleop)
+void RobotOrientationDriver::setTargetOrientation(const double angle, const bool from_teleop, const double velocity)
 {
 	//ROS_INFO_STREAM("Setting orientation with from teleop =" << from_teleop);
 	if (robot_enabled_)
@@ -43,9 +45,10 @@ void RobotOrientationDriver::setTargetOrientation(double angle, bool from_teleop
 	}
 	most_recent_is_teleop_ = from_teleop;
 	// Publish desired robot orientation to the PID node
-	std_msgs::Float64 pid_setpoint_msg;
+	pid_velocity_msg::PIDVelocity pid_setpoint_msg;
 	target_orientation_ = angles::normalize_angle(target_orientation_);
-	pid_setpoint_msg.data = target_orientation_;
+	pid_setpoint_msg.position = target_orientation_;
+	pid_setpoint_msg.velocity = velocity;
 	//ROS_INFO_STREAM_THROTTLE(2, "Publishing pid setpoid with value " << pid_setpoint_msg);
 	pid_setpoint_pub_.publish(pid_setpoint_msg);
 
@@ -76,6 +79,12 @@ void RobotOrientationDriver::orientationCmdCallback(const std_msgs::Float64::Con
 	setTargetOrientation(orient_msg->data, false);
 }
 
+void RobotOrientationDriver::velocityOrientationCmdCallback(const pid_velocity_msg::PIDVelocity::ConstPtr &orient_msg)
+{
+	//ROS_INFO_STREAM(__FUNCTION__ << " angle = " << orient_msg->data);
+	setTargetOrientation(orient_msg->position, false, orient_msg->velocity);
+}
+
 void RobotOrientationDriver::controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort)
 {
 	// Store a local copy of the output of the PID node. This
@@ -83,7 +92,7 @@ void RobotOrientationDriver::controlEffortCallback(const std_msgs::Float64::Cons
 	orientation_command_effort_ = control_effort->data;
 }
 
-void RobotOrientationDriver::setRobotOrientation(double angle)
+void RobotOrientationDriver::setRobotOrientation(const double angle)
 {
 	//ROS_INFO_STREAM(__FUNCTION__ << " angle = " << angle);
 	robot_orientation_ = angle;
@@ -101,7 +110,7 @@ void RobotOrientationDriver::setRobotOrientation(double angle)
 	pid_state_pub_.publish(pid_state_msg);
 }
 
-void RobotOrientationDriver::setRobotEnabled(bool enabled)
+void RobotOrientationDriver::setRobotEnabled(const bool enabled)
 {
 	//ROS_INFO_STREAM(__FUNCTION__ << " robot_enabled = " << enabled);
 	robot_enabled_ = enabled;

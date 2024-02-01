@@ -23,7 +23,7 @@ int linebreak_debounce_iterations;
 
 double nearest_angle(std::vector<double> angles, double cur_angle)
 {
-	double snap_angle;
+	double snap_angle{0};
 	double smallest_distance = std::numeric_limits<double>::max();
 	for(size_t i = 0; i < angles.size(); i++){
 		double distance = fabs(angles::shortest_angular_distance(cur_angle, angles[i]));

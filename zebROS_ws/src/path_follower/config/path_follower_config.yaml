@@ -18,5 +18,5 @@ path_follower:
     time_offset: 0.0
     # will transform the odom and pose messages from this frame to base link before being used, to make odom appear to come from base_link
     #odom_frame: "base_link"
-    map_frame: "odom"
+    map_frame: "map"
     #debug: true

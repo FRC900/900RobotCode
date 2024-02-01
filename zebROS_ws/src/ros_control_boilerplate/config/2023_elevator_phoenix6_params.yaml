@@ -69,7 +69,6 @@ elevator_controller_2023:
 
     elevator_follower: 
         joint: elevator_follower
-
         sensor_to_mechanism_ratio: 159.61
         #invert_output: counterclockwise_positive
         control_oppose_master_direction: True
