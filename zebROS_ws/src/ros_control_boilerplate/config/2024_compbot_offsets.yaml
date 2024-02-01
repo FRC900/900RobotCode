@@ -1,0 +1,9 @@
+swerve_drive_controller:
+    bl_angle:
+        offset: 7.53
+    br_angle:
+        offset: 9.041
+    fl_angle:
+        offset: 6.000
+    fr_angle:
+        offset: 12.9

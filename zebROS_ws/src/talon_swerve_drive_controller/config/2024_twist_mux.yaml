@@ -1,0 +1,48 @@
+topics:
+-
+  name    : combine orient strafing
+  topic   : /teleop/orient_strafing/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 200
+-
+  name    : teleop joystick comp
+  topic   : /teleop/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 175
+-
+  name    : placing_cmd_vel
+  topic   : /placing/cmd_vel
+  timeout : 0.2
+  priority: 148
+-
+  name    : auto_cmd_vel
+  topic   : /auto/cmd_vel
+  timeout : 0.2
+  priority: 130
+-
+  name    : path_follower
+  topic   : /path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
+-
+  name    : hold_position
+  topic   : /hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
+-
+  name    : hold_distance
+  topic   : /hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
+-
+  name    : balancing
+  topic   : /balance_position/balancer_server/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
+-
+  name    : align_cmd_vel
+  topic   : /align/cmd_vel
+  timeout : 0.2
+  priority: 129
+
+locks: []

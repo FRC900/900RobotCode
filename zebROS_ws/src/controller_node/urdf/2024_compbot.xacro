@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<robot name="2024_compbot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <link name="base_link"/>
+    <!-- add important transforms for 2023 -->
+    <link name="front_bumper"/>
+    <joint name="front_bumper" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="front_bumper"/>
+        <origin xyz="0.4445 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+	
+</robot>
