@@ -115,6 +115,7 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
   if(!dynamic_arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, dynamic_arm_params))
   {
     ROS_ERROR("dynamic_arm_controller : Cannot initialize dynamic_arm joint!");
+    return false;
   }
 
   dynamic_arm_service_ = controller_nh.advertiseService("command", &DynamicArmController::cmdService, this);

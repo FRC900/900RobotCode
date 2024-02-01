@@ -37,7 +37,7 @@ elevator_controller_2023:
     elevator_zeroing_timeout:  2.0
     stage_2_height: 0.7213
     elevator_leader:
-        type: talon_controllers/TalonFXProControllerInterface 
+        type: talonfxpro_controllers/TalonFXProControllerInterface 
         joint: elevator_leader
         close_loop_values:
             - {kP: 550, kI: 0.000, kD: 0.00, kV: 19, kS: 0, kA: 0, kG: 0.0, gravity_type: elevator_static}

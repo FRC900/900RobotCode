@@ -231,6 +231,7 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept
     enable_read_thread_.exchange(other.enable_read_thread_);
 
     set_position_.exchange(other.set_position_);
+    type_string_control_mode_.exchange(other.type_string_control_mode_);
 } 
 
 TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &other)
@@ -339,6 +340,7 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
         continuous_wrap_.store(other.continuous_wrap_.load());
         enable_read_thread_.store(other.enable_read_thread_.load());
         set_position_.store(other.set_position_.load()); // TODO - this might not matter since it isn't a persistent config item?
+        type_string_control_mode_.store(other.type_string_control_mode_.load());
     }
     return *this;
 }
@@ -772,6 +774,202 @@ bool TalonFXProCIParams::readContinuousWrap(const ros::NodeHandle &n)
 bool TalonFXProCIParams::readEnableReadThread(const ros::NodeHandle &n)
 {
     readIntoScalar(n, "enable_read_thread", enable_read_thread_);
+    return true;
+}
+
+bool TalonFXProCIParams::readTypeStringControlMode(const ros::NodeHandle &n)
+{
+    if (std::string type_str; n.getParam("type", type_str))
+    {
+        // Controller set to base class - no default type
+        if (type_str == "talonfxpro_controllers/TalonFXProControllerInterface")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::First;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDutyCycleOutController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DutyCycleOut;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::TorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProVoltageOutController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::VoltageOut;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProPositionDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::PositionDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProPositionVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::PositionVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProPositionTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::PositionTorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProVelocityDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::VelocityDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProVelocityVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::VelocityVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProVelocityTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::VelocityTorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicExpoDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicExpoVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicExpoTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicExpoTorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicVelocityDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicVelocityVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProMotionMagicVelocityTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityTorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDynamicMotionMagicDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDynamicMotionMagicVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDynamicMotionMagicTorqueCurrentFOCController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicTorqueCurrentFOC;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProFollowerController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::Follower;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProStrictFollowerController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::StrictFollower;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProNeutralOutController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::NeutralOut;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProCoastOutController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::CoastOut;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProStaticBrakeController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::StaticBrake;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialDutyCycleOutController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialDutyCycleOut;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialVoltageOutController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialVoltageOut;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialPositionDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialPositionDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialPositionVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialPositionVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialVelocityDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialVelocityDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialVelocityVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialVelocityVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialMotionMagicDutyCycleController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialMotionMagicDutyCycle;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialMotionMagicVoltageController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialMotionMagicVoltage;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialFollowerController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialFollower;
+            return true;
+        }
+        if (type_str == "talonfxpro_controllers/TalonFXProDifferentialStrictFollowerController")
+        {
+            type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::DifferentialStrictFollower;
+            return true;
+        }
+        ROS_ERROR_STREAM("Unknown control mode " << type_str << " for joint " << joint_name_);
+        return false;
+    }
     return true;
 }
 
@@ -1764,7 +1962,8 @@ bool TalonFXProControllerInterface::readParams(const ros::NodeHandle &n, TalonFX
            params.readMotionMagic(n) &&
            params.readContinuousWrap(n) &&
            params.readControl(n) &&
-           params.readEnableReadThread(n);
+           params.readEnableReadThread(n) &&
+           params.readTypeStringControlMode(n);
 }
 
 void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
@@ -1860,6 +2059,18 @@ bool TalonFXProControllerInterface::setInitialControlMode(void)
 {
     ROS_INFO_STREAM("TalonFXPro " << talon_.getName() << " base class setInitialControlMode");
     return true;
+}
+
+void TalonFXProControllerInterface::setControlModeFromTypeString(void)
+{
+    if (params_.type_string_control_mode_ == hardware_interface::talonfxpro::TalonMode::First)
+    {
+        ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " : Can't set mode because type: was set to base class");
+    }
+    else
+    {
+        talon_->setControlMode(params_.type_string_control_mode_);
+    }
 }
 
 //

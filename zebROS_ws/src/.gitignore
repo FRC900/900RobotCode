@@ -10,6 +10,7 @@ ar_track_alvar
 control_toolbox
 cpu_monitor
 ddynamic_reconfigure
+ddynamic_reconfigure_python
 pid
 px_ros_pkg
 realsense

@@ -66,7 +66,7 @@ four_bar_controller_2023:
     # trying to drive down to prevent killing the motor
     four_bar_zeroing_timeout:  2.0
     four_bar:
-        type: talon_controllers/TalonFXProControllerInterface 
+        type: talonfxpro_controllers/TalonFXProControllerInterface 
         joint: four_bar
         close_loop_values:
             - {kP: 400.0, kI: 0.000, kD: 0.0, kV: 7.5, kS: 0.0}

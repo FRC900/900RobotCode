@@ -120,6 +120,7 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
             if (!four_bar_joint_.initWithNode(command_iface, nullptr, controller_nh, four_bar_params))
             {
                 ROS_ERROR("Cannot initialize four_bar joint!");
+                return false;
             }
             bool dynamic_reconfigure = true;
             controller_nh.param("dynamic_reconfigure", dynamic_reconfigure, dynamic_reconfigure);

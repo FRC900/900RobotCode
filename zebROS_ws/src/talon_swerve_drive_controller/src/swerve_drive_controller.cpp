@@ -273,9 +273,15 @@ bool init(hardware_interface::RobotHW *hw,
 							  << " and steering motors with joint name: " << steering_names_[i]);
 
 		ros::NodeHandle l_nh(controller_nh, speed_names_[i]);
-		speed_joints_[i].initWithNode(hw->get<COMMAND_INTERFACE_TYPE>(), nullptr, l_nh);
+		if (!speed_joints_[i].initWithNode(hw->get<COMMAND_INTERFACE_TYPE>(), nullptr, l_nh))
+		{
+			return false;
+		}
 		ros::NodeHandle r_nh(controller_nh, steering_names_[i]);
-		steering_joints_[i].initWithNode(hw->get<COMMAND_INTERFACE_TYPE>(), nullptr, r_nh);
+		if (!steering_joints_[i].initWithNode(hw->get<COMMAND_INTERFACE_TYPE>(), nullptr, r_nh))
+		{
+			return false;
+		}
 	}
 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);

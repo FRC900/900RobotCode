@@ -89,6 +89,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	if(!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
 	{
 		ROS_ERROR("Cannot initialize elevator joint!");
+		return false;
 	}
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);

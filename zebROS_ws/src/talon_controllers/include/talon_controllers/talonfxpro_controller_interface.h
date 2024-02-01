@@ -85,6 +85,8 @@ public:
 
     bool readEnableReadThread(const ros::NodeHandle &n);
 
+    bool readTypeStringControlMode(const ros::NodeHandle &n);
+
     const std::string &getJointName(void) const;
 
     std::string joint_name_;
@@ -192,6 +194,8 @@ public:
     std::atomic<bool> enable_read_thread_{true};
 
     std::atomic<double> set_position_{0};
+
+    std::atomic<hardware_interface::talonfxpro::TalonMode> type_string_control_mode_{hardware_interface::talonfxpro::TalonMode::Disabled};                                                     
 };
 
 class TalonFXProControllerInterface
@@ -532,6 +536,13 @@ protected:
     std::vector<hardware_interface::talonfxpro::TalonFXProCommandHandle> follower_talons_;
 
     virtual bool setInitialControlMode(void);
+    
+    // Normally the control mode is determined by creating a derived fixed mode class
+    // or dynmically changed by a controller calling setControlMode. This function
+    // is used in cases where we need to use the type: param from the config file.
+    // This is typically only used for cases where we're hacking our controller
+    // interface code into existing ROS packages
+    void setControlModeFromTypeString(void);
 
     static inline const std::map<std::string, int> limit_type_enum_map_ {
         {"NormallyOpen", static_cast<int>(hardware_interface::talonfxpro::LimitType::NormallyOpen)},
