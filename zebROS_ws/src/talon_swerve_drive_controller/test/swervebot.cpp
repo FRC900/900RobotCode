@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
 	SimTime sim_time;
 	SwerveBot<4> robot;
-	talon_swerve_drive_controller::TalonSwerveDriveController<4, hardware_interface::talonfxpro::TalonFXProCommandInterface> swerve_controller;
+	talon_swerve_drive_controller::TalonSwerveDriveController<4> swerve_controller;
 
 	// Initialize sensor state before starting controller
 	robot.set_motor_angles({0, 0, 0, 0});

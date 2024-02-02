@@ -66,15 +66,15 @@
 namespace talon_swerve_drive_controller
 {
 
-template <size_t WHEELCOUNT, typename COMMAND_INTERFACE_TYPE>
+template <size_t WHEELCOUNT>
 class TalonSwerveDriveController
-	: public controller_interface::MultiInterfaceController<COMMAND_INTERFACE_TYPE, hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface>
+	: public controller_interface::MultiInterfaceController<hardware_interface::talonfxpro::TalonFXProCommandInterface, hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface>
 {
 public:
 
 bool init(hardware_interface::RobotHW *hw,
 		ros::NodeHandle &/*root_nh*/,
-		ros::NodeHandle &controller_nh)
+		ros::NodeHandle &controller_nh) override
 {
 	const std::string complete_ns = controller_nh.getNamespace();
 	const size_t id = complete_ns.find_last_of('/');
@@ -273,12 +273,12 @@ bool init(hardware_interface::RobotHW *hw,
 							  << " and steering motors with joint name: " << steering_names_[i]);
 
 		ros::NodeHandle l_nh(controller_nh, speed_names_[i]);
-		if (!speed_joints_[i].initWithNode(hw->get<COMMAND_INTERFACE_TYPE>(), nullptr, l_nh))
+		if (!speed_joints_[i].initWithNode(hw->get<hardware_interface::talonfxpro::TalonFXProCommandInterface>(), nullptr, l_nh))
 		{
 			return false;
 		}
 		ros::NodeHandle r_nh(controller_nh, steering_names_[i]);
-		if (!steering_joints_[i].initWithNode(hw->get<COMMAND_INTERFACE_TYPE>(), nullptr, r_nh))
+		if (!steering_joints_[i].initWithNode(hw->get<hardware_interface::talonfxpro::TalonFXProCommandInterface>(), nullptr, r_nh))
 		{
 			return false;
 		}
@@ -415,7 +415,7 @@ bool init(hardware_interface::RobotHW *hw,
 	return true;
 }
 
-void starting(const ros::Time &time)
+void starting(const ros::Time &time) override
 {
 	std::array<double, WHEELCOUNT> steer_angles;
 	for (size_t k = 0; k < WHEELCOUNT; k++)
@@ -440,7 +440,7 @@ void starting(const ros::Time &time)
 	//odometry_.init(time);
 }
 
-void stopping(const ros::Time & time)
+void stopping(const ros::Time &time) override
 {
 	time_before_brake_ = 0;
 	std::array<double, WHEELCOUNT> steer_angles;
@@ -451,7 +451,7 @@ void stopping(const ros::Time & time)
 	brake(steer_angles, time, true);
 }
 
-void update(const ros::Time &time, const ros::Duration &period)
+void update(const ros::Time &time, const ros::Duration &period) override
 {
 	// Grab current steering angle
 	std::array<double, WHEELCOUNT> steer_angles;
@@ -480,21 +480,13 @@ void update(const ros::Time &time, const ros::Duration &period)
 	{
 		if (!dont_set_angle_mode_)
 		{
-			steering_joints_[i].setPIDFSlot(0);
-			if constexpr (std::is_same_v<COMMAND_INTERFACE_TYPE, hardware_interface::TalonCommandInterface>)
-			{
-				steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
-			}
-			else
-			{
-				steering_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage);
-			}
+			steering_joints_[i].setControlSlot(0);
+			steering_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage);
 			// TODO - don't think this is ever set to any other value, might be OK to move it
 			// to init or starting or something
-			steering_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-			steering_joints_[i].setDemand1Value(0);
+			steering_joints_[i].setControlFeedforward(0);
 		}
-		speed_joints_[i].setPIDFSlot(0);
+		speed_joints_[i].setControlSlot(0);
 	}
 
 	// Special case for when the drive base is stopped
@@ -512,28 +504,29 @@ void update(const ros::Time &time, const ros::Duration &period)
 			// the drive base is currently configured.
 			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
-				// ROS_INFO_STREAM("PARKING CONFIG TIME DELAY stopping wheels!!!!!!!!!!!!!!!!======================================");
-				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-				speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-				speed_joints_[i].setDemand1Value(0);
+				speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::DutyCycleOut);
+				speed_joints_[i].setControlFeedforward(0);
 
-				if (neutral_mode_ == hardware_interface::NeutralMode::NeutralMode_Coast)
+				if (neutral_mode_ == hardware_interface::talonfxpro::NeutralMode::Coast)
 				{
 					// coast mode is now just ff term like before.  The small force commanded
 					// from the motor will slow the robot gradually vs. brake mode's immediate stop
-					speed_joints_[i].setCommand(last_wheel_sign_[i] * stopping_ff_);
+					speed_joints_[i].setControlOutput(last_wheel_sign_[i] * stopping_ff_);
 				}
 				else
 				{
 					// if we are in brake mode it is time to stop immediately.
 					// Setting speed to 0 will trigger brake mode
-					speed_joints_[i].setCommand(0);
+					speed_joints_[i].setControlOutput(0);
 				}
 				speed_joints_[i].setNeutralMode(neutral_mode_);
 
 				if (!dont_set_angle_mode)
 				{
-					steering_joints_[i].setCommand(speeds_angles_[i][1]);
+					steering_joints_[i].setControlOutput(0);
+					steering_joints_[i].setControlPosition(speeds_angles_[i][1]);
+					steering_joints_[i].setControlVelocity(0);
+					steering_joints_[i].setControlAcceleration(0);
 				}
 			}
 		}
@@ -563,7 +556,10 @@ void update(const ros::Time &time, const ros::Duration &period)
 	// Set wheel steering angles, as long as dont_set_angle_mode is false
 	for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
 	{
-		steering_joints_[i].setCommand(speeds_angles_[i][1]);
+		steering_joints_[i].setControlOutput(0);
+		steering_joints_[i].setControlPosition(speeds_angles_[i][1]);
+		steering_joints_[i].setControlVelocity(0);
+		steering_joints_[i].setControlAcceleration(0);
 	}
 
 	// Wait a bit after coming out of parking
@@ -574,12 +570,11 @@ void update(const ros::Time &time, const ros::Duration &period)
 		{
 			if (!percent_out_drive_mode)
 			{
-				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_Velocity);
-				speed_joints_[i].setCommand(speeds_angles_[i][0]);
+				speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::VelocityVoltage);
+				speed_joints_[i].setControlVelocity(speeds_angles_[i][0]);
 
 				// Add static feed forward in direction of current velocity
-				speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
-				speed_joints_[i].setDemand1Value(copysign(f_s_, speeds_angles_[i][0]));
+				speed_joints_[i].setControlFeedforward(copysign(f_s_, speeds_angles_[i][0]));
 				last_wheel_sign_[i] = copysign(1., speeds_angles_[i][0]);
 			}
 			else
@@ -587,10 +582,9 @@ void update(const ros::Time &time, const ros::Duration &period)
 				// ROS_INFO_STREAM("Percent out drive mode stopping wheels!!!!!!!!!!!!!!!!======================================");
 				// Debugging mode - used for robot characterization by sweeping
 				// from 0-100% output and measuring response
-				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-				speed_joints_[i].setCommand(hypot(curr_cmd.lin[0], curr_cmd.lin[1]));
-				speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-				speed_joints_[i].setDemand1Value(0);
+				speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::DutyCycleOut);
+				speed_joints_[i].setControlOutput(hypot(curr_cmd.lin[0], curr_cmd.lin[1]));
+				speed_joints_[i].setControlFeedforward(0);
 			}
 		}
 	}
@@ -602,11 +596,9 @@ void update(const ros::Time &time, const ros::Duration &period)
 		// position?
 		for (size_t i = 0; i < WHEELCOUNT; ++i)
 		{
-			// ROS_INFO_STREAM("Coming out of parking stopping wheels!!!!!!!!!!!!!!!!======================================");
-			speed_joints_[i].setCommand(0);
-			speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-			speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-			speed_joints_[i].setDemand1Value(0);
+			speed_joints_[i].setControlOutput(0);
+			speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::DutyCycleOut);
+			speed_joints_[i].setControlFeedforward(0);
 		}
 	}
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
@@ -809,15 +801,16 @@ void brake(const std::array<double, WHEELCOUNT> &steer_angles, const ros::Time &
 	const std::array<double, WHEELCOUNT> park_angles = swerveC_->parkingAngles(steer_angles);
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
-		// ROS_INFO_STREAM("Braking wheels!!!!!!!!!!!!!!!!======================================");
-		speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-		speed_joints_[i].setCommand(0.0);
-		speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-		speed_joints_[i].setDemand1Value(0);
-		speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Brake);
+		speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::DutyCycleOut);
+		speed_joints_[i].setControlOutput(0.0);
+		speed_joints_[i].setControlFeedforward(0);
+		speed_joints_[i].setNeutralMode(hardware_interface::talonfxpro::NeutralMode::Brake);
 		if (!dont_set_angle_mode && (park_when_stopped_ || force_parking_mode))
 		{
-			steering_joints_[i].setCommand(park_angles[i]);
+			steering_joints_[i].setControlOutput(0);
+			steering_joints_[i].setControlPosition(park_angles[i]);
+			steering_joints_[i].setControlVelocity(0);
+			steering_joints_[i].setControlAcceleration(0);
 		}
 	}
 	// Reset the timer which delays drive wheel velocity a bit after
@@ -906,10 +899,10 @@ bool setNeturalModeService(std_srvs::SetBool::Request& req, std_srvs::SetBool::R
 	if(this->isRunning())
 	{
 		if (req.data) {
-			neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Coast;
+			neutral_mode_ = hardware_interface::talonfxpro::NeutralMode::Coast;
 		}
 		else {
-			neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Brake;
+			neutral_mode_ = hardware_interface::talonfxpro::NeutralMode::Brake;
 		}
 	}
 	else
@@ -1017,10 +1010,8 @@ std::string name_; // Controller name, for debugging
 std::unique_ptr<swerve<WHEELCOUNT>> swerveC_; // Swerve math calculations object
 
 /// Hardware handles:
-//  Select type based onm the controller interface type
-using CONTROLLER_INTERFACE_TYPE = typename std::conditional_t<std::is_same_v<COMMAND_INTERFACE_TYPE, hardware_interface::TalonCommandInterface>, talon_controllers::TalonControllerInterface, talonfxpro_controllers::TalonFXProControllerInterface>;
-std::array<CONTROLLER_INTERFACE_TYPE, WHEELCOUNT> speed_joints_;
-std::array<CONTROLLER_INTERFACE_TYPE, WHEELCOUNT> steering_joints_;
+std::array<talonfxpro_controllers::TalonFXProControllerInterface, WHEELCOUNT> speed_joints_;
+std::array<talonfxpro_controllers::TalonFXProControllerInterface, WHEELCOUNT> steering_joints_;
 
 /// Velocity command related:
 struct Commands
@@ -1073,7 +1064,7 @@ std::atomic<bool> percent_out_drive_mode_{false}; // run drive wheels in open-lo
 
 // Switch between brake and coast mode for speed wheels when stopping the robot
 ros::ServiceServer set_neutral_mode_serv_;
-std::atomic<hardware_interface::NeutralMode> neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Brake;
+std::atomic<hardware_interface::talonfxpro::NeutralMode> neutral_mode_ = hardware_interface::talonfxpro::NeutralMode::Brake;
 
 // Used to toggle parking mode when stopped
 ros::ServiceServer park_serv_;
@@ -1136,18 +1127,8 @@ std::array<std::string, WHEELCOUNT> steering_names_;
 
 }; // class definition
 
-
-// The PLUGINLIB_EXPORT_CLASS() call below can't handle classes with more than 1 template arg, su 
-// use partial specialization here to remove one of them for the 4-wheel definition
-template <typename COMMAND_INTERFACE_TYPE>
-class TalonSwerveDriveController4 : public TalonSwerveDriveController<4, COMMAND_INTERFACE_TYPE>
-{
-};
-
 } // namespace talon_swerve_drive_controller
 
 #include <pluginlib/class_list_macros.h>
-template class talon_swerve_drive_controller::TalonSwerveDriveController4<hardware_interface::TalonCommandInterface>;
-template class talon_swerve_drive_controller::TalonSwerveDriveController4<hardware_interface::talonfxpro::TalonFXProCommandInterface>;
-PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController4<hardware_interface::TalonCommandInterface>, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController4<hardware_interface::talonfxpro::TalonFXProCommandInterface>, controller_interface::ControllerBase)
+template class talon_swerve_drive_controller::TalonSwerveDriveController<4>;
+PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController<4>, controller_interface::ControllerBase)
