@@ -13,6 +13,7 @@
 #include <algorithm>
 #include "tf2_ros/transform_listener.h"
 #include "pid_velocity_msg/PIDVelocity.h"
+#include <angles/angles.h>
 
 // #define DEBUG
 
@@ -239,7 +240,7 @@ class PathAction
 
 				if ((fabs(goal->position_path.poses[0].pose.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(goal->position_path.poses[0].pose.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
-					(fabs(command_msg.position - orientation_state) < final_rot_tol))
+					(angles::shortest_angular_distance(command_msg.position, orientation_state) < final_rot_tol))
 				{
 					ROS_INFO_STREAM("path_follower: successfully aligned to initial waypoint");
 					break;
@@ -353,7 +354,7 @@ class PathAction
 				ROS_INFO_STREAM("Path follower calculations took " << duration);
 				if ((fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
-					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol) &&
+					(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) < final_rot_tol) &&
 					(current_index >= (goal->position_path.poses.size() - 2)))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");

@@ -24,14 +24,42 @@ auto_mode_2: ["place_cone_high", "balance_facing_away", "snap_0_before_intake"] 
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 
 auto_mode_4: ["drive_out_community", "snap_0_before_intake"] # we now face the pieces at the end of this auto,
-auto_mode_5: [""]
-auto_mode_6: ["drive_out_community", "snap_0_before_intake"]
+auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map_rel_four_note_grid3_csv", "map_rel_four_note_grid4_csv"]
+auto_mode_6: ["relocalize", "map_rel_four_note_grid1_csv", "relocalize", "map_rel_four_note_grid2_csv", "relocalize", "map_rel_four_note_grid3_csv", "relocalize", "map_rel_four_note_grid4_csv"]
 
 auto_mode_7: ["map_rel_two_note_csv"]
 auto_mode_8: ["map_rel_four_note1_csv", "map_rel_four_note2_csv", "map_rel_four_note3_csv"]
 auto_mode_9: ["relocalize", "map_rel_four_note1_csv", "relocalize", "map_rel_four_note2_csv", "relocalize", "map_rel_four_note3_csv", "relocalize"]
 
 auto_mode_10: ["GetCone_csv"]
+
+map_rel_four_note_grid1_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid2_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid3_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid4_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
 
 map_rel_four_note1_csv:
   waypoint_actions: {}

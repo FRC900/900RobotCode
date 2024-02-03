@@ -824,11 +824,6 @@ class AutoNode {
 	}
 
 	bool relocalizefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
-		const double start_time = ros::Time::now().toSec();
-		// wait for like 0.2 seconds
-		double duration = 0.2;
-		ros::Time::sleepUntil(ros::Time::now() + ros::Duration(duration));
-
 		// make a std_srvs::Empty request
 		std_srvs::Empty srv;
 		// call the relocalize service
@@ -838,6 +833,7 @@ class AutoNode {
 			shutdownNode(ERROR, "Auto node - relocalize service call failed");
 			return false;
 		}
+
 		ROS_INFO_STREAM("Auto node - relocalize service call succeeded");
 		return true;
 	}
