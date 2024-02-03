@@ -28,4 +28,4 @@ if __name__ == "__main__":
     interpolating_map.insert(0, 1231)
     interpolating_map.insert(1, 5353)
     interpolating_map.insert(3, 13131)
-    print(interpolating_map[1])
+    print(interpolating_map[0.6])
