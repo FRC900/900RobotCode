@@ -1,0 +1,9 @@
+# goal
+uint8 INTAKE_CLAW=0
+uint8 OUTTAKE_CLAW=1
+uint8 mode
+---
+# feedback
+bool has_game_piece
+---
+# result

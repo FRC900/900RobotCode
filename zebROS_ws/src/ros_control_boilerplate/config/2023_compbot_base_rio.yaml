@@ -45,6 +45,8 @@ hardware_interface:
 
        - {name: joystick0, type: joystick, id: 0, local: true}
        - {name: button_box, type: joystick, id: 1, local: true}
+
+       - {name: claw_limit_switch, type: digital_input, dio_channel: 7, invert: true, local: true}
          #- {name: joystick2, type: joystick, id: 2, local: true}
          #- {name: joystick_rumble0, type: rumble, rumble_port: 0}
          #- {name: joystick_rumble2, type: rumble, rumble_port: 2}

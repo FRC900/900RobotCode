@@ -47,6 +47,12 @@ hardware_interface:
        - {name: four_bar, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
 
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+
+       - {name: note_conveyor, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
+       - {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+
+       - {name: claw, type: can_talon_srx, can_bus: can0, can_id: 54, local: true}
+       - {name: claw_limit_switch, type: digital_input, local: false}
        
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
@@ -238,3 +244,24 @@ swerve_drive_state_controller:
         offset: 6.000
     fr_angle:
         offset: 12.9
+
+note_conveyor_talonfxpro_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: note_conveyor
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Coast
+
+note_diverter_talonfxpro_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: note_diverter
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Coast
+
+claw_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: claw
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+    voltage_compensation_saturation: 13

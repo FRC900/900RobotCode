@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="diverter">
+		<node name="diverter_server_2024" pkg="behaviors" type="2024_diverter_server.py" output="screen"/>
+		<rosparam command="load" file="$(find behaviors)/config/conveyor_diverter_config.yaml"/>
+	</group>
+</launch>

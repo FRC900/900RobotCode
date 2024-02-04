@@ -62,6 +62,9 @@
 			 pigeon2_imu_state_controller
 			 latency_compensation_state_controller
 			 swerve_drive_state_controller
+			 note_diverter_controller
+			 note_conveyor_controller
+			 claw_controller
 			 robot_code_ready_controller" />
 			 <!--
 			-->
