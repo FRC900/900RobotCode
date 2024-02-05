@@ -30,7 +30,8 @@ std::map<int, std::string> parsePBTXT(std::string filename) {
 	while (std::regex_search(searchStart, str.cend(), res, pbtxtRegex))
 	{
 		std::cout << res[1] << " = " << res[2] << std::endl;
-		pbtxtMap[std::stoi(res[1])] = res[2];
+		// +1 is because yaml is 0 indexed but stage doesn't like markers with id 0
+		pbtxtMap[std::stoi(res[1]) + 1] = res[2];
 		searchStart = res.suffix().first;
 	}
 	return pbtxtMap;

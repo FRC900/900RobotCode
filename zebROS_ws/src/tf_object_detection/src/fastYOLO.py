@@ -67,10 +67,11 @@ def run_inference_for_single_image(msg):
         cls_id = int(label)
         obj = TFObject()
         obj.confidence = score
-        obj.tl.x = bbox[0]
-        obj.tl.y = bbox[1]
-        obj.br.x = bbox[2]
-        obj.br.y = bbox[3]
+        height, width = ori.shape[:2]
+        obj.tl.x = max(bbox[0], 0)
+        obj.tl.y = max(bbox[1], 0) 
+        obj.br.x = min(bbox[2], width)
+        obj.br.y = min(bbox[3], height)
         obj.id = cls_id # number
         obj.label = DETECTRON.name_from_cls_id(cls_id) # string
         '''

@@ -103,7 +103,7 @@
 
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
-			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2023_twist_mux.yaml"/>
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2024_twist_mux.yaml"/>
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
@@ -141,6 +141,9 @@
 	</include>
 
 	<include file="$(find behaviors)/launch/2023_align_to_grid.launch">
+	</include>
+
+	<include file="$(find behaviors)/launch/drive_to_object.launch">
 	</include>
 
 	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>

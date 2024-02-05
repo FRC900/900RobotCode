@@ -1,5 +1,10 @@
 topics:
 -
+  name    : auto_note_pickup
+  topic   : /auto_note_align/cmd_vel
+  timeout : 0.05
+  priority: 900
+-
   name    : combine orient strafing
   topic   : /teleop/orient_strafing/swerve_drive_controller/cmd_vel
   timeout : 0.2

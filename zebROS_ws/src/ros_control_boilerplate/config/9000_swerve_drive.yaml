@@ -40,9 +40,9 @@ swerve_drive_controller:
     encoder_steering_get_units: 1
     encoder_steering_set_units: 1
 
-    # bl fl br fr
+
     # 17.5 in (0.4445 m) long, 15.5 in (0.3937) wide
-    wheel_coords: [[-0.22225, 0.19685], [0.22225, 0.19685], [-0.22225, -0.19685], [0.22225, -0.19685]]
+    wheel_coords: [[-0.19685, 0.22225], [0.19685, 0.22225], [-0.19685, -0.22225], [0.19685, -0.22225]]
     parking_config_time_delay: 0.75
     drive_speed_time_delay: 0.125
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
@@ -101,10 +101,11 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
+    # fl -> bl, fr -> fl, bl -> br, br -> fr
     fl_angle:
         joint: fl_angle
         feedback_sensor_source: RemoteCANCoder
-        feedback_remote_sensor_id: 11
+        feedback_remote_sensor_id: 12
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0
@@ -116,7 +117,7 @@ swerve_drive_controller:
     fr_angle:
         joint: fr_angle
         feedback_sensor_source: RemoteCANCoder
-        remote_feedback_device_id0: 12
+        remote_feedback_device_id0: 14
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0
@@ -128,7 +129,7 @@ swerve_drive_controller:
     br_angle:
         joint: br_angle
         feedback_sensor_source: RemoteCANCoder
-        remote_feedback_device_id0: 14
+        remote_feedback_device_id0: 13
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0
@@ -140,7 +141,7 @@ swerve_drive_controller:
     bl_angle:
         joint: bl_angle
         feedback_sensor_source: RemoteCANCoder
-        remote_feedback_device_id0: 13
+        remote_feedback_device_id0: 11
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0

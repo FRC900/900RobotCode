@@ -83,7 +83,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		const float objDistance = usefulDepthMat(cvDepth->image, rect, algorithm, false);
 		if (objDistance < 0 || isnan(objDistance))
 		{
-			ROS_ERROR_STREAM_THROTTLE(2, "Depth of object at " << objRectCenter << " with bounding rect " << rect << " invalid : " << objDistance);
+			ROS_ERROR_STREAM_THROTTLE(0.5, "Depth of object at " << objRectCenter << " with bounding rect " << rect << " invalid : " << objDistance);
 			return;
 		}
 		const cv::Point3f world_coord_scaled = cc.screen_to_world(rect, worldObject.id, objDistance);

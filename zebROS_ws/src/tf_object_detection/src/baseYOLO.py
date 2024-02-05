@@ -238,12 +238,11 @@ class YOLO900:
             # Compute padding [width, height]
             new_unpad = int(round(width * self.ratio)), int(round(height * self.ratio))
 
-            if debug:
-                dw, dh = self.engine_W - new_unpad[0], self.engine_H - new_unpad[1]  # wh padding
-                dw /= 2  # divide padding into 2 sides
-                dh /= 2
-                self.dwdh = torch.asarray((dw, dh) * 2, dtype=torch.float32, device=self.device)
             
+            dw, dh = self.engine_W - new_unpad[0], self.engine_H - new_unpad[1]  # wh padding
+            dw /= 2  # divide padding into 2 sides
+            dh /= 2
+            self.dwdh = torch.asarray((dw, dh) * 2, dtype=torch.float32, device=self.device)
             
             # will shift image down this much, and use to determine where to draw letterbox color
             self.pixels_to_shift_down = self.engine_H - new_unpad[1]

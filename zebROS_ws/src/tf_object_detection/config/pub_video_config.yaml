@@ -1,7 +1,7 @@
 pub_topic: "/zed_objdetect/left/image_rect_color"
 framerate: 10
 show_video: true
-empty_video: false # Instead of displaying a video, send an empty 1080p image, mainly useful for triggering trtdetect.py to start initializing
+empty_video: true # Instead of displaying a video, send an empty 1080p image, mainly useful for triggering trtdetect.py to start initializing
 
 #Edit me!
 filename: "1678.mp4"

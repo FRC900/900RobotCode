@@ -289,7 +289,11 @@ class AutoNode {
 		ROS_INFO_STREAM("auto_node : addding " << req.path_name << " to premade_paths");
 		premade_position_paths_[req.path_name] = req.dynamic_position_path;
 		premade_velocity_paths_[req.path_name] = req.dynamic_velocity_path;
-
+		premade_position_waypoints_[req.path_name] = nav_msgs::Path();
+		premade_velocity_waypoints_[req.path_name] = nav_msgs::Path();
+		for (int i = 0; i < req.dynamic_position_path.poses.size(); i++) {
+			waypointsIdxs_[req.path_name].push_back(0);
+		}
 		return true;
 	}
 

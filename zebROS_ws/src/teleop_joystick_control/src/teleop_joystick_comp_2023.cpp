@@ -39,6 +39,8 @@
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 #include <talon_state_msgs/TalonFXProState.h>
 #include <std_srvs/SetBool.h>
+#include "behavior_actions/DriveToObjectAction.h"
+
 
 struct DynamicReconfigVars
 {
@@ -203,6 +205,8 @@ void zero_all_diag_commands(void)
 }
 
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::DriveToObjectAction>> auto_note_pickup_ac;
+
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>> placing_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>> pathing_ac;
@@ -345,6 +349,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		pathing_ac->cancelAllGoals();
 		align_and_place_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		auto_note_pickup_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		pathed = false;
 	}
 	if(button_box.redRelease) {
@@ -962,11 +967,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 #ifdef ROTATION_WITH_STICK
 			if(joystick_states_array[0].leftTrigger > config.trigger_threshold)
 			{
+				ROS_INFO_STREAM("LEFT TRIGGER");
 				if(!joystick1_left_trigger_pressed)
 				{
-					behavior_actions::Intaking2023Goal goal;
-					goal.piece = intake_piece;
-					intaking_ac->sendGoal(goal);
+					behavior_actions::DriveToObjectGoal goal;
+					goal.id = "note";
+					goal.distance_away = 0.5;
+					goal.tolerance = 0.1; // todo make configurable
+					auto_note_pickup_ac->sendGoal(goal);
+					ROS_WARN_STREAM("Auto picking up notes");
 				}
 
 				joystick1_left_trigger_pressed = true;
@@ -975,7 +984,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				if(joystick1_left_trigger_pressed)
 				{
-					intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+					auto_note_pickup_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_left_trigger_pressed = false;
@@ -1399,6 +1408,7 @@ int main(int argc, char **argv)
 	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
 	pathing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>>("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true);
 	align_and_place_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>>("/align_and_place_grid", true);
+	auto_note_pickup_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::DriveToObjectAction>>("/drive_to_object/drive_to_object", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();

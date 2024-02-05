@@ -35,14 +35,15 @@ hardware_interface:
     can_interface: can0
 
     joints:
-        - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
-        - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
-        - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
-        - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
-        - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
-        - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
-        - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
-        - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
+        # fl -> bl, fr -> fl, bl -> br, br -> fr
+        - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
+        - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
+        - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
+        - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
+        - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
+        - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
+        - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
+        - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
 
         #- {name: pcm, type: pcm, pcm_id: 0}
         - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}

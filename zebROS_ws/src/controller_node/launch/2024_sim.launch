@@ -104,7 +104,7 @@
 	-->
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
-			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2023_twist_mux.yaml"/>
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2024_twist_mux.yaml"/>
 			<remap from="cmd_vel_out" to="/cmd_vel"/>
 		</node>
 
@@ -124,7 +124,8 @@
 	</group>
 
 	<include file="$(find fake_sensors)/launch/apriltag_sim.launch"/>
-	<include file="$(find behaviors)/launch/2023_align_to_grid.launch">
+
+	<include file="$(find behaviors)/launch/drive_to_object.launch">
 	</include>
 
 	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>

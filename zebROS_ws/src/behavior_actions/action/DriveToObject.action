@@ -1,0 +1,12 @@
+# goal
+string id
+float64 distance_away
+float64 tolerance
+---
+# result
+bool success
+---
+# feedback
+float64 x_error
+float64 y_error
+float64 angle_error

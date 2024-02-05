@@ -106,6 +106,7 @@ add_action_files(
 		Claw2024.action
 		#GoToColor.action
 		#RotatePanel.action
+		DriveToObject.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs)

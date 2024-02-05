@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   talon_controller_msgs
   #teraranger_array
   tf2_ros
+  path_follower # for axis_state.h
 )
 
 include_directories(
@@ -136,7 +137,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
    #INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs path_follower
    DEPENDS 
 )
 
@@ -150,6 +151,9 @@ add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
 add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(publish_pid_cmd_vel_node ${catkin_LIBRARIES})
 
+add_executable(drive_to_object_node src/drive_to_object.cpp)
+target_link_libraries(drive_to_object_node ${catkin_LIBRARIES})
+add_dependencies(drive_to_object_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2023 actionlib servers
 add_executable(path_to_apriltag src/path_to_apriltag.cpp)
@@ -235,11 +239,9 @@ target_link_libraries(2022_ejecting_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_ejecting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 endif()
 
-if (0)
 add_executable(game_piece_path_server src/game_piece_path_gen.cpp)
 target_link_libraries(game_piece_path_server ${catkin_LIBRARIES})
 add_dependencies(game_piece_path_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-endif()
 
 # 2020 actionlib servers
 if (0)
