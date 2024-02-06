@@ -1,11 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-
 	<!-- GDB functionality -->
 	<arg name="debug" default="false" />
 	<arg unless="$(arg debug)" name="launch_prefix" value="" />
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args " />
-
 
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
@@ -14,17 +12,12 @@
 	<arg name="primary_imu" default="PIGEON2" />
 
 	<group ns="frcrobot_jetson">
-		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson_sim.yaml" command="load" if="$(eval arg('hw_or_sim')=='sim')"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson.yaml" command="load" if="$(eval arg('hw_or_sim')=='hw')"/>
-
+		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_swerve_drive_phoenix6.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_elevator_phoenix6_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_four_bar_phoenix6_params.yaml" command="load"/>
 		
-		<include file="$(find moveit_launch)/launch/2023_moveit_sim.launch" if="$(eval arg('hw_or_sim')=='sim')">
-		</include>
-			
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
 		-->
@@ -62,9 +55,6 @@
 			 pigeon2_imu_state_controller
 			 latency_compensation_state_controller
 			 swerve_drive_state_controller
-			 note_diverter_controller
-			 note_conveyor_controller
-			 claw_controller
 			 robot_code_ready_controller" />
 			 <!--
 			-->

@@ -47,8 +47,7 @@ hardware_interface:
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 15, local: true}
        
        #arm
-       - {name: arm_elbow, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
-       - {name: arm_wrist, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
+       - {name: arm, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
 
        #climb
        - {name: climb_leader, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
@@ -59,9 +58,11 @@ hardware_interface:
        - {name: shooter_right, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
 
        #Claw/Diverter
-       - {name: claw_diverter, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
+       # TODO - see if these need to be merged?
+       - {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+       - {name: claw, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
 
-       
+       - {name: claw_limit_switch, type: digital_input, local: false}
        
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
@@ -74,7 +75,6 @@ hardware_interface:
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
 
        - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
-    #    - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: intake, type: talonfx} ]}
 
 # Create controllers for each joint
 #
@@ -87,47 +87,6 @@ hardware_interface:
 # /frcrobot/joint1_talon_controller/command
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
-
-minifrc_moveit_controller:
-    type: talon_position_controllers/JointTrajectoryController
-    joints:
-        - base_arm
-        - second_stage_arm
-    base_arm:
-        type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
-        joint: base_arm
-        # DONT SET THIS FOR SIM !!! 
-        #feedback_sensor_source: RemoteCANCoder
-        #remote_feedback_device_id0: 21
-        #neutral_deadband: 0.01
-        close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
-        forward_limit_enable: False
-        reverse_limit_enable: False
-        dynamic_reconfigure: True
-    second_stage_arm:
-        type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
-        joint: second_stage_arm
-        # DONT SET THIS FOR SIM !!! 
-        #feedback_sensor_source: RemoteCANCoder
-        #remote_feedback_device_id0: 21
-        #neutral_deadband: 0.01
-        close_loop_values:
-            - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
-        invert: clockwise_positive
-        neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
-        forward_limit_enable: False
-        reverse_limit_enable: False
-        dynamic_reconfigure: True
-
 
 intake_talonfxpro_controller:
     type: talonfxpro_controllers/TalonFXProDutyCycleOutController
@@ -236,3 +195,24 @@ swerve_drive_state_controller:
         offset: 6.000
     fr_angle:
         offset: 12.9
+
+note_conveyor_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: intake
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Coast
+
+note_diverter_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: note_diverter
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Coast
+
+claw_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: claw
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+    voltage_compensation_saturation: 10

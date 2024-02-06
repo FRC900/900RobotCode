@@ -5,11 +5,9 @@ import actionlib
 
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
-from behavior_actions.msg import Claw2024Feedback, Claw2024Result, Claw2024Goal, Claw2024Action
+from behavior_actions.msg import Claw2024Result, Claw2024Goal, Claw2024Action
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
-
-from time import sleep
 
 class Claw2024ActionServer(object):
     # create messages that are used to publish feedback/result
@@ -25,6 +23,7 @@ class Claw2024ActionServer(object):
     def execute_cb(self, goal: Claw2024Goal):
         pct_out = Float64()
         success = True
+        r = rospy.Rate(10)
         if goal.mode == goal.INTAKE_CLAW:
             pct_out.data = intake_speed
             self.claw_pub.publish(pct_out)
@@ -52,7 +51,7 @@ class Claw2024ActionServer(object):
                     break
                 r.sleep()
 
-            sleep(delay)
+            rospy.Rate(delay).sleep()
             pct_out.data = 0
             self.claw_pub.publish(pct_out)
             if success:
@@ -75,19 +74,18 @@ def dyn_rec_callback(config, level):
     global intake_speed
     global outtake_speed
     global delay
-    intake_speed = config["intake_speed"] / 13.0
-    outtake_speed = config["outtake_speed"] / 13.0
+    intake_speed = config["intake_speed"]
+    outtake_speed = config["outtake_speed"]
     delay = config["delay"]
     return config
 
 if __name__ == '__main__':
     rospy.init_node('claw_server_2024')
-    r = rospy.Rate(10)
 
     ddynrec = DDynamicReconfigure("claw_dyn_rec")
-    ddynrec.add_variable("intake_speed", "float/double variable", 1.0, 0.0, 13.0)
-    ddynrec.add_variable("outtake_speed", "float/double variable", 1.0, 0.0, 13.0)
-    ddynrec.add_variable("delay", "float/double variable", 0.5, 0.0, 1.0)
+    ddynrec.add_variable("intake_speed", "float/double variable", rospy.get_param("intake_speed"), 0.0, 13.0)
+    ddynrec.add_variable("outtake_speed", "float/double variable", rospy.get_param("outtake_speed"), 0.0, 13.0)
+    ddynrec.add_variable("delay", "float/double variable", rospy.get_param("outtake_stop_delay"), 0.0, 1.0)
     ddynrec.start(dyn_rec_callback)
     
     server = Claw2024ActionServer(rospy.get_name())

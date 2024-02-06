@@ -1,11 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-
 	<!-- GDB functionality -->
 	<arg name="debug" default="false" />
 	<arg unless="$(arg debug)" name="launch_prefix" value="" />
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args " />
-
 
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
@@ -15,13 +13,8 @@
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_base_jetson.yaml" command="load"/>
-
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_phoenix6.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
-		
-		
-		<include file="$(find moveit_launch)/launch/2023_moveit_sim.launch" if="$(eval arg('hw_or_sim')=='sim')">
-		</include>
 			
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
@@ -44,6 +37,7 @@
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
 			 swerve_drive_controller
+			 swerve_drive_state_controller
 			 joint_state_controller_jetson
 			 joint_state_listener_controller_jetson
 			 talon_state_controller_jetson
@@ -56,7 +50,9 @@
 			 orchestra_state_controller
 			 pigeon2_imu_state_controller
 			 latency_compensation_state_controller
-			 swerve_drive_state_controller
+			 note_diverter_controller
+			 note_conveyor_controller
+			 claw_controller
 			 robot_code_ready_controller" />
 			 <!--
 			-->
@@ -88,7 +84,6 @@
 		<!-- <include file="$(find controller_node)/launch/fuse_odom.launch"/> -->
 	</group>
 
-	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2024" />
 	</include>
@@ -100,36 +95,33 @@
 		</node>
 	</group>
 	
-	<include file="$(find controller_node)/launch/hold_position.launch"/>
+	<!-- <include file="$(find controller_node)/launch/hold_position.launch"/> -->
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	
-	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
+	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<!-- Add 2024 actionlib servers here -->
+	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
+	<include file="$(find behaviors)/launch/2024_claw.launch"/>
 	
-
 	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>
 
-	<!-- <include file="$(find controller_node)/launch/2023_terabee.launch" if="$(eval arg('hw_or_sim')=='hw')">
-	</include> -->
-		
-	<!-- Will advertise /zed_objdetect/left/image_rect_color_throttle -->
-	<!--<node name="throttle_zed" pkg="topic_tools" type="throttle"  args="messages /zed_objdetect/left/image_rect_color 4" output="screen"/>-->
 	<!-- Consider adding 2024 launch file for recording -->
-	
-	
 	<include file="$(find controller_node)/launch/record_2024_compbot.launch" if="$(arg record)" />
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
 	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
 		<arg name="input_type" value="live_camera" if="$(eval hw_or_sim == 'hw')"/>
+		<!-- TODO : add camera position params here -->
 	</include>
 
+	<!-- 
 	<group ns="wpilib_odom">
 		<node name="odom_integrate_velocity_test" pkg="controller_node" type="odom_integrate_velocity_test.py"/>
-	</group>
+	</group> 
+	-->
 
 	<!--  <include file="$(find controller_node)/launch/rosbridge_websocket.launch"> -->
 </launch>

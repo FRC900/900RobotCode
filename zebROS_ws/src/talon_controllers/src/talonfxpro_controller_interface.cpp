@@ -797,7 +797,7 @@ bool TalonFXProCIParams::readTypeStringControlMode(const ros::NodeHandle &n)
             type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::TorqueCurrentFOC;
             return true;
         }
-        if (type_str == "talonfxpro_controllers/TalonFXProVoltageOutController")
+        if (type_str == "talonfxpro_controllers/TalonFXProVoltageOutputController")
         {
             type_string_control_mode_ = hardware_interface::talonfxpro::TalonMode::VoltageOut;
             return true;

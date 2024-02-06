@@ -37,16 +37,13 @@ hardware_interface:
        # controlled by the Jetson won't run. Use an unused CAN Id so that
        # the Rio sending 0'd control frames to it won't interfere with
        # operation of real Talons
-       - {name: dummy_talon, type: can_talon_srx, local: false}
+      #  - {name: dummy_talon, type: can_talon_srx, local: false}
 
-       # Add 2023 solenoids/digital inputs
-       
        - {name: pdh, type: pdh, module: 1}
 
        - {name: joystick0, type: joystick, id: 0, local: true}
        - {name: button_box, type: joystick, id: 1, local: true}
 
-       - {name: claw_limit_switch, type: digital_input, dio_channel: 7, invert: true, local: true}
          #- {name: joystick2, type: joystick, id: 2, local: true}
          #- {name: joystick_rumble0, type: rumble, rumble_port: 0}
          #- {name: joystick_rumble2, type: rumble, rumble_port: 2}

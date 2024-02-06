@@ -5,7 +5,7 @@ import actionlib
 
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
-from behavior_actions.msg import NoteDiverterFeedback, NoteDiverterResult, NoteDiverterGoal, NoteDiverterAction
+from behavior_actions.msg import NoteDiverterResult, NoteDiverterGoal, NoteDiverterAction
 from std_msgs.msg import Float64
 
 class NoteDiverterActionServer(object):
@@ -54,8 +54,8 @@ if __name__ == '__main__':
     rospy.init_node('diverter_server_2024')
     
     ddynrec = DDynamicReconfigure("diverter_dyn_rec")
-    ddynrec.add_variable("conveyor_speed", "float/double variable", 1.0, 0.0, 13.0)
-    ddynrec.add_variable("diverter_speed", "float/double variable", 1.0, 0.0, 13.0)
+    ddynrec.add_variable("conveyor_speed", "float/double variable", rospy.get_param("note_conveyor_speed"), 0.0, 13.0)
+    ddynrec.add_variable("diverter_speed", "float/double variable", rospy.get_param("note_diverter_speed"), 0.0, 13.0)
     ddynrec.start(dyn_rec_callback)
 
     server = NoteDiverterActionServer(rospy.get_name())
