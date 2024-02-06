@@ -25,14 +25,14 @@ def box_to_rect(box):
   return [x_min, y_min, x_max, y_max]
 
 def check_iou(detected_rect, previous_labels, threshold):
-  #print(f"check_iou : {detected_rect}")
+  # print(f"check_iou : {detected_rect}")
   for label in previous_labels:
     new_rect = []
     new_rect.append(min(label.bndbox.xmin, label.bndbox.xmax))
     new_rect.append(min(label.bndbox.ymin, label.bndbox.ymax))
     new_rect.append(max(label.bndbox.xmin, label.bndbox.xmax))
     new_rect.append(max(label.bndbox.ymin, label.bndbox.ymax))
-    #print(f"\tnew_rect = {new_rect}")
+    # print(f"\tnew_rect = {new_rect}")
     if (bb_intersection_over_union(detected_rect, new_rect) > threshold):
       return False
   return True
@@ -54,6 +54,7 @@ def bb_intersection_over_union(boxA, boxB):
         # area and dividing it by the sum of prediction + ground-truth
         # areas - the interesection area
         iou = interArea / float(boxAArea + boxBArea - interArea)
+        # print(f'\tiou = {iou}')
         # return the intersection over union value
         return iou
 
@@ -63,6 +64,8 @@ def main(args: argparse.Namespace) -> None:
 
     TEST_IMAGE_PATHS = sorted(glob.glob(args.input_files))
     print(f"TEST_IMAGE_PATHS = {TEST_IMAGE_PATHS}")
+
+    convert_map = { 'ds_numbers' : 'red_ds_number' , 'red_tape_corners' : 'red_tape_corner', 'blue_tape_corners' : 'blue_tape_corner'}
     for image_path in TEST_IMAGE_PATHS:
       print(f"image_path = {image_path}")
       image = cv2.imread(image_path)            
@@ -89,11 +92,14 @@ def main(args: argparse.Namespace) -> None:
       previous_labels = {}
       for cls_id in result.names:
           previous_labels[result.names[int(cls_id)]] = []
-      print(f"valid label['names'] = {valid_labels}")
+      # print(f"valid label['names'] = {valid_labels}")
+      robots = [o for o in voc.objects if o.name == 'robot']
       for obj in voc.objects:
-         if obj.name not in valid_labels:
+          if obj.name not in valid_labels:
             continue
-         previous_labels[obj.name].append(obj)
+          previous_labels[obj.name].append(obj)
+
+      voc.objects = [o for o in voc.objects if o.name in valid_labels]
 
       print(previous_labels)
       added_labels = False
@@ -110,15 +116,25 @@ def main(args: argparse.Namespace) -> None:
           print(f"label = {label}")
 
           rect = box_to_rect(box)
-          if not check_iou(rect, previous_labels[label], 0.1):
+          if not check_iou(rect, previous_labels[label], 0.2):
               print(f"label {label} failed IoU check")
               continue
+
+          # If a previous robot label matches up with a blue or red robot detection,
+          # use the original label bounding box with the updated color label
+          if 'robot' in label:
+              for r in robots:
+                if not check_iou(rect, [r], 0.4):
+                    rect = r.bndbox
+                    break
+
 
           # Generate a list of all AprilTags from the original XML.  Use this to
           # do an additional check of IoU if the current label is also an apriltag
           # This is to prevent a previously hand-labeled apriltag from being overwritten
           # by an auto-labeling of the wrong ID
           if 'april_tag' in label:
+            continue
             all_apriltags = []
             for p in previous_labels:
               all_apriltags.extend(previous_labels[p])
@@ -127,6 +143,8 @@ def main(args: argparse.Namespace) -> None:
                 print(f"label {label} failed combined AprilTag IoU check")
                 continue
 
+          if label in convert_map:
+            label = convert_map[label]
           print(f"Adding new {label} at {rect}")
           voc.objects.append(PascalObject(label, "Unspecified", truncated=False, difficult=False, bndbox=BndBox(rect[0], rect[1], rect[2], rect[3])))
           added_labels = True

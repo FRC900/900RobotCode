@@ -43,7 +43,7 @@ download: |
 
   from os import symlink
   from pathlib import Path
-  from random import shuffle
+  from random import random, seed, shuffle
 
   def convert_label(input_xml, out_path, test):
       def convert_box(size, box):
@@ -57,6 +57,20 @@ download: |
       root = tree.getroot()
       img_path = Path(root.find('path').text)
       img_name = img_path.name
+      
+      if 'FRC2024' in str(img_path):
+          only_notes = True
+          obj_count = 0
+          for obj in root.iter('object'):
+              obj_count += 1
+              cls = obj.find('name').text
+              if cls != 'note':
+                  only_notes = False
+                  break
+
+          if only_notes and (obj_count > 0) and (random() <= 0.9):
+              # print(f"Skipping {img_name} (only notes)")
+              return
 
       symlink(img_path, out_path / 'images' / tt / img_name)
 
@@ -79,10 +93,11 @@ download: |
 
 
   # Create destination dirs
+  seed()
   dir = Path(yaml['path'])  # dataset root dir
   for tt in ['train', 'test']:
-    for il in ['images', 'labels']:
-      (dir / il / tt).mkdir(exist_ok=True, parents=True)
+      for il in ['images', 'labels']:
+        (dir / il / tt).mkdir(exist_ok=True, parents=True)
 
   # Convert
   data_paths = [
@@ -105,4 +120,4 @@ download: |
   print(f"{len(input_xmls)} input images found, {split_point} training and {len(input_xmls) - split_point} validation")
 
   for i in range(len(input_xmls)):
-    convert_label(input_xmls[i], dir, i >= split_point)
+      convert_label(input_xmls[i], dir, i >= split_point)

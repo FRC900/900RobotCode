@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
+'''
+TODO - set up a command line arg with options for 1st time training, or transfer learning
+       or perhaps set it automatically based on the presence of a yolo model .pt file in the same directory
+1st time training:
+    - Use the default YOLOv8 args for patience, optimizer, lr0/lr (these are overridden by auto), warmup_bias_lr
 
+Trainsfer learning (tune these)
+       optimizer='SGD',
+        lr0=0.002,
+        warmup_bias_lr=0.001
+
+Note, the final learning rate is lr0 * lrf. Default lrf is 0.01, meaning the final learning rate is 1% of
+lr0. That's true in both cases, so leave this at the default for now.
+'''
 import argparse
 from ultralytics import YOLO
 from os import rename
@@ -12,6 +25,10 @@ def train_yolo(args: argparse.Namespace) -> None:
                     epochs=args.epochs,
                     imgsz=args.input_size,
                     batch=args.batch_size,
+                    patience=args.patience,
+                    optimizer='SGD',
+                    lr0=0.00125,
+                    warmup_bias_lr=args.warmup_bias_lr,
                     augment=True, #Pretty sure this is a no-op
                     fliplr=False,
                     flipud=False,
@@ -60,7 +77,7 @@ def train_yolo(args: argparse.Namespace) -> None:
                      tensorrt_path,
                      int8=True,
                      fp16=True,
-                     dataset_path='datasets/FRC2024/images/train',
+                     dataset_path='/home/ubuntu/tensorflow_workspace/2024Game/datasets/FRC2024/images/train',
                      calibration_file=calibration_path)
     new_pt_file_path = Path(pt_file_path).with_stem(args.output_stem)
     new_onnx_path = onnx_path.with_stem(args.output_stem)
@@ -87,6 +104,16 @@ def parse_args() -> argparse.Namespace:
                         type=int,
                         default=150,
                         help='Number of epochs to train')
+    parser.add_argument('--patience',
+                        type=int,
+                        default=50,
+                        help='Stop training early if this many epochs pass without improvement')
+    # When doing reinforcment learning from a previously trained model, use a lower initial
+    # learning rate to avoid jumping away from the previous model's weights
+    parser.add_argument('--warmup-bias-lr',
+                        type=float,
+                        default=0.001,
+                        help='Use a different learning rate for the first few epochs')
     parser.add_argument('--batch-size',
                         type=int,
                         default=12,

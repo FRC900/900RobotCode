@@ -5,3 +5,4 @@ trt_graph.pb
 *.md5sum*
 *.engine
 yolo*pt
+runs
