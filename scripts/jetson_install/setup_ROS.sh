@@ -85,6 +85,7 @@ sudo apt install -y \
 	ros-noetic-joy \
 	ros-noetic-map-server \
 	ros-noetic-marker-msgs \
+	ros-noetic-moveit \
 	ros-noetic*mux* \
 	ros-noetic-navigation \
 	ros-noetic-pcl-conversions \

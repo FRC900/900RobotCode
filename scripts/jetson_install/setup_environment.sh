@@ -27,6 +27,7 @@ sudo apt install -y \
     gdb \
     gfortran \
     git \
+    git-lfs \
     gstreamer1.0-plugins-* \
     hdf5-tools \
     htop \
@@ -112,24 +113,6 @@ sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 cd ..
 sudo rm -rf cmake-3.27.0*
 
-#install caffe
-# cd
-# git clone https://github.com/BVLC/caffe.git
-# cd caffe
-# mkdir build
-# cd build
-
-# if [ "$gpu" == "false" ] ; then
-    # cmake -DCPU_ONLY=ON ..
-# else
-    # cmake -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF ..
-# fi
-
-# make -j4 all
-#make test
-#make runtest
-# make -j4 install
-
 # Install tinyxml2
 cd
 git clone https://github.com/leethomason/tinyxml2.git
@@ -170,13 +153,14 @@ sudo apt update
 sudo apt install -y canivore-usb=1.11
 sudo apt-mark hold canivore-usb
 
-sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
-sudo bash -c "echo \"Name=can0\" >> /etc/systemd/network/80-can.network"
-sudo bash -c "echo \\"" >> /etc/systemd/network/80-can.network"
-sudo bash -c "echo \"[CAN\"] >> /etc/systemd/network/80-can.network"
-sudo bash -c "echo \"BitRate=1000K\" >> /etc/systemd/network/80-can.network"
-sudo systemctl enable systemd-networkd
-sudo systemctl restart systemd-networkd
+# Re-enable if we want to use a canivore usb interface
+# sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
+# sudo bash -c "echo \"Name=can0\" >> /etc/systemd/network/80-can.network"
+# sudo bash -c "echo \\"" >> /etc/systemd/network/80-can.network"
+# sudo bash -c "echo \"[CAN\"] >> /etc/systemd/network/80-can.network"
+# sudo bash -c "echo \"BitRate=1000K\" >> /etc/systemd/network/80-can.network"
+# sudo systemctl enable systemd-networkd
+# sudo systemctl restart systemd-networkd
 
 sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
 sudo bash -c "echo can >> /etc/modules"
@@ -189,7 +173,6 @@ sudo bash -c "echo gs_usb >> /etc/modules"
 #sudo rm /etc/modprobe.d/blacklist-mttcan.conf
 
 # Disable l4tbridge - https://devtalk.nvidia.com/default/topic/1042511/is-it-safe-to-remove-l4tbr0-bridge-network-on-jetson-xavier-/
-# sudo rm /etc/systemd/system/nv-l4t-usb-device-mode.sh /etc/systemd/system/multi-user.target.wants/nv-l4t-usb-device-mode.service
 sudo systemctl disable nv-l4t-usb-device-mode.service
 sudo systemctl stop nv-l4t-usb-device-mode.service
 
@@ -279,27 +262,28 @@ find /home/ubuntu/sparkmax -name \*linux\*zip | grep -v debug | xargs -n 1 unzip
 rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
-cd /home/ubuntu
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2024.1.1-beta-1/WPILib_Linux-2024.1.1-beta-1.tar.gz
-mkdir -p /home/ubuntu/wpilib/2024
-cd /home/ubuntu/wpilib/2024
-tar -xzf /home/ubuntu/WPILib_Linux-2024.1.1-beta-1.tar.gz
-tar -xzf WPILib_Linux-2024.1.1-beta-1/WPILib_Linux-2024.1.1-beta-1-artifacts.tar.gz
-rm /home/ubuntu/WPILib_Linux-2024.1.1-beta-1.tar.gz
-cd /home/ubuntu/wpilib/2024/tools
-python3 ToolsUpdater.py
-mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib
-cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib
-find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
-mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib
-cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib
-find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2024/maven /home/ubuntu/wpilib/2024/jdk /home/ubuntu/wpilib/2024/WPILib_Linux-2024.1.1-beta-1 /home/ubuntu/wpilb/2024/utility /home/ubuntu/wpilib/2024/tools /home/ubuntu/wpilib/2024/documentation /home/ubuntu/wpilib/2024/installUtils /home/ubuntu/wpilib/2024/vsCodeExtensions
+export WPILIBVER=2024.2.1
+cd /home/ubuntu &&\
+wget https://frcmaven.wpi.edu/ui/api/v1/download/contentBrowsing/installer/v$WPILIBVER/Linux/WPILib_Linux-$WPILIBVER.tar.gz &&\
+mkdir -p /home/ubuntu/wpilib/2024 &&\
+cd /home/ubuntu/wpilib/2024 &&\
+tar -xzf /home/ubuntu/WPILib_Linux-$WPILIBVER.tar.gz &&\
+tar -xzf WPILib_Linux-$WPILIBVER/WPILib_Linux-$WPILIBVER-artifacts.tar.gz &&\
+rm /home/ubuntu/WPILib_Linux-$WPILIBVER.tar.gz &&\
+cd /home/ubuntu/wpilib/2024/tools &&\
+python3 ToolsUpdater.py &&\
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib &&\
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib &&\
+find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o &&\
+find . -name \*.debug -delete &&\
+mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib &&\
+cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib &&\
+find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o &&\
+cd /home/ubuntu/wpilib/2024/tools &&\
+mv roborioteamnumbersetter roboRIOTeamNumberSetter.py .. &&\
+rm -rf /home/ubuntu/wpilib/2024/advantagescope /home/ubuntu/wpilib/2024/maven /home/ubuntu/wpilib/frc2024/jdk /home/ubuntu/wpilib/2024/WPILib_Linux-$WPILIBVER /home/ubuntu/wpilb2024/utility /home/ubuntu/wpilib/2024/jdk /home/ubuntu/wpilib/2024/documentation /home/ubuntu/wpilib/2024/vsCodeExtensions /home/ubuntu/wpilib/2024/vendordeps /home/ubuntu/wpilib/2024/utility /home/ubuntu/wpilib/2024/tools /home/ubuntu/wpilib/2024/frccode /home/ubuntu/wpilib/2024/installUtils /home/ubuntu/wpilib/2024/WPILIB_Linux-{$wpilibver} &&\
+mv /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib/google/protobuf /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib/google/protobuf.bak &&\
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
-find ~/wpilib -name \*.debug | xargs rm -rf
-find ~/wpilib -name athena | xargs rm -rf
-find ~/wpilib -name x86-64| xargs rm -rf
-find ~/wpilib -name raspbian | xargs rm -rf
 
 # Set up prereqs for deploy script
 mv ~/2023RobotCode ~/2023RobotCode.orig
@@ -314,19 +298,6 @@ sudo chmod 644 /usr/local/zed/settings/*
 
 cp ~/2023RobotCode/.vimrc ~/2023RobotCode/.gvimrc ~
 sudo cp ~/2023RobotCode/kjaget.vim /usr/share/vim/vim81/colors
-
-cd
-wget https://github.com/git-lfs/git-lfs/releases/download/v3.3.0/git-lfs-linux-arm64-v3.3.0.tar.gz
-mkdir git-lfs-install
-cd git-lfs-install
-tar -xzf ../git-lfs-linux-arm64-v3.3.0.tar.gz
-cd git-lfs-3.3.0
-sudo ./install.sh
-cd
-rm -rf git-lfs-linux-arm64-v3.3.0.tar.gz git-lfs-install
-git lfs install
-cd ~/2023RobotCode
-git lfs pull
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson NX"
@@ -361,68 +332,10 @@ git fetch origin
 git submodule update --init --recursive
 python3 ./install.py --clang-completer --system-libclang --ninja
 
-# Install tensorflow on Jetson
-sudo pip3 install -U pip testresources setuptools==49.6.0
-sudo pip3 install nvidia-pyindex
-sudo pip3 install uff graphsurgeon
-sudo pip3 install --ignore-installed -U cython
-sudo pip3 install -U --no-deps numpy==1.21.1 future==0.18.2 mock==3.0.5 h5py==3.6.0 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig
-#sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
-sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v502 tensorflow==1.15.5+nv22.12
-sudo pip3 install matplotlib
-
-# Fails with error install grpcio?
-#sudo pip3 install protobuf-compiler
-sudo apt install -y protobuf-compiler
-cd /home/ubuntu
-git clone https://github.com/tensorflow/models.git
-cd models
-git submodule update --init --recursive
-cd /home/ubuntu/models/research
-git checkout c787baad4fcf3e008107be0662a4138194b24522^
-protoc object_detection/protos/*.proto --python_out=.
-sudo pip3 install --ignore-installed .
-cd slim
-sudo pip3 install --ignore-installed .
-
-
-
-# Install cuda manually for now?
-#wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/cuda-keyring_1.0-1_all.deb
-#sudo dpkg -i cuda-keyring_1.0-1_all.deb
-#sudo apt-get update
-#sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev python3-libnvinfer-dev
-
-echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-12.0/compat" >> /home/ubuntu/.bashrc
-echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-11.4/targets/aarch64-linux/lib" >> /home/ubuntu/.bashrc
-
-cd
-export PATH=$PATH:/usr/local/cuda/bin
-git clone https://github.com/NVIDIA/TensorRT.git
-cd TensorRT
-git checkout 8.5.2
-git submodule update --init --recursive
-mkdir build
-cd build
-cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DCMAKE_CXX_STANDARD=17 ..
-cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72 87" -DCUDA_VERSION=11.4 -DCUDNN_VERSION=8.6.0 ..
-
-sudo ninja install
-
 sudo -H bash
 export PATH=$PATH:/usr/local/cuda/bin
 export CUDA_ROOT=/usr/local/cuda
 pip3 install pycuda
-
-sudo apt install -y  libsoup2.4-dev libjson-glib-dev libgstrtspserver-1.0-dev
-cd
-git clone https://github.com/FRC900/jetson-utils.git
-cd jetson-utils
-git checkout -t origin/ssd_norm
-mkdir build
-cd build
-cmake -GNinja ..
-sudo ninja install
 
 # Ultralytics YOLOv8 prereqs here
 sudo python3 -m pip install --no-cache-dir --upgrade pascal_voc
@@ -439,7 +352,6 @@ sudo python3 -m pip install --no-cache-dir --upgrade psutil
 
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnx>=1.12'
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnxsim>=0.4.1'
-sudo python3 -m pip install --no-cache-dir --upgrade 'pytorch_pfn_extras'
 wget https://nvidia.box.com/shared/static/mvdcltm9ewdy2d5nurkiqorofz1s53ww.whl -O onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
 sudo pip3 install onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
 rm onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
@@ -460,16 +372,17 @@ sudo pip3 install --no-cache-dir --verbose ${PYTORCH_WHL}
 rm ${PYTORCH_WHL}
 
 
-export TORCHVISION_VERSION=v0.15.0
+export TORCHVISION_VERSION=0.15
 export TORCH_CUDA_ARCH_LIST=7.2;8.7 
 sudo apt install -y libjpeg-dev libpng-dev zlib1g-dev
-git clone --branch ${TORCHVISION_VERSION} --recursive --depth=1 https://github.com/pytorch/vision torchvision
+git clone --branch release/${TORCHVISION_VERSION} --recursive --depth=1 https://github.com/pytorch/vision torchvision
 cd torchvision
-git checkout ${TORCHVISION_VERSION}
+git checkout release/${TORCHVISION_VERSION}
 sudo python3 setup.py install
 cd ..
 sudo rm -rf torchvision
 
+sudo python3 -m pip install --no-cache-dir --upgrade 'pytorch_pfn_extras'
 sudo python3 -m pip install --no-cache-dir --upgrade ultralytics
 cd /home/ubuntu
 git clone https://github.com/triple-Mu/YOLOv8-TensorRT.git
