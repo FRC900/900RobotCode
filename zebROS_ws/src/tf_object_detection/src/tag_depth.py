@@ -3,7 +3,7 @@ import rospy
 from field_obj.msg import TFDetection, TFObject
 #from cuda_apriltag_ros.msg import AprilTagDetectionArray as CUDAAprilTagDetectionArray
 #from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
-from apriltag_msgs.msg import ApriltagPoseStamped, ApriltagArrayStamped, Apriltag
+from apriltag_msgs.msg import ApriltagArrayStamped
 
 global pub
 
@@ -11,7 +11,7 @@ def depth_check_cb(msg):
     global pub
     TFdet = TFDetection()
     TFdet.header = msg.header
-    detections = msg.detections
+    detections = msg.apriltags
     for detection in detections:
         obj = TFObject()        
         obj.br.x = max(detection.corners[0].x, detection.corners[1].x, detection.corners[2].x, detection.corners[3].x)
@@ -48,11 +48,11 @@ def depth_check_cb(msg):
 
 def regular_main():
     global pub 
-    sub_topic = "/tag_detections"
+    sub_topic = "/apriltag_detection/tags"
     pub_topic = "tag_detection_msg"
     rospy.init_node('tag_depth', anonymous=True)
 
-    sub = rospy.Subscriber(sub_topic, ApriltagPoseStamped, depth_check_cb)
+    sub = rospy.Subscriber(sub_topic, ApriltagArrayStamped, depth_check_cb)
     pub = rospy.Publisher(pub_topic, TFDetection, queue_size=3)
 
     try:

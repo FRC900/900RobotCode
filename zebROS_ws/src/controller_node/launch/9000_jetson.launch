@@ -86,5 +86,15 @@
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
+
+	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
+		<arg name="input_type"      value="live_camera" />
+		<arg name="cam_pos_x"       value="-0.25" />
+		<arg name="cam_pos_y"       value="0.017" />
+		<arg name="cam_pos_z"       value="0.342" />
+		<arg name="cam_roll"        value="0.0" />
+		<arg name="cam_pitch"       value="-0.27925" /> <!-- camera is mounted flat -->
+		<arg name="cam_yaw"         value="3.14159" />
+	</include>
 	
 </launch>
