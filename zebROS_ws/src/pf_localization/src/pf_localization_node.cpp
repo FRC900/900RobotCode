@@ -67,6 +67,9 @@ double moving_rot_noise_multiplier{1.0};
 // let the localization converge.  0.0 means no transition and
 // make a step transition between moving and stopped multipliers.
 double    stopped_transition_time{0.0};
+// How slow the robot needs to be moving to be considered stopped
+// This is L2 norm of the x, y, z-ang velocities
+double    stopped_speed_threshold{0.5};
 ros::Time last_moving_stamp{};
 
 void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
@@ -229,7 +232,7 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   // TODO - check return code
   pf->motion_update(delta_x, delta_y, delta_angular_z);
 
-  const bool stopped = (x_vel == 0.0) && (y_vel == 0.0) && (z_ang_velocity == 0.0);
+  const bool stopped = hypot(x_vel, y_vel, z_ang_velocity) <= stopped_speed_threshold;
   // Stop applying noise after enough time has passed since the last camera measurement
   if ((ros::Time::now() - last_camera_data).toSec() < noise_delta_t) {
     // How far along are we in the transition from moving to stopped noise multipliers
@@ -403,6 +406,9 @@ int main(int argc, char **argv) {
   if (!nh_.param("stopped_transition_time", stopped_transition_time, 1.0)) {
     ROS_WARN("no stopped_transition_time specified, using default");
   }
+  if (!nh_.param("stopped_speed_threshold", stopped_speed_threshold, 0.5)) {
+    ROS_WARN("no stopped_speed_threshold specified, using default");
+  }
   if (!nh_.param("rotation_threshold", rotation_threshold, 0.25)) {
     ROS_WARN("no rotation_threshold specified, using default");
   }
@@ -449,6 +455,8 @@ int main(int argc, char **argv) {
                                         num_particles);
 
   ddynamic_reconfigure::DDynamicReconfigure ddr(nh_);
+  ddr.registerVariable<std::string>("odom_frame_id",&odom_frame_id, std::string("Name of the odom frame used in map->odom tf broadcaster"));
+  ddr.registerVariable<std::string>("map_frame_id", &map_frame_id, std::string("Name of the map frame used in map->map tf broadcaster"));
   ddr.registerVariable<double>("p_stdev", &p_stdev, [](double ns){pf->set_pos_stddev(ns); }, "Position noise standard deviation", 0.0, 5.0);
   ddr.registerVariable<double>("r_stdev", &r_stdev, [](double rs){pf->set_rot_stddev(rs); }, "Rotation noise standard deviation", 0.0, 5.0);
   ddr.registerVariable<double>("stopped_pos_noise_multiplier", &stopped_pos_noise_multiplier, "Multiplier for position noise when robot is stopped ", 0.0, 100.0);
@@ -456,6 +464,7 @@ int main(int argc, char **argv) {
   ddr.registerVariable<double>("moving_pos_noise_multiplier", &moving_pos_noise_multiplier, "Multiplier for position noise when robot is moving ", 0.0, 100.0);
   ddr.registerVariable<double>("moving_rot_noise_multiplier", &moving_rot_noise_multiplier, "Multiplier for rotation noise when robot is moving ", 0.0, 100.0);
   ddr.registerVariable<double>("stopped_transition_time", &stopped_transition_time, "Time in seconds after stopping to lineraly interpolate between moving and stopped multipliers", 0.0, 10.);
+  ddr.registerVariable<double>("stopped_speed_threshold", &stopped_speed_threshold, "Max speed to be considered stopped", 0.0, 10.);
   ddr.registerVariable<double>("rotation_threshold", &rotation_threshold, [](double rt){pf->set_rotation_threshold(rt); }, "Particle rotations more than this far away from imu angle are set to IMU + noise", 0.0, angles::from_degrees(360.0));
   ddr.registerVariable<double>("camera_sigma_x", &sigmas[0], "camera_sigma_x", 0.0, 5.0);
   ddr.registerVariable<double>("camera_sigma_y", &sigmas[1], "camera_sigma_x", 0.0, 5.0);
