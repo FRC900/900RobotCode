@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node name="rosbag_record_node" pkg="rosbag" type="record"
+	  launch-prefix="nice"
+	  args="record -o /home/ubuntu/bagfiles/
+		/frcrobot_jetson/swerve_drive_controller/odom
+        /front/apriltag_detection/tags
+		/back/apriltag_detection/tags
+        /tf
+		/tf_static
+		/zed_front/left/camera_info
+		/zed_front/left/image_rect_color
+        /zed_back/left/camera_info
+		/zed_back/left/image_rect_color
+        /zed_front/depth/depth_registered
+        /zed_back/depth/depth_registered
+        /tagslam/odom/body_frc_robot
+		"/>
+</launch>
+<!-- 		/zed_objdetect/left_raw/camera_info
+			/zed_objdetect/left_raw/image_rect_color
+
+-->

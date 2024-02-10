@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="zed_name"        default="zed_objdetect" />
+  <arg name="zed_node_name"   default="zed_objdetect" />
+  <arg name="camera_model"    default="zed2" />
+  <arg name="depth_algorithm" default="CONTOURS" />
+
+  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml">
+    <arg name="common_params_file"   value="$(find controller_node)/config/zed_objdet/common_9000_back.yaml" />
+    <arg name="camera_params_file"   value="$(find controller_node)/config/zed_objdet/$(arg camera_model).yaml" />
+    <arg name="node_name"            value="zed_back" />
+    <arg name="publish_urdf"         value="true" />
+    <arg name="camera_name"          value="zed_back" />
+    <arg name="camera_model"         value="zed2" />
+    <arg name="base_frame"           value="base_link" />
+    <arg name="cam_pos_x"            value="-0.25" />
+		<arg name="cam_pos_y"            value="0.017" />
+		<arg name="cam_pos_z"            value="0.342" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="-0.27925" />
+		<arg name="cam_yaw"              value="3.14159" />
+  </include>
+
+  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml">
+    <arg name="common_params_file"   value="$(find controller_node)/config/zed_objdet/common_9000_front.yaml" />
+    <arg name="camera_params_file"   value="$(find controller_node)/config/zed_objdet/$(arg camera_model).yaml" />
+    <arg name="node_name"            value="zed_front" />
+    <arg name="publish_urdf"         value="true" />
+    <arg name="camera_name"          value="zed_front" />
+    <arg name="camera_model"         value="zed2" />
+    <arg name="base_frame"           value="base_link" />
+    <arg name="cam_pos_x"            value="0.25" />
+		<arg name="cam_pos_y"            value="0.017" />
+		<arg name="cam_pos_z"            value="0.342" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="-0.27925" />
+		<arg name="cam_yaw"              value="0.0" />
+  </include>
+
+  <group ns="tf_object_detection">
+  <!--
+    <node pkg="tf_object_detection" name="tf_object_tracker" type="tracker.py" output="screen">
+    </node>
+  -->
+
+	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
+    
+    <node pkg="tf_object_detection" name="tf_object_detection" type="fastYOLO.py" output="screen">
+    </node>
+   
+
+    <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">
+      <remap from="/apriltag_detection/tags" to="/front/apriltag_detection/tags"/>
+    </node>
+   
+    <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
+      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+    </node>
+
+    <node pkg="tf_object_detection" name="tf_object_screen_to_world_tags" type="tf_object_screen_to_world" output="screen">
+      <remap from="obj_detection_msg" to="tag_detection_msg"/>
+      <remap from="object_detection_world" to="tag_detection_world"/>
+      <remap from="/zed_objdetect/depth/depth_registered" to="/zed_front/depth/depth_registered"/>
+      <remap from="/zed_objdetect/left/camera_info" to="/zed_front/left/camera_info"/>
+      <param name="timeout" type="double" value="0.2" /> 
+      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+    </node>
+    <!--
+    <node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
+    </node>
+    -->
+	   <!--Possible that this should not be in namespace?-->
+   
+  </group>
+	<!--
+  <arg name="cam_image_topic" default="left/image_rect_gray" />
+	<arg name="cam_info_topic" default="left/camera_info" />
+	<arg name="output_frame" default="/zed_ar_left_camera_frame" />
+
+	<include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+		<arg name="camera_name"            value="$(arg zed_name)" />
+		<arg name="image_topic"            value="$(arg cam_image_topic)" />
+	</include>
+	-->
+	<!--
+  <group ns="goal_detection">
+    <node pkg="apriltag_launch" name="apriltag_to_pf_node" type="apriltag_to_pf_node" output="screen">
+    </node>
+  </group>
+	-->
+  
+  <!-- Launch apriltags-->
+  <!-- <include file="$(find cuda_apriltag_ros)/launch/cuda_continuous_detection.launch">
+	</include> -->
+  <!-- 2023 are 16h5, not CUDA, so... -->
+  <group ns="front">
+    <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+      <arg name="camera_name"            value="/zed_front/left" />
+      <arg name="image_topic"            value="/image_rect_gray" />
+      <arg name="tag_type"               value="36h11" />
+    </include>
+  </group>
+
+  <group ns="back">
+    <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+      <arg name="camera_name"            value="/zed_back/left" />
+      <arg name="image_topic"            value="/image_rect_gray" />
+      <arg name="tag_type"               value="36h11" />
+    </include>
+  </group>
+</launch>
