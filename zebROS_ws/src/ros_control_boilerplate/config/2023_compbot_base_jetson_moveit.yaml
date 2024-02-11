@@ -114,6 +114,14 @@ minifrc_moveit_controller:
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
+    # this is pretty neat, we get free constraints both on following and end goal position
+    constraints:
+      goal_time: 1.0
+      # vel_tolerance is 0 for due to the movegroup/follow_joint_trajectory/goal tolerance is empty
+      stopped_velocity_tolerance: 0
+      # very generous tolerances
+      base_arm: {trajectory: 0.3, goal: 0.1}
+      second_stage_arm: {trajectory: 0.3, goal: 0.1}
 
 # minifrc_moveit_controller:
 #     type: talon_position_controllers/JointTrajectoryController
