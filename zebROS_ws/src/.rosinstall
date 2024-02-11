@@ -24,7 +24,7 @@
 - git:
     local-name: ros_controllers
     uri: https://github.com/FRC900/ros_controllers.git
-    version: talon_joint_trajectory_controller
+    version: noetic-devel
 - git:
     local-name: stage_ros
     uri: https://github.com/FRC900/stage_ros
