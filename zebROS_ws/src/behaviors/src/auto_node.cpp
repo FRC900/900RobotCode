@@ -146,12 +146,12 @@ class AutoNode {
 		//dashboard (to get auto mode)
 		auto_mode_sub_ = nh_.subscribe("auto_mode", 1, &AutoNode::updateAutoMode, this); //TODO get correct topic name (namespace)
 		enable_auto_in_teleop_sub_ = nh_.subscribe("/enable_auto_in_teleop", 1, &AutoNode::enable_auto_in_teleop, this);
-		orientation_effort_sub_ = nh_.subscribe("/teleop/orient_strafing/control_effort", 1, &AutoNode::orientation_effort_callback, this);
+		orientation_effort_sub_ = nh_.subscribe("/teleop/orient_strafing/control_effort", 1, &AutoNode::orientation_effort_callback, this, ros::TransportHints().tcpNoDelay());
 
 		// Used to pass in dynamic paths from other nodes
 		path_finder_ = nh_.advertiseService("dynamic_path", &AutoNode::dynamic_path_storage, this);
         orient_command_pub_ = nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1);
-		current_yaw_sub_ = nh_.subscribe("/teleop/orient_strafing/state", 1, &AutoNode::yaw_callback, this);
+		current_yaw_sub_ = nh_.subscribe("/teleop/orient_strafing/state", 1, &AutoNode::yaw_callback, this, ros::TransportHints().tcpNoDelay());
 		if (!nh_.getParam("angle_tolerance", angle_tolerance_))
 		{
 			ROS_ERROR_STREAM("Could not read param "

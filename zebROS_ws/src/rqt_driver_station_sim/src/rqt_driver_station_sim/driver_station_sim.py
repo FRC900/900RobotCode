@@ -83,7 +83,7 @@ class DriverStationSim(Plugin):
 
 
     def _auto_state_callback(self, msg):
-        self.auto_state_signal.emit(int(msg.id));
+        self.auto_state_signal.emit(int(msg.id))
 
     def _talon_state_callback(self, msg):
         # name + ": " + percent_output + "%, set to " + setpoint

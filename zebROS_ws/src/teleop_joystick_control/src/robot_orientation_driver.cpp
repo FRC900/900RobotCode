@@ -9,17 +9,17 @@
 
 RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	: nh_(nh)
-	, orientation_command_sub_{nh_.subscribe("orientation_command", 1, &RobotOrientationDriver::orientationCmdCallback, this)}
-	, velocity_orientation_command_sub_{nh_.subscribe("velocity_orientation_command", 1, &RobotOrientationDriver::velocityOrientationCmdCallback, this)}
+	, orientation_command_sub_{nh_.subscribe("orientation_command", 1, &RobotOrientationDriver::orientationCmdCallback, this, ros::TransportHints().tcpNoDelay())}
+	, velocity_orientation_command_sub_{nh_.subscribe("velocity_orientation_command", 1, &RobotOrientationDriver::velocityOrientationCmdCallback, this, ros::TransportHints().tcpNoDelay())}
 	, pid_enable_pub_{nh_.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1, true)} // latching
 	, pid_state_pub_{nh_.advertise<std_msgs::Float64>("orient_strafing/state", 1)}
 	, pid_setpoint_pub_{nh_.advertise<pid_velocity_msg::PIDVelocity>("orient_strafing/setpoint", 1)}
-	, pid_control_effort_sub_{nh_.subscribe("orient_strafing/control_effort", 1, &RobotOrientationDriver::controlEffortCallback, this)}
-	, imu_sub_{nh_.subscribe("/imu/zeroed_imu", 1, &RobotOrientationDriver::imuCallback, this)}
+	, pid_control_effort_sub_{nh_.subscribe("orient_strafing/control_effort", 1, &RobotOrientationDriver::controlEffortCallback, this, ros::TransportHints().tcpNoDelay())}
+	, imu_sub_{nh_.subscribe("/imu/zeroed_imu", 1, &RobotOrientationDriver::imuCallback, this, ros::TransportHints().tcpNoDelay())}
 	, match_data_sub_{nh_.subscribe("/frcrobot_rio/match_data", 1, &RobotOrientationDriver::matchStateCallback, this)}
+    , robot_orient_service_{nh_.advertiseService("set_teleop_orient", &RobotOrientationDriver::holdTargetOrientation, this)}
 	// one_shot = true, auto_start = false
 	// inversting that
-    , robot_orient_service_{nh_.advertiseService("set_teleop_orient", &RobotOrientationDriver::holdTargetOrientation, this)}
 	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
 {
 	std_msgs::Bool enable_pub_msg;

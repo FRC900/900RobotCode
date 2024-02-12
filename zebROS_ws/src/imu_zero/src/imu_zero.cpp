@@ -239,7 +239,7 @@ int main(int argc, char* argv[]) {
 
   tfListener = std::make_unique<tf2_ros::TransformListener>(tfBuffer);
   pub = node.advertise<sensor_msgs::Imu>(pub_topic, 1);
-  ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
+  ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback, ros::TransportHints().tcpNoDelay());
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
   bias_estimate = node.serviceClient<std_srvs::Trigger>(bias_service_name);
   ukf_zero_pos = node.serviceClient<robot_localization::SetPose>(ukf_set_pose_name);

@@ -106,11 +106,11 @@ public:
   DriveToObjectActionServer(std::string name) :
     as_(nh_, name, boost::bind(&DriveToObjectActionServer::executeCB, this, _1), false),
     action_name_(name),
-    sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/object_detection_world", 1, &DriveToObjectActionServer::callback, this)),
+    sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/object_detection_world", 1, &DriveToObjectActionServer::callback, this, ros::TransportHints().tcpNoDelay())),
     ac_hold_position_("/hold_position/hold_position_server", true),
     tf_listener_(tf_buffer_),
     orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1)),
-    control_effort_sub_(nh_.subscribe<std_msgs::Float64>("/teleop/orient_strafing/control_effort", 1, &DriveToObjectActionServer::controlEffortCB, this)),
+    control_effort_sub_(nh_.subscribe<std_msgs::Float64>("/teleop/orient_strafing/control_effort", 1, &DriveToObjectActionServer::controlEffortCB, this, ros::TransportHints().tcpNoDelay())),
     cmd_vel_sub_(nh_.subscribe<geometry_msgs::TwistStamped>("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, &DriveToObjectActionServer::cmdVelCb, this))
   {
     const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };

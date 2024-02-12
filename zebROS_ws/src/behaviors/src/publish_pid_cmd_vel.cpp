@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
   }
   else {
 		ROS_WARN_STREAM("Subscribing to: " << orient_topic);
-    orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB);
+    orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB, ros::TransportHints().tcpNoDelay());
 		orient_sub = true;
   }
   if(!nh_private_params.getParam("x_topic", x_topic)) {
@@ -93,7 +93,7 @@ int main(int argc, char ** argv)
   }
   else {
 		ROS_WARN_STREAM("Subscribing to: " << x_topic);
-    x_pid_sub = nh.subscribe(x_topic, 1, &xCB);
+    x_pid_sub = nh.subscribe(x_topic, 1, &xCB, ros::TransportHints().tcpNoDelay());
 		x_sub = true;
   }
   if(!nh_private_params.getParam("y_topic", y_topic)) {
@@ -101,7 +101,7 @@ int main(int argc, char ** argv)
   }
   else {
 		ROS_WARN_STREAM("Subscribing to: " << y_topic);
-    y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
+    y_pid_sub = nh.subscribe(y_topic, 1, &yCB, ros::TransportHints().tcpNoDelay());
 		y_sub = true;
   }
 	if(!nh_private_params.getParam("enable_topic", enable_topic))
@@ -109,7 +109,7 @@ int main(int argc, char ** argv)
 		ROS_ERROR("Could not read enable_topic in publish_pid_cmd_vel");
 	}
 	else {
-		enable_pid_sub = nh.subscribe(enable_topic, 1, &enableCB);
+		enable_pid_sub = nh.subscribe(enable_topic, 1, &enableCB, ros::TransportHints().tcpNoDelay());
 	}
 	if(!nh_private_params.getParam("command_timeout", command_timeout))
 	{
@@ -121,7 +121,7 @@ int main(int argc, char ** argv)
 		ratio_imposed = false;
 	}
 	else {
-    ratio_xy_sub = nh.subscribe(ratio_xy_topic, 1, &ratio_xyCB);
+    ratio_xy_sub = nh.subscribe(ratio_xy_topic, 1, &ratio_xyCB, ros::TransportHints().tcpNoDelay());
 		ratio_imposed = true;
 	}
 	if(!nh_private_params.getParam("name", name))
@@ -133,7 +133,7 @@ int main(int argc, char ** argv)
       ROS_ERROR("Could not read orient_state_topic in publish_pid_cmd_vel. Assuming robot_centric.");
   }
   else {
-      orient_state_sub = nh.subscribe(orient_state_topic, 1, &orientStateCB);
+      orient_state_sub = nh.subscribe(orient_state_topic, 1, &orientStateCB, ros::TransportHints().tcpNoDelay());
   }
 	if(!nh_private_params.getParam("transform_yaw", transform_yaw))
 	{
