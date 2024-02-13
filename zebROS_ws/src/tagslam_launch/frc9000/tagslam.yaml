@@ -3,7 +3,7 @@ tagslam_parameters:
 #                 slow (use iSAM2, but test for error and use full if error is large)
 #                 fast (iSAM2 only, no test for error)
 # default: slow
-  optimizer_mode: slow
+  optimizer_mode: fast
 # minimum angle [in degrees] between optical axis and tag surface
   minimum_viewing_angle: 15.0
 # minimum tag area in pixels^2. Any tags smaller than that are ignored
