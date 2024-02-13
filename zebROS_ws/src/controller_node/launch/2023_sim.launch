@@ -128,4 +128,35 @@
 		<arg name="cpu" value="true"/>
 	</include>
 
+	<!-- 
+		This was taken from the older detetection.launch before removing it
+		No idea if it is useful or not but keeping it in just in case
+	-->
+	<arg name="zed_name"     value="zed_objdetect" />
+    <arg name="camera_name"  value="$(arg zed_name)" />
+	<arg name="camera_model" value="zed2" />
+    <arg name="base_frame"   value="base_link" />
+    <arg name="cam_pos_x"    value="0.152" />
+    <arg name="cam_pos_y"    value="-0.224" />
+    <arg name="cam_pos_z"    value="0.802" />
+    <arg name="cam_roll"     value="0.0" />
+	<arg name="cam_pitch"    value="0.0" />
+    <arg name="cam_yaw"      value="0.0" />
+    <param name="$(arg camera_name)_description"
+          command="$(find xacro)/xacro '$(find zed_wrapper)/urdf/zed_descr.urdf.xacro'
+                    camera_name:=$(arg camera_name)
+                    camera_model:=$(arg camera_model)
+                    base_frame:=$(arg base_frame)
+                    cam_pos_x:=$(arg cam_pos_x)
+                    cam_pos_y:=$(arg cam_pos_y)
+                    cam_pos_z:=$(arg cam_pos_z)
+                    cam_roll:=$(arg cam_roll)
+                    cam_pitch:=$(arg cam_pitch)
+                    cam_yaw:=$(arg cam_yaw)"
+    />
+
+    <node name="$(arg camera_name)_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" required="true">
+        <remap from="robot_description" to="$(arg camera_name)_description" />
+    </node>
+
 </launch>

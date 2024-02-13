@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="run_camera"           default="true" />
+	<arg name="run_apriltag"         default="true" />
+	<arg name="run_object_detection" default="true" />
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="zed_name"             value="zedx_front" />
+		<arg name="zed_config_dir"       value="zedx" />
+		<arg name="camera_model"         value="zedx" />
+		<arg name="serial_number"	     value="47067994" />
+		<arg name="cam_pos_x"            value="0.0" />
+		<arg name="cam_pos_y"            value="0.0" />
+		<arg name="cam_pos_z"            value="0.0" />
+		<arg name="run_camera"           value="$(arg run_camera)" />
+		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
+		<arg name="run_object_detection" value="$(arg run_object_detection)" />
+	</include>
+
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="zed_name"             value="zedx_back" />
+		<arg name="zed_config_dir"       value="zedx" />
+		<arg name="camera_model"         value="zedx" />
+		<arg name="serial_number"	     value="49607378" />
+		<arg name="cam_pos_x"            value="0.0" />
+		<arg name="cam_pos_y"            value="0.0" />
+		<arg name="cam_pos_z"            value="0.0" />
+		<arg name="run_camera"           value="$(arg run_camera)" />
+		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
+		<arg name="run_object_detection" value="$(arg run_object_detection)" />
+	</include>
+</launch>

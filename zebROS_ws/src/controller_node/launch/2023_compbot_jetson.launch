@@ -150,8 +150,14 @@
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
-	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
-		<arg name="input_type" value="live_camera" if="$(eval hw_or_sim == 'hw')"/>
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="run_camera" value="false" if="$(eval hw_or_sim == 'sim')"/>
+		<arg name="cam_pos_x"  value="0.152" />
+		<arg name="cam_pos_y"  value="-0.224" />
+		<arg name="cam_pos_z"  value="0.802" />
+		<arg name="cam_roll"   value="0.0" />
+		<arg name="cam_pitch"  value="0.0" /> <!-- camera is now mounted flat -->
+		<arg name="cam_yaw"    value="0.0" />
 	</include>
 
 	<group ns="wpilib_odom">

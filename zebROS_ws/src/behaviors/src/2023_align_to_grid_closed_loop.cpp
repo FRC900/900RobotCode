@@ -204,7 +204,7 @@ public:
   AlignToGridAction(std::string name) :
     as_(nh_, name, boost::bind(&AlignToGridAction::executeCB, this, _1), false),
     action_name_(name),
-    sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/tag_detection_world", 1, &AlignToGridAction::callback, this)),
+    sub_(nh_.subscribe<field_obj::Detection>("/apriltag_zed_objdet/tag_detection_world", 1, &AlignToGridAction::callback, this)),
     ac_hold_position_("/hold_position/hold_position_server", true),
     tf_listener_(tf_buffer_),
     orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1)),

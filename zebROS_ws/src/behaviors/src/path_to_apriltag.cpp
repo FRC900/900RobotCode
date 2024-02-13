@@ -88,7 +88,7 @@ public:
         tf_listener_(tf_buffer_),
         ac_("/path_follower/path_follower_server", true),
         client_(nh_.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen")),
-        sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/tag_detection_world", 1, boost::bind(&PathToAprilTagAction::callback, this, _1))),
+        sub_(nh_.subscribe<field_obj::Detection>("/apriltag_zed_objdet/tag_detection_world", 1, boost::bind(&PathToAprilTagAction::callback, this, _1))),
         subImu_(nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, boost::bind(&PathToAprilTagAction::imuCallback, this, _1)))
     {
         if (!nh_params_.hasParam("timeout")) {

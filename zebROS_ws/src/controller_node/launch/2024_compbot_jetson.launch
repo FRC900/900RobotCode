@@ -112,9 +112,15 @@
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
-	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
-		<arg name="input_type" value="live_camera" if="$(eval hw_or_sim == 'hw')"/>
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="run_camera" value="false" if="$(eval hw_or_sim == 'sim')"/>
 		<!-- TODO : add camera position params here -->
+		<arg name="cam_pos_x"  value="0.0" />
+		<arg name="cam_pos_y"  value="0.0" />
+		<arg name="cam_pos_z"  value="0.0" />
+		<arg name="cam_roll"   value="0.0" />
+		<arg name="cam_pitch"  value="0.0" />
+		<arg name="cam_yaw"    value="0.0" />
 	</include>
 
 	<!-- 

@@ -4,13 +4,10 @@
 import os
 import rospy
 import rospkg
-from sys import path
 from baseYOLO import YOLO900
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from field_obj.msg import TFDetection, TFObject
-
-from cv2 import imwrite
 
 bridge = CvBridge()
 pub, pub_debug = None, None
@@ -57,10 +54,9 @@ def run_inference_for_single_image(msg):
     detection = TFDetection()
     detection.header = msg.header
 
-    apriltag_seen = False
     d_bboxes, d_scores, d_labels = detections.bboxes, detections.scores, detections.labels  
     for (bbox, score, label) in zip(d_bboxes, d_scores, d_labels):
-        if not (score > min_confidence):
+        if score <= min_confidence:
             continue
 
         bbox = bbox.round().int().tolist() # [x1, y1, x2, y2] where x1 y1 is top left corner and x2 y2 bottom right
@@ -74,10 +70,6 @@ def run_inference_for_single_image(msg):
         obj.br.y = min(bbox[3], height)
         obj.id = cls_id # number
         obj.label = DETECTRON.name_from_cls_id(cls_id) # string
-        '''
-        if 'april_tag' in obj.label:
-            apriltag_seen = True
-        '''
         detection.objects.append(obj)
 
     pub.publish(detection)
@@ -89,17 +81,7 @@ def run_inference_for_single_image(msg):
         frame_counter = 0
 
     DETECTRON.t.end("callback")
-    '''
-    if not apriltag_seen:
-        global last_write_time
-        global SECONDS_PER_WRITE
-        global FILE_PREFIX
-        if (rospy.get_time() - last_write_time) > SECONDS_PER_WRITE:
-            time = msg.header.stamp
-            imwrite(FILE_PREFIX+str(int(time.to_sec()))+'.png', ori)
-            rospy.loginfo('Saving image')
-            last_write_time = rospy.get_time()
-    '''
+    
 
 def main():
     global pub, pub_debug, min_confidence, DETECTRON
@@ -112,14 +94,14 @@ def main():
     rospy.init_node('tf_object_detection', anonymous=True)
     min_confidence = 0.1
 
-    if rospy.has_param('min_confidence'):
-        min_confidence = rospy.get_param('min_confidence')
+    if rospy.has_param('~min_confidence'):
+        min_confidence = rospy.get_param('~min_confidence')
         rospy.loginfo("Min confidence of " + str(min_confidence) + " loaded from config")
     else:
         rospy.logwarn("Unable to get min confidence, defaulting to 0.1")
 
-    if rospy.has_param('image_topic'):
-        sub_topic = rospy.get_param('image_topic')
+    if rospy.has_param('~image_topic'):
+        sub_topic = rospy.get_param('~image_topic')
         rospy.loginfo("Image topic of " + str(sub_topic) + " loaded from config")
     else:
         rospy.logwarn("Unable to get image topic, defaulting to c920/rect_image")

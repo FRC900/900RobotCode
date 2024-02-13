@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="zed_name"             default="zed_objdet" />
+  <arg name="zed_config_dir"       default="$(arg zed_name)" />
+  <arg name="camera_model"         default="zed2" />
+  <arg name="zed_node_name"        default="$(arg zed_name)" />
+  <arg name="camera_id"            default="0" />
+  <arg name="serial_number"        default="0" />
+  <arg name="cam_pos_x"            default="0.0" />
+  <arg name="cam_pos_y"            default="0.0" />
+  <arg name="cam_pos_z"            default="0.0" />
+  <arg name="cam_roll"             default="0.0" />
+  <arg name="cam_pitch"            default="0.0" />
+  <arg name="cam_yaw"              default="0.0" />
+  <arg name="depth_algorithm"      default="CONTOURS" />
+  <arg name="run_camera"           default="true" />
+  <arg name="run_apriltag"         default="true" />
+  <arg name="run_object_detection" default="true" />
+  <arg name="run_pub_video"        default="false" />
+
+  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval run_camera)">
+    <arg name="camera_name"          value="$(arg zed_name)" />
+    <arg name="camera_model"         value="$(arg camera_model)" />
+    <arg name="node_name"            value="$(arg zed_node_name)" />
+    <arg name="base_frame"           value="base_link" />
+    <arg name="publish_urdf"         value="true" />
+    <arg name="camera_id"            value="$(arg camera_id)" />
+    <arg name="serial_number"        value="$(arg serial_number)" />
+    <arg name="cam_pos_x"            value="$(arg cam_pos_x)" />
+    <arg name="cam_pos_y"            value="$(arg cam_pos_y)" />
+    <arg name="cam_pos_z"            value="$(arg cam_pos_z)" />
+    <arg name="cam_roll"             value="$(arg cam_roll)"  />
+    <arg name="cam_pitch"            value="$(arg cam_pitch)" />
+    <arg name="cam_yaw"              value="$(arg cam_yaw)"   />
+
+    <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
+    <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
+  </include>
+
+  <group ns="apriltag_$(arg zed_name)" if="$(eval run_apriltag)">
+    <!-- Run UMich apriltag detector on output of ZED camera code
+    TBD - does gray force zed code to publish a message it
+    wouldn't otherwise?  Maybe color is better -->
+    <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+      <arg name="camera_name"            value="/$(arg zed_name)/left" />
+      <arg name="image_topic"            value="/image_rect_gray" />
+      <arg name="tag_type"               value="36h11" />
+    </include>
+
+    <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 
+        Publishes to $(ns)/tag_detection_msgs
+    -->
+    <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">
+			<remap from="tags_in" to="/apriltag_$(arg zed_name)/apriltag_detection/tags"/>
+    </node>
+    <!-- Use depth info to generate apriltag world coords -->
+		<node pkg="tf_object_detection" name="tf_object_screen_to_world_tags" type="tf_object_screen_to_world" output="screen">
+			<remap from="obj_detection_msg" to="tag_detection_msg"/>
+			<remap from="object_detection_world" to="tag_detection_world"/>
+			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+			<remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+			<param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+			<param name="timeout" type="double" value="0.2" /> 
+		</node>
+  </group>
+
+	<group ns="tf_object_detection_$(arg zed_name)" if="$(eval run_object_detection)">
+		<node pkg="tf_object_detection" name="tf_object_detection" type="fastYOLO.py" output="screen">
+			<param name="image_topic" type="string" value="/$(arg zed_name)/left/image_rect_color" />
+			<param name="min_confidence" type="double" value="0.05" />
+		</node>
+
+		<node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
+			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+			<remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+			<param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+		</node>
+
+	</group>
+
+	<group ns="tf_object_detection_$(arg zed_name)" if="$(eval run_pub_video)">
+    <node pkg="tf_object_detection" name="pub_video" type="pub_video.py" output="screen">
+      <param name="pub_topic" type="string" value="/$(arg zed_name)/left/image_rect_color" />
+      <param name="framerate" type="int" value="10" />
+      <param name="show_video" type="bool" value="true" />
+      <!-- Instead of displaying a video, send an empty 1080p image, mainly useful for triggering trtdetect.py to start initializing -->
+      <param name="empty_video" type="bool" value="true" />  
+      <param name="filename" type="string" value="1678.mp4" />
+    </node>
+  </group>
+
+</launch>

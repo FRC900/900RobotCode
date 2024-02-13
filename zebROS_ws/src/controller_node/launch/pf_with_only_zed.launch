@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <!--
-	 Test pf localization using only a zed camera.
+	Test pf localization using only a zed camera.
 	Uses ZED cam data -> apritags -> pf localization, plus
+		 ZED cam data -> object detection -> pf localization, plus
          ZED odom data -> imu_zero -> pf localization, plus
          PF fake cmd_vel -> pf localization (this never mimcs motion, just keeps the internal PF timestamp up to date
 -->
@@ -9,15 +10,8 @@
 	<!-- Should be false -->
 	<arg name="vis" default="True" />
 
-	<!-- Run ZED camera + YOLO object detection + cuda apriltags, etc etc etc -->
-	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
-		<arg name="input_type" value="live_camera" />
-		<arg name="cam_pos_x"       default="0.0" />
-		<arg name="cam_pos_y"       default="0.0" />
-		<arg name="cam_pos_z"       default="0.0" />
-		<arg name="cam_roll"        default="0.0" />
-		<arg name="cam_pitch"       default="0.0" />
-		<arg name="cam_yaw"         default="0.0" />
+	<!-- Run ZED camera + YOLO object detection + apriltags, etc etc etc -->
+	<include file="$(find controller_node)/launch/zed_detection.launch">
 	</include>
 
 	<group ns="imu">

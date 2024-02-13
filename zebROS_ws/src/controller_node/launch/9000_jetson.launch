@@ -86,15 +86,36 @@
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
-
-	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
-		<arg name="input_type"      value="live_camera" />
-		<arg name="cam_pos_x"       value="-0.25" />
-		<arg name="cam_pos_y"       value="0.017" />
-		<arg name="cam_pos_z"       value="0.342" />
+	<!-- 
+		RPY for both cameras is almost certainly not correct
+		Fix it using tagslam calibration data
+	-->
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="run_camera"      value="false" if="$(eval hw_or_sim == 'sim')"/>
+		<arg name="zed_name"        value="zed_front" />
+		<arg name="zed_config_dir"  value="zed_objdet" />
+		<arg name="serial_number"	value="28695205" />
+		<arg name="cam_pos_x"       value="0.236" />
+		<arg name="cam_pos_y"       value="0.077" />
+		<arg name="cam_pos_z"       value="0.354" />
 		<arg name="cam_roll"        value="0.0" />
-		<arg name="cam_pitch"       value="-0.27925" /> <!-- camera is mounted flat -->
+		<arg name="cam_pitch"       value="-0.27925" />
 		<arg name="cam_yaw"         value="3.14159" />
+		<arg name="run_object_detection" value="true" />
+	</include>
+
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="run_camera"      value="false" if="$(eval hw_or_sim == 'sim')"/>
+		<arg name="zed_name"        value="zed_back" />
+		<arg name="zed_config_dir"  value="zed_objdet" />
+		<arg name="serial_number"	value="21775716" />
+		<arg name="cam_pos_x"       value="-0.236" />
+		<arg name="cam_pos_y"       value="-0.043" />
+		<arg name="cam_pos_z"       value="0.354" />
+		<arg name="cam_roll"        value="0.0" />
+		<arg name="cam_pitch"       value="-0.27925" />
+		<arg name="cam_yaw"         value="3.14159" />
+		<arg name="run_object_detection" value="false" />
 	</include>
 	
 </launch>
