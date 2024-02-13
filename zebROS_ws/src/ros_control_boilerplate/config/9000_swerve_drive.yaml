@@ -31,7 +31,7 @@ swerve_drive_controller:
     f_v: 0.0379
 
     # TODO : move this into sensor_to_mechanism_ratio for Falcons
-    ratio_encoder_to_rotations: 0.163398693 # Test me, will show up in odom results
+    ratio_encoder_to_rotations: 0.148148148 # Test me, will show up in odom results
 
     encoder_drive_get_V_units: 1
     encoder_drive_set_V_units: 1
@@ -50,12 +50,12 @@ swerve_drive_controller:
     fl_drive:
         joint: fl_drive
         close_loop_values:
-            - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
+            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.10
         dynamic_reconfigure: True
         neutral_mode: Brake
         forward_limit_enable: False
@@ -63,12 +63,12 @@ swerve_drive_controller:
     fr_drive:
         joint: fr_drive
         close_loop_values:
-            - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
+            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.10
         dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
@@ -76,13 +76,13 @@ swerve_drive_controller:
     bl_drive:
         joint: bl_drive
         close_loop_values:
-            - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
+            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
         #feedback_type: IntegratedSensor
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.10
         dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
@@ -90,13 +90,13 @@ swerve_drive_controller:
     br_drive:
         joint: br_drive
         close_loop_values:
-            - {kP: 1.00, kI: 0.0, kD: 0.0, kV: 0.125, kS: 0.0}
+            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
         #feedback_type: IntegratedSensor
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.10
         dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
