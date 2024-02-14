@@ -107,6 +107,7 @@ add_action_files(
 		#GoToColor.action
 		#RotatePanel.action
 		DriveToObject.action
+		Arm2024.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs)

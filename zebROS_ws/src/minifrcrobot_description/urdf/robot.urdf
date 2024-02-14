@@ -239,33 +239,8 @@
     <child link="auto_motor_link" />
     <origin rpy="0.0 0 0" xyz="0 0 0"/>
 </joint>
-<link name="robot_code_ready_link" ></link>
-<joint name="robot_code_ready_jetson" type="fixed">
-    <parent link="base_link"/>
-    <child link="robot_code_ready_link" />
-    <origin rpy="0.0 0 0" xyz="0 0 0"/>
-</joint>
-<link name="robot_code_ready_rio_link" ></link>
 
-<joint name="robot_code_ready_rio" type="fixed">
-    <parent link="base_link"/>
-    <child link="robot_code_ready_rio_link" />
-    <origin rpy="0.0 0 0" xyz="0 0 0"/>
-</joint>
-
-<!-- 
-       - {name: pcm, type: pcm, pcm_id: 0}
-       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
-
-       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
-
-       - {name: babys_first_orchestra, type: orchestra, id: 1}
-
-       - {name: robot_code_ready_jetson, local: true, type: ready}
-       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
-
--->
-<link name="pcm_link" ></link>
+<link name="pcm_link"></link>
 
 <joint name="pcm" type="fixed">
     <parent link="base_link"/>
@@ -273,30 +248,20 @@
     <origin rpy="0.0 0 0" xyz="0 0 0"/>
 </joint>
 
-<link name="pigeon2_link" ></link>
+<link name="robot_code_ready_jetson_link"></link>
 
-<joint name="pigeon2" type="fixed">
+<joint name="robot_code_ready_jetson" type="fixed">
     <parent link="base_link"/>
-    <child link="pigeon2_link" />
+    <child link="robot_code_ready_jetson_link" />
     <origin rpy="0.0 0 0" xyz="0 0 0"/>
 </joint>
 
-<link name="candle1_link" ></link>
+<link name="robot_code_ready_rio_link"></link>
 
-<joint name="candle1" type="fixed">
+<joint name="robot_code_ready_rio" type="fixed">
     <parent link="base_link"/>
-    <child link="candle1_link" />
+    <child link="robot_code_ready_rio_link" />
     <origin rpy="0.0 0 0" xyz="0 0 0"/>
 </joint>
-
-<link name="babys_first_orchestra_link" ></link>
-
-<joint name="babys_first_orchestra" type="fixed">
-    <parent link="base_link"/>
-    <child link="babys_first_orchestra_link" />
-    <origin rpy="0.0 0 0" xyz="0 0 0"/>
-</joint>
-
-
 
 </robot>

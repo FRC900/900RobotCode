@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="arm">
+		<rosparam file="$(find behaviors)/config/2024_arm_control.yaml" command="load"/>
+		<node name="move_arm_server_2024" pkg="behaviors" type="2024_move_arm_server.py" output="screen"/>
+	</group>
+</launch>

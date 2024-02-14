@@ -1,0 +1,11 @@
+# goal
+uint8 DIVERTER=0
+uint8 AMP=1
+uint8 TRAP=2
+uint8 path
+---
+# result
+bool success
+---
+# feedback
+float64 percent_complete
