@@ -21,9 +21,11 @@ sudo apt install -y \
     exfat-fuse \
     exfat-utils \
 	gcc-10 \
+	gcc-13 \
     gcc-11 \
 	g++-10 \
     g++-11 \
+    g++-13 \
     gdb \
     gfortran \
     git \
@@ -125,7 +127,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/4.0/l4t35.3/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/4.0/l4t35.4/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -223,7 +225,8 @@ mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include
 mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ctre
 mkdir -p /home/ubuntu/ctre
 cd /home/ubuntu/ctre
-python3 /home/ubuntu/2024RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix6/latest/Phoenix6And5-frc2024-latest.json 
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix6/latest/Phoenix6-frc2024-latest.json 
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix/Phoenix5-frc2024-latest.json 
 cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include
 find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
 cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ctre
@@ -253,7 +256,7 @@ rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 cd /home/ubuntu
 mkdir sparkmax
 cd sparkmax
-python3 /home/ubuntu/2024RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib-2024.json
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib-2024.json
 cd /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include
 find /home/ubuntu/sparkmax -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
 mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/rev
@@ -338,7 +341,7 @@ export CUDA_ROOT=/usr/local/cuda
 pip3 install pycuda
 
 # Ultralytics YOLOv8 prereqs here
-sudo python3 -m pip install --no-cache-dir --upgrade pascal_voc
+sudo python3 -m pip install --no-cache-dir --upgrade 'pascal_voc==0.0.7'
 sudo python3 -m pip install --no-cache-dir --upgrade 'matplotlib>=3.2.2'
 sudo python3 -m pip install --no-cache-dir --upgrade 'opencv-python>=4.6.0'
 sudo python3 -m pip install --no-cache-dir --upgrade 'Pillow>=7.1.2'
@@ -406,3 +409,4 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 # Install pyserial (for 2023 intake reader)
 sudo pip3 install pyserial
 sudo pip3 install cupy-cuda11x
+
