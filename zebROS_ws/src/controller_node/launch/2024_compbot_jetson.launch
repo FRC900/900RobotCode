@@ -53,6 +53,9 @@
 			 note_conveyor_controller
 			 claw_controller
 			 arm_controller
+			 left_shooter_voltage_velocity_controller
+			 right_shooter_voltage_velocity_controller
+			 shooter_pivot_motionmagicvoltage_controller
 			 robot_code_ready_controller" />
 			 <!--swerve_drive_state_controller
 			 swerve_drive_state_controller
@@ -108,6 +111,8 @@
 	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
 	<include file="$(find behaviors)/launch/2024_claw.launch"/>
 	
+    <include file="$(find behaviors)/launch/2024_shooter.launch"/>
+
 	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>
 
 	<!-- Consider adding 2024 launch file for recording -->

@@ -1,0 +1,11 @@
+#defining goal
+float64 pivot_position
+
+---
+#defining result
+bool success
+
+---
+#feedback
+float64 percent_complete
+bool is_at_pivot_position

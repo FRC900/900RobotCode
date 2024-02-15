@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="shooter">
+		<rosparam file="$(find behaviors)/config/2024_shooter_speed.yaml" command="load"/>
+		<rosparam file="$(find behaviors)/config/2024_shooter_pivot_magic.yaml" command="load"/>
+		<node name="shooter_server_2024" pkg="behaviors" type="2024_shooter_server.py" output="screen"/>
+		<node name="shooter_pivot_server_2024" pkg="behaviors" type="2024_shooter_pivot_server.py" output="screen"/>
+	</group>
+</launch>
