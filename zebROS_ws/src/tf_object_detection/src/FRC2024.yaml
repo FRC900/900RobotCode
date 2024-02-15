@@ -58,7 +58,7 @@ download: |
       img_path = Path(root.find('path').text)
       img_name = img_path.name
       
-      if 'FRC2024' in str(img_path):
+      if 'FRC2024xxFIXME' in str(img_path):
           only_notes = True
           obj_count = 0
           for obj in root.iter('object'):
@@ -68,7 +68,7 @@ download: |
                   only_notes = False
                   break
 
-          if only_notes and (obj_count > 0) and (random() <= 0.9):
+          if only_notes and (obj_count > 0) and (random() <= 0.6):
               # print(f"Skipping {img_name} (only notes)")
               return
 

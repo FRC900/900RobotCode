@@ -26,9 +26,9 @@ def train_yolo(args: argparse.Namespace) -> None:
                     imgsz=args.input_size,
                     batch=args.batch_size,
                     patience=args.patience,
-                    optimizer='SGD',
-                    lr0=0.00125,
-                    warmup_bias_lr=args.warmup_bias_lr,
+                    # optimizer='SGD',
+                    # lr0=0.00125,
+                    # warmup_bias_lr=args.warmup_bias_lr,
                     augment=True, #Pretty sure this is a no-op
                     fliplr=False,
                     flipud=False,
@@ -52,7 +52,7 @@ def train_yolo(args: argparse.Namespace) -> None:
         '/home/ubuntu/YOLOv8-TensorRT/export-det.py',
         '--weights', pt_file_path,
         '--iou-thres', '0.65',
-        '--conf-thres', '0.25',
+        '--conf-thres', '0.05',
         '--topk', '100',
         '--opset', '11',
         '--sim',
@@ -110,10 +110,10 @@ def parse_args() -> argparse.Namespace:
                         help='Stop training early if this many epochs pass without improvement')
     # When doing reinforcment learning from a previously trained model, use a lower initial
     # learning rate to avoid jumping away from the previous model's weights
-    parser.add_argument('--warmup-bias-lr',
-                        type=float,
-                        default=0.001,
-                        help='Use a different learning rate for the first few epochs')
+    # parser.add_argument('--warmup-bias-lr',
+    #                     type=float,
+    #                     default=0.001,
+    #                     help='Use a different learning rate for the first few epochs')
     parser.add_argument('--batch-size',
                         type=int,
                         default=12,
