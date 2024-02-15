@@ -9,5 +9,5 @@ cam0:
   resolution: [1280, 720]
   rostopic: /zed_objdetect/left/image_rect_color
   # fix me
-  tagtopic: /apriltag_detection/tags
+  tagtopic: /apriltag_zed_objdet/apriltag_detection/tags
   rig_body: frc_robot

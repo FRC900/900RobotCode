@@ -120,6 +120,8 @@ class AutoNode {
 		int old_waypoint_ = 0;
 		double old_percent_complete_ = 0.0;
 		double old_waypoint_percent_ = 0.0;
+		// Publishes first point of auto path
+		ros::Publisher first_point_pub_;
 		// END probably changing year to year ----------------
 
 	public:
@@ -184,6 +186,7 @@ class AutoNode {
 
 		// START change year to year
 		// better way to initalize?
+		first_point_pub_ = nh_.advertise<geometry_msgs::Pose>("first_point", 1, true);
 		functionMap_["relocalize"] = &AutoNode::relocalizefn;
 		functionMap_["pause"] = &AutoNode::pausefn;
 		functionMap_["intaking_actionlib_server"] = &AutoNode::intakefn;
@@ -600,6 +603,10 @@ class AutoNode {
 				premade_position_waypoints_[auto_steps_[j]] = nav_msgs::Path();
 				premade_velocity_waypoints_[auto_steps_[j]] = nav_msgs::Path();
 				waypointsIdxs_[auto_steps_[j]] = waypointsIdx;
+
+				if (premade_position_paths_.size() == 1) {
+					first_point_pub_.publish(pos_path_msg.poses[0].pose);
+				}
 				continue;
 			}
 			// If the path has no goal, return

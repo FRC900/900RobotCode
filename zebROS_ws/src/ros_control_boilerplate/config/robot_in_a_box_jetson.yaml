@@ -24,15 +24,9 @@ hardware_interface:
    joints:
        #- {name: terrance, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
        #- {name: phillip, type: can_talon_fx, can_bus: CANivore, can_id: 2, local: true}
-      # - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 1, local: true}
-       #- {name: pdp, local: true, type: pdp}
-      # - {name: pcm, local: true, type: pcm, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
-       #- {name: do1, local: false, type: digital_output}
-       #- {name: do2, local_update: true, local_hardware: false, type: digital_output}
-         #- {name: four_bar_leader, type: can_talon_fx, can_bus: CANivore, can_id: 22, local: true}
-      # - {name: candle1, can_id: 5, can_bus: CANivore, type: candle, local: true}
+       - {name: candle1, can_id: 5, can_bus: CANivore, type: candle, local: true}
        
 joint_state_controller:
    type:         joint_state_controller/JointStateController
@@ -110,10 +104,6 @@ joint_state_listener_controller:
 match_state_listener_controller:
     type:      state_listener_controller/MatchStateListenerController
     topic:     /frcrobot_rio/match_data
-
-do2_controller:
-    type: position_controllers/JointPositionController
-    joint: do2
 
 pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
