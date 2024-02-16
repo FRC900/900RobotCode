@@ -2,14 +2,14 @@
 <launch>
     <group ns="drive_to_object">
 
-        <node name="drive_to_object" pkg="behaviors" type="drive_to_object_node" output="screen"/>
+        <node name="drive_to_object" pkg="drive_to_object" type="drive_to_object_node" output="screen"/>
 
         <node name="x_position_pid" pkg="pid" type="controller" >
             <param name="node_name" value="x_position_pid" />
-            <param name="Kp" value="1.0" />
+            <param name="Kp" value="3.0" />
             <param name="Ki" value="0.0" />
             <param name="Kd" value="0.0" />
-            <param name="upper_limit" value="2.0" />
+            <param name="upper_limit" value="3.0" />
             <param name="lower_limit" value="1.0" />
             <param name="windup_limit" value="10" />
             <param name="max_loop_frequency" value="250.0" />

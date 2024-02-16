@@ -82,7 +82,7 @@
 
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
-			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2023_twist_mux.yaml"/>
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2024_twist_mux.yaml"/>
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
@@ -95,12 +95,12 @@
 		<arg name="zed_name"        value="zed_front" />
 		<arg name="zed_config_dir"  value="zed_objdet" />
 		<arg name="serial_number"	value="28695205" />
-		<arg name="cam_pos_x"       value="0.236" />
-		<arg name="cam_pos_y"       value="0.077" />
-		<arg name="cam_pos_z"       value="0.354" />
-		<arg name="cam_roll"        value="0.0" />
-		<arg name="cam_pitch"       value="-0.27925" />
-		<arg name="cam_yaw"         value="3.14159" />
+    	<arg name="cam_pos_x"            value="0.25" />
+		<arg name="cam_pos_y"            value="0.017" />
+		<arg name="cam_pos_z"            value="0.342" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="-0.27925" />
+		<arg name="cam_yaw"              value="0.0" />
 		<arg name="run_object_detection" value="true" />
 	</include>
 
@@ -109,13 +109,15 @@
 		<arg name="zed_name"        value="zed_back" />
 		<arg name="zed_config_dir"  value="zed_objdet" />
 		<arg name="serial_number"	value="21775716" />
-		<arg name="cam_pos_x"       value="-0.236" />
-		<arg name="cam_pos_y"       value="-0.043" />
-		<arg name="cam_pos_z"       value="0.354" />
-		<arg name="cam_roll"        value="0.0" />
-		<arg name="cam_pitch"       value="-0.27925" />
-		<arg name="cam_yaw"         value="3.14159" />
+   		<arg name="cam_pos_x"            value="-0.25" />
+		<arg name="cam_pos_y"            value="0.017" />
+		<arg name="cam_pos_z"            value="0.342" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="-0.27925" />
+		<arg name="cam_yaw"              value="3.14159" />
 		<arg name="run_object_detection" value="false" />
 	</include>
+
+	<include file="$(find tagslam_launch)/launch/frc9000_tagslam_realtime.launch"/>
 	
 </launch>

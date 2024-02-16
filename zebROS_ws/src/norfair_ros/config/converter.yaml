@@ -1,0 +1,10 @@
+converter_subscribers:
+  yolo_detect:
+    topic: "/tf_object_detection_zed_front/obj_detection_msg"
+  screen_to_world:  
+    topic: "/tf_object_detection_zed_front/object_detection_world"
+
+converter_publishers:
+  output:
+    topic: "norfair/input"
+    queue_size: 1

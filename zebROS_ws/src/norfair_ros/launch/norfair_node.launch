@@ -1,0 +1,11 @@
+<launch>
+
+    <node pkg="norfair_ros" name="converter" type="converter.py" output="screen"/>
+    <node pkg="norfair_ros" name="norfair_ros" type="norfair_node.py" output="screen"/>
+    <!-- <node pkg="norfair_ros" name="video_writer" type="video_writer.py" output="screen"/>  -->
+
+    <rosparam file="$(find norfair_ros)/config/norfair.yaml"/>
+    <rosparam file="$(find norfair_ros)/config/converter.yaml"/>
+    <rosparam file="$(find norfair_ros)/config/video_writer.yaml"/>
+
+</launch>

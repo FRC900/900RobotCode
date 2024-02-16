@@ -54,7 +54,7 @@
 		 Use the TF broadcaster rather than tf2_ros since costmap2d seems to think that static transform broadcasts
          are too old to use?
 	-->
-	<node pkg="tf2_ros" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom" />
+	<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom" /> -->
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_mapodom" args="0 0 0 0 0 0 map odom" />
 	<group ns="robot_state">
@@ -62,7 +62,7 @@
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 	</group>
 
-	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" >
+	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" output="screen" >
 		<!-- rosparam won't load this yaml because there are numeric-only keys (TypeError: can only concatenate str (not "int") to str)
 			 so fake_goal_detect just loads the file and parses it using a regex :| -->
 		<!-- <rosparam command="load" file="$(find tf_object_detection)/src/FRC2024.yaml" ns="yolo_yaml" /> -->
@@ -125,7 +125,9 @@
 
 	<include file="$(find fake_sensors)/launch/apriltag_sim.launch"/>
 
-	<include file="$(find behaviors)/launch/drive_to_object.launch">
+	<include file="$(find drive_to_object)/launch/drive_to_object.launch">
+	</include>
+	<include file="$(find norfair_ros)/launch/norfair_node.launch">
 	</include>
 
 	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>

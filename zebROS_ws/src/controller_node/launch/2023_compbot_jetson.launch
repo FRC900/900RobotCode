@@ -133,7 +133,7 @@
 	<include file="$(find behaviors)/launch/2023_align_to_grid.launch">
 	</include>
 
-	<include file="$(find behaviors)/launch/drive_to_object.launch">
+	<include file="$(find drive_to_object)/launch/drive_to_object.launch">
 	</include>
 
 	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>

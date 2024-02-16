@@ -1,0 +1,17 @@
+norfair_subscribers:
+  converter:
+    topic: "norfair/input"
+
+norfair_publishers:
+  detections:
+    topic: "norfair/output"
+    queue_size: 1
+
+norfair_setup:
+  distance_function: "euclidean"
+  distance_threshold: 0.5 # no clue what units, assuming meters
+  hit_counter_max: 90 # need to test in real life
+  initialization_delay: 4
+  pointwise_hit_counter_max: 4
+  detection_threshold: 0.01
+  past_detections_length: 5

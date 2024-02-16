@@ -1,0 +1,11 @@
+video_writer_subscribers:
+  camera_reading:
+    topic: "/zed_objdetect/left/image_rect_color"
+    fps: 30
+    height: 720
+    width: 1280
+
+  detections:
+    topic: "/norfair/output"
+
+output_path: "/home/ubuntu/2023RobotCode/zebROS_ws/tracking.mp4"

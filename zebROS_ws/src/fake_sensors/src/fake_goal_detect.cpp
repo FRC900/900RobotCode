@@ -46,7 +46,7 @@ class FakeGoalDetection
 			, covariance_(0.0004)
 			, sub_(n.subscribe("base_marker_detection", 2, &FakeGoalDetection::cmdVelCallback, this))
 			, pub_(n.advertise<field_obj::Detection>("goal_detect_msg", 2))
-			, pubd_(n.advertise<field_obj::Detection>("/tf_object_detection/object_detection_world", 2))
+			, pubd_(n.advertise<field_obj::Detection>("/tf_object_detection_zed_front/object_detection_world", 2))
 			, objMap_(objMap)
 
 		{
@@ -86,9 +86,17 @@ class FakeGoalDetection
 					obj.location.x = p.x;
 					obj.location.y = p.y;
 					obj.location.z = p.z;
+					
 					obj.angle = atan2(obj.location.y, obj.location.x) * 180. / M_PI;
 					obj.confidence = msgIn->markers[i].ids_confidence[0];
 					obj.id = objMap_[msgIn->markers[i].ids[0]];
+					if (obj.id == "note") {
+						// ROS_INFO_STREAM("Found a note!");
+						if (hypot(p.x, p.y) < 2.0) {
+							ROS_INFO_STREAM_THROTTLE(1, "Note too close! Dropping");
+							continue;
+						}
+ 					}
 					msgOut.objects.push_back(obj);
 
 					geometry_msgs::TransformStamped transformStamped;
@@ -123,6 +131,8 @@ class FakeGoalDetection
 					dummy.angle = atan2(dummy.location.y, dummy.location.x) * 180. / M_PI;
 					dummy.confidence = msgIn->markers[i].ids_confidence[0];
 					dummy.id = std::to_string(msgIn->markers[i].ids[0]);
+					ROS_INFO_STREAM("Saw else " << dummy.id);
+
 					msgOut.objects.push_back(dummy);
 				}
 			}
