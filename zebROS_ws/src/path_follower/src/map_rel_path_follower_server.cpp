@@ -4,7 +4,7 @@
 #include <geometry_msgs/Quaternion.h>
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathGoal.h>
-#include <path_follower/axis_state.h>
+#include <axis_state/axis_state.h>
 #include <path_follower/path_follower.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>

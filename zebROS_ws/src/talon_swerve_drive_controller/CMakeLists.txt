@@ -9,18 +9,17 @@ find_package(catkin REQUIRED COMPONENTS
     ctre_interfaces
     geometry_msgs
     nav_msgs
-    std_msgs
-	  std_srvs
     periodic_interval_counter
     realtime_tools
 	  roscpp
+    std_msgs
+	  std_srvs
     talon_controllers
 	  talon_state_msgs
     talon_swerve_drive_controller_msgs
     tf
     trajectory_msgs
     urdf
-    periodic_interval_counter
 )
 
 find_package(Eigen3 REQUIRED)

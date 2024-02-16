@@ -6,7 +6,7 @@
 #include <nav_msgs/Odometry.h>
 #include <path_follower_msgs/holdPositionAction.h>
 #include <path_follower_msgs/holdPositionGoal.h>
-#include <path_follower/axis_state.h>
+#include <axis_state/axis_state.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>

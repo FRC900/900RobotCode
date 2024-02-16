@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(drive_to_object)
+project(axis_state)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,18 +8,9 @@ project(drive_to_object)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  actionlib
-  axis_state
-  behavior_actions
-  frc_msgs
-  geometry_msgs
-  norfair_ros
-  sensor_msgs
+  pid_velocity_msg
+  roscpp
   std_msgs
-  std_srvs
-  tf2
-  tf2_geometry_msgs
-  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -79,7 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   frc_msgs#   geometry_msgs#   sensor_msgs#   std_msgs#   tf2_geometry_msgs
+#   std_msgs
 # )
 
 ################################################
@@ -112,9 +103,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES drive_to_object
-#  CATKIN_DEPENDS behavior_actions field_obj frc_msgs geometry_msgs norfair_ros path_follower sensor_msgs std_msgs std_srvs tf2 tf2_geometry_msgs tf2_ros
+  INCLUDE_DIRS include
+#  LIBRARIES axis_state
+  CATKIN_DEPENDS pid_velocity_msg roscpp std_msgs
 #  DEPENDS system_lib
 )
 
@@ -125,13 +116,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/drive_to_object.cpp
+#   src/${PROJECT_NAME}/axis_state.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -139,9 +130,25 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(drive_to_object_node src/drive_to_object.cpp)
-target_link_libraries(drive_to_object_node ${catkin_LIBRARIES})
-add_dependencies(drive_to_object_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+# add_executable(${PROJECT_NAME}_node src/axis_state_node.cpp)
+
+## Rename C++ executable without prefix
+## The above recommended prefix causes long target names, the following renames the
+## target back to the shorter version for ease of user use
+## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -172,11 +179,11 @@ add_dependencies(drive_to_object_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXP
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -190,7 +197,7 @@ add_dependencies(drive_to_object_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXP
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_drive_to_object.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_axis_state.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

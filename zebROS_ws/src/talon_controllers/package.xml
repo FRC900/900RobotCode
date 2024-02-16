@@ -17,8 +17,8 @@
   <depend>ctre_interfaces</depend>
   <depend>ddynamic_reconfigure</depend>
   <depend>ddr_updater</depend>
-  <depend>realtime_tools</depend>
-  <depend>talon_controller_msgs</depend>
+  <build_depend>realtime_tools</build_depend>
+  <build_depend>talon_controller_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
 

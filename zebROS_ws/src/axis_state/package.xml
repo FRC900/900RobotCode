@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>behaviors</name>
-  <version>0.1.0</version>
-  <description>The behaviors package</description>
+  <name>axis_state</name>
+  <version>0.0.0</version>
+  <description>The axis_state package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="anjasheppard@todo.todo">anjasheppard</maintainer>
+  <maintainer email="ubuntu@todo.todo">ubuntu</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/behaviors</url> -->
+  <!-- <url type="website">http://wiki.ros.org/axis_state</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,38 +49,16 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>behavior_actions</depend>
-  <depend>frc_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>talon_state_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <build_depend>axis_state</build_depend>
-  <build_depend>nav_msgs</build_depend>
+  <build_depend>pid_velocity_msg</build_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>actionlib</build_depend>
-  <build_depend>actionlib_msgs</build_depend>
-  <build_depend>ddynamic_reconfigure</build_depend>
-  <build_export_depend>actionlib</build_export_depend>
-  <build_export_depend>nav_msgs</build_export_depend>
+  <build_export_depend>pid_velocity_msg</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-  <exec_depend>actionlib</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>pid_velocity_msg</exec_depend>
   <exec_depend>roscpp</exec_depend>
-  <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>actionlib</exec_depend>
-  <exec_depend>actionlib_msgs</exec_depend>
-  <depend>tf2_ros</depend>
-  <depend>path_follower_msgs</depend>
-  <depend>field_obj</depend>
-  <depend>base_trajectory_msgs</depend>
-  <depend>controllers_2022_msgs</depend>
-  <depend>controllers_2023_msgs</depend>
-  <depend>talon_controller_msgs</depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

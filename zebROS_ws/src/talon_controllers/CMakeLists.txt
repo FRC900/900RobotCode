@@ -27,7 +27,7 @@ catkin_package(
     ddr_updater
 	  ddynamic_reconfigure
 	  message_runtime
-    realtime_tools
+    # realtime_tools
   INCLUDE_DIRS include
   LIBRARIES talon_controller_interface
 )

@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   actionlib
   actionlib_msgs
+  axis_state
   base_trajectory_msgs
   behavior_actions
   #color_spin
@@ -33,7 +34,6 @@ find_package(catkin REQUIRED COMPONENTS
   talon_controller_msgs
   #teraranger_array
   tf2_ros
-  path_follower # for axis_state.h
 )
 
 include_directories(
@@ -137,7 +137,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
    #INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs path_follower
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs
    DEPENDS 
 )
 
