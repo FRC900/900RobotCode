@@ -33,6 +33,7 @@
 #include <angles/angles.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <behavior_actions/AlignToSpeaker2024Action.h>
 
 enum AutoStates {
 			NOT_READY,
@@ -107,6 +108,7 @@ class AutoNode {
 		actionlib::SimpleActionClient<behavior_actions::Balancing2023Action> balancing_ac;
 		actionlib::SimpleActionClient<behavior_actions::Placing2023Action> placing_ac_;
 		actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action> align_and_place_ac_;
+		actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action> align_to_speaker_ac_;
 
 		// path follower and feedback
 		std::map<std::string, nav_msgs::Path> premade_position_paths_;
@@ -132,6 +134,7 @@ class AutoNode {
 		, balancing_ac("/balance_position/balancing_server", true)
 		, placing_ac_("/placing/placing_server_2023", true)
 		, align_and_place_ac_("/align_and_place_grid", true)
+		, align_to_speaker_ac_("/align_to_speaker/align_to_speaker_2024", true)
 
 	// Constructor
 	{
@@ -196,6 +199,7 @@ class AutoNode {
 		functionMap_["balancing_actionlib_server"] = &AutoNode::autoBalancefn;
 		functionMap_["grid_align_server"] = &AutoNode::gridalignfn;
 		functionMap_["snap_to_orientation"] = &AutoNode::snapanglefn;
+		functionMap_["align_to_speaker"] = &AutoNode::alignToSpeakerfn;
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
 			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
@@ -203,6 +207,7 @@ class AutoNode {
 			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			placing_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			align_and_place_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			align_to_speaker_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			if (park_enabled) {
 				std_srvs::SetBool srv;
 				srv.request.data = false;
@@ -834,12 +839,25 @@ class AutoNode {
 		return true;
 	}
 
+	bool alignToSpeakerfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		if(!align_to_speaker_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find align to speaker actionlib server");
+			return false;
+		}
+
+		behavior_actions::AlignToSpeaker2024Goal goal;
+		goal.align_forever = false;
+
+		align_to_speaker_ac_.sendGoal(goal);
+		waitForActionlibServer(align_to_speaker_ac_, 1.5, "align_to_speaker");
+
+		return true;
+	}
+
 	bool relocalizefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
 		// make a std_srvs::Empty request
 		std_srvs::Empty srv;
 		// call the relocalize service
-		ros::Duration(0.2).sleep();
-
 		if (!tagslam_relocalize_srv_.call(srv)) {
 			shutdownNode(ERROR, "Auto node - relocalize service call failed");
 			return false;

@@ -54,9 +54,9 @@
 		 Use the TF broadcaster rather than tf2_ros since costmap2d seems to think that static transform broadcasts
          are too old to use?
 	-->
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_mapodom" args="0 0 0 0 0 0 map odom" />
 	<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom" /> -->
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link" />
-	<node pkg="tf2_ros" type="static_transform_publisher" name="static_mapodom" args="0 0 0 0 0 0 map odom" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2023_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -128,6 +128,9 @@
 	<include file="$(find drive_to_object)/launch/drive_to_object.launch">
 	</include>
 	<include file="$(find norfair_ros)/launch/norfair_node.launch">
+	</include>
+
+	<include file="$(find behaviors)/launch/2024_align_to_speaker.launch">
 	</include>
 
 	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>
