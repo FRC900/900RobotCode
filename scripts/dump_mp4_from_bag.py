@@ -3,6 +3,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2, sys, yaml
 import numpy as np
+from yaml import CLoader as Loader
 
 bagfile_name = sys.argv[1]
 
@@ -15,7 +16,7 @@ bridge = CvBridge()
 
 count = 0
 
-info_dict = yaml.load(bag._get_yaml_info())
+info_dict = yaml.load(bag._get_yaml_info(), Loader=Loader)
 for t in info_dict['topics']:
     if t['topic'] == topic:
         fps = t['frequency']
