@@ -1,0 +1,8 @@
+# goal
+bool align_forever # if true, don't exit once we're aligned (just exit when preempted)
+---
+# result
+bool success
+---
+# feedback
+float64 error # the angular error from where we want to be

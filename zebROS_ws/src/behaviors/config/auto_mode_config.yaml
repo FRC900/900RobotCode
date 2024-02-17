@@ -28,10 +28,13 @@ auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map
 auto_mode_6: ["relocalize", "map_rel_four_note_grid1_csv", "relocalize", "map_rel_four_note_grid2_csv", "relocalize", "map_rel_four_note_grid3_csv", "relocalize", "map_rel_four_note_grid4_csv"]
 
 auto_mode_7: ["map_rel_two_note_csv"]
-auto_mode_8: ["map_rel_four_note1_csv", "map_rel_four_note2_csv", "map_rel_four_note3_csv"]
-auto_mode_9: ["relocalize", "map_rel_four_note1_csv", "relocalize", "map_rel_four_note2_csv", "relocalize", "map_rel_four_note3_csv", "relocalize"]
+auto_mode_8: ["align_to_speaker", "map_rel_four_note1_csv", "align_to_speaker", "map_rel_four_note2_csv", "align_to_speaker", "map_rel_four_note3_csv", "align_to_speaker"]
+auto_mode_9: ["align_to_speaker", "relocalize", "map_rel_four_note1_csv", "align_to_speaker", "relocalize", "map_rel_four_note2_csv", "align_to_speaker", "relocalize", "map_rel_four_note3_csv", "align_to_speaker"]
 
 auto_mode_10: ["GetCone_csv"]
+
+align_to_speaker:
+  type: align_to_speaker
 
 map_rel_four_note_grid1_csv:
   waypoint_actions: {}

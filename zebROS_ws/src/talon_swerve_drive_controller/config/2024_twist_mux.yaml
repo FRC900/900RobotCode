@@ -45,6 +45,11 @@ topics:
   timeout : 0.2
   priority: 130
 -
+  name    : speaker_align_cmd_vel
+  topic   : /speaker_align/cmd_vel
+  timeout : 0.2
+  priority: 129
+-
   name    : align_cmd_vel
   topic   : /align/cmd_vel
   timeout : 0.2

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <std_srvs/Empty.h>
+#include <geometry_msgs/TwistStamped.h>
 
 
 namespace tf2
@@ -52,6 +53,8 @@ std::string tagslam_baselink = "frc_robot";
 std::unique_ptr<tf2_ros::StaticTransformBroadcaster> tfbr;
 tf2_ros::Buffer tf_buffer;
 geometry_msgs::TransformStamped map_odom_tf;
+
+ros::Time last_tf_pub = ros::Time(0);
 
 
 void updateMapOdomTf() {
@@ -130,15 +133,33 @@ void updateMapOdomTf() {
 void timerCallback(const ros::TimerEvent &event) {
   updateMapOdomTf();
   // map_odom_tf.header.stamp = ros::Time::now();
-  tfbr->sendTransform(map_odom_tf);
+  if (map_odom_tf.header.frame_id == map_frame_id) {
+    tfbr->sendTransform(map_odom_tf);
+  }
   ROS_WARN_STREAM_THROTTLE(2, "Publishing map odom tf in timer");
 }
 
 bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/) {
   updateMapOdomTf();
-  tfbr->sendTransform(map_odom_tf);
+  if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04 && (ros::Time::now() - map_odom_tf.header.stamp).toSec() < 0.1) {
+    tfbr->sendTransform(map_odom_tf);
+    last_tf_pub = ros::Time::now();
+  }
   ROS_WARN_STREAM("Publishing static map odom tf in service");
   return true;
+}
+
+void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+  if (hypot(msg->twist.linear.x, msg->twist.linear.y) > 0.02) {
+    last_tf_pub = ros::Time::now() + ros::Duration(0.1);
+  }
+  if (hypot(msg->twist.linear.x, msg->twist.linear.y) < 0.02) {
+    updateMapOdomTf();
+    if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04 && (ros::Time::now() - map_odom_tf.header.stamp).toSec() < 0.1) {
+      tfbr->sendTransform(map_odom_tf);
+      last_tf_pub = ros::Time::now();
+    }
+  }
 }
 
 int main(int argc, char **argv) {
@@ -152,8 +173,11 @@ int main(int argc, char **argv) {
   // ros::Timer timer = nh_.createTimer(ros::Duration(0.004), timerCallback);
   // write a service that takes in an empty message and publishes the tf
   ros::ServiceServer service = nh_.advertiseService("tagslam_pub_map_to_odom", service_cb);
+  ros::Subscriber cmd_vel_sub = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, cmdVelCallback);
   updateMapOdomTf();
-  tfbr->sendTransform(map_odom_tf);
+  if (map_odom_tf.header.frame_id == map_frame_id) {
+    tfbr->sendTransform(map_odom_tf);
+  }
   ros::spin();
 
   return 0;
