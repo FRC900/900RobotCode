@@ -21,7 +21,7 @@ point_cloud_freq:               10.0                            # Dynamic - freq
 general:
     camera_name:                zedx_front
     zed_id:                     0
-    serial_number:              47067994
+    serial_number:              0
     gpu_id:                     -1
     base_frame:                 'base_link'                     # must be equal to the frame_id used in the URDF file
     sdk_verbose:                1                               # Set verbose level of the ZED SDK
@@ -51,11 +51,11 @@ pos_tracking:
     imu_fusion:                 true                            # enable/disable IMU fusion. When set to false, only the optical odometry will be used.
     publish_tf:                 false                           # publish `odom -> base_link` TF
     publish_map_tf:             false                           # publish `map -> odom` TF
-    map_frame:                  'zed_objdet_map'
-    odometry_frame:             'zed_objdet_odom'
-    area_memory_db_path:        'zed_objdet.area'
+    map_frame:                  'zedx_map'
+    odometry_frame:             'zedx_odom'
+    area_memory_db_path:        'zedx.area'
     save_area_memory_db_on_exit: false                          # save the "known visual features" map when the node is correctly closed to the path indicated by `area_memory_db_path`
-    area_memory:                true                            # Enable to detect loop closure
+    area_memory:                false                           # Enable to detect loop closure
     floor_alignment:            true                            # Enable to automatically calculate camera/floor offset
     initial_base_pose:          [0.0,0.0,0.0, 0.0,0.0,0.0]      # Initial position of the `base_frame` -> [X, Y, Z, R, P, Y]
     init_odom_with_first_valid_pose: true                       # Enable to initialize the odometry with the first valid pose
@@ -84,11 +84,11 @@ object_detection:
     max_range:                          15.                             # Maximum detection range
     allow_reduced_precision_inference:  true                            # Allow inference to run at a lower precision to improve runtime and memory usage
     prediction_timeout:                 0.5                             #  During this time [sec], the object will have OK state even if it is not detected. Set this parameter to 0 to disable SDK predictions            
-    object_tracking_enabled:            true                            # Enable/disable the tracking of the detected objects
-    mc_people:                          true                            # Enable/disable the detection of persons for 'MULTI_CLASS_BOX_X' models
-    mc_vehicle:                         true                            # Enable/disable the detection of vehicles for 'MULTI_CLASS_BOX_X' models
-    mc_bag:                             true                            # Enable/disable the detection of bags for 'MULTI_CLASS_BOX_X' models
-    mc_animal:                          true                            # Enable/disable the detection of animals for 'MULTI_CLASS_BOX_X' models
-    mc_electronics:                     true                            # Enable/disable the detection of electronic devices for 'MULTI_CLASS_BOX_X' models
-    mc_fruit_vegetable:                 true                            # Enable/disable the detection of fruits and vegetables for 'MULTI_CLASS_BOX_X' models
-    mc_sport:                           true                            # Enable/disable the detection of sport-related objects for 'MULTI_CLASS_BOX_X' models
+    object_tracking_enabled:            false                            # Enable/disable the tracking of the detected objects
+    mc_people:                          false                            # Enable/disable the detection of persons for 'MULTI_CLASS_BOX_X' models
+    mc_vehicle:                         false                            # Enable/disable the detection of vehicles for 'MULTI_CLASS_BOX_X' models
+    mc_bag:                             false                            # Enable/disable the detection of bags for 'MULTI_CLASS_BOX_X' models
+    mc_animal:                          false                            # Enable/disable the detection of animals for 'MULTI_CLASS_BOX_X' models
+    mc_electronics:                     false                            # Enable/disable the detection of electronic devices for 'MULTI_CLASS_BOX_X' models
+    mc_fruit_vegetable:                 false                            # Enable/disable the detection of fruits and vegetables for 'MULTI_CLASS_BOX_X' models
+    mc_sport:                           false                            # Enable/disable the detection of sport-related objects for 'MULTI_CLASS_BOX_X' models

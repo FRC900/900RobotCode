@@ -1,0 +1,19 @@
+# zebROS 2023
+# Copy this to /etc/systemd/system/ 
+
+[Unit]
+Description=2024 ROS Vision Startup Script
+After=ntp.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/2023RobotCode/scripts/jetson_setup
+
+#ExecStartPre=/home/ubuntu/2023RobotCode/scripts/jetson_setup/wait_for_ntp_sync.sh
+
+ExecStart=/bin/bash -ec "/home/ubuntu/2023RobotCode/scripts/jetson_setup/vision.sh || true" 
+
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

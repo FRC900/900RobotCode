@@ -33,15 +33,19 @@ ulimit -r unlimited
 #echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl stop ntp.service
 #echo ubuntu | ssh -tt 10.9.0.9 sudo -kS date -s @$(date -u +"%s")
 #echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl start ntp.service
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl restart zed_x_daemon
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS i2cset -y -f 30 0x29 0x04 0x15 0x30 i
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS i2cset -y -f 30 0x29 0x04 0x18 0x30 i
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS i2cset -y -f 30 0x29 0x04 0x1B 0x30 i
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS i2cset -y -f 30 0x29 0x04 0x1E 0x30 i
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS systemctl restart zed_x_daemon
+#echo ubuntu | ssh -tt 10.9.0.9 sudo -kS jetson_clocks --fan
+
 
 #echo 1100-1200,443,80,554,1735 > /proc/sys/net/ipv4/ip_local_reserved_ports
 
 #echo 5800 5810 > /proc/sys/net/ipv4/ip_local_port_range
 #systemctl restart networking
-
-# TODO - this should be handled by 10-local.rules 
-#sudo chmod a+rw /dev/ttyACM0
-#sudo umount /mnt/900_2 --lazy
 
 export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
@@ -52,10 +56,6 @@ echo "mounted / recording" >> /home/ubuntu/bagfiles/mounted.txt
 #record:=true
 
 top -b > /home/ubuntu/bagfiles/$(date +%Y%m%d%H%M%S)_top_log.txt
-
-# Set brightness and exposure for C920 camera to low levels
-# for retro-tape detection
-#v4l2-ctl -d `find /dev/v4l/by-id/ -name \*Webcam_C9\*` -c exposure_auto=1,exposure_absolute=20,brightness=5
 
 /home/ubuntu/2023RobotCode/scripts/jetson_setup/clocks.sh &
 

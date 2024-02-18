@@ -17,6 +17,7 @@
   <arg name="run_apriltag"         default="true" />
   <arg name="run_object_detection" default="true" />
   <arg name="run_pub_video"        default="false" />
+  <arg name="startup_delay"        default="0.0" />
 
   <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval run_camera)">
     <arg name="camera_name"          value="$(arg zed_name)" />
@@ -32,6 +33,7 @@
     <arg name="cam_roll"             value="$(arg cam_roll)"  />
     <arg name="cam_pitch"            value="$(arg cam_pitch)" />
     <arg name="cam_yaw"              value="$(arg cam_yaw)"   />
+    <arg name="startup_delay"        value="$(arg startup_delay)" />
 
     <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
     <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
