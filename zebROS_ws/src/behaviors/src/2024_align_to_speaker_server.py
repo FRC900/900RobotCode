@@ -72,7 +72,7 @@ class Aligner:
             msg1 = behavior_actions.msg.AutoAlignSpeaker()
 
             msg1.distance = math.sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
-            msg.data = self.current_yaw + math.atan2(trans.transform.translation.y, trans.transform.translation.x)
+            msg.data = math.pi + self.current_yaw + math.atan2(trans.transform.translation.y, trans.transform.translation.x)
             msg1.angle = math.atan2(trans.transform.translation.y, trans.transform.translation.x)
 
             self._feedback.error = math.atan2(trans.transform.translation.y, trans.transform.translation.x)

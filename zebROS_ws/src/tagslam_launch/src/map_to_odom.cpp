@@ -156,6 +156,7 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
   if (hypot(msg->twist.linear.x, msg->twist.linear.y) < 0.02) {
     updateMapOdomTf();
     if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04 && (ros::Time::now() - map_odom_tf.header.stamp).toSec() < 0.1) {
+      ROS_INFO_STREAM_THROTTLE(2, "RELOCALIZING"); 
       tfbr->sendTransform(map_odom_tf);
       last_tf_pub = ros::Time::now();
     }

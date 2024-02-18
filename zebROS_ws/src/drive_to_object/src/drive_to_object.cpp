@@ -91,9 +91,8 @@ protected:
   double x_error_{0};
   double angle_error_{0};
 
-  int valid_frames_config_{4};
   double velocity_ramp_time_{0.5}; // time to transition from current command velocity to full PID control
-
+  double distance_to_hold_angle_{0.5};
   double timeout_{0.25};
 
   std::map<std::string, AlignActionAxisStatePosition> axis_states_;
@@ -133,10 +132,17 @@ public:
       return ;
     }
 
-    nh_.getParam("min_valid_frames", valid_frames_config_);
-    nh_.getParam("velocity_ramp_time", velocity_ramp_time_);
-    nh_.getParam("timeout", timeout_);
+    if(!nh_.getParam("velocity_ramp_time", velocity_ramp_time_)) {
+      ROS_ERROR_STREAM("Could not read velocity_ramp_time_ in align_server");
+    }
 
+    if(!nh_.getParam("distance_to_hold_angle", distance_to_hold_angle_)) { 
+      ROS_ERROR_STREAM("Could not read distance_to_hold_angle_ in align_server");
+    }
+
+    if(!nh_.getParam("timeout", timeout_)) {
+      ROS_ERROR_STREAM("Could not read timeout_ in align_server");
+    }
     // geometry_msgs::Twist t1;
     // t1.linear.x = 1.0;
     // geometry_msgs::Twist t2;
@@ -183,7 +189,7 @@ public:
   std::optional<norfair_ros::Detection> findClosestObject(const norfair_ros::Detections &detections, const std::string &object_id, const int &tracked_object_id) {
     double minDistance = std::numeric_limits<double>::max();
     // ROS_INFO_STREAM("Finding closest object");
-    auto map_to_baselink = tf_buffer_.lookupTransform("map", "base_link", ros::Time::now(), ros::Duration(0.1));
+    auto map_to_baselink = tf_buffer_.lookupTransform("odom", "base_link", ros::Time::now(), ros::Duration(0.1));
     double map_x = map_to_baselink.transform.translation.x;
     double map_y = map_to_baselink.transform.translation.y;
     // ROS_INFO_STREAM("HERE");
@@ -254,8 +260,8 @@ public:
 
     // just to make sure to go through the loop once
     int tracked_object_id = -1;
-    x_error_ = 100;
-    angle_error_ = 100;
+    x_error_ = 900;
+    angle_error_ = 900;
     ros::Rate r = ros::Rate(60);
     ROS_INFO_STREAM("Execute callback");
     auto x_axis_it = axis_states_.find("x");
@@ -271,12 +277,11 @@ public:
     } else {
       tracked_object_id = closestObject->id;
     }
-
-    double field_relative_object_angle = latest_yaw_ + atan2(closestObject->points[0].point[1], closestObject->points[0].point[0]);
+    // we don't know this until we go once in the loop, set to large value to signal that
+    double field_relative_object_angle = 900;
     std_msgs::Float64 msg;
-    msg.data = field_relative_object_angle;
-    orientation_command_pub_.publish(msg);
-    int valid_frames = 0;
+    // msg.data = field_relative_object_angle;
+    // orientation_command_pub_.publish(msg);
 
     geometry_msgs::Twist initial_cmd_vel = latest_cmd_vel_.twist;
     ROS_INFO_STREAM("Initial cmd vel is " << initial_cmd_vel);
@@ -284,7 +289,7 @@ public:
 
     geometry_msgs::PointStamped latest_map_relative_detection;
 
-    while (abs(x_error_) > goal->tolerance || valid_frames < valid_frames_config_) {
+    while (!(abs(x_error_) <= goal->tolerance)) {
       ros::spinOnce(); // grab latest callback data
       if (as_.isPreemptRequested() || !ros::ok())
       {
@@ -303,11 +308,11 @@ public:
         object_point.point.z = closestObject->points[0].point[2];
         object_point.header = latest_.header;
         // will go map to map but copies
-        tf_buffer_.transform(object_point, latest_map_relative_detection, "map");
+        tf_buffer_.transform(object_point, latest_map_relative_detection, "odom");
       }
 
       x_axis.setEnable(true);
-      auto map_to_baselink = tf_buffer_.lookupTransform("base_link", "map", ros::Time::now(), ros::Duration(0.1));
+      auto map_to_baselink = tf_buffer_.lookupTransform("base_link", "odom", ros::Time::now(), ros::Duration(0.1));
       tf2::doTransform(latest_map_relative_detection, base_link_point, map_to_baselink);
       // ROS_WARN_STREAM("Base link pt " << base_);
 
@@ -319,13 +324,17 @@ public:
       x_axis.setCommand(-goal->distance_away);
 
       x_error_ = fabs(goal->distance_away - base_link_point.point.x);
-
-      field_relative_object_angle = latest_yaw_ + atan2(base_link_point.point.y, base_link_point.point.x);
+      // checking if it is 900, we only want to set this value once and then keep it. 
+      if (x_error_ > distance_to_hold_angle_) {
+        field_relative_object_angle = latest_yaw_ + atan2(base_link_point.point.y, base_link_point.point.x);
+        ROS_INFO_STREAM("SETTING ANGLE TO " << field_relative_object_angle);
+      }
 
       msg.data = field_relative_object_angle;
       orientation_command_pub_.publish(msg);
 
-      angle_error_ = fabs(atan2(base_link_point.point.y, base_link_point.point.x));
+      angle_error_ = fabs(field_relative_object_angle - latest_yaw_);
+      
       ROS_INFO_STREAM("Angle error is " << angle_error_);
       // note: need to account for spinning, because that changes the direction we're pointing --> changes what command we need to send.
       // could try to do the math, but i'm not sure how we'd calculate that.
@@ -349,12 +358,14 @@ public:
       cmd_vel_pub_.publish(t);
       feedback_.x_error = x_error_;
       feedback_.angle_error = angle_error_;
-      if (abs(x_error_) <= goal->tolerance && angle_error_ <= goal->tolerance) {
-        valid_frames++;
-      }
       as_.publishFeedback(feedback_);
       r.sleep();
     }
+    geometry_msgs::Twist t;
+    t.linear.x = 0;
+    t.linear.y = 0;
+    t.angular.z = 0;
+    cmd_vel_pub_.publish(t);
     x_axis.setEnable(false);
     result_.success = true;
     as_.setSucceeded(result_);

@@ -28,11 +28,11 @@
 			 joint_state_listener_controller_rio
 			 joystick_controller
 			 button_box_controller
-			 pdh_state_controller
+			 
 			 match_state_controller
 			 robot_controller_state_controller
 			 robot_code_ready_controller" />
-
+			<!-- pdh_state_controller -->
 		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
 
 		<include file="$(find cpu_monitor)/launch/cpu_monitor.launch">

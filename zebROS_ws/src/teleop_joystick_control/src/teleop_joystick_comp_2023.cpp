@@ -972,7 +972,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				{
 					behavior_actions::DriveToObjectGoal goal;
 					goal.id = "note";
-					goal.distance_away = 0.5;
+					goal.distance_away = 0.6;
 					goal.tolerance = 0.1; // todo make configurable
 					auto_note_pickup_ac->sendGoal(goal);
 					ROS_WARN_STREAM("Auto picking up notes");

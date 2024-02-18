@@ -47,42 +47,43 @@ hardware_interface:
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 15, local: true}
        
        #arm
-       - {name: arm, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
+        #- {name: arm, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
 
        #climb
-       - {name: climb_leader, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
-       - {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
+       #- {name: climb_leader, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+       #- {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
 
        #shooter
-       - {name: left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
-       - {name: right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
-       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+       #- {name: left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+       #- {name: right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
+       #- {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
 
        
 
        #Claw/Diverter
        # TODO - see if these need to be merged?
-       - {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
-       - {name: claw, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
+       #- {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
+       #- {name: claw, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
 
         #shooter and pivot stuff
        
 
 
 
-       - {name: claw_limit_switch, type: digital_input, local: false}
+       #- {name: claw_limit_switch, type: digital_input, local: false}
        
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
-       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
+       #- {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
 
-       - {name: babys_first_orchestra, type: orchestra, id: 1}
+       #- {name: babys_first_orchestra, type: orchestra, id: 1}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
 
-       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
+        #  taken out
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw}] }
 
 # Create controllers for each joint
 #

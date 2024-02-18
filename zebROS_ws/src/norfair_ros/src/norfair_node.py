@@ -31,7 +31,7 @@ class NorfairNode:
                 )
             )
         detection_msg.header.stamp = rospy.get_rostime()
-        detection_msg.header.frame_id = "map"
+        detection_msg.header.frame_id = "odom"
         
         self.pub.publish(detection_msg)
 
