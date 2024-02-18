@@ -1,5 +1,5 @@
 {
-    "version": "v0.2.1",
+    "version": "v0.2.2",
     "robotConfiguration": {
         "mass": 49.39198466872796,
         "rotationalInertia": 5.2697898752008525,
@@ -3731,67 +3731,58 @@
                     "scope": [
                         "first"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "191b827e-fdf8-4658-8425-035a651f0d37"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         "last"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "f5408356-06d9-4fcb-a0e7-f5b93e5b2ab3"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         1,
                         2
                     ],
-                    "type": "StraightLine",
-                    "uuid": "6d9d5cc1-1d18-42fc-aa65-0e8518f5d3b4"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         4,
                         5
                     ],
-                    "type": "StraightLine",
-                    "uuid": "1f03a0f7-a2ca-4a8e-abd7-399db9d95dac"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         7,
                         8
                     ],
-                    "type": "StraightLine",
-                    "uuid": "512d5f6a-b963-4df1-95ef-2628032e95a6"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         4
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "7cb5e0b5-bba1-4d5e-b285-e92ff256dcb5"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         5
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "d03c93e6-ffd9-4a92-a926-c8428ed838ab"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         8
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "2b7abc82-556e-459b-9c24-63cdd43a2aba"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         10
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "bc18ca55-0e90-46a1-8b9c-4463a122e2a7"
+                    "type": "WptZeroVelocity"
                 }
             ],
             "usesControlIntervalGuessing": false,
@@ -7886,60 +7877,52 @@
                     "scope": [
                         "first"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "5abb50f5-a35d-4cfb-9ea1-8a907355fb6a"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         "last"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "53a0e495-75cc-4c2c-94dd-2b0b238134c2"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         1,
                         2
                     ],
-                    "type": "StraightLine",
-                    "uuid": "16eb2bb9-2392-4388-9ab9-a82eb332a365"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         4,
                         5
                     ],
-                    "type": "StraightLine",
-                    "uuid": "b0836abb-0c69-4da5-a328-d7fa0c425606"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         8,
                         9
                     ],
-                    "type": "StraightLine",
-                    "uuid": "42eb7bd0-e186-4db8-8aef-c6a0198c26cd"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         6
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "14e02cab-de38-42bc-b389-9ee39aa55f64"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         3
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "6c24849a-f710-4056-891d-c51e12f70058"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         11
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "56c9b02c-a617-4203-af49-d7a9f0c7cbbb"
+                    "type": "WptZeroVelocity"
                 }
             ],
             "usesControlIntervalGuessing": false,
@@ -9820,45 +9803,39 @@
                     "scope": [
                         "first"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "4803e4f7-9c9f-4b05-8e8f-13f649da447e"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         "last"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "36f3e32f-a327-4d9d-81c3-862b912c6475"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         5
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "fac05262-ae6e-4a3c-88da-6ef8bed14472"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         4
                     ],
-                    "type": "WptZeroVelocity",
-                    "uuid": "1141eb14-a1d8-4c60-a712-484c89a21ad5"
+                    "type": "WptZeroVelocity"
                 },
                 {
                     "scope": [
                         4,
                         5
                     ],
-                    "type": "StraightLine",
-                    "uuid": "b8f9b42e-0918-4acc-ab02-7af5340a9c10"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         1,
                         2
                     ],
-                    "type": "StraightLine",
-                    "uuid": "7c59ecba-f636-4999-92f2-fd43ae60583a"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
@@ -9866,7 +9843,6 @@
                         "last"
                     ],
                     "type": "MaxVelocity",
-                    "uuid": "7fd1c7e5-c97c-4d5e-a901-220ccfe6ab05",
                     "velocity": 2
                 }
             ],
@@ -11748,15 +11724,13 @@
                     "scope": [
                         "first"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "936ef6b6-4cf1-4d0a-bb6e-e2b36dfdc900"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         "last"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "f0d32be4-2f0d-4446-85c7-2807b11a3b13"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
@@ -11764,7 +11738,6 @@
                         "last"
                     ],
                     "type": "MaxVelocity",
-                    "uuid": "d545fc32-6a12-4324-82b1-069c7db8b7a0",
                     "velocity": 2
                 },
                 {
@@ -11772,29 +11745,25 @@
                         1
                     ],
                     "type": "WptVelocityDirection",
-                    "uuid": "d1b206ee-aef2-4997-8d59-67586dad38b7",
                     "direction": -0.47
                 },
                 {
                     "scope": [
                         1
                     ],
-                    "type": "StopPoint",
-                    "uuid": "baac71de-62bb-40af-81a6-2e931298dd2a"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         3
                     ],
-                    "type": "StopPoint",
-                    "uuid": "db78156a-3a7f-4436-98d4-db77415fd3bf"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         5
                     ],
-                    "type": "StopPoint",
-                    "uuid": "94f5c3dd-3947-4e31-a214-f1904dd42b9e"
+                    "type": "StopPoint"
                 }
             ],
             "usesControlIntervalGuessing": false,
@@ -12199,15 +12168,13 @@
                     "scope": [
                         "first"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "0ae64e9e-06ea-4805-a411-92e2157422f5"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         "last"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "03caf389-5966-40d4-b743-b2a01d60be0a"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
@@ -12215,7 +12182,6 @@
                         "last"
                     ],
                     "type": "MaxVelocity",
-                    "uuid": "f85b1230-9f12-4ffe-978d-754936f18e37",
                     "velocity": 2
                 }
             ],
@@ -14466,23 +14432,20 @@
                     "scope": [
                         "first"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "c7ab4e13-8125-4b4f-9273-efdb6a790f2a"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         "last"
                     ],
-                    "type": "StopPoint",
-                    "uuid": "82db0e1b-e153-4c47-8c93-e52ce102876f"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         1,
                         2
                     ],
-                    "type": "StraightLine",
-                    "uuid": "cd0cedfe-66d0-414a-9b6b-f0d6f7c66b23"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
@@ -14490,7 +14453,6 @@
                         "last"
                     ],
                     "type": "MaxVelocity",
-                    "uuid": "262a5fdc-1bc9-4dec-8699-8f0bd8dbcf39",
                     "velocity": 2
                 },
                 {
@@ -14498,37 +14460,32 @@
                         3,
                         4
                     ],
-                    "type": "StraightLine",
-                    "uuid": "bcb4cd01-7cea-47c4-927e-c34c9c493b4c"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         5,
                         6
                     ],
-                    "type": "StraightLine",
-                    "uuid": "3de78c0d-25a1-4d36-9e41-00e1ef7a420e"
+                    "type": "StraightLine"
                 },
                 {
                     "scope": [
                         2
                     ],
-                    "type": "StopPoint",
-                    "uuid": "2abbd8fe-ee95-4252-8565-4d69fad97ed8"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         3
                     ],
-                    "type": "StopPoint",
-                    "uuid": "a01c8ff1-3dfd-4f48-8c4f-4908dce556b4"
+                    "type": "StopPoint"
                 },
                 {
                     "scope": [
                         4
                     ],
-                    "type": "StopPoint",
-                    "uuid": "8f122cea-3c33-4147-a28a-3cc0417d71a4"
+                    "type": "StopPoint"
                 }
             ],
             "usesControlIntervalGuessing": false,
@@ -14537,5 +14494,6 @@
             "circleObstacles": []
         }
     },
-    "splitTrajectoriesAtStopPoints": true
+    "splitTrajectoriesAtStopPoints": true,
+    "usesObstacles": false
 }

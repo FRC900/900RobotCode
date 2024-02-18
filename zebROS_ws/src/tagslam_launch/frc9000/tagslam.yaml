@@ -30,7 +30,7 @@ body_defaults:
   rotation_noise: 0.01
 # website says this is good when all tags are already known for state estimation and gives speed 
 #amnesia: true
-# amnesia: true
+amnesia: true
 # no default body because all unknown tags should be ignored
 
 default_body: zebracorn_labs
@@ -77,24 +77,43 @@ bodies:
              x: 0.00001000
              y: 0.00001000
              z: 0.00001000
+       - id: 8
+         size: 0.16510000
+         pose:
+           position:
+             x: -0.01220967
+             y: 4.96773663
+             z: 1.44946190
+           rotation:
+             x: 1.19797039
+             y: 1.16770972
+             z: 1.20899562
+           position_noise:
+             x: 0.00057603
+             y: 0.00072432
+             z: 0.00195865
+           rotation_noise:
+             x: 0.00407386
+             y: 0.00436885
+             z: 0.00141598
 
 
  - frc_robot:
      is_static: false
      type: simple
-    #  odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
+     odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
      #odom_topic: "/frcrobot_jetson/swerve_drive_state_controller/odom"
-    #  odom_frame_id: base_link
+     odom_frame_id: base_link
      # assumed odom noise in meters(!): the larger this parameter, the less you rely on odom
-    #  odom_translation_noise: 0.001
-    #  # assomed odom noise in radians(!)
-    #  odom_rotation_noise: 0.001
-    #  T_body_odom:
-    #    position:
-    #      x:  0
-    #      y:  0
-    #      z:  0
-    #    rotation:
-    #      x:  0
-    #      y:  0
-    #      z:  0
+     odom_translation_noise: 0.001
+     # assomed odom noise in radians(!)
+     odom_rotation_noise: 0.001
+     T_body_odom:
+       position:
+         x:  0
+         y:  0
+         z:  0
+       rotation:
+         x:  0
+         y:  0
+         z:  0

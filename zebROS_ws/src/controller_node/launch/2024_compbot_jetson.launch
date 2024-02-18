@@ -22,9 +22,9 @@
 		
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 
-		<!--
-		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
-		-->
+		
+		<!-- <node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node> -->
+		
 
 		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>
 
@@ -36,7 +36,8 @@
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
-			 swerve_drive_controller 
+			 latency_compensation_state_controller
+			 swerve_drive_controller
 			 joint_state_controller_jetson
 			 joint_state_listener_controller_jetson
 			 talon_state_controller_jetson
@@ -44,21 +45,25 @@
 			 match_state_listener_controller
 			 talonfxpro_state_controller
 			 talonfxpro_config_controller
-			 candle_controller
+			 intake_talonfxpro_controller
+			 pigeon2_imu_state_controller
+			 robot_code_ready_controller" />
+			 
+			 <!--swerve_drive_state_controller
+			 swerve_drive_state_controller
+
+
+			 
+			 			 candle_controller
 			 orchestra_controller
 			 orchestra_state_controller
-			 pigeon2_imu_state_controller
-			 latency_compensation_state_controller
-			 note_diverter_controller
+			note_diverter_controller
 			 note_conveyor_controller
 			 claw_controller
 			 arm_controller
 			 left_shooter_voltage_velocity_controller
 			 right_shooter_voltage_velocity_controller
 			 shooter_pivot_motionmagicvoltage_controller
-			 robot_code_ready_controller" />
-			 <!--swerve_drive_state_controller
-			 swerve_drive_state_controller
 			-->
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
@@ -68,6 +73,7 @@
 		</include>
 	</group>
 
+	<!-- ADD ME BACK -->
 	<group ns="imu">
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
 			<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
@@ -88,8 +94,9 @@
 		<!-- <include file="$(find controller_node)/launch/fuse_odom.launch"/> -->
 	</group>
 
+	<!-- ADD TELEOP BACK -->
 	<include file="$(find controller_node)/launch/teleop.launch">
-		<arg name="year" value="2024" />
+		<arg name="year" value="2023" />
 	</include>
 
 	<group ns="cmd_vel_mux">
@@ -104,32 +111,31 @@
 	
 	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
-	<include file="$(find behaviors)/launch/2024_arm.launch"/>
+	<!-- <include file="$(find behaviors)/launch/2024_arm.launch"/> -->
 
 
 	<!-- Add 2024 actionlib servers here -->
-	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
+	<!-- <include file="$(find behaviors)/launch/2024_diverter.launch"/>
 	<include file="$(find behaviors)/launch/2024_claw.launch"/>
 	
-    <include file="$(find behaviors)/launch/2024_shooter.launch"/>
+    <include file="$(find behaviors)/launch/2024_shooter.launch"/> -->
 
-	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>
+	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 
 	<!-- Consider adding 2024 launch file for recording -->
 	<include file="$(find controller_node)/launch/record_2024_compbot.launch" if="$(arg record)" />
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
-	<include file="$(find controller_node)/launch/zed_detection.launch">
+	<!-- <include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="run_camera" value="false" if="$(eval hw_or_sim == 'sim')"/>
-		<!-- TODO : add camera position params here -->
 		<arg name="cam_pos_x"  value="0.0" />
 		<arg name="cam_pos_y"  value="0.0" />
 		<arg name="cam_pos_z"  value="0.0" />
 		<arg name="cam_roll"   value="0.0" />
 		<arg name="cam_pitch"  value="0.0" />
 		<arg name="cam_yaw"    value="0.0" />
-	</include>
+	</include> -->
 
 	<!-- 
 	<group ns="wpilib_odom">

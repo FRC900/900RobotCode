@@ -27,7 +27,7 @@ auto_mode_4: ["drive_out_community", "snap_0_before_intake"] # we now face the p
 auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map_rel_four_note_grid3_csv", "map_rel_four_note_grid4_csv"]
 auto_mode_6: ["relocalize", "map_rel_four_note_grid1_csv", "relocalize", "map_rel_four_note_grid2_csv", "relocalize", "map_rel_four_note_grid3_csv", "relocalize", "map_rel_four_note_grid4_csv"]
 
-auto_mode_7: ["map_rel_two_note_csv"]
+auto_mode_7: ["map_rel_four_note_grid_right1_csv", "relocalize", "map_rel_four_note_grid_right2_csv", "relocalize", "map_rel_four_note_grid_right3_csv"]
 auto_mode_8: ["align_to_speaker", "map_rel_four_note1_csv", "align_to_speaker", "map_rel_four_note2_csv", "align_to_speaker", "map_rel_four_note3_csv", "align_to_speaker"]
 auto_mode_9: ["align_to_speaker", "relocalize", "map_rel_four_note1_csv", "align_to_speaker", "relocalize", "map_rel_four_note2_csv", "align_to_speaker", "relocalize", "map_rel_four_note3_csv", "align_to_speaker"]
 
@@ -35,6 +35,27 @@ auto_mode_10: ["GetCone_csv"]
 
 align_to_speaker:
   type: align_to_speaker
+
+map_rel_four_note_grid_right1_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right2_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right3_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
 
 map_rel_four_note_grid1_csv:
   waypoint_actions: {}

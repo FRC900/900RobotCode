@@ -405,29 +405,27 @@
 		/tf_object_detection/tag_detection_msg
         /tf_object_detection/tag_detection_world
 		/tf_static
-		/zed_objdetect/atm_press
-		/zed_objdetect/depth/camera_info
-		/zed_objdetect/imu/data
-		/zed_objdetect/imu/data_raw
-		/zed_objdetect/imu/mag
-		/zed_objdetect/left/camera_info
-		/zed_objdetect/odom
-		/zed_objdetect/parameter_descriptions
-		/zed_objdetect/parameter_updates
-		/zed_objdetect/path_map
-		/zed_objdetect/path_odom
-		/zed_objdetect/plane
-		/zed_objdetect/plane_marker
-		/zed_objdetect/pose
-		/zed_objdetect/pose_with_covariance
-		/zed_objdetect/temperature/imu
-		/zed_objdetect/temperature/left
-		/zed_objdetect/temperature/right
+		/zed_front/atm_press
+		/zed_front/depth/camera_info
+		/zed_front/imu/data
+		/zed_front/imu/data_raw
+		/zed_front/imu/mag
+		/zed_front/left/camera_info
+		/zed_front/odom
+		/zed_front/parameter_descriptions
+		/zed_front/parameter_updates
+		/zed_front/path_map
+		/zed_front/path_odom
+		/zed_front/plane
+		/zed_front/plane_marker
+		/zed_front/pose
+		/zed_front/pose_with_covariance
+		/zed_front/temperature/imu
+		/zed_front/temperature/left
+		/zed_front/temperature/right
 		/frcrobot_jetson/talonfxpro_states
 		/frcrobot_jetson/talonfxpro_configs
 		/frcrobot_jetson/swerve_drive_state_controller/odom
-		/vroom
-		/wpilib_odom/odom
 		/norfair/input
 		/norfair/output
 		/tf_object_detection_zed_front/obj_detection_msg
@@ -437,5 +435,18 @@
 		/zed_front/depth/depth_registered
 		/tf
 		/tf_static
+		/drive_to_object/drive_to_object/cancel
+		/drive_to_object/drive_to_object/feedback
+		/drive_to_object/drive_to_object/goal
+		/drive_to_object/drive_to_object/result
+		/drive_to_object/drive_to_object/status
+		/drive_to_object/x_position_pid/parameter_descriptions
+		/drive_to_object/x_position_pid/parameter_updates
+		/drive_to_object/x_position_pid/pid_debug
+		/drive_to_object/x_position_pid/pid_enable
+		/drive_to_object/x_position_pid/x_cmd_pub
+		/drive_to_object/x_position_pid/x_command
+		/drive_to_object/x_position_pid/x_state_pub
+		/auto_note_align/cmd_vel
 		"/>
 </launch>
