@@ -46,7 +46,8 @@ hardware_interface:
          #- {name: joystick2, type: joystick, id: 2, local: true}
          #- {name: joystick_rumble0, type: rumble, rumble_port: 0}
          #- {name: joystick_rumble2, type: rumble, rumble_port: 2}
-       #- {name: claw_limit_switch, type: digital_input, dio_channel: 7, invert: true, local: true}
+       - {name: claw_limit_switch, type: digital_input, dio_channel: 7, invert: true, local: true}
+       - {name: preshooter_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
 

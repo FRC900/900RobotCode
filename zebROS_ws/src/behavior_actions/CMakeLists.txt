@@ -105,9 +105,9 @@ add_action_files(
 		AlignToSubstation2023.action
 		AlignToSpeaker2024.action
 		NoteDiverter.action
-		Claw2024.action
 		Shooter2024.action
 		ShooterPivot2024.action
+		Clawster2024.action
 		#GoToColor.action
 		#RotatePanel.action
 		DriveToObject.action
