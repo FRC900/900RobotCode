@@ -54,15 +54,15 @@ hardware_interface:
        #- {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
 
        #shooter
-       #- {name: left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
-       #- {name: right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
-       #- {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+       - {name: left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+       - {name: right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
+       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
 
        
 
        #Claw/Diverter
        # TODO - see if these need to be merged?
-       - {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+       - {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 17, local: true}
        - {name: clawster, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
 
        - {name: claw_limit_switch, type: digital_input, local: false}
@@ -280,9 +280,9 @@ shooter_pivot_motionmagicvoltage_controller:
    joint: shooter_pivot_motionmagic_joint
    motion_magic_cruise_velocity: 8.0
    motion_magic_acceleration: 16.0
-   motion_magic_jerk: 24.0
+   motion_magic_jerk: 1000.0
    sensor_to_mechanism_ratio: 1.0
    rotor_to_sensor_ratio: 1.0
    close_loop_values:
-       - {kP: 65, kI: 1, kD: 0.00, kV: 0.085, kS: 0}
+       - {kP: 1.0, kI: 0.0, kD: 0.00, kV: 0.0, kS: 0}
    dynamic_reconfigure: True

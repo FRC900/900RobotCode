@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="shooting">
+		<rosparam command="load" file="$(find behaviors)/config/2024_shooting_config.yaml"/>
+		<node name="shooting_server_2024" pkg="behaviors" type="2024_shooting_server.py" output="screen"/>
+	</group>
+</launch>

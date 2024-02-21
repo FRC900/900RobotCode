@@ -48,6 +48,9 @@
 			 intake_talonfxpro_controller
 			 pigeon2_imu_state_controller
 			 clawster_controller
+			 left_shooter_voltage_velocity_controller
+			 right_shooter_voltage_velocity_controller
+			 shooter_pivot_motionmagicvoltage_controller
 			 robot_code_ready_controller" />
 			 
 			 <!--swerve_drive_state_controller
@@ -121,6 +124,8 @@
 	<include file="$(find behaviors)/launch/2024_preshooter.launch"/>
 	
     <include file="$(find behaviors)/launch/2024_shooter.launch"/>
+
+	<include file="$(find behaviors)/launch/2024_shooting.launch"/>
 
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 
