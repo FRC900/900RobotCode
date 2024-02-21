@@ -1,3 +1,6 @@
 [submodule "allwpilib"]
 	path = allwpilib
 	url = https://github.com/wpilibsuite/allwpilib.git
+[submodule "zebROS_ws/src/joystick_simulation_node"]
+	path = zebROS_ws/src/joystick_simulation_node
+	url = git@github.com:FRC900/joystick_simulation_node.git
