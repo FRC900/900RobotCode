@@ -58,6 +58,44 @@ bodies:
      type: simple
      # side to side mapping
      tags:
+       - id: 3
+         size: 0.16510000
+         pose:
+           position:
+             x: 16.579
+             y: 4.983
+             z: 1.451
+           rotation:
+             x: 1.209
+             y: -1.209
+             z: -1.209
+           position_noise:
+             x: 0.00010000
+             y: 0.00010000
+             z: 0.00010000
+           rotation_noise:
+             x: 0.00001000
+             y: 0.00001000
+             z: 0.00001000
+       - id: 4
+         size: 0.16510000
+         pose:
+           position:
+             x: 16.579
+             y: 5.548
+             z: 1.451
+           rotation:
+             x: 1.209
+             y: -1.209
+             z: -1.209
+           position_noise:
+             x: 0.00010000
+             y: 0.00010000
+             z: 0.00010000
+           rotation_noise:
+             x: 0.00001000
+             y: 0.00001000
+             z: 0.00001000
        - id: 7
          size: 0.16510000
          pose:

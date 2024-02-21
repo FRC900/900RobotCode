@@ -79,7 +79,7 @@ class NorfairNode:
             transform.transform.rotation.z = 0.0
             transform.transform.rotation.w = 1.0
             self.br.sendTransform(transform)
-            print(f"publishing transform: {transform}")
+            # print(f"publishing transform: {transform}")
 
     def main(self):
         """

@@ -77,6 +77,7 @@ class AutoNode {
 
 		// auto mode and state
 		signed char auto_mode_ = -1; //-1 if nothing selected
+		int8_t alliance_color_ = frc_msgs::MatchSpecificData::ALLIANCE_COLOR_UNKNOWN;
 		std::vector<std::string> auto_steps_; //stores string of action names to do, read from the auto mode array in the config file
 		bool enable_teleop_ = false;
 		bool auto_started_ = false; //set to true when enter auto time period
@@ -245,6 +246,7 @@ class AutoNode {
 	//subscriber callback for match data
 	void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 	{
+		alliance_color_ = msg->allianceColor;
 		// have to do this check here because otherwise it will be modified in the check below
 		// all of the cases where auto_stopped_ gets set to true are bad, preempt/aborted/timeout no real way to recover
 		if (auto_stopped_) {
@@ -733,10 +735,11 @@ class AutoNode {
 			//read sequence of actions from config
 			if (auto_mode_ >= 0)
 			{
-				if(nh_.getParam("auto_mode_" + std::to_string(auto_mode_), auto_steps_)) {
+				if(nh_.getParam("auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue"), auto_steps_)) {
 					if (!preLoadPath()) {
 						return false;
 					}
+					ROS_INFO_STREAM_THROTTLE(1, "auto_node: mode " << "auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue"));
 				} 
 			}
 			if(auto_mode_ > 0){
@@ -1319,8 +1322,8 @@ class AutoNode {
 
 			auto_steps_.clear(); //stores string of action names to do, read from the auto mode array in the config file
 			//read sequence of actions from config
-			if(!nh_.getParam("auto_mode_" + std::to_string(auto_mode_), auto_steps_)){
-				shutdownNode(ERROR, "Couldn't read auto_mode_" + std::to_string(auto_mode_) + " config value in auto node");
+			if(!nh_.getParam("auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue"), auto_steps_)){
+				shutdownNode(ERROR, "Couldn't read " + ("auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue") + " config value in auto node"));
 				return 1;
 			}
 

@@ -66,22 +66,22 @@ omnidir_robot
 
 # Copied from 2023_charged_up.world and I changed the numbers and added 8 more --Elias
 # Note: team update 01 is being used here since it has a correction for apriltags (transposed #s) -- from charged up file --Elias
-# objdet_target ( pose [ 15.079 0.246 1.356 120.000 ] fiducial_return 101 color "blue") # Blue source
-# objdet_target ( pose [ 16.185 0.884 1.356 120.000 ] fiducial_return 102 color "blue") # Blue source
-# objdet_target ( pose [ 16.579 4.983 1.451 180.000 ] fiducial_return 103 color "red")
-# objdet_target ( pose [ 16.579 5.548 1.451 180.000 ] fiducial_return 104 color "red")
-# objdet_target ( pose [ 14.701 8.204 1.356 -90.000 ] fiducial_return 105 color "red")
-# objdet_target ( pose [ 1.841 8.204 1.356 -90.000 ] fiducial_return 106 color "blue")
-# objdet_target ( pose [ -0.013 5.548 1.451 0.000 ] fiducial_return 107 color "blue")
-# objdet_target ( pose [ -0.013 4.983 1.451 0.000 ] fiducial_return 108 color "blue")
-# objdet_target ( pose [ 0.356 0.884 1.356 60.000 ] fiducial_return 109 color "red") # Red source
-# objdet_target ( pose [ 1.462 0.246 1.356 60.000 ] fiducial_return 110 color "red") # Red source
-# objdet_target ( pose [ 11.905 3.713 1.321 -60.000 ] fiducial_return 111 color "red")
-# objdet_target ( pose [ 11.905 4.498 1.321 60.000 ] fiducial_return 112 color "red")
-# objdet_target ( pose [ 11.220 4.105 1.321 180.000 ] fiducial_return 113 color "red")
-# objdet_target ( pose [ 5.321 4.105 1.321 0.000 ] fiducial_return 114 color "blue")
-# objdet_target ( pose [ 4.641 4.498 1.321 120.000 ] fiducial_return 115 color "blue")
-# objdet_target ( pose [ 4.641 3.713 1.321 -120.000 ] fiducial_return 116 color "blue")
+objdet_target ( pose [ 15.079 0.246 1.356 120.000 ] fiducial_return 101 color "blue") # Blue source
+objdet_target ( pose [ 16.185 0.884 1.356 120.000 ] fiducial_return 102 color "blue") # Blue source
+objdet_target ( pose [ 16.579 4.983 1.451 180.000 ] fiducial_return 103 color "red")
+objdet_target ( pose [ 16.579 5.548 1.451 180.000 ] fiducial_return 104 color "red")
+objdet_target ( pose [ 14.701 8.204 1.356 -90.000 ] fiducial_return 105 color "red")
+objdet_target ( pose [ 1.841 8.204 1.356 -90.000 ] fiducial_return 106 color "blue")
+objdet_target ( pose [ -0.013 5.548 1.451 0.000 ] fiducial_return 107 color "blue")
+objdet_target ( pose [ -0.013 4.983 1.451 0.000 ] fiducial_return 108 color "blue")
+objdet_target ( pose [ 0.356 0.884 1.356 60.000 ] fiducial_return 109 color "red") # Red source
+objdet_target ( pose [ 1.462 0.246 1.356 60.000 ] fiducial_return 110 color "red") # Red source
+objdet_target ( pose [ 11.905 3.713 1.321 -60.000 ] fiducial_return 111 color "red")
+objdet_target ( pose [ 11.905 4.498 1.321 60.000 ] fiducial_return 112 color "red")
+objdet_target ( pose [ 11.220 4.105 1.321 180.000 ] fiducial_return 113 color "red")
+objdet_target ( pose [ 5.321 4.105 1.321 0.000 ] fiducial_return 114 color "blue")
+objdet_target ( pose [ 4.641 4.498 1.321 120.000 ] fiducial_return 115 color "blue")
+objdet_target ( pose [ 4.641 3.713 1.321 -120.000 ] fiducial_return 116 color "blue")
 
 # notes:
 

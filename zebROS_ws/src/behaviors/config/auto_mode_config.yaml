@@ -23,34 +23,75 @@ auto_mode_1: ["place_cone_high", "drive_out_community"]
 auto_mode_2: ["place_cone_high", "balance_facing_away", "snap_0_before_intake"] # should test this, I don't think the balancing server exits
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 
-auto_mode_4: ["drive_out_community", "snap_0_before_intake"] # we now face the pieces at the end of this auto,
+auto_mode_4_blue: ["map_rel_four_note_grid_right1_blue_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right2_blue_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right3_blue_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right4_blue_csv"]
+auto_mode_4_red: ["map_rel_four_note_grid_right1_red_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right2_red_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right3_red_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right4_red_csv"]
 auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map_rel_four_note_grid3_csv", "map_rel_four_note_grid4_csv"]
 auto_mode_6: ["relocalize", "map_rel_four_note_grid1_csv", "relocalize", "map_rel_four_note_grid2_csv", "relocalize", "map_rel_four_note_grid3_csv", "relocalize", "map_rel_four_note_grid4_csv"]
 
-auto_mode_7: ["map_rel_four_note_grid_right1_csv", "relocalize", "map_rel_four_note_grid_right2_csv", "relocalize", "map_rel_four_note_grid_right3_csv"]
+auto_mode_7_blue: ["map_rel_four_note_grid_right1_blue_csv", "map_rel_four_note_grid_right2_blue_csv", "map_rel_four_note_grid_right3_blue_csv", "map_rel_four_note_grid_right4_blue_csv"]
+auto_mode_7_red: ["map_rel_four_note_grid_right1_red_csv", "map_rel_four_note_grid_right2_red_csv", "map_rel_four_note_grid_right3_red_csv", "map_rel_four_note_grid_right4_red_csv"]
 auto_mode_8: ["align_to_speaker", "map_rel_four_note1_csv", "align_to_speaker", "map_rel_four_note2_csv", "align_to_speaker", "map_rel_four_note3_csv", "align_to_speaker"]
 auto_mode_9: ["align_to_speaker", "relocalize", "map_rel_four_note1_csv", "align_to_speaker", "relocalize", "map_rel_four_note2_csv", "align_to_speaker", "relocalize", "map_rel_four_note3_csv", "align_to_speaker"]
 
 auto_mode_10: ["GetCone_csv"]
 
+pause_half:
+  type: pause
+  duration: 0.5
+
 align_to_speaker:
   type: align_to_speaker
 
-map_rel_four_note_grid_right1_csv:
+map_rel_four_note_grid_right1_blue_csv:
   waypoint_actions: {}
   type: path
   goal:
     points:
       - [0.0, 0.0, 0.0]
 
-map_rel_four_note_grid_right2_csv:
+map_rel_four_note_grid_right2_blue_csv:
   waypoint_actions: {}
   type: path
   goal:
     points:
       - [0.0, 0.0, 0.0]
 
-map_rel_four_note_grid_right3_csv:
+map_rel_four_note_grid_right3_blue_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right4_blue_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right1_red_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right2_red_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right3_red_csv:
+  waypoint_actions: {}
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+map_rel_four_note_grid_right4_red_csv:
   waypoint_actions: {}
   type: path
   goal:
