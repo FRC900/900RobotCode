@@ -141,21 +141,24 @@ void timerCallback(const ros::TimerEvent &event) {
 
 bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/) {
   updateMapOdomTf();
-  if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04 && (ros::Time::now() - map_odom_tf.header.stamp).toSec() < 0.1) {
+  if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04) {
     tfbr->sendTransform(map_odom_tf);
     last_tf_pub = ros::Time::now();
+  }
+  else {
+    ROS_ERROR_STREAM("Condition not met to publish transform in service. now = " << ros::Time::now() << ", last = " << last_tf_pub);
   }
   ROS_WARN_STREAM("Publishing static map odom tf in service");
   return true;
 }
 
 void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
-  if (hypot(msg->twist.linear.x, msg->twist.linear.y) > 0.02) {
+  if (hypot(msg->twist.linear.x, msg->twist.linear.y) > 0.1) {
     last_tf_pub = ros::Time::now() + ros::Duration(0.1);
   }
-  if (hypot(msg->twist.linear.x, msg->twist.linear.y) < 0.02) {
+  if (hypot(msg->twist.linear.x, msg->twist.linear.y) < 0.1) {
     updateMapOdomTf();
-    if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04 && (ros::Time::now() - map_odom_tf.header.stamp).toSec() < 0.1) {
+    if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04) {
       ROS_INFO_STREAM_THROTTLE(2, "RELOCALIZING"); 
       tfbr->sendTransform(map_odom_tf);
       last_tf_pub = ros::Time::now();

@@ -21,20 +21,23 @@ for file in files:
     except Exception as e:
         print(f"Failed on {file} with exception {e}")
     # init stuff
-    csv = ""
+    csv_blue = ""
+    csv_red = ""
     idx = -1
     for t in trajectory:
         # add each trajectory waypoint to the csv
         pose = tf2_geometry_msgs.PoseStamped()
         pose.header.frame_id = "field"
-        pose.pose.position.x = t['x']
+        pose.pose.position.x = 16.54 - t['x']
         pose.pose.position.y = t['y']
-        pose.pose.orientation.x = transformations.quaternion_from_euler(0, 0, t['heading'])[0]
-        pose.pose.orientation.y = transformations.quaternion_from_euler(0, 0, t['heading'])[1]
-        pose.pose.orientation.z = transformations.quaternion_from_euler(0, 0, t['heading'])[2]
-        pose.pose.orientation.w = transformations.quaternion_from_euler(0, 0, t['heading'])[3]
 
-        csv += f"{t['timestamp']},{pose.pose.position.x},{pose.pose.position.y},{transformations.euler_from_quaternion([pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w])[2]},{t['angularVelocity']},{t['velocityX']},{t['velocityY']},0\n"
-    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/map_rel_{file.replace('.traj', '').replace('.', '')}_csv.csv", "w") as csv_file:
-        print(csv)
-        csv_file.write(csv)
+        csv_red += f"{t['timestamp']},{16.54 - t['x']},{t['y']},{math.pi - t['heading']},{-t['angularVelocity']},{-t['velocityX']},{t['velocityY']},0\n"
+        csv_blue += f"{t['timestamp']},{t['x']},{t['y']},{t['heading']},{t['angularVelocity']},{t['velocityX']},{t['velocityY']},0\n"
+
+    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/map_rel_{file.replace('.traj', '').replace('.', '')}_blue_csv.csv", "w") as blue_file:
+        print(csv_blue)
+        blue_file.write(csv_blue)
+    
+    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/map_rel_{file.replace('.traj', '').replace('.', '')}_red_csv.csv", "w") as red_file:
+        print(csv_red)
+        red_file.write(csv_red)

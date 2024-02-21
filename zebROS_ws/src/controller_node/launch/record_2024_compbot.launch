@@ -7,6 +7,9 @@
 	  args="record --tcpnodelay -o /home/ubuntu/bagfiles/
 		/apriltag_detection/tags
 	    /tagslam/odom/body_frc_robot
+		/apriltag_zed_back/apriltag_detection/tags
+		/apriltag_zed_back/tag_detection_msg
+		/apriltag_zed_back/tag_detection_world
 		/align/cmd_vel
 		/align_and_place_grid/cancel
         /align_and_place_grid/feedback
