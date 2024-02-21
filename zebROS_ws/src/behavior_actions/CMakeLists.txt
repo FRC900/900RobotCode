@@ -112,6 +112,9 @@ add_action_files(
 		#RotatePanel.action
 		DriveToObject.action
 		Arm2024.action
+		Shooter2024.action
+		ShooterPivot2024.action
+		Shooting2024.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs)
