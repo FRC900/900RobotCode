@@ -5,7 +5,9 @@
 #include <pluginlib/class_list_macros.h>
 
 #include <string>
-#include <optional>
+#include <mutex>
+#include <variant>
+#include <vector>
 
 #include <candle_controller_msgs/Brightness.h>
 #include <candle_controller_msgs/Colour.h>
@@ -84,6 +86,8 @@ AnimationClass getAnimationClass(AnimationType type) {
     }
 }
 
+using Command = std::variant<LEDGroup, Animation>;
+
 namespace candle_controller {
 class CANdleController : public controller_interface::Controller<CANdleCommandInterface> {
 public:
@@ -113,67 +117,37 @@ public:
     void starting(const ros::Time&) override {}
 
     void update(const ros::Time&, const ros::Duration&) override {
-        const LEDGroupStamped leds = *(this->led_buffer.readFromRT());
-        const AnimationStamped animation = *(this->animation_buffer.readFromRT());
-        const double brightness = *(this->brightness_buffer.readFromRT());
-
+        const double brightness = *(brightness_buffer.readFromRT());
         // Brightness isn't exclusive to colours/animations, so it gets special treatment
         this->candle_handle->setBrightness(brightness);
 
-        if (leds.time > this->last_write || animation.time > this->last_write) {
-            if (leds.time > animation.time) {
-                ROS_INFO_STREAM("Writing LED group to CANdle");
-                this->last_write = leds.time;
-                this->candle_handle->setLEDGroup(leds.group);
-            } else {
-                ROS_INFO_STREAM("Writing new animation to CANdle");
-                this->last_write = animation.time;
-                this->candle_handle->setAnimation(animation.animation);
+        if (!cmd_buf_mutex.try_lock()) { return; }
+        std::lock_guard lock(cmd_buf_mutex, std::adopt_lock);
+
+        for (Command& cmd : command_buffer) {
+            if (std::holds_alternative<LEDGroup>(cmd)) {
+                LEDGroup led_group = std::get<LEDGroup>(cmd);
+                candle_handle->setLEDGroup(led_group);
+            }
+            else {
+                Animation anim = std::get<Animation>(cmd);
+                candle_handle->setAnimation(anim);
             }
         }
+        command_buffer.clear();
     }
 
     void stopping(const ros::Time&) override {}
 
 private:
-    struct LEDGroupStamped {
-        ros::Time time;
-        LEDGroup group;
-
-        LEDGroupStamped() {}
-    };
-
-    struct AnimationStamped {
-        Animation animation;
-        ros::Time time;
-
-        AnimationStamped() {}
-    };
-
     CANdleCommandHandle candle_handle;
     ros::ServiceServer colour_service;
     ros::ServiceServer brightness_service;
     ros::ServiceServer animation_service;
-    ros::Time last_write;
 
-    realtime_tools::RealtimeBuffer<LEDGroupStamped> led_buffer;
-    realtime_tools::RealtimeBuffer<AnimationStamped> animation_buffer;
+    std::vector<Command> command_buffer;
+    std::mutex cmd_buf_mutex;
     realtime_tools::RealtimeBuffer<double> brightness_buffer;
-
-    bool colourCallback(candle_controller_msgs::Colour::Request& req, candle_controller_msgs::Colour::Response&) {
-        if (this->isRunning()) {
-            LEDGroupStamped leds;
-            leds.group = LEDGroup(req.start, req.count, Colour(req.red, req.green, req.blue, req.white));
-            leds.time = ros::Time::now();
-
-            this->led_buffer.writeFromNonRT(leds);
-
-            return true;
-        } else {
-            ROS_ERROR_STREAM("Can't accept new commands. CANdleController is not running.");
-            return false;
-        }
-    }
 
     bool brightnessCallback(candle_controller_msgs::Brightness::Request& req, candle_controller_msgs::Brightness::Response&) {
         if (this->isRunning()) {
@@ -186,17 +160,29 @@ private:
         }
     }
 
+    bool colourCallback(candle_controller_msgs::Colour::Request& req, candle_controller_msgs::Colour::Response&) {
+        if (this->isRunning()) { 
+            LEDGroup leds = LEDGroup(req.start, req.count, Colour(req.red, req.green, req.blue, req.white));
+            std::lock_guard lock(cmd_buf_mutex);
+            command_buffer.emplace_back(leds);
+
+            return true;
+        } else {
+            ROS_ERROR_STREAM("Can't accept new commands. CANdleController is not running.");
+            return false;
+        }
+    }
+    
     bool animationCallback(candle_controller_msgs::Animation::Request& req, candle_controller_msgs::Animation::Response&) {
         if (this->isRunning()) {
-            AnimationStamped animation;
-            animation.time = ros::Time::now();
+            Animation animation;
             AnimationType animation_type = convertAnimationType(req.animation_type);
             AnimationClass animation_class = getAnimationClass(animation_type);
 
             switch (animation_class) {
                 // Base Standard animation
                 case AnimationClass::BaseStandard: {
-                    animation.animation = Animation(
+                    animation = Animation(
                         req.speed,
                         req.start,
                         req.count,
@@ -210,7 +196,7 @@ private:
                 break;
                 // Base Two animation
                 case AnimationClass::BaseTwo: {
-                    animation.animation = Animation(
+                    animation = Animation(
                         req.speed,
                         req.start,
                         req.count,
@@ -225,10 +211,11 @@ private:
                 break;
             }
 
-            ROS_INFO_STREAM("Setting CANdle animation to animation with ID " << (int) animation.animation.class_type);
+            ROS_INFO_STREAM("Setting CANdle animation to animation with ID " << (int) animation.class_type);
             
-            this->animation_buffer.writeFromNonRT(animation);
-
+            std::lock_guard lock(cmd_buf_mutex);
+            command_buffer.emplace_back(animation);
+            
             return true;
         } else {
             ROS_ERROR_STREAM("Can't accept new commands. CANdleController is not running.");
