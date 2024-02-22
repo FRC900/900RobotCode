@@ -927,11 +927,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: rightTrigger
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
-				teleop_cmd_vel->setSlowMode(true);
+				teleop_cmd_vel->setCaps(config.max_speed_slow, config.max_rot_slow);
 			}
 			else
 			{
-				teleop_cmd_vel->setSlowMode(false);
+				teleop_cmd_vel->resetCaps();
 			}
 		}
 		else

@@ -132,5 +132,10 @@
         "format": "cpp",
         "stdfloat": "cpp",
         "valarray": "cpp"
+    },
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#1F1E5E",
+        "titleBar.activeBackground": "#2C2A84",
+        "titleBar.activeForeground": "#FBFBFE"
     }
 }
