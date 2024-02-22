@@ -1,3 +1,6 @@
+#ifndef TELEOP_CMD_VEL_2023_H
+#define TELEOP_CMD_VEL_2023_H
+
 #include <optional>
 #include "ros/console.h"
 #include <Eigen/Dense>
@@ -17,6 +20,15 @@ struct StrafeSpeeds
 		, y_{y}
 	{
 	}
+};
+
+struct MovementCaps {
+	MovementCaps(double speed_cap, double rotation_cap) {
+		speed_cap_ = speed_cap;
+		rotation_cap_ = rotation_cap;
+	}
+	double speed_cap_{};
+	double rotation_cap_{};
 };
 
 template <class ConfigT>
@@ -52,9 +64,14 @@ class TeleopCmdVel
 			}
 		}
 
-		void setSuperSlowMode(const bool super_slow_mode)
+		void setCaps(const double speed_cap, const double rotation_cap)
 		{
-			super_slow_mode_ = super_slow_mode;
+			movement_caps_ = MovementCaps(speed_cap, rotation_cap);
+		}
+
+		void resetCaps(void)
+		{
+			movement_caps_ = std::nullopt;
 		}
 
 		void restoreRobotOrient(void)
@@ -63,14 +80,9 @@ class TeleopCmdVel
 			offset_angle_ = saved_offset_angle_;
 		}
 
-		void setSlowMode(const bool slow_mode)
-		{
-			slow_mode_ = slow_mode;
-		}
-
 		// Note - updateRiseTimeInMsec() does nothing if the
 		// requested time is the same as the current config
-		void updateRateLimit(const ConfigT &config)
+		void updateRateLimit(const ConfigT &config)	
 		{
 			x_rate_limit_.updateRiseTimeInMsec(config.drive_rate_limit_time);
 			y_rate_limit_.updateRiseTimeInMsec(config.drive_rate_limit_time);
@@ -82,13 +94,13 @@ class TeleopCmdVel
 		{
 			double max_speed;
 			double max_rot;
-			if (super_slow_mode_) {
-				max_speed = config.max_speed_elevator_extended;
-				max_rot = config.max_rot_elevator_extended;
-			}
-			else {
-				max_speed = slow_mode_ ? config.max_speed_slow : config.max_speed;
-				max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;
+
+			if (movement_caps_) {
+				max_speed = movement_caps_->speed_cap_;
+				max_rot = movement_caps_->rotation_cap_;
+			} else {
+				max_speed = config.max_speed;
+				max_rot = config.max_rot;
 			}
 
 			x_rate_limit_.updateMinMax(-max_speed, max_speed);
@@ -102,6 +114,18 @@ class TeleopCmdVel
 
 			// Convert to polar coordinates
 			double direction = atan2(leftStickY, leftStickX);
+			if(fabs(angles::shortest_angular_distance(direction,0)) < config.radial_deadzone) {
+				direction = 0;
+			}
+			else if(fabs(angles::shortest_angular_distance(direction,M_PI/2)) < config.radial_deadzone) {
+				direction = M_PI/2;
+			}
+			else if(fabs(angles::shortest_angular_distance(direction,M_PI)) < config.radial_deadzone) {
+				direction = M_PI;
+			}
+			else if(fabs(angles::shortest_angular_distance(direction,3*M_PI/2)) < config.radial_deadzone) {
+				direction = 3*M_PI/2;
+			}
 			//ROS_INFO_STREAM(__LINE__ << " direction:"  << direction);
 
 			// Do a dead zone check on the magnitude of the velocity,
@@ -135,6 +159,7 @@ class TeleopCmdVel
 			//ROS_INFO_STREAM(__LINE__ << " "  << xSpeed << " " << ySpeed);
 
 			// Rotation is a bit simpler since it is just one independent axis
+		
 
 #ifdef ROTATION_WITH_STICK
 			const double rotAxisVal = event.rightStickX;
@@ -189,11 +214,11 @@ class TeleopCmdVel
 		double generateAngleIncrement(const double rotationZ, const ros::Time &stamp, ConfigT &config)
 		{
 			double max_rot;
-			if (super_slow_mode_) {
-				max_rot = config.max_rot_elevator_extended;
+			if (movement_caps_) {
+				max_rot = movement_caps_->rotation_cap_;
 			}
 			else {
-				max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;
+				max_rot = config.max_rot;
 			}
 			//rot_rate_limit_.updateMinMax(-max_rot, max_rot);
 			//rot_rate_limit_.updateRiseTimeInMsec(config.rotate_rate_limit_time);
@@ -224,8 +249,8 @@ class TeleopCmdVel
 		bool robot_orient_{false};
 		double offset_angle_{M_PI / 2.0};
 
-		bool slow_mode_{false};
-		bool super_slow_mode_{false};
+		std::optional<MovementCaps> movement_caps_; 
+
 		bool saved_robot_orient_{false};
 		double saved_offset_angle_{M_PI / 2.0};
 
@@ -249,3 +274,5 @@ class TeleopCmdVel
 			return (fabs(test_axis) - dead_zone) / (1.0 - dead_zone);
 		}
 };
+
+#endif 

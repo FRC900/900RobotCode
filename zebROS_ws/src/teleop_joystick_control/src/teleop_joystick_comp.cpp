@@ -400,11 +400,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
-			teleop_cmd_vel->setSlowMode(true);
+			teleop_cmd_vel->setCaps(config.max_speed_slow, config.max_rot_slow)
 		}
 		else
 		{
-			teleop_cmd_vel->setSlowMode(false);
+			teleop_cmd_vel->resetCaps();
 		}
 
 		std_msgs::Bool enable_pub_msg;

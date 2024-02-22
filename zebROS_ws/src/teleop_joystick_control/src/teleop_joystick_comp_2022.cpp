@@ -843,14 +843,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperLeft
 			if(joystick_states_array[0].bumperLeftPress)
 			{
-				teleop_cmd_vel->setSlowMode(true);
+				teleop_cmd_vel->setCaps(config.max_speed_slow, config.max_rot_slow)
 			}
 			if(joystick_states_array[0].bumperLeftButton)
 			{
 			}
 			if(joystick_states_array[0].bumperLeftRelease)
 			{
-				teleop_cmd_vel->setSlowMode(false);
+				teleop_cmd_vel->resetCaps();
 			}
 
 			//Joystick1: bumperRight
@@ -964,7 +964,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
 				
-				// teleop_cmd_vel->setSlowMode(true);
+				// teleop_cmd_vel->setCaps(config.max_speed_slow, config.max_rot_slow)
 				if(!joystick1_right_trigger_pressed) {
 					behavior_actions::AlignedShooting2022Goal goal;
 					// feels like we should always shoot all of our cargo, so num_cargo might be uneeded, just get it from indexer and shoot it all
@@ -982,7 +982,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 					align_shooting_pf_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
-				// teleop_cmd_vel->setSlowMode(false);
+				// teleop_cmd_vel->resetCaps();
 				joystick1_right_trigger_pressed = false;
 			}
 #endif
