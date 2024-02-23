@@ -1342,7 +1342,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.feedback_rotor_offset_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setFeedbackRotorOffset, this, _1, false),
                                                         "offset is applied to the absolute integrated rotor sensor",
-                                                        -1, 1);
+                                                        -1000, 1000);
             ddr_updater_->ddr_.registerVariable<double>("sensor_to_mechanism_ratio",
                                                         [this]() { return params_.sensor_to_mechanism_ratio_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setSensorToMechanismRatio, this, _1, false),

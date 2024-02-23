@@ -11,7 +11,7 @@ namespace cancoder_controller_interface
 class CANCoderCIParams : public ddr_updater::DDRUpdater
 {
 	public:
-		explicit CANCoderCIParams(ros::NodeHandle n);
+		explicit CANCoderCIParams(const ros::NodeHandle &n);
 
 		void setSensorDirection(const int sensor_direction, bool update_dynamic = true);
 		void setMagnetOffset(const double magnet_offset, bool update_dynamic = true);
@@ -41,7 +41,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 		};
 
 		template <typename T>
-		void readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
+		void readIntoScalar(const ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
 		{
 			T val;
 			if (n.getParam(name, val))
@@ -49,7 +49,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 		}
 
 		template <typename T>
-		bool readIntoEnum(ros::NodeHandle const &n,
+		bool readIntoEnum(const ros::NodeHandle &n,
 						  const std::string &param_name,
 						  const std::map<std::string, int> &mymap,
 						  std::atomic<T> &out) const
@@ -75,7 +75,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 class CANCoderControllerInterface
 {
 	public:
-		CANCoderControllerInterface(ros::NodeHandle &n, const std::string &joint_name, hardware_interface::cancoder::CANCoderCommandHandle handle);
+		CANCoderControllerInterface(const ros::NodeHandle &n, hardware_interface::cancoder::CANCoderCommandHandle handle);
 
 		void update(void);
 		void setPosition(const double new_position);

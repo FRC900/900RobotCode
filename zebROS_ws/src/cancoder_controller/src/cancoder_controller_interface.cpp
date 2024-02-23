@@ -3,22 +3,22 @@
 
 namespace cancoder_controller_interface
 {
-CANCoderCIParams::CANCoderCIParams(ros::NodeHandle n)
+CANCoderCIParams::CANCoderCIParams(const ros::NodeHandle &n)
 	: DDRUpdater(n)
 {
+	// Then hook them up to dynamic reconfigure options
+	// TODO : these can be lambda functions
+	ddr_.registerEnumVariable<int>("sensor_direction", [this]() { return static_cast<int>(sensor_direction_.load()); }, boost::bind(&CANCoderCIParams::setSensorDirection, this, _1, false), "Sensor Direction", sensor_direction_enum_map_);
+	ddr_.registerVariable<double>("magnet_offset", [this]() { return static_cast<double>(magnet_offset_.load()); }, boost::bind(&CANCoderCIParams::setMagnetOffset, this, _1, false), "Magnet Offset", -M_PI, M_PI);
+	ddr_.registerEnumVariable<int>("absolute_sensor_range", [this]() { return static_cast<int>(absolute_sensor_range_.load()); }, boost::bind(&CANCoderCIParams::setAbsoluteSensorRange, this, _1, false), "Absolute Sensor Range", absolute_sensor_range_enum_map_);
+	ddr_.registerVariable<double>("conversion_factor", [this]() { return static_cast<double>(conversion_factor_.load()); }, boost::bind(&CANCoderCIParams::setConversionFactor, this, _1, false), "Conversion Factor", 0., 1000.);
+	ddr_.publishServicesTopics();
+
 	// Override default values with config params, if present
 	readIntoEnum(n, "sensor_direction", sensor_direction_enum_map_, sensor_direction_);
 	readIntoScalar(n, "magnet_offset", magnet_offset_);
 	readIntoEnum(n, "absolute_sensor_range", absolute_sensor_range_enum_map_, absolute_sensor_range_);
 	readIntoScalar(n, "conversion_factor", conversion_factor_);
-
-	// Then hook them up to dynamic reconfigure options
-	// TODO : these can be lambda functions
-	ddr_.registerEnumVariable<int>("sensor_direction", [this]() { return static_cast<int>(sensor_direction_.load()); }, boost::bind(&CANCoderCIParams::setSensorDirection, this, _1, false), "Sensor Direction", sensor_direction_enum_map_);
-	ddr_.registerVariable<double>("magnet_offset", [this]() { return static_cast<int>(magnet_offset_.load()); }, boost::bind(&CANCoderCIParams::setMagnetOffset, this, _1, false), "Magnet Offset", -M_PI, M_PI);
-	ddr_.registerEnumVariable<int>("absolute_sensor_range", [this]() { return static_cast<int>(absolute_sensor_range_.load()); }, boost::bind(&CANCoderCIParams::setAbsoluteSensorRange, this, _1, false), "Absolute Sensor Range", absolute_sensor_range_enum_map_);
-	ddr_.registerVariable<double>("conversion_factor", [this]() { return static_cast<int>(conversion_factor_.load()); }, boost::bind(&CANCoderCIParams::setConversionFactor, this, _1, false), "Conversion Factor", 0., 1000.);
-	ddr_.publishServicesTopics();
 }
 
 // Functions to update params from either DDR callbacks or the interface.
@@ -84,8 +84,8 @@ double CANCoderCIParams::getConversionFactor(void) const
 	return conversion_factor_;
 }
 
-CANCoderControllerInterface::CANCoderControllerInterface(ros::NodeHandle &n, const std::string &joint_name, hardware_interface::cancoder::CANCoderCommandHandle handle)
-	: params_(ros::NodeHandle(n, joint_name))
+CANCoderControllerInterface::CANCoderControllerInterface(const ros::NodeHandle &n, hardware_interface::cancoder::CANCoderCommandHandle handle)
+	: params_(n)
 	, handle_(handle)
 {
 }

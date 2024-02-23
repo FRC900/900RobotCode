@@ -101,14 +101,8 @@ void Driver::moveDirection(int x, int y, int z, double button_move_speed) {
 	direction_x_ += x;
 	direction_y_ += y;
 	direction_z_ += z;
-	cmd_vel.linear.x = direction_x_ * button_move_speed;
-	cmd_vel.linear.y = direction_y_ * button_move_speed;
-	cmd_vel.linear.z = direction_z_ * button_move_speed;
-	cmd_vel.angular.x = 0.0;
-	cmd_vel.angular.y = 0.0;
-	cmd_vel.angular.z = 0.0;
 
-	JoystickRobotVel_.publish(cmd_vel);
+	sendDirection(button_move_speed);
 }
 
 void Driver::sendDirection(double button_move_speed) {
@@ -120,6 +114,8 @@ void Driver::sendDirection(double button_move_speed) {
 	cmd_vel.angular.y = 0.0;
 	cmd_vel.angular.z = 0.0;
 
+	// avoid z output (ends up overriding this cmd_vel and we stutter)
+	robot_orientation_driver_.setTargetOrientation(robot_orientation_driver_.getCurrentOrientation(), false);
 	JoystickRobotVel_.publish(cmd_vel);
 }
 
@@ -188,6 +184,7 @@ ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state
 				cmd_vel.linear.x *= -1;
 				cmd_vel.linear.y *= -1;
 			}
+
 			JoystickRobotVel_.publish(cmd_vel);
 			sendRobotZero_ = false;
 			no_driver_input_ = false;

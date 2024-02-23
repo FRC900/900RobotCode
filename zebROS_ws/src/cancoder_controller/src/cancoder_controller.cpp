@@ -16,7 +16,7 @@ bool CANCoderController::init(hardware_interface::cancoder::CANCoderCommandInter
 	ROS_INFO("Got joint %s in CANCoder controller", joint_name.c_str());
 
 	auto cancoder_handle = hw->getHandle(joint_name);
-	interface_ = std::make_unique<cancoder_controller_interface::CANCoderControllerInterface>(controller_nh, joint_name, cancoder_handle);
+	interface_ = std::make_unique<cancoder_controller_interface::CANCoderControllerInterface>(controller_nh, cancoder_handle);
 	return true;
 }
 
