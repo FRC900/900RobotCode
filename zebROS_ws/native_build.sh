@@ -21,7 +21,6 @@ uname -a | grep -q x86_64
 if [ $? -eq 1 ]; then
 	EXTRA_SKIPLIST_PACKAGES="
 		as726x_controllers \
-		cancoder_controller \
 		canifier_controller \
 		demo_tf_node \
 		field \

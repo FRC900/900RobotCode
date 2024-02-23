@@ -55,6 +55,11 @@ hardware_interface:
         - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
         - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
 
+        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
+        - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
+        - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
+        - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
+
 
 
 # Create controllers for each joint
@@ -172,13 +177,13 @@ swerve_drive_state_controller:
     wheel_coords: [[-0.22225, 0.19685], [0.22225, 0.19685], [-0.22225, -0.19685], [0.22225, -0.19685]]
 
     bl_angle:
-        offset: 1.99418
+        offset: -1.5707963267948966
     br_angle:
-        offset: -3.03268
+        offset: -1.5707963267948966
     fl_angle:
-        offset: -0.98635
+        offset: -1.5707963267948966
     fr_angle:
-        offset: 2.98052
+        offset: -1.5707963267948966
 
 latency_compensation_state_controller:
     type: latency_compensation_state_controller/LatencyCompensationStateController
