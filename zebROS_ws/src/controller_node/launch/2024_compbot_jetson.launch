@@ -48,8 +48,10 @@
 			 intake_talonfxpro_controller
 			 pigeon2_imu_state_controller
 			 clawster_controller
-			 left_shooter_voltage_velocity_controller
-			 right_shooter_voltage_velocity_controller
+			 top_left_shooter_controller
+			 top_right_shooter_controller
+			 bottom_left_shooter_controller
+			 bottom_right_shooter_controller
 			 shooter_pivot_motionmagicvoltage_controller
 			 robot_code_ready_controller" />
 			 

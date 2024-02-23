@@ -29,14 +29,20 @@ class ShootingServer(object):
         rospy.loginfo("2024_shooting_server: waiting for preshooter")
         self.preshooter_client.wait_for_server()
 
-        # speeds_map: [[distance: [left_speed, right_speed]], ...]
+        # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
         speeds_map_param = rospy.get_param("speeds_map")
 
-        self.left_map = InterpolatingMap()
-        self.left_map.container = {l[0]: l[1][0] for l in speeds_map_param}
+        self.top_left_map = InterpolatingMap()
+        self.top_left_map.container = {l[0]: l[1][0] for l in speeds_map_param}
 
-        self.right_map = InterpolatingMap()
-        self.right_map.container = {l[0]: l[1][1] for l in speeds_map_param}
+        self.top_right_map = InterpolatingMap()
+        self.top_right_map.container = {l[0]: l[1][1] for l in speeds_map_param}
+
+        self.bottom_left_map = InterpolatingMap()
+        self.bottom_left_map.container = {l[0]: l[1][2] for l in speeds_map_param}
+
+        self.bottom_right_map = InterpolatingMap()
+        self.bottom_right_map.container = {l[0]: l[1][3] for l in speeds_map_param}
 
         self.angle_map = InterpolatingMap()
         self.angle_map.container = {l[0]: l[1] for l in rospy.get_param("angle_map")}
@@ -48,8 +54,10 @@ class ShootingServer(object):
 
     def execute_cb(self, goal: Shooting2024Goal):
         # Look up speed and angle to send to shooter and pivot server
-        left_speed = self.left_map[goal.distance]
-        right_speed = self.right_map[goal.distance]
+        top_left_speed = self.top_left_map[goal.distance]
+        top_right_speed = self.top_right_map[goal.distance]
+        bottom_left_speed = self.bottom_left_map[goal.distance]
+        bottom_right_speed = self.bottom_right_map[goal.distance]
         pivot_angle = self.angle_map[goal.distance]
 
         rospy.loginfo("2024_shooting_server: spinning up")
@@ -58,8 +66,10 @@ class ShootingServer(object):
         self.server.publish_feedback(self.feedback)
 
         shooter_goal = Shooter2024Goal()
-        shooter_goal.left_shooter_speed = left_speed
-        shooter_goal.right_shooter_speed = right_speed
+        shooter_goal.top_left_speed = top_left_speed
+        shooter_goal.top_right_speed = top_right_speed
+        shooter_goal.bottom_left_speed = bottom_left_speed
+        shooter_goal.bottom_right_speed = bottom_right_speed
 
         shooter_done = False
         def shooter_feedback_cb(feedback: Shooter2024Feedback):

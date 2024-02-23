@@ -1,6 +1,8 @@
 #defining goal
-float64 left_shooter_speed
-float64 right_shooter_speed
+float64 top_left_speed
+float64 top_right_speed
+float64 bottom_left_speed
+float64 bottom_right_speed
 
 ---
 #defining result
@@ -9,5 +11,7 @@ bool success
 ---
 #feedback
 bool is_shooting_at_speed
-float64 left_percent_complete
-float64 right_percent_complete
+float64 top_left_percent_complete
+float64 top_right_percent_complete
+float64 bottom_left_percent_complete
+float64 bottom_right_percent_complete
