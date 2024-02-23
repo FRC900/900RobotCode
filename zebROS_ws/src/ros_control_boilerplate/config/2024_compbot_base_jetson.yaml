@@ -54,9 +54,11 @@ hardware_interface:
        #- {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
 
        #shooter
-       - {name: left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
-       - {name: right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
-       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+       - {name: top_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+       - {name: top_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
+       - {name: bottom_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
+       - {name: bottom_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
+       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 55, local: true}
 
        
 
@@ -239,37 +241,54 @@ clawster_controller:
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 10
 
-left_shooter_voltage_velocity_controller:
+top_left_shooter_controller:
    type: talonfxpro_controllers/TalonFXProVelocityVoltageController
-   joint: left_shooter_joint
+   joint: top_left_shooter_joint
    invert: clockwise_positive
    close_loop_values:
       - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
-   #current_limit_continuous_amps: 15
-   #current_limit_peak_amps: 25
-   #current_limit_peak_msec: 50
-   #current_limit_enable: True
    peak_reverse_voltage: 0
    sensor_to_mechanism_ratio: 0.5
-   # voltage_closed_loop_ramp_period: 0.10
    dynamic_reconfigure: True
    neutral_mode: Coast
    forward_limit_enable: False
    reverse_limit_enable: False
 
-right_shooter_voltage_velocity_controller:
+top_right_shooter_controller:
    type: talonfxpro_controllers/TalonFXProVelocityVoltageController
-   joint: right_shooter_joint
-   #invert: clockwise_positive
+   joint: top_right_shooter_joint
+   invert: clockwise_positive
    close_loop_values:
       - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
-   #current_limit_continuous_amps: 15
-   #current_limit_peak_amps: 25
-   #current_limit_peak_msec: 50
-   #current_limit_enable: True
    peak_reverse_voltage: 0
    sensor_to_mechanism_ratio: 0.5
-   # voltage_closed_loop_ramp_period: 0.10
+   dynamic_reconfigure: True
+   neutral_mode: Coast
+   forward_limit_enable: False
+   reverse_limit_enable: False
+
+bottom_left_shooter_controller:
+   type: talonfxpro_controllers/TalonFXProVelocityVoltageController
+   joint: bottom_left_shooter_joint
+   invert: clockwise_positive
+   close_loop_values:
+      - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
+   peak_reverse_voltage: 0
+   sensor_to_mechanism_ratio: 0.5
+   dynamic_reconfigure: True
+   neutral_mode: Coast
+   forward_limit_enable: False
+   reverse_limit_enable: False
+
+
+bottom_right_shooter_controller:
+   type: talonfxpro_controllers/TalonFXProVelocityVoltageController
+   joint: bottom_right_shooter_joint
+   invert: clockwise_positive
+   close_loop_values:
+      - {kP: 0.2, kI: 0.0, kD: 0.0, kV: 0.0575, kS: 0.0}
+   peak_reverse_voltage: 0
+   sensor_to_mechanism_ratio: 0.5
    dynamic_reconfigure: True
    neutral_mode: Coast
    forward_limit_enable: False
