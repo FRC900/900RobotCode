@@ -97,13 +97,13 @@ public:
              m.subwooferShootButton = bbs->getButton(2);
 
             constexpr uint8_t FIRST_AUTO_BUTTON = 19;
-            constexpr uint8_t NUM_AUTO_BUTTONS = 6;
+            constexpr uint8_t NUM_AUTO_BUTTONS = 10;
             m.auto_mode = 0;
             for (uint8_t i = 0; i < NUM_AUTO_BUTTONS; i++)
             {
                 if (bbs->getButton(FIRST_AUTO_BUTTON + i))
                 {
-                    m.auto_mode = i + 1;
+                    m.auto_mode = i;
                     break;
                 }
             }
