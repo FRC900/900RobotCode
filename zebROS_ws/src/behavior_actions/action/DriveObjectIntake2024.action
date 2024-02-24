@@ -1,0 +1,11 @@
+uint8 SHOOTER=0
+uint8 CLAW=1
+uint8 destination
+bool intake_only
+---
+bool success
+---
+bool DRIVING_TO_NOTE_FAILED
+float64 x_error
+float64 y_error
+float64 angle_error

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="clawster">
+		<rosparam command="load" file="$(find behaviors)/config/2024_claw_preshooter_config.yaml"/>
+		<node name="clawster_server_2024" pkg="behaviors" type="2024_clawster_server.py" output="screen"/>
+	</group>
+</launch>

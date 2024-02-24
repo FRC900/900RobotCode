@@ -63,7 +63,7 @@ class NorfairNode:
 
     def tf_pub(self, event):
         # publish transform between odom to the tracked notes
-        print(f"current time: {rospy.Time.now()}")
+        #print(f"current time: {rospy.Time.now()}")
         for tracked_object in self.tracked_objects:
             t = tracked_object.last_detection.points[0]
             # print("t: ", t)

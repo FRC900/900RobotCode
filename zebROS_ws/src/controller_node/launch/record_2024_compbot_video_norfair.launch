@@ -6,6 +6,8 @@
 	  launch-prefix="nice"
 	  args="record --tcpnodelay -o /home/ubuntu/bagfiles/
 		/apriltag_detection/tags
+		/apriltag_zed_back/apriltag_detection/tags
+		/apriltag_zed_front/apriltag_detection/tags
 	    /tagslam/odom/body_frc_robot
 		/align/cmd_vel
 		/align_and_place_grid/cancel
@@ -394,6 +396,7 @@
 		/teleop/orient_strafing/state
 		/teleop/orient_strafing/swerve_drive_controller/cmd_vel
 		/teleop/orientation_command
+		/teleop/velocity_orientation_command
 		/teleop/swerve_drive_controller/cmd_vel
 		/teleop/teleop_params/parameter_descriptions
 		/teleop/teleop_params/parameter_updates
@@ -405,24 +408,24 @@
 		/tf_object_detection/tag_detection_msg
         /tf_object_detection/tag_detection_world
 		/tf_static
-		/zed_front/atm_press
-		/zed_front/depth/camera_info
-		/zed_front/imu/data
-		/zed_front/imu/data_raw
-		/zed_front/imu/mag
-		/zed_front/left/camera_info
-		/zed_front/odom
-		/zed_front/parameter_descriptions
-		/zed_front/parameter_updates
-		/zed_front/path_map
-		/zed_front/path_odom
-		/zed_front/plane
-		/zed_front/plane_marker
-		/zed_front/pose
-		/zed_front/pose_with_covariance
-		/zed_front/temperature/imu
-		/zed_front/temperature/left
-		/zed_front/temperature/right
+		/zed_back/atm_press
+		/zed_back/depth/camera_info
+		/zed_back/imu/data
+		/zed_back/imu/data_raw
+		/zed_back/imu/mag
+		/zed_back/left/camera_info
+		/zed_back/odom
+		/zed_back/parameter_descriptions
+		/zed_back/parameter_updates
+		/zed_back/path_map
+		/zed_back/path_odom
+		/zed_back/plane
+		/zed_back/plane_marker
+		/zed_back/pose
+		/zed_back/pose_with_covariance
+		/zed_back/temperature/imu
+		/zed_back/temperature/left
+		/zed_back/temperature/right
 		/frcrobot_jetson/talonfxpro_states
 		/frcrobot_jetson/talonfxpro_configs
 		/frcrobot_jetson/swerve_drive_state_controller/odom
@@ -430,9 +433,9 @@
 		/norfair/output
 		/tf_object_detection_zed_front/obj_detection_msg
 		/tf_object_detection_zed_front/object_detection_world
-		/zed_front/left/image_rect_color
-		/zed_front/left/camera_info
-		/zed_front/depth/depth_registered
+		/zed_back/left/image_rect_color
+		/zed_back/left/camera_info
+		/zed_back/depth/depth_registered
 		/tf
 		/tf_static
 		/drive_to_object/drive_to_object/cancel

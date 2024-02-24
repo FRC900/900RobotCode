@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="intaking">
+		<rosparam file="$(find behaviors)/config/2024_intaking_config.yaml" command="load"/>
+		<node name="intaking_server_2024" pkg="behaviors" type="2024_intaking_server.py" output="screen"/>
+	</group>
+</launch>

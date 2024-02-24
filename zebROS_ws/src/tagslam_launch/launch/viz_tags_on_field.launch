@@ -19,10 +19,9 @@
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 	<!-- <node pkg="tf" type="static_transform_publisher" name="link_basetomap" args="0 0 0 0 0 0 1 map base_link 10" /> -->
-  <!--tagslam_viz visualize_tags.launch tag_id_file:=$HOME/.ros/poses.yaml
   <include file="$(find tagslam_viz)/launch/visualize_tags.launch">
-    <arg name="tag_id_file" value="/home/ubuntu/.ros/poses.yaml" />
-  </include>-->
+    <arg name="tag_id_file" value="/home/ubuntu/.2023RobotCode.readonly/zebROS_ws/src/tagslam_launch/frc900/tagslam.yaml" />
+  </include>
 
 
 </launch>

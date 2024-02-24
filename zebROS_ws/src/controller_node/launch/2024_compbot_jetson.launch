@@ -53,20 +53,16 @@
 			 bottom_left_shooter_controller
 			 bottom_right_shooter_controller
 			 shooter_pivot_motionmagicvoltage_controller
+			 clawster_controller
+			 note_diverter_controller
 			 robot_code_ready_controller" />
 			 
 			 <!--swerve_drive_state_controller
-			 swerve_drive_state_controller
-
-
-			 
 			 			 candle_controller
 			 orchestra_controller
 			 orchestra_state_controller
-			note_diverter_controller
-			 note_conveyor_controller
+			 note_intake_controller
 			 clawster_controller
-			 arm_controller
 			 left_shooter_voltage_velocity_controller
 			 right_shooter_voltage_velocity_controller
 			 shooter_pivot_motionmagicvoltage_controller
@@ -102,7 +98,7 @@
 
 	<!-- ADD TELEOP BACK -->
 	<include file="$(find controller_node)/launch/teleop.launch">
-		<arg name="year" value="2023" />
+		<arg name="year" value="2024" />
 	</include>
 
 	<group ns="cmd_vel_mux">
@@ -111,25 +107,27 @@
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
+
+	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	
 	<!-- <include file="$(find controller_node)/launch/hold_position.launch"/> -->
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	
 	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
-	<!-- <include file="$(find behaviors)/launch/2024_arm.launch"/> -->
+	<include file="$(find behaviors)/launch/2024_arm.launch"/>
 
 
 	<!-- Add 2024 actionlib servers here -->
 	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
-	<include file="$(find behaviors)/launch/2024_claw.launch"/>
-	<include file="$(find behaviors)/launch/2024_preshooter.launch"/>
+	<include file="$(find behaviors)/launch/2024_preshooter_and_claw.launch"/>
 	
     <include file="$(find behaviors)/launch/2024_shooter.launch"/>
 
 	<include file="$(find behaviors)/launch/2024_shooting.launch"/>
 
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
+	<include file="$(find behaviors)/launch/2024_intaking.launch"/>
 
 	<!-- Consider adding 2024 launch file for recording -->
 	<include file="$(find controller_node)/launch/record_2024_compbot.launch" if="$(arg record)" />

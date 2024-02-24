@@ -43,9 +43,9 @@ class Aligner:
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
         yaw = euler[2]
         self.current_yaw = yaw
+        
     def data_callback(self, data_msg):
         self.color = data_msg.allianceColor
-        
         
     def robot_orientation_effort_callback(self, msg):
         self.current_orient_effort = msg.data

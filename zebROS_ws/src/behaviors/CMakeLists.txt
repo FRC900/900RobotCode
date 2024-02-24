@@ -17,7 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   #controllers_2019_msgs
   #controllers_2020_msgs
   #controllers_2022_msgs
-  controllers_2023_msgs
+  #controllers_2023_msgs
+  # all python so really no controller msgs
   ddynamic_reconfigure
   dynamic_reconfigure
   frc_msgs
@@ -151,11 +152,12 @@ add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
 add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(publish_pid_cmd_vel_node ${catkin_LIBRARIES})
 
-# 2023 actionlib servers
 add_executable(path_to_apriltag src/path_to_apriltag.cpp)
 target_link_libraries(path_to_apriltag ${catkin_LIBRARIES})
 add_dependencies(path_to_apriltag ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+if (0)
+# 2023 actionlib servers
 add_executable(align_and_place_grid src/2023_align_and_place_grid.cpp)
 target_link_libraries(align_and_place_grid ${catkin_LIBRARIES})
 add_dependencies(align_and_place_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -195,6 +197,7 @@ add_dependencies(2023_fourbar_elevator_path_server ${${PROJECT_NAME}_EXPORTED_TA
 add_executable(2023_align_to_substation_server src/2023_align_to_substation.cpp)
 target_link_libraries(2023_align_to_substation_server ${catkin_LIBRARIES})
 add_dependencies(2023_align_to_substation_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
 
 # 2022 actionlib servers
 if (0)
@@ -395,7 +398,7 @@ install(TARGETS
 	auto_node
 	publish_pid_cmd_vel_node
 	#game_piece_path_server
-	2023_updown_elevater_server
+	#2023_updown_elevater_server
 	#align_to_shoot_server
 	#align_hatch_server
 	#align_with_camera

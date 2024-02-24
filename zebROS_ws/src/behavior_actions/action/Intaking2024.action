@@ -1,0 +1,11 @@
+uint8 SHOOTER=0
+uint8 CLAW=1
+uint8 destination
+bool run_until_preempt # used for auto to run intake the entire time 
+---
+bool success
+---
+uint8 DIVERTING=0
+uint8 CLAWSTERING=1
+uint8 INTAKING=2
+uint8 state

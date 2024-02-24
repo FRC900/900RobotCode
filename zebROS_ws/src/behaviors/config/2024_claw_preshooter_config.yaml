@@ -1,0 +1,11 @@
+controller_name: "clawster_controller"
+outtake_delay: 0.5
+claw:
+  intake_speed: 0.4
+  outtake_speed: -0.5
+  switch_name: "claw_limit_switch"
+  
+preshooter:
+  intake_speed: 0.7
+  outtake_speed: -0.9
+  switch_name: "preshooter_limit_switch"
