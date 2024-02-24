@@ -36,6 +36,10 @@
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
+			 bl_cancoder_controller
+			 fl_cancoder_controller
+			 br_cancoder_controller
+			 fr_cancoder_controller
 			 latency_compensation_state_controller
 			 swerve_drive_controller
 			 joint_state_controller_jetson
@@ -57,13 +61,10 @@
 			 robot_code_ready_controller" />
 			 
 			 <!--swerve_drive_state_controller
-			 			 candle_controller
-			 orchestra_controller
-			 orchestra_state_controller
-			 note_intake_controller
-			 left_shooter_voltage_velocity_controller
-			 right_shooter_voltage_velocity_controller
-			 shooter_pivot_motionmagicvoltage_controller
+				candle_controller
+				orchestra_controller
+				orchestra_state_controller
+				note_intake_controller
 			-->
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />

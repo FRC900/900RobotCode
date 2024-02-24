@@ -34,6 +34,7 @@ hardware_interface:
    can_interface: can0
 
    joints:
+       # Swerve drive
        - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
        - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
        - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
@@ -43,7 +44,11 @@ hardware_interface:
        - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
        - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
      
-        #intake
+       - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
+       - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
+       - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
+       - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
+       #intake
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 15, local: true}
        
        #arm
@@ -59,8 +64,6 @@ hardware_interface:
        - {name: bottom_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
        - {name: bottom_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
        - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 55, local: true}
-
-       
 
        #Claw/Diverter
        # TODO - see if these need to be merged?
