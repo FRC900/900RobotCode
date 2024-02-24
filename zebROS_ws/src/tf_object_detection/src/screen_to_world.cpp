@@ -84,7 +84,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		if (objDistance < 0 || isnan(objDistance))
 		{
 			ROS_ERROR_STREAM_THROTTLE(0.5, "Depth of object at " << objRectCenter << " with bounding rect " << rect << " invalid : " << objDistance);
-			return;
+			continue;
 		}
 		const cv::Point3f world_coord_scaled = cc.screen_to_world(rect, worldObject.id, objDistance);
 
