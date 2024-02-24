@@ -32,7 +32,7 @@ auto_mode_4: ["four_note_speaker1_ALLIANCE_csv", "pause_half",
               "four_note_speaker5_ALLIANCE_csv", 
               "four_note_speaker6_ALLIANCE_csv"]
 
-auto_mode_5: ["start_intake", "pause_half", "stop_intake"]
+auto_mode_5: ["start_intake", "spin_up_shooter", "pause_two", "shoot_center_subwoofer", "pause_two", "shoot_diagonal", "stop_intake", "spin_down_shooter"]
 auto_mode_6: ["pause_half"]
 auto_mode_7: ["pause_half"]
 auto_mode_8: ["pause_half"]
@@ -55,6 +55,10 @@ pause_half:
   type: pause
   duration: 0.5
 
+pause_two:
+  type: pause
+  duration: 2.0
+
 align_to_speaker:
   type: align_to_speaker
 
@@ -63,6 +67,24 @@ start_intake:
 
 stop_intake:
   type: stop_intake
+
+spin_up_shooter: 
+  type: spin_up_shooter
+  distance: 1.0 # meters
+
+spin_down_shooter:
+  type: spin_down_shooter
+
+# right in front
+shoot_center_subwoofer:
+  type: shoot_distance
+  distance: 1.0 # meters
+
+# on the diagonal left/right 
+shoot_diagonal:
+  type: shoot_distance
+  distance: 2.0 # meters
+
 
 ros_rate: 10 # in ms, used for all ros rate calls
 angle_tolerance: 0.00872665 # 0.5 degrees
