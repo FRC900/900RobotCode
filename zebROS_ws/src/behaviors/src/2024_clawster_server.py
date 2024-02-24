@@ -73,8 +73,11 @@ class Clawster2024ActionServer(object):
             while self.get_current_switch(goal) == 0 and (not rospy.is_shutdown()):
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
+                    rospy.logwarn("Clawster_server: Preempted!")
+                    pct_out.data = 0
+                    self.claw_pub.publish(pct_out)
                     success = False
-                    break
+                    return
                 r.sleep()
 
             pct_out.data = 0
@@ -90,8 +93,11 @@ class Clawster2024ActionServer(object):
             while self.get_current_switch(goal) != 0 and (not rospy.is_shutdown()):
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
+                    rospy.logwarn("Clawster_server: Preempted!")
+                    pct_out.data = 0
+                    self.claw_pub.publish(pct_out)
                     success = False
-                    break
+                    return
                 r.sleep()
 
             rospy.Rate(self.outtake_delay).sleep()

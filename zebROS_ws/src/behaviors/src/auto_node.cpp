@@ -131,7 +131,7 @@ class AutoNode {
 		: nh_(nh)
 		, path_ac_("/path_follower/path_follower_server", true)
 		, align_to_speaker_ac_("/align_to_speaker/align_to_speaker_2024", true)
-		, intaking_ac_("FIX ME LATER", true)
+		, intaking_ac_("/intaking/intaking_server_2024", true)
 
 	// Constructor
 	{
