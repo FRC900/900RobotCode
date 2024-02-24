@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 <launch>
 	<include file="$(find controller_node)/launch/zed_detection.launch">
-		<arg name="zed_name"             value="zedx_front" />
+		<arg name="zed_name"             value="zed_front" />
 		<arg name="zed_config_dir"       value="zed_field_calibration" />
 		<arg name="camera_model"         value="zed2" />
-		<!-- <arg name="serial_number"	     value="47067994" /> -->
 		<arg name="cam_pos_x"            value="0.0" />
 		<arg name="cam_pos_y"            value="0.0" />
 		<arg name="cam_pos_z"            value="0.0" />
@@ -13,4 +12,22 @@
 		<arg name="run_object_detection" value="false" />
 	</include>
 
+	<node pkg="fake_sensors" type="map_checking.py" name="map_checking" output="screen"/>
+
+	<node name="rosbag_record_node" pkg="rosbag" type="record"
+		args="record -o /home/ubuntu
+			/apriltag_zed_front/apriltag_detection/tags
+			/apriltag_zed_front/tag_detection_msg
+			/apriltag_zed_front/tag_detection_world
+			/zed_front/depth/camera_info
+			/zed_front/depth/depth_registered
+			/zed_front/left/camera_info
+			/zed_front/left/image_rect_color
+			/rosout
+			/rosout_agg
+			/tf
+			/tf_static
+
+		"
+  />
 </launch>
