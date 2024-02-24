@@ -45,6 +45,11 @@ hardware_interface:
         - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
         - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
 
+        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
+        - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
+        - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
+        - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
+
         #- {name: pcm, type: pcm, pcm_id: 0}
         - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
@@ -55,10 +60,6 @@ hardware_interface:
         - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
         - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
 
-        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
-        - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
-        - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
-        - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
 
 
 

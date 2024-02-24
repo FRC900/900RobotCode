@@ -105,7 +105,7 @@ swerve_drive_controller:
         #neutral_deadband: 0.01
     fl_angle:
         joint: fl_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: FusedCANcoder
         feedback_remote_sensor_id: 11
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
@@ -114,11 +114,13 @@ swerve_drive_controller:
         motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
+        rotor_to_sensor_ratio: 12.8
+        sensor_to_mechanism_ratio: 1.0
         dynamic_reconfigure: True
         invert: clockwise_positive
     fr_angle:
         joint: fr_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 12
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
@@ -127,11 +129,13 @@ swerve_drive_controller:
         motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
+        rotor_to_sensor_ratio: 12.8
+        sensor_to_mechanism_ratio: 1.0
         dynamic_reconfigure: True
         invert: clockwise_positive
     br_angle:
         joint: br_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 14
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
@@ -140,11 +144,13 @@ swerve_drive_controller:
         motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
+        rotor_to_sensor_ratio: 12.8
+        sensor_to_mechanism_ratio: 1.0
         dynamic_reconfigure: True
         invert: clockwise_positive
     bl_angle:
         joint: bl_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 13
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
@@ -153,6 +159,8 @@ swerve_drive_controller:
         motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
+        rotor_to_sensor_ratio: 12.8
+        sensor_to_mechanism_ratio: 1.0
         dynamic_reconfigure: True
         invert: clockwise_positive
 
@@ -160,7 +168,7 @@ swerve_drive_controller:
 swerve_angle_phoenix6_controller:
     type: talonfxpro_controllers/TalonFXProMotionMagicExpoVoltageController
     joint: bl_angle
-    feedback_sensor_source: RemoteCANCoder
+    feedback_sensor_source: FusedCANcoder
     remote_feedback_device_id0: 13
     close_loop_values:
         - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
@@ -171,3 +179,27 @@ swerve_angle_phoenix6_controller:
     reverse_limit_enable: False
     dynamic_reconfigure: True
     invert: clockwise_positive
+
+bl_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: bl_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 0
+
+fl_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: fl_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 0
+
+br_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: br_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 0
+
+fr_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: fr_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 0
