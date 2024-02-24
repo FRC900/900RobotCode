@@ -10,6 +10,11 @@
 			Read button box info from hardware interface and publish it (2023 buttonbox)
 		</description>
 	</class>
+	<class name="button_box_state_controller_2024/ButtonBoxStateController_2024" type="button_box_state_controller::ButtonBoxStateController_2024" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read button box info from hardware interface and publish it (2024 buttonbox)
+		</description>
+	</class>
 	<class name="can_bus_status_state_controller/CANBusStatusStateController" type="can_bus_status_state_controller::CANBusStatusStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Read CTRE CAN bus status state info and publish it

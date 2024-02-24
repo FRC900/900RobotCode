@@ -37,6 +37,11 @@ bool climbButton
 bool climbPress
 bool climbRelease
 
+# subwoofer shoot
+bool subwooferShootButton
+bool subwooferShootPress
+bool subwooferShootRelease
+
 # momentary switch for speed
 # speed ===
 bool speedSwitchUpButton

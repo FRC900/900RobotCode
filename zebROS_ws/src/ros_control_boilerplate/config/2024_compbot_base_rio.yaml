@@ -26,7 +26,7 @@ generic_hw_control_loop:
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
    joints:
-       # 2022 joints
+       # 2024 joints
        #
        # Solenoids which are updated from controllers on the Jetson need
        # to be configured here so they can write to hardware attached
@@ -117,7 +117,7 @@ joystick2_controller:
     publish_rate: 50
 
 button_box_controller:
-    type: button_box_state_controller_2023/ButtonBoxStateController_2023
+    type: button_box_state_controller_2024/ButtonBoxStateController_2024
     name: button_box
     publish_rate: 50
 

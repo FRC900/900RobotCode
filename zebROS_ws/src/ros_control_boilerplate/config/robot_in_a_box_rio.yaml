@@ -39,7 +39,7 @@ hardware_interface:
        - {name: robot_code_ready_rio, local: true, type: ready}
 
 button_box_controller:
-    type: button_box_state_controller_2023/ButtonBoxStateController_2023
+    type: button_box_state_controller_2024/ButtonBoxStateController_2024
     name: button_box
     publish_rate: 50
        
