@@ -32,7 +32,7 @@ auto_mode_4: ["four_note_speaker1_ALLIANCE_csv", "pause_half",
               "four_note_speaker5_ALLIANCE_csv", 
               "four_note_speaker6_ALLIANCE_csv"]
 
-auto_mode_5: ["pause_half"]
+auto_mode_5: ["start_intake", "pause_half", "stop_intake"]
 auto_mode_6: ["pause_half"]
 auto_mode_7: ["pause_half"]
 auto_mode_8: ["pause_half"]
@@ -58,6 +58,11 @@ pause_half:
 align_to_speaker:
   type: align_to_speaker
 
+start_intake:
+  type: start_intake
+
+stop_intake:
+  type: stop_intake
 
 ros_rate: 10 # in ms, used for all ros rate calls
 angle_tolerance: 0.00872665 # 0.5 degrees
