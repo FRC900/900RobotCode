@@ -87,7 +87,7 @@ class Clawster2024ActionServer(object):
             else:
                 self._result.has_game_piece = False
         else:
-            rospy.loginfo("Clawster_server: Outtaking!")
+            rospy.loginfo("Clawster_server: Outtaking/Shooting!")
             pct_out.data = outtake_speed
             self.claw_pub.publish(pct_out)
             while self.get_current_switch(goal) != 0 and (not rospy.is_shutdown()):

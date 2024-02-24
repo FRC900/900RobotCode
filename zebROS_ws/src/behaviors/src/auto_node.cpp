@@ -34,6 +34,7 @@
 // year specific actions
 #include <behavior_actions/AlignToSpeaker2024Action.h>
 #include <behavior_actions/Intaking2024Action.h>
+#include <behavior_actions/Shooting2024Action.h>
 
 
 enum AutoStates {
@@ -109,6 +110,8 @@ class AutoNode {
 		actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action> align_to_speaker_ac_;
 
 		actionlib::SimpleActionClient<behavior_actions::Intaking2024Action> intaking_ac_;
+		actionlib::SimpleActionClient<behavior_actions::Shooting2024Action> shooting_ac_;
+
 
 		// path follower and feedback
 		std::map<std::string, nav_msgs::Path> premade_position_paths_;
@@ -132,6 +135,7 @@ class AutoNode {
 		, path_ac_("/path_follower/path_follower_server", true)
 		, align_to_speaker_ac_("/align_to_speaker/align_to_speaker_2024", true)
 		, intaking_ac_("/intaking/intaking_server_2024", true)
+		, shooting_ac_("/shooting/shooting_server_2024", true)
 
 	// Constructor
 	{
@@ -196,11 +200,15 @@ class AutoNode {
 		functionMap_["align_to_speaker"] = &AutoNode::alignToSpeakerfn;
 		functionMap_["start_intake"] = &AutoNode::startIntakingfn;
 		functionMap_["stop_intake"] = &AutoNode::stopIntakingfn;
+		functionMap_["spin_up_shooter"] = &AutoNode::spinUpShooterfn;
+		functionMap_["spin_down_shooter"] = &AutoNode::spinDownShooterfn;
+		functionMap_["shoot_distance"] = &AutoNode::shootDistancefn;
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
 			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			align_to_speaker_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			shooting_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			if (park_enabled) {
 				std_srvs::SetBool srv;
 				srv.request.data = false;
@@ -882,6 +890,76 @@ class AutoNode {
 		align_to_speaker_ac_.sendGoal(goal);
 		waitForActionlibServer(align_to_speaker_ac_, 1.5, "align_to_speaker");
 
+		return true;
+	}
+
+	bool spinUpShooterfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		ROS_INFO_STREAM("Auto node spinning up shooter!");
+		if(!shooting_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find intaking shooting server");
+			return false;
+		}
+		double distance;
+
+		if (!action_data.hasMember("distance"))
+		{
+			ROS_ERROR_STREAM("Auto action " << auto_step << " missing 'distance' field");
+			return false;
+		}
+		if (!readFloatParam("distance", action_data, distance))
+		{
+			shutdownNode(ERROR, "Auto node - distance is not a double or int in pause action");
+			return false;
+		}
+		ROS_INFO_STREAM("Auto node - Spinning up shooter with distance " << distance);
+		behavior_actions::Shooting2024Goal goal;
+		goal.leave_spinning = true; // keep spinning after 
+		goal.setup_only = true; // don't actually shoot anything
+		goal.distance = distance; 
+		goal.mode = goal.SPEAKER;
+		shooting_ac_.sendGoal(goal); // this goal will succeed almost right away, don't cancel
+		return true; 
+	}
+
+	bool shootDistancefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		if(!shooting_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find shooting server");
+			return false;
+		}
+		double distance;
+		if (!action_data.hasMember("distance"))
+		{
+			ROS_ERROR_STREAM("Auto action " << auto_step << " missing 'distance' field");
+			return false;
+		}
+		if (!readFloatParam("distance", action_data, distance))
+		{
+			shutdownNode(ERROR, "Auto node - distance is not a double or int in pause action");
+			return false;
+		}
+
+		ROS_INFO_STREAM("Auto node - SHOOTING with distance " << distance);
+		behavior_actions::Shooting2024Goal goal;
+		goal.leave_spinning = true; // want to keep going after this shot
+		goal.setup_only = false; // actually shoot something
+		goal.distance = distance; 
+		goal.mode = goal.SPEAKER;
+		shooting_ac_.sendGoal(goal); 
+		
+		waitForActionlibServer(shooting_ac_, 10, "Shooting!");
+		return true;
+	}
+	
+	bool spinDownShooterfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		if(!shooting_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find shooting server");
+			return false;
+		}
+		ROS_WARN_STREAM("Auto Node - shooter spinning DOWN");
+		behavior_actions::Shooting2024Goal goal;
+		goal.cancel_movement = true;
+		shooting_ac_.sendGoal(goal); // this goal will succeed almost right away, don't cancel
+		// shooting_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 		return true;
 	}
 

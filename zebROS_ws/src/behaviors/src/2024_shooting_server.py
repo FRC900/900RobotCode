@@ -54,6 +54,16 @@ class ShootingServer(object):
         self.server.start()
 
     def execute_cb(self, goal: Shooting2024Goal):
+        # WE DO NOT HANDLE AMP RIGHT NOW
+
+        if goal.cancel_movement:
+            rospy.logwarn("2024_shooting_server: CANCELING SPIN UP")
+            self.shooter_client.cancel_goals_at_and_before_time(rospy.Time())
+            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+            self.result.success = True
+            self.server.set_succeeded(self.result)
+            return
+        
         # Look up speed and angle to send to shooter and pivot server
         top_left_speed = self.top_left_map[goal.distance]
         top_right_speed = self.top_right_map[goal.distance]
@@ -61,7 +71,7 @@ class ShootingServer(object):
         bottom_right_speed = self.bottom_right_map[goal.distance]
         pivot_angle = self.angle_map[goal.distance]
 
-        rospy.loginfo("2024_shooting_server: spinning up")
+        rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
 
         self.feedback.current_stage = self.feedback.SPINNING
         self.server.publish_feedback(self.feedback)
@@ -104,15 +114,14 @@ class ShootingServer(object):
 
                 # ensure pivot stopped
                 self.pivot_client.cancel_goals_at_and_before_time(rospy.Time())
-
                 self.server.set_preempted()
-
                 return
+            
             r.sleep()
 
-        rospy.loginfo("2024_shooting_server: shooting")
-
         if not goal.setup_only:
+            rospy.loginfo("2024_shooting_server: shooting")
+
             self.feedback.current_stage = self.feedback.SHOOTING
             self.server.publish_feedback(self.feedback)
 
@@ -120,12 +129,12 @@ class ShootingServer(object):
             preshooter_goal.mode = preshooter_goal.OUTTAKE
             preshooter_goal.destination = preshooter_goal.PRESHOOTER
 
-            self.preshooter_client.send_goal(preshooter_goal)
-
             preshooter_done = False
             def preshooter_done_cb(state, result):
                 nonlocal preshooter_done
                 preshooter_done = True
+                rospy.logwarn("2024_shooting_server: PRESHOOTER CB DONE")
+
             self.preshooter_client.send_goal(preshooter_goal, done_cb=preshooter_done_cb)
 
             while not preshooter_done and not rospy.is_shutdown():
