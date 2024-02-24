@@ -14,20 +14,39 @@
 
 	<node pkg="fake_sensors" type="map_checking.py" name="map_checking" output="screen"/>
 
+	<!--o 
+		Set up a pipleine to throttle the image stream to 2 FPS and resize it by
+		50% to reduce disk space usage.
+		This will be for object detection training, so lower quality is acceptable.
+	 -->
+	<node pkg="topic_tools" type="throttle" name="throttle" output="screen"
+		args="messages /zed_front/left/image_rect_color 2">
+		<remap from="/throttle" to="/zed_front/left/image_rect_color_throttle" />
+	</node>
+
+	<node name="resized" pkg="nodelet" type="nodelet"
+			args="standalone image_proc/resize"
+			output="screen">
+		<remap from="image" to="/zed_front/left/image_rect_color_throttle" />
+		<remap from="camera_info" to="/zed_front/left/camera_info" />
+		<param name="scale_width" value="0.5" />
+		<param name="scale_height" value="0.5" />
+	</node>
+	<!-- 
+		Camera info might be less useful after downsampling but it also takes basically
+		no space or cpu time so why not save it
+	-->
 	<node name="rosbag_record_node" pkg="rosbag" type="record"
-		args="record -o /home/ubuntu
+		args="record -o /home/ubuntu/
 			/apriltag_zed_front/apriltag_detection/tags
 			/apriltag_zed_front/tag_detection_msg
 			/apriltag_zed_front/tag_detection_world
-			/zed_front/depth/camera_info
-			/zed_front/depth/depth_registered
-			/zed_front/left/camera_info
-			/zed_front/left/image_rect_color
+			/resized/image
 			/rosout
+			/zed_front/left/camera_info
 			/rosout_agg
 			/tf
 			/tf_static
-
 		"
-  />
+	/>
 </launch>
