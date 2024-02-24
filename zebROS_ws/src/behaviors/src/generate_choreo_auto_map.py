@@ -34,10 +34,10 @@ for file in files:
         csv_red += f"{t['timestamp']},{16.54 - t['x']},{t['y']},{math.pi - t['heading']},{-t['angularVelocity']},{-t['velocityX']},{t['velocityY']},0\n"
         csv_blue += f"{t['timestamp']},{t['x']},{t['y']},{t['heading']},{t['angularVelocity']},{t['velocityX']},{t['velocityY']},0\n"
 
-    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/map_rel_{file.replace('.traj', '').replace('.', '')}_blue_csv.csv", "w") as blue_file:
+    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/{file.replace('.traj', '').replace('.', '')}_blue_csv.csv", "w") as blue_file:
         print(csv_blue)
         blue_file.write(csv_blue)
     
-    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/map_rel_{file.replace('.traj', '').replace('.', '')}_red_csv.csv", "w") as red_file:
+    with open(f"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/{file.replace('.traj', '').replace('.', '')}_red_csv.csv", "w") as red_file:
         print(csv_red)
         red_file.write(csv_red)

@@ -20,13 +20,14 @@ class ShootingServer(object):
         self.feedback = Shooting2024Feedback()
         self.shooter_client = actionlib.SimpleActionClient('/shooter/set_shooter_speed', Shooter2024Action)
         rospy.loginfo("2024_shooting_server: waiting for shooter")
+        # this will block forever if something lower level fails to come up
         self.shooter_client.wait_for_server()
         self.pivot_client = actionlib.SimpleActionClient('/shooter/set_shooter_pivot', ShooterPivot2024Action)
         rospy.loginfo("2024_shooting_server: waiting for pivot")
         self.pivot_client.wait_for_server()
         # The preshooter and claw are very similar (drive motor until limit switch pressed). They'll probably be the same server.
-        self.preshooter_client = actionlib.SimpleActionClient('/preshooter/preshooter_server_2024', Clawster2024Action)
-        rospy.loginfo("2024_shooting_server: waiting for preshooter")
+        self.preshooter_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
+        rospy.loginfo("2024_shooting_server: waiting for clawster")
         self.preshooter_client.wait_for_server()
 
         # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
@@ -117,6 +118,7 @@ class ShootingServer(object):
 
             preshooter_goal = Clawster2024Goal()
             preshooter_goal.mode = preshooter_goal.OUTTAKE
+            preshooter_goal.destination = preshooter_goal.PRESHOOTER
 
             self.preshooter_client.send_goal(preshooter_goal)
 

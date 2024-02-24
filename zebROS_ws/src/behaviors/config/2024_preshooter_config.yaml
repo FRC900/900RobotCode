@@ -1,5 +1,0 @@
-intake_speed: 0.7
-outtake_speed: -0.9
-outtake_stop_delay: 0.5
-controller_name: "clawster_controller"
-switch_name: "preshooter_limit_switch"

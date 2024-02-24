@@ -1,5 +1,7 @@
 // Top-level driver for auto behaviors.
 #include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/algorithm/string.hpp> // find and replace 
+#include <boost/algorithm/string/predicate.hpp>
 #include <ros/ros.h>
 #include <behavior_actions/AutoMode.h> //msg file
 #include <behavior_actions/AutoState.h> //msg file
@@ -10,10 +12,6 @@
 #include "base_trajectory_msgs/GenerateSpline.h"
 #include "base_trajectory_msgs/PathOffsetLimit.h"
 #include <actionlib/client/simple_action_client.h>
-#include <behavior_actions/Placing2023Action.h>
-#include <behavior_actions/Intaking2023Action.h>
-#include <behavior_actions/Balancing2023Action.h>
-#include <behavior_actions/GamePieceState2023.h>
 #include <behavior_actions/DynamicPath.h>
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathFeedback.h>
@@ -26,14 +24,17 @@
 #include "std_msgs/Float64.h"
 #include "angles/angles.h"
 #include <std_srvs/SetBool.h>
-#include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
 #include <geometry_msgs/TransformStamped.h>
 #include <angles/angles.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+// year specific actions
 #include <behavior_actions/AlignToSpeaker2024Action.h>
+#include <behavior_actions/Intaking2024Action.h>
+
 
 enum AutoStates {
 			NOT_READY,
@@ -105,11 +106,9 @@ class AutoNode {
 		// START probably changing year to year, mostly year specific actions but also custom stuff based on what is needed
 		//actionlib clients
 		actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac_; //TODO fix this path
-		actionlib::SimpleActionClient<behavior_actions::Intaking2023Action> intaking_ac_;
-		actionlib::SimpleActionClient<behavior_actions::Balancing2023Action> balancing_ac;
-		actionlib::SimpleActionClient<behavior_actions::Placing2023Action> placing_ac_;
-		actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action> align_and_place_ac_;
 		actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action> align_to_speaker_ac_;
+
+		actionlib::SimpleActionClient<behavior_actions::Intaking2024Action> intaking_ac_;
 
 		// path follower and feedback
 		std::map<std::string, nav_msgs::Path> premade_position_paths_;
@@ -131,11 +130,8 @@ class AutoNode {
 		AutoNode(const ros::NodeHandle &nh) 
 		: nh_(nh)
 		, path_ac_("/path_follower/path_follower_server", true)
-		, intaking_ac_("/intaking/intaking_server_2023", true)
-		, balancing_ac("/balance_position/balancing_server", true)
-		, placing_ac_("/placing/placing_server_2023", true)
-		, align_and_place_ac_("/align_and_place_grid", true)
 		, align_to_speaker_ac_("/align_to_speaker/align_to_speaker_2024", true)
+		, intaking_ac_("FIX ME LATER", true)
 
 	// Constructor
 	{
@@ -193,22 +189,18 @@ class AutoNode {
 		first_point_pub_ = nh_.advertise<geometry_msgs::Pose>("first_point", 1, true);
 		functionMap_["relocalize"] = &AutoNode::relocalizefn;
 		functionMap_["pause"] = &AutoNode::pausefn;
-		functionMap_["intaking_actionlib_server"] = &AutoNode::intakefn;
-		functionMap_["placing_actionlib_server"] = &AutoNode::placefn;
 		functionMap_["path"] = &AutoNode::pathfn;
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
-		functionMap_["balancing_actionlib_server"] = &AutoNode::autoBalancefn;
-		functionMap_["grid_align_server"] = &AutoNode::gridalignfn;
 		functionMap_["snap_to_orientation"] = &AutoNode::snapanglefn;
+		
 		functionMap_["align_to_speaker"] = &AutoNode::alignToSpeakerfn;
+		functionMap_["start_intake"] = &AutoNode::startIntakingfn;
+		functionMap_["stop_intake"] = &AutoNode::stopIntakingfn;
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
 			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			placing_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			align_and_place_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			align_to_speaker_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			if (park_enabled) {
 				std_srvs::SetBool srv;
 				srv.request.data = false;
@@ -529,30 +521,63 @@ class AutoNode {
 		return true;
 	}
 
+	std::string getAllianceColorString() { 
+		std::string color_str = ""; 
+		if (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_UNKNOWN) {
+			ROS_ERROR_STREAM("UNKNOWN ALLIANCE COLOR, REQUIRED FOR AUTO - EXITING");
+			return "";
+		}
+		else if (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED) {
+			color_str = "red";
+		}
+		else if (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_BLUE) {
+			color_str = "blue";
+		}
+		else {
+			ROS_ERROR_STREAM("ALLIANCE COLOR FELL THROUGH, EXITING");
+			return "";
+		}
+		return color_str;
+	}
 	// ---------------- END NOT CHANGING year to year ----------------
 
 	// Called before auto actually starts, runs the path planner and stores the path in premade_paths_
  	bool preLoadPath() {
 		for (size_t j = 0; j < auto_steps_.size(); j++) {
 			XmlRpc::XmlRpcValue action_data;
+			
+			std::string color_str = getAllianceColorString(); 
+			if (color_str == "") {
+				return false; 
+			}
+			const std::string ALLIANCE = "ALLIANCE"; 
+			boost::replace_all(auto_steps_[j], ALLIANCE, color_str); 
+			//ROS_INFO_STREAM("Auto mode j " << j << " step: " << auto_steps_[j]); 
+
 			// If the path was already retrieved, continue
 			if (premade_position_paths_.find(auto_steps_[j]) != premade_position_paths_.end()) {
 				continue;
 			}
+
+			
 			// If the auto step doesn't exist as a yaml definition, continue
-			if(!nh_.getParam(auto_steps_[j], action_data)) {
-				continue;
+			if (!(boost::algorithm::ends_with(auto_steps_[j], "csv"))) {
+				if(!nh_.getParam(auto_steps_[j], action_data)) {
+					continue;
+				}
+				// If the auto step's type is not a path, continue
+				if (action_data["type"] != "path") {
+					continue;
+				}
 			}
-			// If the auto step's type is not a path, continue
-			if (!(action_data["type"] == "path")) {
-				continue;
-			}
-			ROS_INFO_STREAM("Path " << auto_steps_[j]);
+
+			ROS_INFO_STREAM("Now looking for path at " << auto_steps_[j]);
+			
 			if (auto_steps_[j].find("_csv") != std::string::npos) {
 				// CSV format:
 				// 0    1 2 3   4                5    6    7
 				// time,x,y,yaw,angular_velocity,xvel,yvel,waypointIdx
-				ROS_INFO_STREAM("auto_node : Loading Choreo path located at behaviors/path/" << auto_steps_[j]);
+				ROS_INFO_STREAM("auto_node : Loading Choreo path located at behaviors/path/" << auto_steps_[j] << ".csv");
 				std::ifstream csv("/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/" + auto_steps_[j] + ".csv");
 				std::string line;
 				std::vector<std::vector<double>> path;
@@ -610,7 +635,7 @@ class AutoNode {
 				premade_position_waypoints_[auto_steps_[j]] = nav_msgs::Path();
 				premade_velocity_waypoints_[auto_steps_[j]] = nav_msgs::Path();
 				waypointsIdxs_[auto_steps_[j]] = waypointsIdx;
-
+				ROS_INFO_STREAM("SETTING PREMADE PATH WITH " << auto_steps_[j]);
 				if (premade_position_paths_.size() == 1) {
 					first_point_pub_.publish(pos_path_msg.poses[0].pose);
 				}
@@ -735,12 +760,15 @@ class AutoNode {
 			//read sequence of actions from config
 			if (auto_mode_ >= 0)
 			{
-				if(nh_.getParam("auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue"), auto_steps_)) {
+				if(nh_.getParam("auto_mode_" + std::to_string(auto_mode_), auto_steps_)) {
 					if (!preLoadPath()) {
 						return false;
 					}
-					ROS_INFO_STREAM_THROTTLE(1, "auto_node: mode " << "auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue"));
+					ROS_INFO_STREAM_THROTTLE(1, "auto_node: mode auto_mode_" + std::to_string(auto_mode_));
 				} 
+				else {
+					ROS_ERROR_STREAM("COULD NOT FIND AUTO MODE PARAM?");
+				}
 			}
 			if(auto_mode_ > 0){
 				auto_state_ = READY;
@@ -857,6 +885,32 @@ class AutoNode {
 		return true;
 	}
 
+	bool startIntakingfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		if(!intaking_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find intaking actionlib server");
+			return false;
+		}
+
+		behavior_actions::Intaking2024Goal goal;
+		goal.destination = goal.SHOOTER;
+		goal.run_until_preempt = true;
+
+		intaking_ac_.sendGoal(goal); // just send and can cancel in another action
+		ROS_INFO_STREAM("Auto node - Starting intake");
+		return true;
+	}
+
+	bool stopIntakingfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		if(!intaking_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find intaking actionlib server");
+			return false;
+		}
+
+		intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now()); // cancel goal sent from start intaking, probably never needed but could be helpful in a pinch
+		ROS_WARN_STREAM("Auto node - STOPPING INTAKE in auto");
+		return true;
+	}
+
 	bool relocalizefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
 		// make a std_srvs::Empty request
 		std_srvs::Empty srv;
@@ -867,69 +921,6 @@ class AutoNode {
 		}
 
 		ROS_INFO_STREAM("Auto node - relocalize service call succeeded");
-		return true;
-	}
-
-	bool placefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
-		//for some reason this is necessary, even if the server has been up and running for a while
-		if(!placing_ac_.waitForServer(ros::Duration(5))){
-			shutdownNode(ERROR,"Auto node - couldn't find placing actionlib server");
-			return false;
-		}
-
-		behavior_actions::Placing2023Goal goal;
-		goal.from_Trex = true;
-		goal.step = goal.MOVE;
-		goal.no_drive_back = true;
-
-		uint8_t requested_game_piece = 255;
-
-		if (action_data.hasMember("piece"))
-		{
-			if (action_data["piece"] == "cone") {
-				requested_game_piece = behavior_actions::GamePieceState2023::BASE_TOWARDS_US_CONE;
-			}
-			else if (action_data["piece"] == "cube") {
-				requested_game_piece = behavior_actions::GamePieceState2023::CUBE;
-			}
-			else {
-				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"piece\" field is not \"cone\" or \"cube\". Exiting!");
-				return false;
-			}
-		}
-
-		if (action_data.hasMember("node"))
-		{
-			if (action_data["node"] == "high") {
-				goal.node = goal.HIGH;
-			}
-			else if (action_data["node"] == "mid") {
-				goal.node = goal.MID;
-			}
-			else if (action_data["node"] == "hybrid") {
-				goal.node = goal.HYBRID;
-			}
-			else {
-				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"node\" field is not \"high\", \"mid\",  or \"hybrid\". Exiting!");
-				return false;
-			}
-		}
-		else {
-			shutdownNode(ERROR, "Auto node - placing_actionlib_server: no node specified");
-			return false;
-		}
-
-		if (requested_game_piece != 255) {
-			goal.override_game_piece = true;
-			goal.piece = requested_game_piece;
-		}
-		placing_ac_.sendGoal(goal);
-		waitForActionlibServer(placing_ac_, 10.0, "placing_server");
-
-		goal.step = goal.PLACE_RETRACT;
-
-		placing_ac_.sendGoal(goal);
-		waitForActionlibServer(placing_ac_, 10.0, "placing_server");
 		return true;
 	}
 
@@ -968,140 +959,6 @@ class AutoNode {
 			rate.sleep();
 		}
 		ROS_INFO_STREAM("Auto node : Done with snap - Current yaw (deg) = " << angles::to_degrees(current_yaw_) << " target angle (deg) = " << angles::to_degrees(angle_in_rad) << " current effort = " << current_orient_effort_);
-		return true;
-	}
-
-	bool gridalignfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
-		//for some reason this is necessary, even if the server has been up and running for a while
-		if(!align_and_place_ac_.waitForServer(ros::Duration(5))){
-			shutdownNode(ERROR,"Auto node - couldn't find align and place actionlib server");
-			return false;
-		}
-
-		behavior_actions::AlignAndPlaceGrid2023Goal goal;
-		goal.auto_place = true;
-		goal.step = 0;
-		goal.tolerance = 0.05;
-		goal.tolerance_for_extend = 1.0;
-
-		uint8_t requested_game_piece = 255;
-
-		if (action_data.hasMember("piece"))
-		{
-			if (action_data["piece"] == "cone") {
-				requested_game_piece = behavior_actions::GamePieceState2023::BASE_TOWARDS_US_CONE;
-			}
-			else if (action_data["piece"] == "cube") {
-				requested_game_piece = behavior_actions::GamePieceState2023::CUBE;
-			}
-			else {
-				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"piece\" field is not \"cone\" or \"cube\". Exiting!");
-				return false;
-			}
-		}
-
-		if (action_data.hasMember("node"))
-		{
-			if (action_data["node"] == "high") {
-				goal.node = goal.HIGH;
-			}
-			else if (action_data["node"] == "mid") {
-				goal.node = goal.MID;
-			}
-			else if (action_data["node"] == "hybrid") {
-				goal.node = goal.HYBRID;
-			}
-			else {
-				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"node\" field is not \"high\", \"mid\",  or \"hybrid\". Exiting!");
-				return false;
-			}
-		}
-		else {
-			shutdownNode(ERROR, "Auto node - placing_actionlib_server: no node specified");
-			return false;
-		}
-
-		if (action_data.hasMember("grid_id"))
-		{
-			int temp;
-			readIntParam("grid_id", action_data, temp);
-			goal.grid_id = temp;
-		}
-		else {
-			shutdownNode(ERROR, "Auto node - auto_placing_actionlib_server: no grid id specified");
-			return false;
-		}
-
-		goal.no_drive_back = true;
-
-		if (requested_game_piece != 255) {
-			goal.override_game_piece = true;
-			goal.piece = requested_game_piece;
-		}
-
-		align_and_place_ac_.sendGoal(goal);
-		waitForActionlibServer(align_and_place_ac_, 10.0, "align_and_place_server");
-
-		return true;
-	}
-
-	bool autoBalancefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
-		if(!balancing_ac.waitForServer(ros::Duration(5))){
-			shutdownNode(ERROR,"Auto node - couldn't find balancing actionlib server");
-			return false;
-		}
-		ROS_INFO_STREAM("Running auto balance!==============");
-		if (!action_data.hasMember("goal"))
-		{
-			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call missing \"goal\" field");
-			return false;
-		}
-		behavior_actions::Balancing2023Goal goal;
-		if(action_data["goal"] == "true") {
-			goal.towards_charging_station = true;
-		}
-		if(action_data["goal"] == "false") {
-			goal.towards_charging_station = false;
-		}
-		balancing_ac.sendGoal(goal);
-		waitForActionlibServer(balancing_ac, 16.0, "balancing_server");
-		ROS_INFO_STREAM("Success!");
-		return true;
-	}
-
-	bool intakefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
-		ROS_ERROR_STREAM("==============INTAKE SERVER CALLED!!!==========");
-		//for some reason this is necessary, even if the server has been up and running for a while
-		if(!intaking_ac_.waitForServer(ros::Duration(5))){
-			shutdownNode(ERROR,"Auto node - couldn't find intaking actionlib server");
-			return false;
-		}
-
-		if (!action_data.hasMember("piece"))
-		{
-			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call missing \"piece\" field");
-			return false;
-		}
-		behavior_actions::Intaking2023Goal goal;
-		if (action_data["piece"] == "retract") {
-			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			return true;
-		}
-		else if (action_data["piece"] == "vertical_cone") {
-			goal.piece = goal.VERTICAL_CONE;
-		}
-		else if (action_data["piece"] == "cone") {
-			goal.piece = goal.BASE_TOWARDS_US_CONE;
-		}
-		else if (action_data["piece"] == "cube") {
-			goal.piece = goal.CUBE;
-		}
-		else {
-			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call \"piece\" field is not \"cone\", \"vertical_cone\", or \"cube\". Exiting!");
-			return false;
-		}
-		intaking_ac_.sendGoal(goal);
-		// waitForActionlibServer(intaking_ac_, 10.0, "intaking_server");
 		return true;
 	}
 
@@ -1268,6 +1125,7 @@ class AutoNode {
 	}
 
 	int runStep(const std::string &name) {
+		
 		//read data from config needed to carry out the action
 		XmlRpc::XmlRpcValue action_data;
 		if(! nh_.getParam(name, action_data)){
@@ -1283,6 +1141,19 @@ class AutoNode {
 				ROS_INFO_STREAM("auto_node: Running " << action_data_type);
 			// amazing syntax 
 			// passes in the config data and which auto step is running
+			bool result = (this->*functionMap_[action_data_type])(action_data, std::string(name));
+			if (!result)
+			{
+				std::string error_msg = "Auto node - Error running auto action " + name;
+				ROS_ERROR_STREAM(error_msg);
+				shutdownNode(ERROR, error_msg);
+				return 1;
+			}
+		}
+		// check if we are a csv, in which case we do know what the type shoudl be and can continue
+		else if (boost::algorithm::ends_with(name, "csv")) {
+			ROS_WARN_STREAM("Assuming " << name << " is a path and setting fields based on it");
+			action_data_type = "path";
 			bool result = (this->*functionMap_[action_data_type])(action_data, std::string(name));
 			if (!result)
 			{
@@ -1322,13 +1193,19 @@ class AutoNode {
 
 			auto_steps_.clear(); //stores string of action names to do, read from the auto mode array in the config file
 			//read sequence of actions from config
-			if(!nh_.getParam("auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue"), auto_steps_)){
-				shutdownNode(ERROR, "Couldn't read " + ("auto_mode_" + std::to_string(auto_mode_) + (alliance_color_ == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED ? "_red" : "_blue") + " config value in auto node"));
+			if(!nh_.getParam("auto_mode_" + std::to_string(auto_mode_), auto_steps_)){
+				shutdownNode(ERROR, "Couldn't read " + ("auto_mode_" + std::to_string(auto_mode_) + " config value in auto node"));
 				return 1;
 			}
 
 			//run through actions in order
 			for(size_t i = 0; i < auto_steps_.size(); i++){
+				std::string color_str = getAllianceColorString(); 
+				if (color_str == "") {
+					shutdownNode(ERROR, "Alliance string is none");
+				}
+				const std::string ALLIANCE = "ALLIANCE"; 
+				boost::replace_all(auto_steps_[i], ALLIANCE, color_str); 
 				if(auto_started_ && !auto_stopped_)
 				{
 					ROS_INFO_STREAM("Auto node - running step " << i << ": " << auto_steps_[i]);

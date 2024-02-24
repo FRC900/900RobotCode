@@ -112,6 +112,7 @@ arm_controller:
     forward_limit_enable: False
     reverse_limit_enable: False
     dynamic_reconfigure: True
+
 intake_talonfxpro_controller:
     type: talonfxpro_controllers/TalonFXProDutyCycleOutController
     joint: intake
@@ -220,7 +221,7 @@ swerve_drive_state_controller:
     fr_angle:
         offset: 12.9
 
-note_conveyor_controller:
+note_intake_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController
     joint: intake
     invert: counterclockwise_positive

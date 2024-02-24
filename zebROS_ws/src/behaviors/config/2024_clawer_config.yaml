@@ -1,5 +1,0 @@
-intake_speed: 0.4
-outtake_speed: -0.5
-outtake_stop_delay: 0.5
-controller_name: "clawster_controller"
-switch_name: "claw_limit_switch"

@@ -2,6 +2,10 @@
 uint8 INTAKE=0
 uint8 OUTTAKE=1
 uint8 mode
+
+uint8 CLAW=0
+uint8 PRESHOOTER=1
+uint8 destination
 ---
 # feedback
 bool has_game_piece

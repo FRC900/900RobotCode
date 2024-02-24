@@ -68,7 +68,7 @@ class Converter:
         # print("screen to world callback")
         detections = []
         # print(field_dets)
-        transform = self.tfBuffer.lookup_transform("odom", field_dets.header.frame_id, field_dets.header.stamp)
+        transform = self.tfBuffer.lookup_transform("odom", field_dets.header.frame_id, field_dets.header.stamp, rospy.Duration(0.02)) # this shouldn't break anything IRL but needed for sim
 
         for detection in field_dets.objects:
             # transform the point from zed_objdetect_left_camera_frame to map
