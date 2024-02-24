@@ -2,7 +2,11 @@
 #define ROTATION_WITH_STICK
 
 #include "ros/ros.h"
+#include "std_srvs/Empty.h"
+
+#include "frc_msgs/ButtonBoxState2024.h"
 #include "frc_msgs/JoystickState.h"
+#include "imu_zero_msgs/ImuZeroAngle.h"
 //#define NEED_JOINT_STATES
 #ifdef NEED_JOINT_STATES
 #include "sensor_msgs/JointState.h"
@@ -465,11 +469,207 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 	}
 }
 
-#if 0
 void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 {
+
+	if (button_box->lockingSwitchButton)
+	{
+	}
+	if (button_box->lockingSwitchPress)
+	{
+	}
+	if (button_box->lockingSwitchRelease)
+	{
+	}
+
+	// TODO We'll probably want to check the actual value here
+	auto_calculator.set_auto_mode(button_box->auto_mode);
+
+ 
+	if(button_box->zeroButton) {
+	}
+	if(button_box->zeroPress) {
+		// for zeroing, assuming the robot starts facing away from the speaker (yes this is 2024 but we need to test it)
+		imu_zero_msgs::ImuZeroAngle imu_cmd;
+		if (alliance_color == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED) {
+			ROS_INFO_STREAM("teleop_joystick_comp_2023 : red alliance");
+			imu_cmd.request.angle = 180.0;
+		} else {
+			ROS_INFO_STREAM("teleop_joystick_comp_2023 : blue or unknown alliance");
+			imu_cmd.request.angle = 0.0;
+		}
+		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing IMU to " << imu_cmd.request.angle);
+		IMUZeroSrv.call(imu_cmd);
+		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing swerve odom");
+		std_srvs::Empty odom_cmd;
+		SwerveOdomZeroSrv.call(odom_cmd);
+	}
+	if(button_box->zeroRelease) {
+	}
+
+	if (button_box->redButton)
+	{
+	}
+	if (button_box->redPress)
+	{
+	}
+	if (button_box->redRelease)
+	{
+	}
+
+	if (button_box->backupButton1Button)
+	{
+	}
+	if (button_box->backupButton1Press)
+	{
+	}
+	if (button_box->backupButton1Release)
+	{
+	}
+
+	if (button_box->backupButton2Button)
+	{
+	}
+	if (button_box->backupButton2Press)
+	{
+	}
+	if (button_box->backupButton2Release)
+	{
+	}
+
+	if (button_box->trapButton)
+	{
+	}
+	if (button_box->trapPress)
+	{
+	}
+	if (button_box->trapRelease)
+	{
+	}
+
+	if (button_box->climbButton)
+	{
+	}
+	if (button_box->climbPress)
+	{
+	}
+	if (button_box->climbRelease)
+	{
+	}
+
+	if (button_box->subwooferShootButton)
+	{
+	}
+	if (button_box->subwooferShootPress)
+	{
+	}
+	if (button_box->subwooferShootRelease)
+	{
+	}
+
+	if (button_box->speedSwitchUpButton)
+	{
+	}
+	if (button_box->speedSwitchUpPress)
+	{
+	}
+	if (button_box->speedSwitchUpRelease)
+	{
+	}
+
+	if (button_box->speedSwitchDownButton)
+	{
+	}
+	if (button_box->speedSwitchDownPress)
+	{
+	}
+	if (button_box->speedSwitchDownRelease)
+	{
+	}
+
+	// Switch in middle position
+	if (!(button_box->speedSwitchDownButton || button_box->speedSwitchUpButton))
+	{
+	}
+
+	if (button_box->shooterArmUpButton)
+	{
+	}
+	if (button_box->shooterArmUpPress)
+	{
+	}
+	if (button_box->shooterArmUpRelease)
+	{
+	}
+
+	if (button_box->shooterArmDownButton)
+	{
+	}
+	if (button_box->shooterArmDownPress)
+	{
+	}
+	if (button_box->shooterArmDownRelease)
+	{
+	}
+
+	// Switch in middle position
+	if (!(button_box->shooterArmDownButton || button_box->shooterArmUpButton))
+	{
+	}
+
+
+	if (button_box->rightGreenPress)
+	{
+		driver->moveDirection(0, 1, 0, config.button_move_speed);
+	}
+	if (button_box->rightGreenButton)
+	{
+		driver->sendDirection(config.button_move_speed);
+	}
+	if (button_box->rightGreenRelease)
+	{
+		driver->moveDirection(0, -1, 0, config.button_move_speed);
+	}
+
+	if (button_box->leftGreenPress)
+	{
+		driver->moveDirection(0, -1, 0, config.button_move_speed);
+	}
+	if (button_box->leftGreenButton)
+	{
+		driver->sendDirection(config.button_move_speed);
+	}
+	if (button_box->leftGreenRelease)
+	{
+		driver->moveDirection(0, 1, 0, config.button_move_speed);
+	}
+
+	if (button_box->topGreenPress)
+	{
+		driver->moveDirection(1, 0, 0, config.button_move_speed);
+	}
+	if (button_box->topGreenButton)
+	{
+		driver->sendDirection(config.button_move_speed);
+	}
+	if (button_box->topGreenRelease)
+	{
+		driver->moveDirection(-1, 0, 0, config.button_move_speed);
+	}
+
+	if (button_box->bottomGreenPress)
+	{
+		driver->moveDirection(-1, 0, 0, config.button_move_speed);
+	}
+	if (button_box->bottomGreenButton)
+	{
+		driver->sendDirection(config.button_move_speed);
+	}
+	if (button_box->bottomGreenRelease)
+	{
+		driver->moveDirection(1, 0, 0, config.button_move_speed);
+	}
 }
-#endif
 
 #ifdef NEED_JOINT_STATES
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
@@ -487,6 +687,6 @@ int main(int argc, char **argv)
 	TeleopInitializer initializer;
 	initializer.set_n_params(n_params);
 	initializer.init();
-	// ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
+	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 	return 0;
 }

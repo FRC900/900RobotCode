@@ -128,6 +128,7 @@ include_directories(
 add_library(frc_state_controller
 	src/button_box_state_controller.cpp
 	src/button_box_state_controller_2023.cpp
+	src/button_box_state_controller_2024.cpp
 	src/can_bus_status_state_controller.cpp
 	src/joint_mode_state_controller.cpp
 	src/joystick_state_controller.cpp

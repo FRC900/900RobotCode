@@ -478,7 +478,6 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 		driver->moveDirection(0, -1, 0, config.button_move_speed);
 	}
 
-
 	if(button_box->leftGreenPress)
 	{
 		driver->moveDirection(0, -1, 0, config.button_move_speed);
@@ -491,7 +490,6 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 	{
 		driver->moveDirection(0, 1, 0, config.button_move_speed);
 	}
-
 
 	if(button_box->topGreenPress)
 	{
