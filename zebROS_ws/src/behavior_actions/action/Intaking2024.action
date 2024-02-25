@@ -8,4 +8,5 @@ bool success
 uint8 DIVERTING=0
 uint8 CLAWSTERING=1
 uint8 INTAKING=2
+uint8 SHOOTERPIVOTING=3
 uint8 state
