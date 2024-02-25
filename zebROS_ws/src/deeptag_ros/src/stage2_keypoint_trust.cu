@@ -2,6 +2,7 @@
 #include "deeptag_ros/stage2_keypoint_trust.h"
 #include <cstdio>
 #include <cooperative_groups.h>
+#include <iostream>
 
 /*
     This version uses n/2 threads --
@@ -94,8 +95,10 @@ bool Stage2KeypointTrust::check(const tcb::span<const Stage2Keypoint> &stage2Key
     }
     // when there is only one warp per block, we need to allocate two warps
     // worth of shared memory so that we don't index shared memory out of bounds
+    // Also handle the case where just 1 keypoint is detected - force blocks
+    // to be at least 1 in that case
     constexpr int threads = 32;
-    const int blocks = iDivUp(stage2Keypoints.size() / 2, threads);
+    const int blocks = std::max(1U, iDivUp(stage2Keypoints.size() / 2, threads));
     if (m_dReduceBufferSize < blocks)
     {
         if (m_dReduceBuffer)
@@ -106,6 +109,7 @@ bool Stage2KeypointTrust::check(const tcb::span<const Stage2Keypoint> &stage2Key
         m_dReduceBufferSize = blocks;
     }
     constexpr int smemSize = (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
+    // std::cout << "threads = " << threads << " blocks = " << blocks << " m_dReduceBufferSize = " << m_dReduceBufferSize << " smemSize = " << smemSize << std::endl;
     reduce3<<<blocks, threads, smemSize, cudaStream>>>(m_dReduceBuffer, stage2Keypoints.data(), stage2Keypoints.size());
     cudaSafeCall(cudaGetLastError());
     cudaSafeCall(cudaMemcpyAsync(m_hResultPtr, m_dReduceBuffer, sizeof(float), cudaMemcpyDeviceToHost, cudaStream));

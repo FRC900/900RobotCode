@@ -102,7 +102,7 @@ void Softmax<BATCH_SIZE>::computeSoftmax(const float *input, const uint32_t idx_
     const uint32_t squareSize = sqrt(countPerBatch);
     // TODO - this occasionally gets 1 extra gridDim value
     const dim3 gridDim(iDivUp(squareSize, blockDim.x), iDivUp(iDivUp(countPerBatch, squareSize), blockDim.y));
-    std::cout << "gridDim = " << gridDim.x  << " " << gridDim.y << " " << gridDim.z << std::endl;
+    // std::cout << "gridDim = " << gridDim.x  << " " << gridDim.y << " " << gridDim.z << std::endl;
     calculateSoftmaxKernel<BATCH_SIZE><<<gridDim, blockDim, 0, cudaStream>>>(m_dResults, input, idx_mult, idx_add > 1 ? idx_add / BATCH_SIZE : idx_add, countPerBatch);
     cudaSafeCall(cudaGetLastError());
 }

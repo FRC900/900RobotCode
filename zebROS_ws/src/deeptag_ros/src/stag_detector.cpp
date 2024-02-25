@@ -16,7 +16,7 @@
 #include "deeptag_ros/stage1_grid_group.h"       // for Stage1GridGroup
 #include "deeptag_ros/stage1_ssd_group.h"        // for Stage1SSDGroup
 #include "deeptag_ros/tag_detect_info.h"
-#define DEBUG
+// #define DEBUG
 #include "deeptag_ros/debug.h"
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
@@ -49,11 +49,12 @@ STagDetector<NUM_TILES, USE_SCALED_IMAGE>::~STagDetector()
 }
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
-void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::initEngine(const std::string &enginePath)
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::initEngine(const std::string &modelPath, const std::string &onnxModelFilename)
 {
-    if (!Util::doesFileExist(enginePath))
+    if (const std::string onnxModelPath = modelPath + "/" + onnxModelFilename;
+        !Util::doesFileExist(onnxModelPath))
     {
-        throw std::runtime_error("Error: Unable to find file at path: " + enginePath);
+        throw std::runtime_error("Error: Unable to find ONNX model file at path: " + onnxModelFilename);
     }
     // Specify our GPU inference configuration options
     Options detectOptions;
@@ -61,7 +62,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::initEngine(const std::string &en
     // FP16 is approximately twice as fast as FP32.
     detectOptions.precision = Precision::INT8;
     // If using INT8 precision, must specify path to directory containing calibration data.
-    detectOptions.calibrationDataDirectoryPath = "";
+    detectOptions.calibrationDataDirectoryPath = "/home/ubuntu";
     // Use NUM_TILES input-sized images tiles plus one copy of the full image resized
     // The higher resolution tiles should give better detection distance,
     // and the lower resolution full image will help detect very large tags
@@ -75,7 +76,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::initEngine(const std::string &en
     m_detectEngine = std::make_unique<DetectionEngine<NUM_TILES, USE_SCALED_IMAGE>>(detectOptions);
 
     // Build the onnx model into a TensorRT engine file.
-    if (!m_detectEngine->build(enginePath))
+    if (!m_detectEngine->build(modelPath, onnxModelFilename))
     {
         throw std::runtime_error("Unable to build TRT engine.");
     }
@@ -114,7 +115,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::generatePriors(const ushort2 &im
     const auto detectInputdim = m_detectEngine->getContextInputDims()[0];
     std::array<ushort2, NUM_TILES> tileOffsets;
     m_detectEngine->getTileOffsets(tileOffsets);
-    std::cout << __PRETTY_FUNCTION__ << " detectInputDim = " << detectInputdim.d[2] << ", " << detectInputdim.d[3] << std::endl;
+    // std::cout << __PRETTY_FUNCTION__ << " detectInputDim = " << detectInputdim.d[2] << ", " << detectInputdim.d[3] << std::endl;
     const ushort2 modelInputDims{static_cast<unsigned short>(detectInputdim.d[3]), static_cast<unsigned short>(detectInputdim.d[2])}; // W, H
     if (m_gridPrior.generate(modelInputDims,
                              8,
@@ -144,8 +145,8 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::generatePriors(const ushort2 &im
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
 void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runSoftmax()
 {
-    std::cout << "m_gridPrior.size() = " << m_gridPrior.getOutput().size() << std::endl;
-    std::cout << "m_ssdGridPrior.size() = " << m_ssdGridPrior.getOutput().size() << std::endl;
+    // std::cout << "m_gridPrior.size() = " << m_gridPrior.getOutput().size() << std::endl;
+    // std::cout << "m_ssdGridPrior.size() = " << m_ssdGridPrior.getOutput().size() << std::endl;
     m_timing.start("grid_softmax", m_detectEngine->getCudaStream());
     // Here, bg and foreground confidence values are offset by the length of the input,
     // so multiply index by 1 and add len, to read {idx, idx+len}
@@ -204,11 +205,11 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runGroupers(const ushort2 &imgSi
     const double imageScale = std::max(static_cast<double>(imgSize.x) / inputDim.d[3], static_cast<double>(imgSize.y) / inputDim.d[2]);
 
     m_timing.start("grid_group", m_detectEngine->getCudaStream());
-    printf("m_cornerConfidenceFilter.getOutput().size() = %ld\n", m_cornerConfidenceFilter.getOutput().size());
+    // printf("m_cornerConfidenceFilter.getOutput().size() = %ld\n", m_cornerConfidenceFilter.getOutput().size());
     m_gridGrouper.compute(m_cornerConfidenceFilter.getOutput(), m_gridGrouperSigma * imageScale, 0.9f, m_detectEngine->getCudaStream());
     m_timing.end("grid_group", m_detectEngine->getCudaStream());
 
-    printf("m_ssdConfidenceFilter.getOutput().size() = %ld\n", m_ssdConfidenceFilter.getOutput().size());
+    // printf("m_ssdConfidenceFilter.getOutput().size() = %ld\n", m_ssdConfidenceFilter.getOutput().size());
     m_timing.start("ssd_group", m_ssdCudaStream);
     m_ssdGrouper.compute(m_ssdConfidenceFilter.getOutput(), m_ssdGrouperSigma * imageScale, 0.9f, m_ssdCudaStream);
     m_timing.end("ssd_group", m_ssdCudaStream);
@@ -362,16 +363,16 @@ cudaStream_t STagDetector<NUM_TILES, USE_SCALED_IMAGE>::getCudaStream(void)
 }
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
-void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::setCornerMinCenterScore(const float cornerMinCenterScore)
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::setCornerMinCenterScore(const double cornerMinCenterScore)
 {
-    m_cornerMinCenterScore = std::max(cornerMinCenterScore, 0.01f);
+    m_cornerMinCenterScore = std::max(cornerMinCenterScore, 0.001);
     m_regenCudaGraph = true;
 }
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
-void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::setSSDMinCenterScore(const float ssdMinCenterScore)
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::setSSDMinCenterScore(const double ssdMinCenterScore)
 {
-    m_ssdMinCenterScore = std::max(ssdMinCenterScore, 0.01f);
+    m_ssdMinCenterScore = std::max(ssdMinCenterScore, 0.001);
     m_regenCudaGraph = true;
 }
 
@@ -390,13 +391,13 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::setSSDGrouperSigma(const int ssd
 }
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
-float STagDetector<NUM_TILES, USE_SCALED_IMAGE>::getCornerMinCenterScore(void) const
+double STagDetector<NUM_TILES, USE_SCALED_IMAGE>::getCornerMinCenterScore(void) const
 {
     return m_cornerMinCenterScore;
 }
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
-float STagDetector<NUM_TILES, USE_SCALED_IMAGE>::getSSDMinCenterScore(void) const
+double STagDetector<NUM_TILES, USE_SCALED_IMAGE>::getSSDMinCenterScore(void) const
 {
     return m_ssdMinCenterScore;
 }

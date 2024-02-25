@@ -15,6 +15,7 @@
   <arg name="depth_algorithm"      default="CONTOURS" />
   <arg name="run_camera"           default="true" />
   <arg name="run_apriltag"         default="true" />
+  <arg name="run_deeptag"          default="false" />
   <arg name="run_object_detection" default="true" />
   <arg name="run_pub_video"        default="false" />
   <arg name="startup_delay"        default="0.0" />
@@ -57,6 +58,31 @@
     </node>
     <!-- Use depth info to generate apriltag world coords -->
 		<node pkg="tf_object_detection" name="tf_object_screen_to_world_tags" type="tf_object_screen_to_world" output="screen">
+			<remap from="obj_detection_msg" to="tag_detection_msg"/>
+			<remap from="object_detection_world" to="tag_detection_world"/>
+			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+			<remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+			<param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+			<param name="timeout" type="double" value="0.2" /> 
+		</node>
+  </group>
+
+  <group ns="apriltag_$(arg zed_name)" if="$(eval run_deeptag)">
+		<node pkg="deeptag_ros" name="deeptag_node" type="deeptag_node" output="screen">
+      <remap from="image_rect_color"  to="/$(arg zed_name)/left/image_rect_color" />
+      <remap from="camera_info"       to="/$(arg zed_name)/left/camera_info" />
+      <param name="tag_type"          value="36h11" />
+      <param name="tag_size_in_meter" value="0.152" />
+    </node>
+
+    <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 
+        Publishes to $(ns)/tag_detection_msgs
+    -->
+    <node pkg="tf_object_detection" name="deeptag_tag_depth" type="tag_depth.py" output="screen">
+			<remap from="tags_in" to="/apriltag_$(arg zed_name)/deeptag_node/tags"/>
+    </node>
+    <!-- Use depth info to generate apriltag world coords -->
+		<node pkg="tf_object_detection" name="tf_object_screen_to_world_deeptags" type="tf_object_screen_to_world" output="screen">
 			<remap from="obj_detection_msg" to="tag_detection_msg"/>
 			<remap from="object_detection_world" to="tag_detection_world"/>
 			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>

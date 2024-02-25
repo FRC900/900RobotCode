@@ -77,14 +77,13 @@ public:
 protected:
     const int32_t m_inputW;
     const int32_t m_inputH;
-    void* m_deviceInput;
+    void* m_deviceInput{nullptr};
     cudaStream_t m_cudaStream;
 private:
     virtual void blobFromGpuImageWrappers(const std::vector<GpuImageWrapper>& batchInput) = 0;
     const int32_t m_batchSize;
-    int32_t m_imgIdx;
+    int32_t m_imgIdx{0};
     std::vector<std::string> m_imgPaths;
-    size_t m_inputCount;
     const std::string m_calibTableName;
     const std::string m_inputBlobName;
     const bool m_readCache;
@@ -109,7 +108,7 @@ public:
 
     virtual ~Engine();
     // Build the network
-    bool build(const std::string &onnxModelPath);
+    bool build(const std::string &modelPath, const std::string &onnxModelFilename);
     // Load and prepare the network for inference
     virtual bool loadNetwork();
     // Run inference.
@@ -153,7 +152,7 @@ private:
     virtual void blobFromGpuImageWrappers(const std::vector<GpuImageWrapper>& batchInput, size_t bufferIdx) = 0;
     bool allocateInputOutputTensors(bool &buffersResized);
     // Converts the engine options into a string
-    std::string serializeEngineOptions(const Options& options, const std::string& onnxModelPath);
+    std::string serializeEngineOptions(const Options& options, const std::string &modelPath, const std::string& onnxModelFilename);
 
     void getDeviceNames(std::vector<std::string>& deviceNames) const;
 
