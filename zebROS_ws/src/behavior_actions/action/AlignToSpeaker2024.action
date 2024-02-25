@@ -8,4 +8,5 @@ bool offsetting
 bool success
 ---
 # feedback
+bool aligned
 float64 error # the angular error from where we want to be

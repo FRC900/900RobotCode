@@ -1,0 +1,18 @@
+#goal
+bool setup_only # just spin up
+bool leave_spinning
+
+bool align_forever
+bool offsetting
+---
+#result
+bool success
+---
+#feedback
+uint8 SPINNING=0
+uint8 PIVOTING=1
+uint8 SHOOTING=2
+uint8 current_stage # if we have a bunch of different stages to manage
+# currently unset:
+float64 current_speed
+float64 target_speed

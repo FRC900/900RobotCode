@@ -125,6 +125,8 @@
     <include file="$(find behaviors)/launch/2024_shooter.launch"/>
 	<include file="$(find behaviors)/launch/2024_shooting.launch"/>
 
+	<include file="$(find behaviors)/launch/2024_align_and_shoot.launch"/>
+
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	<include file="$(find behaviors)/launch/2024_intaking.launch"/>
 
