@@ -4,6 +4,7 @@ import actionlib
 import rospy
 import math
 import tf2_ros
+import tf2_geometry_msgs
 import geometry_msgs.msg
 import std_msgs.msg
 import sensor_msgs.msg
@@ -61,21 +62,34 @@ class Aligner:
                 self._as.set_preempted()
                 success = False
                 break
+            offset_point = tf2_geometry_msgs.PointStamped()
+            offset_point.header.frame_id = 'bluespeaker' if self.color == 1 else 'redspeaker'
+            offset_point.header.stamp = rospy.get_rostime()
+            
+            
+            if goal.offsetting == True:
+                offset_point.point.y = 2
+            else:
+                offset_point.point.y = 0
+
             try:
-                trans = self.tfBuffer.lookup_transform('base_link', 'bluespeaker' if self.color == 1 else 'redspeaker', rospy.Time())#gets 
+                trans = self.tfBuffer.lookup_transform('base_link', offset_point.header.frame_id, rospy.Time())
+                destination = tf2_geometry_msgs.do_transform_point(offset_point, trans)
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
                 rospy.logwarn(e)
                 rate.sleep()
                 continue
 
+            
+
             msg = std_msgs.msg.Float64()
             msg1 = behavior_actions.msg.AutoAlignSpeaker()
 
-            msg1.distance = math.sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
-            msg.data = math.pi + self.current_yaw + math.atan2(trans.transform.translation.y, trans.transform.translation.x)
-            msg1.angle = math.atan2(trans.transform.translation.y, trans.transform.translation.x)
+            msg1.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
+            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
+            msg1.angle = math.atan2(destination.point.y, destination.point.x)
 
-            self._feedback.error = math.atan2(trans.transform.translation.y, trans.transform.translation.x)
+            self._feedback.error = math.atan2(destination.point.y, destination.point.x)
             self._as.publish_feedback(self._feedback)
 
             self.object_publish.publish(msg) 

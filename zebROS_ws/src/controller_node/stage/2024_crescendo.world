@@ -38,7 +38,7 @@ threads 4
 
 window
 (
-  size [ 931  1103 ]
+  size [ 931  1016 ]
   center [ 0.000 0.000 ]
   rotate [ 0.000 0.000 ]
   scale 60.000
