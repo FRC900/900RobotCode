@@ -5,3 +5,10 @@
 speeds_map: [[0.0, [110.0, 100.0, 110.0, 100.0]], [0.5, [170.0, 150.0, 200.0, 180.0]], [2.0, [200.0, 180.0, 300.0, 150.0]]]
 angle_map: [[0.0, 1.22], [1.0, 0.87], [1.5, 0.698], [5.0, 0.349]]
 delay_after_shooting: 0.5
+
+# subwoofer
+subwoofer_top_left_speed: 80 # rad/s
+subwoofer_top_right_speed: 60 # rad/s
+subwoofer_bottom_left_speed: 70 # rad/s
+subwoofer_bottom_right_speed: 50 # rad/s
+subwoofer_pivot_position: 0.9 # rad

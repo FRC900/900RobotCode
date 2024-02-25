@@ -48,6 +48,13 @@ class ShootingServer(object):
         self.angle_map = InterpolatingMap()
         self.angle_map.container = {l[0]: l[1] for l in rospy.get_param("angle_map")}
 
+        # Subwoofer (constant speeds and angle)
+        self.subwoofer_top_left_speed = rospy.get_param("subwoofer_top_left_speed")
+        self.subwoofer_top_right_speed = rospy.get_param("subwoofer_top_right_speed")
+        self.subwoofer_bottom_left_speed = rospy.get_param("subwoofer_bottom_left_speed")
+        self.subwoofer_bottom_right_speed = rospy.get_param("subwoofer_bottom_right_speed")
+        self.subwoofer_pivot_position = rospy.get_param("subwoofer_pivot_position")
+
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
@@ -58,29 +65,35 @@ class ShootingServer(object):
 
         if goal.cancel_movement:
             rospy.logwarn("2024_shooting_server: CANCELING SPIN UP")
-            self.shooter_client.cancel_goals_at_and_before_time(rospy.Time())
-            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+            self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
             self.result.success = True
             self.server.set_succeeded(self.result)
             return
         
-        # Look up speed and angle to send to shooter and pivot server
-        top_left_speed = self.top_left_map[goal.distance]
-        top_right_speed = self.top_right_map[goal.distance]
-        bottom_left_speed = self.bottom_left_map[goal.distance]
-        bottom_right_speed = self.bottom_right_map[goal.distance]
-        pivot_angle = self.angle_map[goal.distance]
-
-        rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
-
         self.feedback.current_stage = self.feedback.SPINNING
         self.server.publish_feedback(self.feedback)
 
         shooter_goal = Shooter2024Goal()
-        shooter_goal.top_left_speed = top_left_speed
-        shooter_goal.top_right_speed = top_right_speed
-        shooter_goal.bottom_left_speed = bottom_left_speed
-        shooter_goal.bottom_right_speed = bottom_right_speed
+        pivot_angle = None # default
+        
+        if goal.mode != goal.SUBWOOFER:
+            # Look up speed and angle to send to shooter and pivot server
+            shooter_goal.top_left_speed = self.top_left_map[goal.distance]
+            shooter_goal.top_right_speed = self.top_right_map[goal.distance]
+            shooter_goal.bottom_left_speed = self.bottom_left_map[goal.distance]
+            shooter_goal.bottom_right_speed = self.bottom_right_map[goal.distance]
+            pivot_angle = self.angle_map[goal.distance]
+
+            rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
+        else:
+            shooter_goal.top_left_speed = self.subwoofer_top_left_speed
+            shooter_goal.top_right_speed = self.subwoofer_top_right_speed
+            shooter_goal.bottom_left_speed = self.subwoofer_bottom_left_speed
+            shooter_goal.bottom_right_speed = self.subwoofer_bottom_right_speed
+            pivot_angle = self.angle_map[goal.distance]
+
+            rospy.loginfo(f"2024_shooting_server: spinning up for subwoofer")
 
         shooter_done = False
         def shooter_feedback_cb(feedback: Shooter2024Feedback):
@@ -110,10 +123,10 @@ class ShootingServer(object):
                 rospy.loginfo("2024_shooting_server: preempted")
 
                 # ensure shooter turned off
-                self.shooter_client.cancel_goals_at_and_before_time(rospy.Time())
+                self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                 # ensure pivot stopped
-                self.pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+                self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self.server.set_preempted()
                 return
             
@@ -143,13 +156,13 @@ class ShootingServer(object):
                     rospy.loginfo("2024_shooting_server: preempted")
 
                     # ensure shooter turned off
-                    self.shooter_client.cancel_goals_at_and_before_time(rospy.Time())
+                    self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     # ensure pivot stopped
-                    self.pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+                    self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     # stop preshooter
-                    self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time())
+                    self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     self.server.set_preempted()
 
@@ -163,13 +176,13 @@ class ShootingServer(object):
             rospy.sleep(rospy.Duration(self.delay_after_shooting))
 
             # ensure shooter turned off
-            self.shooter_client.cancel_goals_at_and_before_time(rospy.Time())
+            self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
             # ensure pivot stopped
-            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
         # stop preshooter
-        self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time())
+        self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
         self.result.success = True
         rospy.loginfo("2024_shooting_server: succeeded")

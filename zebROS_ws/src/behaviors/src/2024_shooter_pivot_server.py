@@ -54,11 +54,8 @@ class ShooterPivotServer2024:
         self.shooter_pivot_pub.publish(std_msgs.msg.Float64(goal.pivot_position))
    
         while True:
-
             if rospy.is_shutdown():
                 break
-            r.sleep()
-
 
             if (goal.pivot_position - initial_motion_magic_value) == 0.0: #either a double or a int i'm not entirely sure
                 self._feedback.percent_complete = 100.0
@@ -78,10 +75,10 @@ class ShooterPivotServer2024:
                 self._feedback.percent_complete = 100.0
                 self._feedback.is_at_pivot_position = True
                 self.server.publish_feedback(self._feedback)
-                r.sleep()
                 self.server.set_succeeded(self._result)
                 break
-                
+            
+            r.sleep()
         
 
 if __name__ == '__main__':
