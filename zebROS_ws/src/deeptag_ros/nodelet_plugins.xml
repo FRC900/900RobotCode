@@ -1,0 +1,8 @@
+<library path="lib/libdeeptag_nodelet">
+	<class name="deeptag_ros/DeeptagRosNodelet" type="deeptag_ros::DeeptagRosNodelet" base_class_type="nodelet::Nodelet">
+		<description>
+			Nodelet for detecting AprilTags using CUDA-optimized deeptag library
+		</description>
+	</class>
+</library>
+

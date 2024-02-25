@@ -168,7 +168,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
     cv::Mat inputRoi(4, 2, CV_64FC1);
     for (size_t batchIdx = 0; batchIdx < thisBatchSize; batchIdx++)
     {
-        std::cout << "batchIdx = " << batchIdx << std::endl;
+        // std::cout << "batchIdx = " << batchIdx << std::endl;
         for (int i = 0; i < 4; i++)
         {
             inputRoi.at<double>(i, 0) = m_rois[batchIdx + m_roiBatchIndex][i].x;
@@ -182,7 +182,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         // rest of the code to use later on.
         const cv::Mat H = cv::findHomography(outputRoi, inputRoi);
         m_Hs.push_back(H.inv());
-#if 1
+#if 0
         std::cout << "input ROI = " << std::endl << "\t" << inputRoi << std::endl;
         std::cout << "output ROI = " << std::endl << "\t" << outputRoi << std::endl;
         std::cout << "H = " << std::endl << "\t" << H << std::endl;

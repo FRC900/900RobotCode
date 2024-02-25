@@ -25,6 +25,22 @@ class DeepTagImplBase
 
         void setTimingsEnabled(const bool enabled);
 
+        virtual void   setCornerMinCenterScore(const double cornerMinCenterScore) = 0;
+        virtual void   setSSDMinCenterScore(const double ssdMinCenterScore) = 0;
+        virtual void   setGridGrouperSigma(const int gridGrouperSigma) = 0;
+        virtual void   setSSDGrouperSigma(const int ssdGrouperSigma) = 0;
+        virtual double getCornerMinCenterScore(void) const = 0;
+        virtual double getSSDMinCenterScore(void) const = 0;
+        virtual int    getGridGrouperSigma(void) const = 0;
+        virtual int    getSSDGrouperSigma(void) const = 0;
+
+        virtual void   setNMSConfidenceThreshold(const double nmsConfidenceThreshold) = 0;
+        virtual void   setNMSNMSThreshold(const double nmsNMSThreshold) = 0;
+        virtual double getNMSConfidenceThreshold(void) const = 0;
+        virtual double getNMSNMSThreshold(void) const = 0;
+
+        virtual void setMinGridMatchRatio(const double minGridMatchRatio) = 0;
+        virtual double getMinGridMatchRatio(void) const = 0;
     protected:
         Timings &getTimings(void);
     private:
@@ -41,8 +57,9 @@ class DeepTagImpl : public DeepTagImplBase
                              const cv::Mat &cameraMatrix,
                              const cv::Mat &distCoeffs,
                              const double tagRealSizeInMeter,
-                             const std::string &detectOnnxModelPath,
-                             const std::string &decodeOnnxModelPath);
+                             const std::string &modelPath,
+                             const std::string &detectOnnxModelFileName,
+                             const std::string &decodeOnnxModelFileName);
         DeepTagImpl(const DeepTagImpl &other) = delete;
         DeepTagImpl(DeepTagImpl &&other) noexcept = delete;
 
@@ -52,20 +69,31 @@ class DeepTagImpl : public DeepTagImplBase
 
         std::vector<DeepTagResult> runInference(const cv::Mat &cpuImg) override;
         void visualize(cv::Mat &image, const std::vector<DeepTagResult> &results) const override;
+
+        void   setCornerMinCenterScore(const double cornerMinCenterScore) override;
+        void   setSSDMinCenterScore(const double ssdMinCenterScore) override;
+        void   setGridGrouperSigma(const int gridGrouperSigma) override;
+        void   setSSDGrouperSigma(const int ssdGrouperSigma) override;
+        double getCornerMinCenterScore(void) const override;
+        double getSSDMinCenterScore(void) const override;
+        int    getGridGrouperSigma(void) const override;
+        int    getSSDGrouperSigma(void) const override;
+
+        void   setNMSConfidenceThreshold(const double nmsConfidenceThreshold) override;
+        void   setNMSNMSThreshold(const double nmsNMSThreshold) override;
+        double getNMSConfidenceThreshold(void) const override;
+        double getNMSNMSThreshold(void) const override;
+
+        void setMinGridMatchRatio(const double minGridMatchRatio) override;
+        double getMinGridMatchRatio(void) const override;
     private:
         STagDetector<NUM_TILES, USE_SCALED_IMAGE> m_sTagDetector;
         ArucoMarkerDict<MARKER_GRID_SIZE> m_arucoMarkerDict;
         ArucoSTagDecoder<MARKER_GRID_SIZE> m_sTagDecoder;
         ArucoPoseEstimator<MARKER_GRID_SIZE> m_poseEstimator;
 
-        float m_nmsConfidenceThreshold{0.5f};
-        float m_nmsNMSThreshold{0.4f};
-
-        using TrackbarAction = std::function<void(int)>;
-        TrackbarAction m_cornerMinCenterScoreAction = [this](int pos) { m_sTagDetector.setCornerMinCenterScore(static_cast<float>(pos) / 100.f); };
-        TrackbarAction m_ssdMinCenterScoreAction = [this](int pos) { m_sTagDetector.setSSDMinCenterScore(static_cast<float>(pos) / 100.f); };
-        TrackbarAction m_gridGrouperSigmaAction = [this](int pos) { m_sTagDetector.setGridGrouperSigma(pos); };
-        TrackbarAction m_ssdGrouperSigmaAction = [this](int pos) { m_sTagDetector.setSSDGrouperSigma(pos); };
+        double m_nmsConfidenceThreshold{0.5};
+        double m_nmsNMSThreshold{0.4};
 };
 
 #endif

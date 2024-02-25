@@ -39,30 +39,17 @@ DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::DeepTagImpl(const De
                                                                         const cv::Mat &cameraMatrix,
                                                                         const cv::Mat &distCoeffs,
                                                                         const double tagRealSizeInMeter,
-                                                                        const std::string &detectOnnxModelPath,
-                                                                        const std::string &decodeOnnxModelPath)
+                                                                        const std::string &modelPath,
+                                                                        const std::string &detectOnnxModelFilename,
+                                                                        const std::string &decodeOnnxModelFilename)
     : DeepTagImplBase{}
     , m_sTagDetector{getTimings()}
     , m_arucoMarkerDict{deepTagTypeToCVName(dictionaryType)}
     , m_sTagDecoder{m_arucoMarkerDict, cameraMatrix, distCoeffs, getTimings()}
     , m_poseEstimator{cameraMatrix, distCoeffs, m_arucoMarkerDict.getUnitTagTemplate().getUnitTags(), tagRealSizeInMeter}
 {
-    m_sTagDetector.initEngine(detectOnnxModelPath);
-    m_sTagDecoder.initEngine(decodeOnnxModelPath);
-
-    cv::namedWindow("Trackbars", cv::WINDOW_NORMAL);
-    cv::TrackbarCallback trackbarCallback = [](int pos, void *userdata) { (*(TrackbarAction *)userdata)(pos); };
-    cv::createTrackbar("CornerMinCenterScore", "Trackbars", nullptr, 100, trackbarCallback, &m_cornerMinCenterScoreAction);
-    cv::setTrackbarPos("CornerMinCenterScore", "Trackbars", static_cast<int>(m_sTagDetector.getCornerMinCenterScore() * 100));
-
-    cv::createTrackbar("SSDMinCenterScore", "Trackbars", nullptr, 100, trackbarCallback, &m_ssdMinCenterScoreAction);
-    cv::setTrackbarPos("SSDMinCenterScore", "Trackbars", static_cast<int>(m_sTagDetector.getSSDMinCenterScore() * 100));
-
-    cv::createTrackbar("GridGrouperSigma", "Trackbars", nullptr, 200, trackbarCallback, &m_gridGrouperSigmaAction);
-    cv::setTrackbarPos("GridGrouperSigma", "Trackbars", m_sTagDetector.getGridGrouperSigma());
-
-    cv::createTrackbar("SSDGrouperSigma", "Trackbars", nullptr, 200, trackbarCallback, &m_ssdGrouperSigmaAction);
-    cv::setTrackbarPos("SSDGrouperSigma", "Trackbars", m_sTagDetector.getSSDGrouperSigma());
+    m_sTagDetector.initEngine(modelPath, detectOnnxModelFilename);
+    m_sTagDecoder.initEngine(modelPath, decodeOnnxModelFilename);
 }
 
 template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
@@ -102,7 +89,7 @@ std::vector<DeepTagResult> DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_
             if (m_poseEstimator.fineGridKeypointsToPose(result.m_rVec, result.m_tVec, decodedTags[i].m_keypointsInImage))
             {
 #ifdef DEBUG
-                std::cout << "result.m_rVec = " << result.m_rVec.t() << " m_tVec = " << result.m_tVec.t() << std::endl;
+                // std::cout << "result.m_rVec = " << result.m_rVec.t() << " m_tVec = " << result.m_tVec.t() << std::endl;
 #endif
             }
         }
@@ -150,6 +137,78 @@ void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::visualize(cv::M
         s << result.m_tagId;
         cv::putText(image, s.str().c_str(), cv::Point2d(roi[0].x, roi[0].y - 5), 0, 0.75, cv::Scalar(0, 128, 0), 2);
     }
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setCornerMinCenterScore(const double cornerMinCenterScore)
+{
+    m_sTagDetector.setCornerMinCenterScore(cornerMinCenterScore);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setSSDMinCenterScore(const double ssdMinCenterScore)
+{
+    m_sTagDetector.setSSDMinCenterScore(ssdMinCenterScore);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setGridGrouperSigma(const int gridGrouperSigma)
+{
+    m_sTagDetector.setGridGrouperSigma(gridGrouperSigma);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setSSDGrouperSigma(const int ssdGrouperSigma)
+{
+    m_sTagDetector.setSSDGrouperSigma(ssdGrouperSigma);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+double DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getCornerMinCenterScore(void) const 
+{
+    return m_sTagDetector.getCornerMinCenterScore();
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+double DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getSSDMinCenterScore(void) const 
+{
+    return m_sTagDetector.getSSDMinCenterScore();
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+int DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getGridGrouperSigma(void) const 
+{
+    return m_sTagDetector.getGridGrouperSigma();
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+int DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getSSDGrouperSigma(void) const
+{
+    return m_sTagDetector.getSSDGrouperSigma();
+}
+
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+double DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getNMSConfidenceThreshold(void) const
+{
+    return m_nmsConfidenceThreshold;
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+double DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getNMSNMSThreshold(void) const
+{
+    return m_nmsNMSThreshold;
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setNMSConfidenceThreshold(const double nmsConfidenceThreshold)
+{
+    m_nmsConfidenceThreshold = nmsConfidenceThreshold;
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setNMSNMSThreshold(const double nmsNMSThreshold)
+{
+    m_nmsNMSThreshold = nmsNMSThreshold;
+}
+
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setMinGridMatchRatio(const double minGridMatchRatio)
+{
+    m_sTagDecoder.setMinGridMatchRatio(minGridMatchRatio);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+double DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::getMinGridMatchRatio(void) const
+{
+    return m_sTagDecoder.getMinGridMatchRatio();
 }
 
 template class DeepTagImpl<0, true, 4>;

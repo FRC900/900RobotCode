@@ -36,12 +36,15 @@ public:
     STagDecoder &operator=(const STagDecoder &other) = delete;
     STagDecoder &operator=(STagDecoder &&other) noexcept = delete;
 
-    void initEngine(const std::string &enginePath);
+    void initEngine(const std::string &modelPath, const std::string &onnxModelFilename);
 
     std::vector<DecodedTag<GRID_SIZE>> detectTags(const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
                                                   const std::vector<std::array<cv::Point2d, 4>> &rois);
 
     virtual ~STagDecoder() = default;
+
+    void   setMinGridMatchRatio(const double minGridMatchRatio);
+    double getMinGridMatchRatio(void) const;
 
 private:
     void runInference(std::vector<std::vector<Stage2KeypointGroup>> &stage2KeypointGroupss,
@@ -68,7 +71,7 @@ private:
 
     // TODO - not sure how configurable this needs to be
     static constexpr size_t m_maxBatchSize = 4;
-    static constexpr double m_minGridMatchRatio = 0.4;
+    double m_minGridMatchRatio = 0.4;
 };
 
 #include "marker_dict.h"

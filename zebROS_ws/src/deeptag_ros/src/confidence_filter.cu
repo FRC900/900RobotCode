@@ -61,7 +61,7 @@ void ConfidenceFilter<OUTPUT, GRID_DIM, PREDICATE>::detect(const std::array<cons
     const bool buffersResized = reallocBuffers(gridDims.size(), cudaStream);
     if (buffersResized || forceCudaGraphRegen)
     {
-        std::cout << "Keypoint detector : generating CUDA graph" << std::endl;
+        std::cout << "Keypoint detector : generating CUDA graph buffersResize = " <<  buffersResized << " forceCudaGraphRegen = " << forceCudaGraphRegen << std::endl;
         cudaSafeCall(cudaStreamSynchronize(cudaStream));
         cudaSafeCall(cudaStreamBeginCapture(cudaStream, cudaStreamCaptureModeGlobal));
         cuCompactor::compact(inputs,

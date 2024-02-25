@@ -79,10 +79,10 @@ bool GridPrior<NUM_TILES, USE_SCALED_IMAGE, CLAMP>::generate(const ushort2 &mode
                                                              const std::array<ushort2, NUM_TILES> &tileOffsets,
                                                              cudaStream_t cudaStream)
 {
-    if ((modelInputSize.y != m_modelInputSize.x) || 
-        (modelInputSize.x != m_modelInputSize.y) ||
-        (imageSize.y != m_imageSize.x) || 
-        (imageSize.x != m_imageSize.y) ||
+    if ((modelInputSize.x != m_modelInputSize.x) || 
+        (modelInputSize.y != m_modelInputSize.y) ||
+        (imageSize.x != m_imageSize.x) || 
+        (imageSize.y != m_imageSize.y) ||
         (stride != m_stride))
     {
         if constexpr (NUM_TILES != 0)

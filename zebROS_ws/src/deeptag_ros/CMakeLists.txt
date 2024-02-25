@@ -3,6 +3,8 @@ project(deeptag_ros)
 enable_language(CUDA)
 
 include("../cmake_modules/CMakeOpt.cmake")
+add_compile_options(-Wno-deprecated-declarations)
+add_compile_options(-Wno-unused-parameter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -14,11 +16,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Ofast -DNDEBUG -Wno-deprecated-de
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  #apriltag_ros_msgs
+  apriltag_msgs
   cv_bridge
+  ddynamic_reconfigure
   geometry_msgs
   image_geometry
   image_transport
+  nodelet
   roscpp
   sensor_msgs
   std_msgs
@@ -147,7 +151,7 @@ include_directories(
   ${TensorRT_INCLUDE_DIRS}
 )
 
-add_library(tensorrt_cpp_api STATIC
+add_library(deeptag STATIC
     src/aruco_dict.cpp
     src/confidence_filter.cu
     src/cuda_event_timing.cpp
@@ -189,23 +193,55 @@ add_library(tensorrt_cpp_api STATIC
 ## either from message generation or dynamic reconfigure
 # add_dependencies(tensorrt_api_cpp ${tensorrt_api_cpp_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-# target_include_directories(tensorrt_cpp_api PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS})
-target_link_libraries(tensorrt_cpp_api PUBLIC ${OpenCV_LIBS} ${CUDA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${TensorRT_LIBRARIES} ${LIBNVTOOLSEXT})
-set_target_properties(tensorrt_cpp_api PROPERTIES CUDA_ARCHITECTURES "86")
-set_property(TARGET tensorrt_cpp_api PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# target_include_directories(deeptag PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS})
+target_link_libraries(deeptag PUBLIC ${OpenCV_LIBS} ${CUDA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${TensorRT_LIBRARIES} ${LIBNVTOOLSEXT})
+set_target_properties(deeptag PROPERTIES CUDA_ARCHITECTURES "86")
+set_property(TARGET deeptag PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 add_executable(run_inference_benchmark src/main.cpp)
-target_link_libraries(run_inference_benchmark PUBLIC tensorrt_cpp_api)
+target_link_libraries(run_inference_benchmark PUBLIC deeptag)
 set_target_properties(run_inference_benchmark PROPERTIES CUDA_ARCHITECTURES "86")
 set_property(TARGET run_inference_benchmark PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 # add_executable(softmax_test src/softmax_test.cpp)
-# target_link_libraries(softmax_test PUBLIC tensorrt_cpp_api)
+# target_link_libraries(softmax_test PUBLIC deeptag)
 # set_target_properties(softmax_test PROPERTIES CUDA_ARCHITECTURES "86")
 
 # add_executable(fine_grid_test src/fine_grid_test.cpp)
-# target_link_libraries(fine_grid_test PUBLIC tensorrt_cpp_api)
+# target_link_libraries(fine_grid_test PUBLIC deeptag)
 # set_target_properties(fine_grid_test PROPERTIES CUDA_ARCHITECTURES "86")
+
+## Declare a C++ executable
+add_executable(deeptag_node
+	src/deeptag_node.cpp
+)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(deeptag_node
+  deeptag
+	${catkin_LIBRARIES}
+)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(deeptag_node
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+)
+
+add_library(deeptag_nodelet
+	src/deeptag_nodelet.cpp
+)
+
+target_link_libraries(deeptag_nodelet
+  deeptag
+	${catkin_LIBRARIES}
+)
+
+add_dependencies(deeptag_nodelet
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

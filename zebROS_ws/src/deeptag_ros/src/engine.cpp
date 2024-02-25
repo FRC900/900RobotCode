@@ -110,10 +110,10 @@ Engine<CALIBRATOR>::Engine(const Options &options)
 }
 
 template<class CALIBRATOR>
-bool Engine<CALIBRATOR>::build(const std::string &onnxModelPath)
+bool Engine<CALIBRATOR>::build(const std::string &modelPath, const std::string &onnxModelFilename)
 {
     // Only regenerate the engine file if it has not already been generated for the specified options
-    m_engineName = serializeEngineOptions(m_options, onnxModelPath);
+    m_engineName = serializeEngineOptions(m_options, modelPath, onnxModelFilename);
     std::cout << "Searching for engine file with name: " << m_engineName << std::endl;
 
     if (doesFileExist(m_engineName)) {
@@ -121,6 +121,7 @@ bool Engine<CALIBRATOR>::build(const std::string &onnxModelPath)
         return true;
     }
 
+    const std::string onnxModelPath = modelPath + "/" + onnxModelFilename;
     if (!doesFileExist(onnxModelPath)) {
         throw std::runtime_error("Could not find model at path: " + onnxModelPath);
     }
@@ -235,12 +236,12 @@ bool Engine<CALIBRATOR>::build(const std::string &onnxModelPath)
             throw std::runtime_error("Error: If INT8 precision is selected, must provide path to calibration data directory to Engine::build method");
         }
 
-        config->setFlag((BuilderFlag::kINT8));
+        config->setFlag(BuilderFlag::kINT8);
 
         const auto input = network->getInput(0);
         const auto inputName = input->getName();
         const auto inputDims = input->getDimensions();
-        const auto calibrationFileName = m_engineName + ".calibration";
+        const auto calibrationFileName = modelPath + "/" + onnxModelFilename.substr(0, onnxModelFilename.find_last_of('.')) + ".calib";
 
         m_calibrator = std::make_unique<CALIBRATOR>(m_options.calibrationBatchSize, inputDims.d[3], inputDims.d[2], m_inferenceCudaStream,
                                                     m_options.calibrationDataDirectoryPath, calibrationFileName,
@@ -479,7 +480,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
         const auto dims = inputDimsFromInputImage(batchInput[0], m_inputDims[i]);
 
         const nvinfer1::Dims4 inputDims = {batchSize, dims.d[1], dims.d[2], dims.d[3]};
-        printf("setInputShape, dims = %d %d %d %d\n", inputDims.d[0], inputDims.d[1], inputDims.d[2], inputDims.d[3]);
+        // printf("setInputShape, dims = %d %d %d %d\n", inputDims.d[0], inputDims.d[1], inputDims.d[2], inputDims.d[3]);
         if (!m_context->setInputShape(m_inputTensorNames[i].c_str(), inputDims)) // Define the batch size
         {
             std::cout << "===== Error =====" << std::endl;
@@ -588,10 +589,10 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
     return true;
 }
 
-template<class CALIBRATOR>
-std::string Engine<CALIBRATOR>::serializeEngineOptions(const Options &options, const std::string& onnxModelPath) {
-    const auto filenamePos = onnxModelPath.find_last_of('/') + 1;
-    std::string engineName = onnxModelPath.substr(filenamePos, onnxModelPath.find_last_of('.') - filenamePos) + ".engine";
+template <class CALIBRATOR>
+std::string Engine<CALIBRATOR>::serializeEngineOptions(const Options &options, const std::string &modelPath, const std::string &onnxModelFilename)
+{
+    std::string engineName = modelPath + "/" + onnxModelFilename.substr(0, onnxModelFilename.find_last_of('.')) + ".engine";
 
     // Add the GPU device name to the file to ensure that the model is only used on devices with the exact same GPU
     std::vector<std::string> deviceNames;
@@ -730,15 +731,13 @@ Int8EntropyCalibrator2::Int8EntropyCalibrator2(int32_t batchSize, int32_t inputW
         , m_inputH(inputH)
         , m_cudaStream(cudaStream)
         , m_batchSize(batchSize)
-        , m_imgIdx(0)
         , m_calibTableName(calibTableName)
         , m_inputBlobName(inputBlobName)
         , m_readCache(readCache)
 {
-
     // Allocate GPU memory to hold the entire batch
-    m_inputCount = 3 * inputW * inputH * batchSize;
-    cudaSafeCall(cudaMalloc(&m_deviceInput, m_inputCount * sizeof(float)));
+    size_t inputCount = static_cast<size_t>(3) * inputW * inputH * batchSize;
+    cudaSafeCall(cudaMalloc(&m_deviceInput, inputCount * sizeof(float)));
 
     // Read the name of all the files in the specified directory.
     if (!doesFileExist(calibDataDirPath)) {

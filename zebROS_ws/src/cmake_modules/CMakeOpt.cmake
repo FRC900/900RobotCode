@@ -31,6 +31,7 @@ add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DNO_EXPLICIT_INSTANTIATIONS>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wextra>")
 #add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-pedantic>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-fPIC>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-fPIC>")
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
   # Everything is in the toolchain file

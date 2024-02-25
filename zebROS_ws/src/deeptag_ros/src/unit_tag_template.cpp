@@ -6,7 +6,7 @@
 #include "deeptag_ros/stage2_keypoint_group.h"
 #include "deeptag_ros/unit_tag_template.h"
 #include "deeptag_ros/warp_perspective_points.h"
-#define DEBUG
+// #define DEBUG
 #include "deeptag_ros/debug.h"
 
 static constexpr size_t maxWarpTry = 3;

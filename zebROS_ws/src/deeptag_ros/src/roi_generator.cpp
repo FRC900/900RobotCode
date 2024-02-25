@@ -105,7 +105,7 @@ static void assignCornersToOneCenter(std::vector<cv::Point2d> &cornersSelected,
     // TODO - should be best 4, possibly fewer if less make the thresholding cut?
     for (size_t i = 0; i < stage1GridGroup.size(); i++) // for each corner
     {
-        std::cout << "i = " << i << " coord = " << stage1GridGroup[i].m_corner.x << " " << stage1GridGroup[i].m_corner.y << " cosDist[] = " << cosDist[i] << " relDist[] = " << relDist[i] << std::endl;
+        // std::cout << "i = " << i << " coord = " << stage1GridGroup[i].m_corner.x << " " << stage1GridGroup[i].m_corner.y << " cosDist[] = " << cosDist[i] << " relDist[] = " << relDist[i] << std::endl;
         if ((fabs(cosDist[i]) > std::max(cosThresh, maxCosDist * 0.85)) && (relDist[i] < relDistThresh))
         {
             cornersSelected.emplace_back(cv::Point2d{stage1GridGroup[i].m_corner.x, stage1GridGroup[i].m_corner.y});
@@ -401,7 +401,7 @@ void centerAndCornersToTags(std::vector<TagDetectInfo> &tagDetectInfo,
     double centerScore = 0;
     for (size_t i = 0; i < stage1SSDGroup.size(); i++) // loop over centers, which are in the SSD results
     {
-        std::cout << "TagAssignLoop" << std::endl;
+        // std::cout << "TagAssignLoop" << std::endl;
         int tagId = stage1SSDGroup[i].m_id;
         assignCornersToOneCenter(cornersSelected,
                                  cornerIdsSelected,
@@ -416,11 +416,11 @@ void centerAndCornersToTags(std::vector<TagDetectInfo> &tagDetectInfo,
         }
 
 
-        std::cout << "centerPos = " << stage1SSDGroup[i].m_center.x << " " << stage1SSDGroup[i].m_center.y << std::endl;
+        // std::cout << "centerPos = " << stage1SSDGroup[i].m_center.x << " " << stage1SSDGroup[i].m_center.y << std::endl;
         printPoints("cornersSelected", cornersSelected);
-        std::cout << "cornerIdsSelected = ";
-        std::ranges::copy(cornerIdsSelected, std::ostream_iterator<int>(std::cout, " "));
-        std::cout << std::endl;
+        // std::cout << "cornerIdsSelected = ";
+        // std::ranges::copy(cornerIdsSelected, std::ostream_iterator<int>(std::cout, " "));
+        // std::cout << std::endl;
         printPoints("anchors", tcb::span<const float2>(&stage1SSDGroup[i].m_anchorsInBox[0], 4));
 #ifdef DEBUG
         std::cout << "cosDistSelected : " << std::endl;
@@ -446,7 +446,7 @@ void centerAndCornersToTags(std::vector<TagDetectInfo> &tagDetectInfo,
                               stage1SSDGroup[i].m_center,
                               tcb::span<const float2>(stage1SSDGroup[i].m_anchorsInBox, 4),
                               cornersSelected);
-#if 1
+#if 0
             std::cout << "bestIds = ";
             for (const auto id : bestIds)
             {

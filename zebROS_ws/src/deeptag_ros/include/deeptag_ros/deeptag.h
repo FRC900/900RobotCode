@@ -63,15 +63,16 @@ struct DeepTagResult
 class DeepTag
 {
     public:
-        explicit DeepTag(const cv::Mat &cpuImg,
+        explicit DeepTag(const cv::Size &cpuImg,
                          const bool tiledDetection,
                          const bool useScaledImage,
                          const DeepTagType dictionaryType,
                          const cv::Mat &cameraMatrix,
                          const cv::Mat &distCoeffs,
                          const double tagRealSizeInMeter,
-                         const std::string &detectOnnxModelPath,
-                         const std::string &decodeOnnxModelPath);
+                         const std::string &modelPath,
+                         const std::string &detectOnnxModelFileName,
+                         const std::string &decodeOnnxModelFileName);
         DeepTag(const DeepTag &other) = delete;
         DeepTag(DeepTag &&other) noexcept = delete;
 
@@ -82,6 +83,23 @@ class DeepTag
         std::vector<DeepTagResult> runInference(const cv::Mat &cpuImg);
         void visualize(cv::Mat &image, const std::vector<DeepTagResult> &results) const;
         void setTimingsEnabled(const bool enabled);
+
+        void   setCornerMinCenterScore(const double cornerMinCenterScore);
+        void   setSSDMinCenterScore(const double ssdMinCenterScore);
+        void   setGridGrouperSigma(const int gridGrouperSigma);
+        void   setSSDGrouperSigma(const int ssdGrouperSigma);
+        double getCornerMinCenterScore(void) const;
+        double getSSDMinCenterScore(void) const;
+        int    getGridGrouperSigma(void) const;
+        int    getSSDGrouperSigma(void) const;
+
+        void   setNMSConfidenceThreshold(const double nms_confidence_threshold);
+        void   setNMSNMSThreshold(const double nms_nms_threshold);
+        double getNMSConfidenceThreshold(void) const;
+        double getNMSNMSThreshold(void) const;
+
+        void setMinGridMatchRatio(const double minGridMatchRatio);
+        double getMinGridMatchRatio(void) const;
     private:
         std::unique_ptr<DeepTagImplBase> m_pImpl;
 };

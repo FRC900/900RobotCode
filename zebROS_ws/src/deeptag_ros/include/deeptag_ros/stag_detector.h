@@ -40,21 +40,21 @@ public:
 
     virtual ~STagDetector();
 
-    void initEngine(const std::string &enginePath);
+    void initEngine(const std::string &modelPath, const std::string &onnxModelFilename);
     std::vector<TagDetectInfo> detectTags(const cv::Mat &cpuImg);
 
     const std::vector<std::vector<GpuImageWrapper>> &getDetectInputs(void) const;
 
     cudaStream_t getCudaStream(void);
 
-    void setCornerMinCenterScore(const float cornerMinCenterScore);
-    void setSSDMinCenterScore(const float cornerMinCenterScore);
-    void setGridGrouperSigma(const int gridGrouperSigma);
-    void setSSDGrouperSigma(const int ssdGrouperSigma);
-    float getCornerMinCenterScore(void) const;
-    float getSSDMinCenterScore(void) const;
-    int  getGridGrouperSigma(void) const;
-    int getSSDGrouperSigma(void) const;
+    void   setCornerMinCenterScore(const double cornerMinCenterScore);
+    void   setSSDMinCenterScore(const double cornerMinCenterScore);
+    void   setGridGrouperSigma(const int gridGrouperSigma);
+    void   setSSDGrouperSigma(const int ssdGrouperSigma);
+    double getCornerMinCenterScore(void) const;
+    double getSSDMinCenterScore(void) const;
+    int    getGridGrouperSigma(void) const;
+    int    getSSDGrouperSigma(void) const;
 
 private:
     ushort2 generateInputs(const cv::Mat &cpuImg);
@@ -82,10 +82,10 @@ private:
 
     bool m_regenCudaGraph{true};
 
-    float m_cornerMinCenterScore{0.2f};
-    float m_ssdMinCenterScore{0.08f};
-    int   m_gridGrouperSigma{8};
-    int   m_ssdGrouperSigma{8};
+    double m_cornerMinCenterScore{0.2f};
+    double m_ssdMinCenterScore{0.08f};
+    int    m_gridGrouperSigma{8};
+    int    m_ssdGrouperSigma{8};
 };
 
 #endif
