@@ -13,6 +13,7 @@ import behavior_actions.msg
 from tf.transformations import euler_from_quaternion # may look like tf1 but is actually tf2
 from frc_msgs.msg import MatchSpecificData
 import std_srvs.srv
+import angles
 
 class Aligner:
     # create messages that are used to publish feedback/result
@@ -39,6 +40,8 @@ class Aligner:
 
         self.pub_dist_and_ang_vel = rospy.Publisher("/speaker_align/dist_and_ang", behavior_actions.msg.AutoAlignSpeaker, queue_size=1) #distance and angle
 
+        self._feedback.aligned = False
+
     def imu_callback(self, imu_msg):
         q = imu_msg.orientation
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
@@ -53,7 +56,7 @@ class Aligner:
     def aligner_callback(self, goal: behavior_actions.msg.AlignToSpeaker2024Goal):
         success = True
         rospy.loginfo(f"Auto Aligning Actionlib called with goal {goal}")
-        rate = rospy.Rate(50.0)
+        rate = rospy.Rate(60.0)
 
         while not rospy.is_shutdown():
             # check that preempt has not been requested by the client
@@ -65,8 +68,7 @@ class Aligner:
             offset_point = tf2_geometry_msgs.PointStamped()
             offset_point.header.frame_id = 'bluespeaker' if self.color == 1 else 'redspeaker'
             offset_point.header.stamp = rospy.get_rostime()
-            
-            
+
             if goal.offsetting == True:
                 offset_point.point.y = 2
             else:
@@ -80,20 +82,19 @@ class Aligner:
                 rate.sleep()
                 continue
 
-            
-
             msg = std_msgs.msg.Float64()
-            msg1 = behavior_actions.msg.AutoAlignSpeaker()
+            dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
 
-            msg1.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
+            dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
             msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-            msg1.angle = math.atan2(destination.point.y, destination.point.x)
+            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
 
-            self._feedback.error = math.atan2(destination.point.y, destination.point.x)
+            self._feedback.error = abs(angles.shortest_angular_distance(msg.data, self.current_yaw))
+            self._feedback.aligned = self._feedback.error < self.tolerance
             self._as.publish_feedback(self._feedback)
 
             self.object_publish.publish(msg) 
-            self.pub_dist_and_ang_vel.publish(msg1) 
+            self.pub_dist_and_ang_vel.publish(dist_ang_msg)
             
             cmd_vel_msg = geometry_msgs.msg.Twist()
             cmd_vel_msg.angular.x = 0 # todo, tune me
@@ -103,10 +104,14 @@ class Aligner:
             cmd_vel_msg.linear.y = 0
             cmd_vel_msg.linear.z = 0
             self.pub_cmd_vel.publish(cmd_vel_msg)
-            
-            if abs(msg.data - self.current_yaw) < self.tolerance and not goal.align_forever:
+
+            rospy.loginfo_throttle(0.5, f"{self.current_yaw} vs {msg.data}")
+
+            if self._feedback.error < self.tolerance:
+                rospy.loginfo_throttle(0.5, "2024_align_to_speaker: aligned")
                 success = True
-                break
+                self._as.publish_feedback(self._feedback)
+                if not goal.align_forever: break
 
             rate.sleep()
         if success:
