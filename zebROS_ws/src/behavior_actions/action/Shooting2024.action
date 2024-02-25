@@ -3,6 +3,7 @@ uint8 SPEAKER=0
 uint8 TRAP=1
 uint8 AMP=2
 uint8 PLOP_FRONT=3
+uint8 SUBWOOFER=4
 uint8 mode
 float64 distance
 bool setup_only # just spin up

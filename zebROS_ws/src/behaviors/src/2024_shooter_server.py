@@ -78,11 +78,7 @@ class ShooterServer2024:
         self.bottom_left_client.call(CommandRequest(command=goal.bottom_left_speed))
         self.bottom_right_client.call(CommandRequest(command=goal.bottom_right_speed))
         
-        while True:
-            if rospy.is_shutdown():
-                break
-            r.sleep()
-
+        while not rospy.is_shutdown():
             if goal.top_left_speed == 0.0 or goal.top_right_speed == 0.0 or goal.bottom_left_speed == 0.0 or goal.bottom_right_speed == 0.0:
                 # if one is zero, set all to zero and return
                 self.top_left_client.call(CommandRequest(command=0))
@@ -97,7 +93,7 @@ class ShooterServer2024:
                 self._feedback.is_shooting_at_speed = True
                 self.server.publish_feedback(self._feedback)
                 self.server.set_succeeded(self._result)
-                break
+                return
         
             else:
                 self._feedback.top_left_percent_complete = (((self.top_left_joint_velocity - initial_top_left_speed) / (goal.top_left_speed - initial_top_left_speed))) * 100
@@ -112,12 +108,13 @@ class ShooterServer2024:
             self.server.publish_feedback(self._feedback)
 
             if self.server.is_preempt_requested():
+                rospy.loginfo("2024_shooter_server: preempted")
                 self.top_left_client.call(CommandRequest(command=0))
                 self.top_right_client.call(CommandRequest(command=0))
                 self.bottom_left_client.call(CommandRequest(command=0))
                 self.bottom_right_client.call(CommandRequest(command=0))
                 self.server.set_preempted()
-                break
+                return
 
             if (top_left_percent_difference < self.tolerance) and (top_right_percent_difference < self.tolerance) and (bottom_left_percent_difference < self.tolerance) and (bottom_right_percent_difference < self.tolerance):
                 self._result.success = True
@@ -127,7 +124,8 @@ class ShooterServer2024:
                 self._feedback.bottom_right_percent_complete = 100.0
                 self._feedback.is_shooting_at_speed = True
                 self.server.publish_feedback(self._feedback)
-                r.sleep()
+            
+            r.sleep()
 
 if __name__ == '__main__':
     rospy.init_node('shooter_server_2024')

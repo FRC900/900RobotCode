@@ -42,9 +42,9 @@ class DriveObjectIntakeServer(object):
     def preempt_servers(self):
         rospy.logwarn("2024_drive_object_intake server: preempted")
         # stop drive to object
-        self.diverter_client.cancel_goals_at_and_before_time(rospy.Time())
+        self.diverter_client.cancel_goals_at_and_before_time(rospy.Time.now())
         # stop intaking
-        self.intaking_client.cancel_goals_at_and_before_time(rospy.Time())
+        self.intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
     def execute_cb(self, goal: DriveObjectIntake2024Goal):
         self.intake_server_done = False
@@ -83,16 +83,16 @@ class DriveObjectIntakeServer(object):
 
         self.drive_to_object_client.send_goal(drive_to_object_goal, done_cb=drive_object_result, feedback_cb=drive_object_feedback)
 
-        start = rospy.Time()
+        start = rospy.Time.now()
         r = rospy.Rate(10)
-        while not (self.intake_server_done or rospy.is_shutdown() or (rospy.Time() - start).to_sec() > self.timeout_):
+        while not (self.intake_server_done or rospy.is_shutdown() or (rospy.Time.now() - start).to_sec() > self.timeout_):
             if self.server.is_preempt_requested():
                 self.preempt_servers() # preempts all actionlib servers
                 self.server.set_preempted()
                 return
             r.sleep()
         
-        rospy.loginfo(f"Intake server done {self.intake_server_done} result {self.intake_server_success} Past timeout: {(rospy.Time() - start).to_sec() > self.timeout_}")
+        rospy.loginfo(f"Intake server done {self.intake_server_done} result {self.intake_server_success} Past timeout: {(rospy.Time.now() - start).to_sec() > self.timeout_}")
         self.preempt_servers()
         self.result.success = self.intake_server_success # set above with intaking result
         self.server.set_succeeded(self.result)

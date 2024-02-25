@@ -72,12 +72,12 @@ class Intaking2024Server(object):
             while pivot_position > self.safe_shooter_angle:
                 if self.server.is_preempt_requested():
                     rospy.loginfo("2024_intaking_server: preempted")
-                    self.shooter_pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+                    self.shooter_pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
                     self.server.set_preempted()
                     return
                 r.sleep()
         
-            self.shooter_pivot_client.cancel_goals_at_and_before_time(rospy.Time())
+            self.shooter_pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
         self.feedback.state = self.feedback.DIVERTING
         self.server.publish_feedback(self.feedback)
@@ -118,9 +118,9 @@ class Intaking2024Server(object):
         intake_srv.command = self.intaking_speed
         self.intake_client.call(intake_srv)
 
-        start = rospy.Time()
+        start = rospy.Time.now()
         # if run until preempt want to just go for the entire auto
-        while goal.run_until_preempt or (not (clawster_done or rospy.is_shutdown() or (rospy.Time() - start).to_sec() > self.intaking_timeout)):
+        while goal.run_until_preempt or (not (clawster_done or rospy.is_shutdown() or (rospy.Time.now() - start).to_sec() > self.intaking_timeout)):
             rospy.loginfo_throttle(0.5, f"2024_intaking_server: waiting for {'preshooter' if goal.destination == goal.SHOOTER else 'claw'}")
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_intaking_server: preempted")
@@ -131,8 +131,8 @@ class Intaking2024Server(object):
                 self.intake_client.call(intake_srv)
 
                 # stop diverter
-                self.diverter_client.cancel_goals_at_and_before_time(rospy.Time())
-                self.clawster_client.cancel_goals_at_and_before_time(rospy.Time())
+                self.diverter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                self.clawster_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 # stop preshooter and claw
                 self.server.set_preempted()
                 return
@@ -144,9 +144,9 @@ class Intaking2024Server(object):
         self.intake_client.call(intake_srv)
 
         # stop diverter
-        self.diverter_client.cancel_goals_at_and_before_time(rospy.Time())
+        self.diverter_client.cancel_goals_at_and_before_time(rospy.Time.now())
         # stop preshooter and claw
-        self.clawster_client.cancel_goals_at_and_before_time(rospy.Time())
+        self.clawster_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
         if clawster_done:
             if clawster_result.has_game_piece:
@@ -160,7 +160,7 @@ class Intaking2024Server(object):
                 self.server.set_succeeded(self.result)
                 return
 
-        if (rospy.Time() - start) > self.intaking_timeout:
+        if (rospy.Time.now() - start) > self.intaking_timeout:
             rospy.loginfo("2024_intaking_server: timed out")
             self.result.success = False
             self.server.set_succeeded(self.result)
