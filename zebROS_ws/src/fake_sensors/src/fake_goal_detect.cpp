@@ -46,7 +46,7 @@ class FakeGoalDetection
 			, covariance_(0.0004)
 			, sub_(n.subscribe("base_marker_detection", 2, &FakeGoalDetection::cmdVelCallback, this))
 			, pub_(n.advertise<field_obj::Detection>("goal_detect_msg", 2))
-			, pubd_(n.advertise<field_obj::Detection>("/tf_object_detection_zed_front/object_detection_world", 2))
+			, pubd_(n.advertise<field_obj::Detection>("/tf_object_detection_zedx_front/object_detection_world", 2))
 			, objMap_(objMap)
 
 		{

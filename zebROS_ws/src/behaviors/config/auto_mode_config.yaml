@@ -6,11 +6,12 @@
 
 
 
-auto_mode_1: ["four_note_source1_ALLIANCE_csv", "pause_half", "relocalize", 
+auto_mode_1: ["start_intake", "four_note_source1_ALLIANCE_csv", "pause_half", "relocalize",  
               "four_note_source2_ALLIANCE_csv", "pause_half", "relocalize", 
               "four_note_source3_ALLIANCE_csv", "pause_half", "relocalize", 
               "four_note_source4_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_source5_ALLIANCE_csv"]
+              "four_note_source5_ALLIANCE_csv",
+              "stop_intake"]
 
 auto_mode_2: ["four_note_source1_ALLIANCE_csv", "pause_half", 
               "four_note_source2_ALLIANCE_csv", "pause_half", 
@@ -25,12 +26,13 @@ auto_mode_3: ["four_note_speaker1_ALLIANCE_csv", "pause_half", "relocalize",
               "four_note_speaker5_ALLIANCE_csv", "pause_half", "relocalize", 
               "four_note_speaker6_ALLIANCE_csv"]
 
-auto_mode_4: ["four_note_speaker1_ALLIANCE_csv", "pause_half", 
+auto_mode_4: ["start_intake", "four_note_speaker1_ALLIANCE_csv", "pause_half", 
               "four_note_speaker2_ALLIANCE_csv", "pause_half", 
               "four_note_speaker3_ALLIANCE_csv", "pause_half", 
               "four_note_speaker4_ALLIANCE_csv", 
               "four_note_speaker5_ALLIANCE_csv", 
-              "four_note_speaker6_ALLIANCE_csv"]
+              "four_note_speaker6_ALLIANCE_csv",
+              "stop_intake"]
 
 auto_mode_5: ["start_intake", "spin_up_shooter", "pause_two", "shoot_center_subwoofer", "pause_two", "shoot_diagonal", "stop_intake", "spin_down_shooter"]
 auto_mode_6: ["pause_half"]

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="rumble">
+		<node name="rumble_server" pkg="behaviors" type="2024_rumble_server.py" output="screen"/>
+	</group>
+</launch>

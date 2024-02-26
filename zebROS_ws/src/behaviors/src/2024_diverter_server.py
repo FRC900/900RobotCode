@@ -25,9 +25,9 @@ class NoteDiverterActionServer(object):
         # Diverter topic
         diverter_srv = CommandRequest()
         if goal.mode == goal.TO_CLAW:
-            diverter_srv.command = diverter_speed
+            diverter_srv.command = -1 * diverter_speed
         else:
-            diverter_srv.command = -1 * diverter_speed # Reverses(?)
+            diverter_srv.command = diverter_speed # Reverses(?)
         self.diverter_client.call(diverter_srv)
 
         while not rospy.is_shutdown():

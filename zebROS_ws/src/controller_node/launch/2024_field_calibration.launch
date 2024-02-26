@@ -37,7 +37,7 @@
 		no space or cpu time so why not save it
 	-->
 	<node name="rosbag_record_node" pkg="rosbag" type="record"
-		args="record -o /home/ubuntu/
+		args="record -o /home/ubuntu/field_calibration_mapping.bag
 			/apriltag_zed_front/apriltag_detection/tags
 			/apriltag_zed_front/tag_detection_msg
 			/apriltag_zed_front/tag_detection_world

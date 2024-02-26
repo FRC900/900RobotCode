@@ -44,10 +44,10 @@ hardware_interface:
        - {name: joystick0, type: joystick, id: 0, local: true}
        - {name: button_box, type: joystick, id: 1, local: true}
          #- {name: joystick2, type: joystick, id: 2, local: true}
-         #- {name: joystick_rumble0, type: rumble, rumble_port: 0}
-         #- {name: joystick_rumble2, type: rumble, rumble_port: 2}
-       - {name: claw_limit_switch, type: digital_input, dio_channel: 7, invert: true, local: true}
-       - {name: preshooter_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
+       - {name: rumble0, type: rumble, port: 0, local: true}
+       #- {name: joystick_rumble2, type: rumble, rumble_port: 2}
+       #- {name: claw_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
+       #- {name: preshooter_limit_switch, type: digital_input, dio_channel: 9, invert: true, local: true}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
 
@@ -68,6 +68,14 @@ hardware_interface:
 # encoder state used by the hw manager and publishes it as
 # a ROS topic.  This is generic ROS stuff, so we'll have
 # to figure out what to map e.g. effort to in the Talon world
+rumble_state_controller:
+    type: rumble_state_controller/RumbleStateController
+    publish_rate: 50
+
+rumble_controller:
+    type: rumble_controller/RumbleController
+    joint: rumble0
+
 talon_state_controller_rio:
    type:         talon_state_controller/TalonStateController
    publish_rate: 100
