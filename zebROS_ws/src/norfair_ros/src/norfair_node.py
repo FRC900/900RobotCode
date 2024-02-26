@@ -9,7 +9,7 @@ import tf2_ros
 import time
 
 class NorfairNode:
-    def publisher(self, tracked_objects: list):
+    def publisher(self, tracked_objects: list, stamp: rospy.Time):
         """
         Tracked objects to ROS message.
 
@@ -30,7 +30,7 @@ class NorfairNode:
                     points=[Point(point=point) for point in tracked_object.last_detection.points],
                 )
             )
-        detection_msg.header.stamp = rospy.get_rostime()
+        detection_msg.header.stamp = stamp
         detection_msg.header.frame_id = "odom"
         
         self.pub.publish(detection_msg)
@@ -59,7 +59,7 @@ class NorfairNode:
         
         tracked_objects = self.tracker.update(detections)
         self.tracked_objects  = tracked_objects
-        self.publisher(tracked_objects)
+        self.publisher(tracked_objects, bbox.header.stamp)
 
     def tf_pub(self, event):
         # publish transform between odom to the tracked notes

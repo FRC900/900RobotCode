@@ -55,14 +55,19 @@ class ShootingServer(object):
         self.subwoofer_bottom_right_speed = rospy.get_param("subwoofer_bottom_right_speed")
         self.subwoofer_pivot_position = rospy.get_param("subwoofer_pivot_position")
 
+        # Amp (constant speeds and angle)
+        self.amp_top_left_speed = rospy.get_param("amp_top_left_speed")
+        self.amp_top_right_speed = rospy.get_param("amp_top_right_speed")
+        self.amp_bottom_left_speed = rospy.get_param("amp_bottom_left_speed")
+        self.amp_bottom_right_speed = rospy.get_param("amp_bottom_right_speed")
+        self.amp_pivot_position = rospy.get_param("amp_pivot_position")
+
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
     def execute_cb(self, goal: Shooting2024Goal):
-        # WE DO NOT HANDLE AMP RIGHT NOW
-
         if goal.cancel_movement:
             rospy.logwarn("2024_shooting_server: CANCELING SPIN UP")
             self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
@@ -76,8 +81,26 @@ class ShootingServer(object):
 
         shooter_goal = Shooter2024Goal()
         pivot_angle = None # default
+
+        if goal.mode == goal.SUBWOOFER:
+            shooter_goal.top_left_speed = self.subwoofer_top_left_speed
+            shooter_goal.top_right_speed = self.subwoofer_top_right_speed
+            shooter_goal.bottom_left_speed = self.subwoofer_bottom_left_speed
+            shooter_goal.bottom_right_speed = self.subwoofer_bottom_right_speed
+            pivot_angle = self.subwoofer_pivot_position
+
+            rospy.loginfo(f"2024_shooting_server: spinning up for subwoofer")
         
-        if goal.mode != goal.SUBWOOFER:
+        elif goal.mode == goal.AMP:
+            shooter_goal.top_left_speed = self.amp_top_left_speed
+            shooter_goal.top_right_speed = self.amp_top_right_speed
+            shooter_goal.bottom_left_speed = self.amp_bottom_left_speed
+            shooter_goal.bottom_right_speed = self.amp_bottom_right_speed
+            pivot_angle = self.amp_pivot_position
+
+            rospy.loginfo(f"2024_shooting_server: spinning up for amp")
+        
+        else:
             # Look up speed and angle to send to shooter and pivot server
             shooter_goal.top_left_speed = self.top_left_map[goal.distance]
             shooter_goal.top_right_speed = self.top_right_map[goal.distance]
@@ -86,14 +109,6 @@ class ShootingServer(object):
             pivot_angle = self.angle_map[goal.distance]
 
             rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
-        else:
-            shooter_goal.top_left_speed = self.subwoofer_top_left_speed
-            shooter_goal.top_right_speed = self.subwoofer_top_right_speed
-            shooter_goal.bottom_left_speed = self.subwoofer_bottom_left_speed
-            shooter_goal.bottom_right_speed = self.subwoofer_bottom_right_speed
-            pivot_angle = self.angle_map[goal.distance]
-
-            rospy.loginfo(f"2024_shooting_server: spinning up for subwoofer")
 
         shooter_done = False
         def shooter_feedback_cb(feedback: Shooter2024Feedback):

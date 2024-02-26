@@ -325,7 +325,7 @@ public:
 
       x_error_ = fabs(goal->distance_away - base_link_point.point.x);
       // checking if it is 900, we only want to set this value once and then keep it. 
-      if (x_error_ > distance_to_hold_angle_) {
+      if (x_error_ > distance_to_hold_angle_ || field_relative_object_angle > 899) {
         field_relative_object_angle = latest_yaw_ + atan2(base_link_point.point.y, base_link_point.point.x);
         ROS_INFO_STREAM("SETTING ANGLE TO " << field_relative_object_angle);
       }
@@ -335,7 +335,7 @@ public:
 
       angle_error_ = fabs(field_relative_object_angle - latest_yaw_);
       
-      ROS_INFO_STREAM("Angle error is " << angle_error_);
+      ROS_INFO_STREAM("Angle error is " << angle_error_ << " field_rel " << field_relative_object_angle << " latest yaw " << latest_yaw_);
       // note: need to account for spinning, because that changes the direction we're pointing --> changes what command we need to send.
       // could try to do the math, but i'm not sure how we'd calculate that.
       // also, we'd probably need to control linear acceleration (since linear velocity has to dynamically change :/)

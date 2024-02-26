@@ -11,7 +11,7 @@ swerve_drive_controller:
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
-    wheel_radius: 0.0475 # m
+    wheel_radius: 0.0508 # meters
     cmd_vel_timout: 0.5
     max_speed: 7 # Potentially raise, otherwise swerve math will limit max motor speed
 
@@ -31,7 +31,7 @@ swerve_drive_controller:
     f_v: 0.0379
 
     # TODO : move this into sensor_to_mechanism_ratio for Falcons
-    ratio_encoder_to_rotations: 0.148148148 # Test me, will show up in odom results
+    ratio_encoder_to_rotations: 0.186666666666
 
     encoder_drive_get_V_units: 1
     encoder_drive_set_V_units: 1
@@ -184,22 +184,22 @@ bl_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: bl_cancoder
     dynamic_reconfigure: True
-    magnet_offset: 0
+    magnet_offset: 2.5770877236478773
 
 fl_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: fl_cancoder
     dynamic_reconfigure: True
-    magnet_offset: 0
+    magnet_offset: 0.4172427743048944
 
 br_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: br_cancoder
     dynamic_reconfigure: True
-    magnet_offset: 0
+    magnet_offset: 1.217980745581199
 
 fr_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: fr_cancoder
     dynamic_reconfigure: True
-    magnet_offset: 0
+    magnet_offset: 2.715145994557585

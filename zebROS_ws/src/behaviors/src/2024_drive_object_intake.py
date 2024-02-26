@@ -6,7 +6,6 @@ from behavior_actions.msg import DriveToObjectAction, DriveToObjectGoal, DriveTo
 from behavior_actions.msg import DriveObjectIntake2024Action, DriveObjectIntake2024Goal, DriveObjectIntake2024Feedback, DriveObjectIntake2024Result
 
 from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse
-
 # Brings in the SimpleActionClient
 import actionlib
 from std_msgs.msg import Float64
@@ -42,7 +41,7 @@ class DriveObjectIntakeServer(object):
     def preempt_servers(self):
         rospy.logwarn("2024_drive_object_intake server: preempted")
         # stop drive to object
-        self.diverter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+        self.drive_to_object_client.cancel_goals_at_and_before_time(rospy.Time.now())
         # stop intaking
         self.intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
@@ -53,7 +52,7 @@ class DriveObjectIntakeServer(object):
         intaking_goal = Intaking2024Goal()
         intaking_goal.destination = goal.destination
         
-        def intaking_result(intaking_result: Intaking2024Result):
+        def intaking_result(state, intaking_result: Intaking2024Result):
             rospy.loginfo(f"Intaking server finished with {intaking_result.success} ")
             # *Think* no race condition because done is set after success
             self.intake_server_success = intaking_result.success
@@ -74,7 +73,7 @@ class DriveObjectIntakeServer(object):
             self.feedback.y_error = drive_feedback.y_error
             self.server.publish_feedback(self.feedback)
         
-        def drive_object_result(drive_result: DriveToObjectResult):
+        def drive_object_result(state, drive_result: DriveToObjectResult):
             if not drive_result.success: 
                 rospy.logwarn("Drive to object failed, Continuing Intake")
                 # not a failure, but do need to let high up code know

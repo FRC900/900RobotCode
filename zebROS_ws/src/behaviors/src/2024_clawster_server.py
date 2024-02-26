@@ -66,6 +66,7 @@ class Clawster2024ActionServer(object):
             intake_speed = self.preshooter_intake_speed
             outtake_speed = self.preshooter_outtake_speed
 
+        rospy.loginfo(f"Clawster: limit switch set to {self.get_current_switch(goal)}")
         if goal.mode == goal.INTAKE:
             rospy.loginfo("Clawster_server: Intaking!")
             pct_out.data = intake_speed
@@ -117,7 +118,7 @@ class Clawster2024ActionServer(object):
             self.claw_switch = data.position[data.name.index(self.claw_switch_name)]
             #rospy.loginfo(f"Found {self.claw_switch_name} with value {self.claw_switch}")
         else:
-            rospy.logwarn(f'2024_clawster_server: {self.claw_switch_name} not found')
+            rospy.logwarn_throttle(1.0, f'2024_clawster_server: {self.claw_switch_name} not found')
             pass
 
         # check preshooter switch
@@ -125,7 +126,7 @@ class Clawster2024ActionServer(object):
             self.preshooter_switch = data.position[data.name.index(self.preshooter_switch_name)] 
             #rospy.loginfo(f"Found {self.preshooter_switch_name} with value {self.preshooter_switch}")
         else:
-            rospy.logwarn(f'2024_clawster_server: {self.preshooter_switch_name} not found')
+            rospy.logwarn_throttle(1.0, f'2024_clawster_server: {self.preshooter_switch_name} not found')
             pass
 
 

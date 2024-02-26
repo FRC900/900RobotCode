@@ -61,6 +61,7 @@ class Converter:
 
         detections_msg = DetectionsMsg()
         detections_msg.detections = detections
+        detections_msg.header.stamp = bboxes.header.stamp
         # print(f"Publishing {detections_msg}")
         self.converter_publisher.publish(detections_msg)
 
@@ -93,6 +94,7 @@ class Converter:
         
         detections_msg = DetectionsMsg()
         detections_msg.detections = detections
+        detections_msg.header.stamp = field_dets.header.stamp
         #print(f"\n\n=================Publishing {detections_msg}")
         
         self.converter_publisher.publish(detections_msg)

@@ -1,10 +1,7 @@
 <library path="lib/libcontrollers_2024">
-	<!-- example plugin, copy for your controller
-	<class name="elevator_controller_2023/ElevatorController_2023" type="elevator_controller_2023::ElevatorController_2023<hardware_interface::TalonCommandInterface>" base_class_type="controller_interface::ControllerBase">
+	<class name="shooter_pivot_controller_2024/ShooterPivotController_2024" type="shooter_pivot_controller_2024::ShooterPivotController_2024" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Library file. Does stuff to make elevator_controller exist.
 		</description>
 	</class>
-	--> 
-
 </library>

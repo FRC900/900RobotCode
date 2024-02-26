@@ -50,21 +50,20 @@
 			 talonfxpro_state_controller
 			 talonfxpro_config_controller
 			 intake_talonfxpro_controller
-			 pigeon2_imu_state_controller
 			 top_left_shooter_controller
 			 top_right_shooter_controller
 			 bottom_left_shooter_controller
 			 bottom_right_shooter_controller
 			 shooter_pivot_motionmagicvoltage_controller
 			 clawster_controller
+			 pigeon2_imu_state_controller
 			 note_diverter_controller
 			 robot_code_ready_controller" />
 			 
-			 <!--swerve_drive_state_controller
-				candle_controller
-				orchestra_controller
-				orchestra_state_controller
-				note_intake_controller
+			 <!--
+			 candle_controller
+			 orchestra_controller
+			 orchestra_state_controller
 			-->
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
@@ -95,7 +94,6 @@
 		<!-- <include file="$(find controller_node)/launch/fuse_odom.launch"/> -->
 	</group>
 
-	<!-- ADD TELEOP BACK -->
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2024" />
 	</include>
@@ -114,7 +112,7 @@
 	
 	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
-	<include file="$(find behaviors)/launch/2024_arm.launch"/>
+	<!-- <include file="$(find behaviors)/launch/2024_arm.launch"/> -->
 
 
 	<!-- Add 2024 actionlib servers here -->
@@ -133,16 +131,46 @@
 	<!-- Consider adding 2024 launch file for recording -->
 	<include file="$(find controller_node)/launch/record_2024_compbot.launch" if="$(arg record)" />
 
+	<include file="$(find drive_to_object)/launch/drive_to_object.launch"/>
+	<include file="$(find behaviors)/launch/2024_drive_to_object_and_intake.launch"/>
+
+
+	<include file="$(find tagslam_launch)/launch/2024_compbot_tagslam.launch"/>
+
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="zed_name"             value="zedx_front" />
+		<arg name="zed_config_dir"       value="zedx" />
+		<arg name="camera_model"         value="zedx" />
+		<arg name="serial_number"	     value="43782465" />
+		<arg name="cam_pos_x"            value="0.3881" />
+		<arg name="cam_pos_y"            value="0.231140" />
+		<arg name="cam_pos_z"            value="0.249929" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_yaw"              value="0.0" />
+		<arg name="run_camera"           value="true" />
+		<arg name="run_apriltag"         value="true" />
+		<arg name="run_object_detection" value="true" />
+		<arg name="startup_delay"        value="0.0" />
+	</include>
+
 	<!-- <include file="$(find controller_node)/launch/zed_detection.launch">
-		<arg name="run_camera" value="false" if="$(eval hw_or_sim == 'sim')"/>
-		<arg name="cam_pos_x"  value="0.0" />
-		<arg name="cam_pos_y"  value="0.0" />
-		<arg name="cam_pos_z"  value="0.0" />
-		<arg name="cam_roll"   value="0.0" />
-		<arg name="cam_pitch"  value="0.0" />
-		<arg name="cam_yaw"    value="0.0" />
+		<arg name="zed_name"             value="zedx_back" />
+		<arg name="zed_config_dir"       value="zedx" />
+		<arg name="camera_model"         value="zedx" />
+		<arg name="serial_number"	     value="47536732" />
+		<arg name="cam_pos_x"            value="-0.297" />
+		<arg name="cam_pos_y"            value="0.0" />
+		<arg name="cam_pos_z"            value="0.205" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_yaw"              value="3.14159265" />
+		<arg name="run_camera"           value="true" />
+		<arg name="run_apriltag"         value="true" />
+		<arg name="run_object_detection" value="false" />
+		<arg name="startup_delay"        value="15.0" />
 	</include> -->
 
 	<!-- 

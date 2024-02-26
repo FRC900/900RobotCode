@@ -28,7 +28,8 @@
 			 joint_state_listener_controller_rio
 			 joystick_controller
 			 button_box_controller
-			 
+			 rumble_state_controller
+			 rumble_controller
 			 match_state_controller
 			 robot_controller_state_controller
 			 robot_code_ready_controller" />
