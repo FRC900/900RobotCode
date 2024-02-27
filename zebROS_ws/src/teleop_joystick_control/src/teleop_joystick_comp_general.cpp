@@ -322,6 +322,11 @@ void TeleopInitializer::init() {
 	{
 		ROS_ERROR("Could not read match_time_to_park in teleop_joystick_comp");
 	}
+	double timeout_delay;
+	if(!n_params_.getParam("startup_wait_time", timeout_delay))
+	{
+		ROS_ERROR("Could not read startup_wait_time in teleop_joystick_comp");
+	}
 
 	ddynamic_reconfigure::DDynamicReconfigure ddr(n_params_);
 
@@ -366,7 +371,7 @@ void TeleopInitializer::init() {
 	ros::Subscriber match_state_sub = n_.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n_.advertiseService("robot_orient", &Driver::orientCallback, driver.get());
 
-	const ros::Duration startup_wait_time_secs(15);
+	const ros::Duration startup_wait_time_secs(timeout_delay);
 	const ros::Time startup_start_time = ros::Time::now();
 	ros::Duration startup_wait_time;
 	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));

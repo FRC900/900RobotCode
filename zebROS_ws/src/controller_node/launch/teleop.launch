@@ -2,8 +2,11 @@
 <launch>
 
   <arg name="year" default="2022" />
+  <arg name="hw_or_sim" default="hw" />
   <group ns="teleop">
-	<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp_$(arg year).yaml" command="load"/>
+    <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp_$(arg year).yaml" command="load"/>
+    <param name="teleop_params/startup_wait_time" value="15.0" unless="$(eval arg('hw_or_sim')=='sim')"/>
+    <param name="teleop_params/startup_wait_time" value="0.0" if="$(eval arg('hw_or_sim')=='sim')"/>
     <node name="teleop_joystick_comp_$(arg year)" pkg="teleop_joystick_control" type="teleop_joystick_comp_$(arg year)" output="screen"/>
 
     <group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
