@@ -377,7 +377,7 @@ void TeleopInitializer::init() {
 	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
 	if(!driver->waitForBrakeSrv(startup_wait_time))
 	{
-		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
+		ROS_ERROR_STREAM("Wait (" << startup_wait_time << ") timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
 
 	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
