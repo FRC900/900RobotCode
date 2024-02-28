@@ -8,7 +8,7 @@ ROBORIO_ADDR=10.9.0.2
 
 # This can be an array of IP address if there are multiple Jetsons
 #JETSON_ADDR=( )
-JETSON_ADDR=(10.9.0.8)
+JETSON_ADDR=(10.9.0.8 10.9.0.9)
 
 # Environment to deploy to (prod or dev).
 INSTALL_ENV=dev

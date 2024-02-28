@@ -31,7 +31,9 @@
 
     <!-- If you want to include a second Jetson, create a new launch file for it and uncomment these lines: -->
     <!-- Jetson 2 Nodes -->
-    <!-- <machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
-    <include file="$(find behaviors)/launch/jetson2_sensor_nodes.launch"/> -->
+	<group if="$(eval arg('hw_or_sim')=='hw')">
+		<machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
+	</gruoup>
+    <include file="$(find behaviors)/launch/2024_compbot_vision.launch"/> 
 
 </launch>

@@ -22,9 +22,7 @@
 		
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 
-		
 		<!-- <node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node> -->
-		
 
 		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>
 
@@ -110,14 +108,14 @@
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	
 	<!-- <include file="$(find controller_node)/launch/hold_position.launch"/> -->
+	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	
-	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
-	<!-- <include file="$(find behaviors)/launch/2024_arm.launch"/> -->
-
 
 	<!-- Add 2024 actionlib servers here -->
+	<include file="$(find behaviors)/launch/2024_arm.launch"/>
+	<include file="$(find behaviors)/launch/2024_arm.launch"/>
 	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
 	<include file="$(find behaviors)/launch/2024_preshooter_and_claw.launch"/>
 	
