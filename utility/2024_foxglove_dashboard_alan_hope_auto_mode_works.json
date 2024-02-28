@@ -2,14 +2,14 @@
   "configById": {
     "3D!1slpkig": {
       "cameraState": {
-        "perspective": true,
-        "distance": 19.999999999999748,
+        "perspective": false,
+        "distance": 19.99999999999953,
         "phi": 59.99999999999991,
-        "thetaOffset": 45,
+        "thetaOffset": 44.99999999999999,
         "targetOffset": [
-          5.382613756863419,
-          4.250556101650074,
-          -5.95273105162471e-17
+          5.54398743114082,
+          3.8309845485288787,
+          1.5012901810064167e-20
         ],
         "target": [
           0,
@@ -60,20 +60,6 @@
       "imageMode": {},
       "followTf": "map"
     },
-    "RawMessages!3w2al3t": {
-      "diffEnabled": false,
-      "diffMethod": "custom",
-      "diffTopicPath": "",
-      "showFullMessageForDiff": false,
-      "topicPath": "/intake/intake_server_2023/status"
-    },
-    "RawMessages!2cbcau9": {
-      "diffEnabled": false,
-      "diffMethod": "custom",
-      "diffTopicPath": "",
-      "showFullMessageForDiff": false,
-      "topicPath": ""
-    },
     "RawMessages!3wbkb6m": {
       "diffEnabled": false,
       "diffMethod": "custom",
@@ -107,18 +93,14 @@
       "diffMethod": "custom",
       "diffTopicPath": "",
       "showFullMessageForDiff": false,
-      "topicPath": "/auto/auto_mode",
-      "expansion": {
-        "header": "c",
-        "stamp~header": "c"
-      }
+      "topicPath": "/auto/auto_mode"
     },
     "RawMessages!2tgtx5a": {
       "diffEnabled": false,
       "diffMethod": "custom",
       "diffTopicPath": "",
       "showFullMessageForDiff": false,
-      "topicPath": "/game_piece/game_piece_state"
+      "topicPath": "/imu/zeroed_imu"
     }
   },
   "globalVariables": {},
@@ -132,26 +114,18 @@
     "second": {
       "direction": "row",
       "first": {
-        "first": "RawMessages!3w2al3t",
-        "second": "RawMessages!2cbcau9",
-        "direction": "column"
+        "direction": "column",
+        "second": "Plot!40imq72",
+        "first": "RawMessages!3wbkb6m",
+        "splitPercentage": 65.44117647058823
       },
       "second": {
-        "direction": "row",
-        "first": {
-          "direction": "column",
-          "second": "Plot!40imq72",
-          "first": "RawMessages!3wbkb6m",
-          "splitPercentage": 65.44117647058823
-        },
-        "second": {
-          "first": "RawMessages!2bzyqch",
-          "second": "RawMessages!2tgtx5a",
-          "direction": "column"
-        },
-        "splitPercentage": 49.54954954954954
-      }
+        "first": "RawMessages!2bzyqch",
+        "second": "RawMessages!2tgtx5a",
+        "direction": "column"
+      },
+      "splitPercentage": 29.142562273835548
     },
-    "splitPercentage": 40.99855976956313
+    "splitPercentage": 31.798051372896367
   }
 }
