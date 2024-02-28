@@ -104,13 +104,22 @@ bool CANCoderHWCommand::clearStickyFaultsChanged(void)
 	return ret;
 }
 
-void CANCoderHWCommand::setConversionFactor(double conversion_factor)
+void CANCoderHWCommand::setConversionFactor(const double conversion_factor)
 {
 	conversion_factor_ = conversion_factor;
 }
 double CANCoderHWCommand::getConversionFactor(void) const
 {
 	return conversion_factor_;
+}
+
+void CANCoderHWCommand::setEnableReadThread(const bool enable_read_thread)
+{
+	enable_read_thread_ = enable_read_thread;
+}
+bool CANCoderHWCommand::getEnableReadThread(void) const
+{
+	return enable_read_thread_;
 }
 
 } // namespace hardware_interface

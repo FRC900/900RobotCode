@@ -36,11 +36,11 @@
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
+			 latency_compensation_state_controller
 			 bl_cancoder_controller
 			 fl_cancoder_controller
 			 br_cancoder_controller
 			 fr_cancoder_controller
-			 latency_compensation_state_controller
 			 swerve_drive_controller
 			 joint_state_controller_jetson
 			 joint_state_listener_controller_jetson
@@ -54,13 +54,15 @@
 			 top_right_shooter_controller
 			 bottom_left_shooter_controller
 			 bottom_right_shooter_controller
-			 shooter_pivot_motionmagicvoltage_controller
+			 pivot_cancoder_controller
+			 shooter_pivot_controller
+			 note_diverter_controller
 			 clawster_controller
 			 pigeon2_imu_state_controller
-			 note_diverter_controller
 			 robot_code_ready_controller" />
 			 
 			 <!--
+
 			 candle_controller
 			 orchestra_controller
 			 orchestra_state_controller
@@ -139,7 +141,7 @@
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
-	<include file="$(find controller_node)/launch/zed_detection.launch">
+	<!-- <include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="zed_name"             value="zedx_front" />
 		<arg name="zed_config_dir"       value="zedx" />
 		<arg name="camera_model"         value="zedx" />
@@ -154,24 +156,24 @@
 		<arg name="run_apriltag"         value="true" />
 		<arg name="run_object_detection" value="true" />
 		<arg name="startup_delay"        value="0.0" />
-	</include>
+	</include> -->
 
-	<!-- <include file="$(find controller_node)/launch/zed_detection.launch">
+	<include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="zed_name"             value="zedx_back" />
 		<arg name="zed_config_dir"       value="zedx" />
 		<arg name="camera_model"         value="zedx" />
-		<arg name="serial_number"	     value="47536732" />
+		<!-- <arg name="serial_number"	     value="47536732" /> -->
 		<arg name="cam_pos_x"            value="-0.297" />
 		<arg name="cam_pos_y"            value="0.0" />
 		<arg name="cam_pos_z"            value="0.205" />
 		<arg name="cam_roll"             value="0.0" />
-		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_pitch"            value="-0.3141592653589793" />
 		<arg name="cam_yaw"              value="3.14159265" />
 		<arg name="run_camera"           value="true" />
 		<arg name="run_apriltag"         value="true" />
 		<arg name="run_object_detection" value="false" />
-		<arg name="startup_delay"        value="15.0" />
-	</include> -->
+		<arg name="startup_delay"        value="0.0" />
+	</include>
 
 	<!-- 
 	<group ns="wpilib_odom">

@@ -37,6 +37,9 @@ class CANCoderHWCommand
 		void   setConversionFactor(const double conversion_factor);
 		double getConversionFactor(void) const;
 
+		void setEnableReadThread(const bool enable_read_thread);
+		bool getEnableReadThread(void) const;
+
 	private:
 		double              set_position_{};
 		bool                set_position_changed_{false};
@@ -46,6 +49,7 @@ class CANCoderHWCommand
 		bool                magnet_sensor_configs_changed_{true};
 		bool                clear_sticky_faults_{false};
 		double              conversion_factor_{1.0};
+		bool                enable_read_thread_{true};
 };
 
 // Handle - used by each controller to get, by name of the

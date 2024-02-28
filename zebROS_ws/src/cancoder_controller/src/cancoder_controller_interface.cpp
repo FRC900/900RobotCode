@@ -21,6 +21,7 @@ CANCoderCIParams::CANCoderCIParams(const ros::NodeHandle &n)
 		ddr_.registerVariable<double>("magnet_offset", [this]() { return static_cast<double>(magnet_offset_.load()); }, boost::bind(&CANCoderCIParams::setMagnetOffset, this, _1, false), "Magnet Offset", -M_PI, M_PI);
 		ddr_.registerEnumVariable<int>("absolute_sensor_range", [this]() { return static_cast<int>(absolute_sensor_range_.load()); }, boost::bind(&CANCoderCIParams::setAbsoluteSensorRange, this, _1, false), "Absolute Sensor Range", absolute_sensor_range_enum_map_);
 		ddr_.registerVariable<double>("conversion_factor", [this]() { return static_cast<double>(conversion_factor_.load()); }, boost::bind(&CANCoderCIParams::setConversionFactor, this, _1, false), "Conversion Factor", 0., 1000.);
+		ddr_.registerVariable<bool>("enable_read_thread", [this]() { return static_cast<bool>(enable_read_thread_.load()); }, boost::bind(&CANCoderCIParams::setEnableReadThread, this, _1, false), "Enable Read Thread");
 		ddr_.publishServicesTopics();
 	}
 
@@ -29,6 +30,7 @@ CANCoderCIParams::CANCoderCIParams(const ros::NodeHandle &n)
 	readIntoScalar(n, "magnet_offset", magnet_offset_);
 	readIntoEnum(n, "absolute_sensor_range", absolute_sensor_range_enum_map_, absolute_sensor_range_);
 	readIntoScalar(n, "conversion_factor", conversion_factor_);
+	readIntoScalar(n, "enable_read_thread", enable_read_thread_);
 }
 
 // Functions to update params from either DDR callbacks or the interface.
@@ -76,6 +78,15 @@ void CANCoderCIParams::setConversionFactor(const double conversion_factor, bool 
 		triggerDDRUpdate();
 	}
 }
+void CANCoderCIParams::setEnableReadThread(const bool enable_read_thread, bool update_dynamic)
+{
+	const bool publish_update = update_dynamic && (enable_read_thread != enable_read_thread_);
+	enable_read_thread_ = enable_read_thread;
+	if (publish_update)
+	{
+		triggerDDRUpdate();
+	}
+}
 
 hardware_interface::cancoder::SensorDirection CANCoderCIParams::getSensorDirection(void) const
 {
@@ -93,6 +104,10 @@ double CANCoderCIParams::getConversionFactor(void) const
 {
 	return conversion_factor_;
 }
+bool CANCoderCIParams::getEnableReadThread(void) const
+{
+	return enable_read_thread_;
+}
 
 CANCoderControllerInterface::CANCoderControllerInterface(const ros::NodeHandle &n, hardware_interface::cancoder::CANCoderCommandHandle handle)
 	: params_(n)
@@ -106,6 +121,7 @@ void CANCoderControllerInterface::update(void)
 	handle_->setMagnetOffset(params_.getMagnetOffset());
 	handle_->setAbsoluteSensorRange(params_.getAbsoluteSensorRange());
 	handle_->setConversionFactor(params_.getConversionFactor());
+	handle_->setEnableReadThread(params_.getEnableReadThread());
 
 	{
 		std::unique_lock<std::mutex> l(set_position_mutex_, std::try_to_lock);

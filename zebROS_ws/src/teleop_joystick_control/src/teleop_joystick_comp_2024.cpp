@@ -38,6 +38,7 @@ AutoModeCalculator2024 auto_calculator;
 
 // TODO: Add 2024 versions, initialize in main before calling generic inititalizer
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2024Action>> intaking_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2024Action>> shooting_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>> drive_and_intake_ac;
 
 
@@ -211,7 +212,9 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
-					
+					behavior_actions::DriveObjectIntake2024Goal goal;
+					goal.destination = goal.SHOOTER;
+					drive_and_intake_ac->sendGoal(goal);
 				}
 
 				joystick1_left_trigger_pressed = true;
@@ -220,7 +223,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(joystick1_left_trigger_pressed)
 				{
-					
+					drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_left_trigger_pressed = false;
@@ -231,9 +234,9 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_right_trigger_pressed)
 				{
-					behavior_actions::DriveObjectIntake2024Goal goal;
-					goal.destination = goal.SHOOTER;
-					drive_and_intake_ac->sendGoal(goal);
+					behavior_actions::Shooting2024Goal goal;
+					goal.mode = goal.SUBWOOFER;
+					shooting_ac->sendGoal(goal);
 				}
 
 				joystick1_right_trigger_pressed = true;
@@ -242,7 +245,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(joystick1_right_trigger_pressed)
 				{
-					drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+					shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_right_trigger_pressed = false;
@@ -697,6 +700,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle n_params(n, "teleop_params");
 
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2024Action>>("/intaking/intaking_server_2024", true);
+	shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Shooting2024Action>>("/shooting/shooting_server_2024", true);
 	drive_and_intake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>>("/intaking/drive_object_intake", true);
 
 	TeleopInitializer initializer;

@@ -2,4 +2,4 @@
 #include "../src/ctre_v5_motor_controllers.cpp"
 #include "../src/ctre_v5_motor_controller.cpp"
 
-template class CTREV5MotorControllers<false>;
+template class CTREV5MotorControllers<false>;   

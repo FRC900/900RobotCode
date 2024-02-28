@@ -31,7 +31,6 @@ MatchDataDevice::MatchDataDevice(const ros::NodeHandle &nh)
     {
         ROS_INFO_STREAM("Loading remote Match Data");
     }
-
 }
 
 MatchDataDevice::~MatchDataDevice() = default;

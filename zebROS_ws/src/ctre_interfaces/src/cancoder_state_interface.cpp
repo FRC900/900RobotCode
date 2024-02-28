@@ -49,6 +49,15 @@ double CANCoderHWState::getConversionFactor(void) const
 	return conversion_factor_;
 }
 
+void CANCoderHWState::setEnableReadThread(const bool enable_read_thread)
+{
+	enable_read_thread_ = enable_read_thread;
+}
+bool CANCoderHWState::getEnableReadThread(void) const
+{
+	return enable_read_thread_;
+}
+
 void CANCoderHWState::setVersionMajor(const int version_major)
 {
 	version_major_ = version_major;

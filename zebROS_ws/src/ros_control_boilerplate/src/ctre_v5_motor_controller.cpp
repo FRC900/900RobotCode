@@ -3,9 +3,9 @@
 #include <ros/node_handle.h>
 
 #include <ctre/phoenix/motorcontrol/IMotorController.h>
-#include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
-#include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
-#include "ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h"
+#include "ctre/phoenix/motorcontrol/can/TalonFX.h"
+#include "ctre/phoenix/motorcontrol/can/TalonSRX.h"
+#include "ctre/phoenix/motorcontrol/can/VictorSPX.h"
 
 #include "ctre_interfaces/talon_command_interface.h"
 #include "ros_control_boilerplate/ctre_v5_motor_controller.h"
@@ -66,30 +66,38 @@ CTREV5MotorController::CTREV5MotorController(const std::string &name_space,
 {
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
                         "Loading joint " << joint_index << "=" << joint_name <<
-                        (local_ ? "local" : "remote") << 
+                        (local_ ? " local" : "remote") << 
                         " as CTREV5 " << joint_type << " id = " << can_id << " on bus " << can_bus);
 
     if (local_)
     {
         if (joint_type == "can_talon_fx")
         {
-            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_id, can_bus);
+            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_id, can_bus);
         }
         else if (joint_type == "can_talon_srx")
         {
-            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_id);
+            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_id
+#ifndef __FRC_ROBORIO__
+            , can_bus
+#endif
+            );
         }
         else if (joint_type == "can_victor_spx")
         {
-            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(can_id);
+            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_id
+#ifndef __FRC_ROBORIO__
+            , can_bus
+#endif
+            );
         }
         // Set up various pointers to the class hierarchy for motor controllers
         // These will be nullptr if the allocated ctre_mc_ object doesn't support
         // the features of a specific controller type.
         // If non-null, these are used to access the method calls for those particular features
         talon_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mc_);
-        talon_fx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(ctre_mc_);
-        talon_srx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mc_);
+        talon_fx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc_);
+        talon_srx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc_);
         victor_spx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mc_);
 
         read_thread_state_ = std::make_unique<hardware_interface::TalonHWState>(can_id);
@@ -1175,17 +1183,25 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
                         break;
                 }
 
-#if 0
-                ROS_INFO_STREAM("called Set(4) on " << getName() <<
+#if 1 // fix gcc bug
+                ROS_INFO_STREAM("USING PERCENT OUTPUT about to call Set(4) on " << getName() <<
                         " out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
                         " demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
                         " demand1_value = " << demand1_value);
 #endif
+
                 state_->setTalonMode(in_mode);
                 state_->setDemand1Type(demand1_type_internal);
                 state_->setDemand1Value(demand1_value);
 
-                victor_spx_->Set(out_mode, command, demand1_type_phoenix, demand1_value);
+                victor_spx_->Set(ctre::phoenix::motorcontrol::ControlMode::PercentOutput, command, demand1_type_phoenix, demand1_value);
+
+#if 1 // fix gcc bug
+                ROS_INFO_STREAM("USING PERCENT OUTPUT called Set(4) on " << getName() <<
+                        " out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
+                        " demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
+                        " demand1_value = " << demand1_value);
+#endif
             }
             else
             {

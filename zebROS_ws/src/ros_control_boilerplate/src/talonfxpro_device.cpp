@@ -1321,6 +1321,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         }
     }
 
+    state_->setEnableReadThread(command_->getEnableReadThread());
+
     // Typically only a subset of these are valid for any particular
     // mode, but get them all and figure it out based on control_mode below
     hardware_interface::talonfxpro::TalonMode control_mode;

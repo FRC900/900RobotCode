@@ -183,23 +183,27 @@ swerve_angle_phoenix6_controller:
 bl_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: bl_cancoder
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     magnet_offset: 2.5770877236478773
+    enable_read_thread: False
 
 fl_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: fl_cancoder
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     magnet_offset: 0.4172427743048944
+    enable_read_thread: False
 
 br_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: br_cancoder
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     magnet_offset: 1.217980745581199
+    enable_read_thread: False
 
 fr_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: fr_cancoder
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     magnet_offset: 2.715145994557585
+    enable_read_thread: False

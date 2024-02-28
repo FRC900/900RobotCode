@@ -58,6 +58,7 @@
 #include "ros_control_boilerplate/digital_input_devices.h"
 #include "ros_control_boilerplate/digital_output_devices.h"
 #include "ros_control_boilerplate/double_solenoid_devices.h"
+#include "ros_control_boilerplate/hoot_logger_devices.h"
 #include "ros_control_boilerplate/joystick_devices.h"
 #include "ros_control_boilerplate/latency_compensation_groups.h"
 #include "ros_control_boilerplate/match_data_devices.h"
@@ -145,6 +146,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 		 * but aren't using any of the CAN device classes.
 		 **/
 		ctre::phoenix::unmanaged::Unmanaged::LoadPhoenix();
+
 	}
 	else
 	{
@@ -152,6 +154,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 		ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
 	}
 	ROS_INFO_STREAM("Phoenix Version String : " << ctre::phoenix::unmanaged::Unmanaged::GetPhoenixVersion());
+	Devices::setHALRobot(run_hal_robot_);
 
 	// Create all the devices specified in the yaml joint list, one type at a time
 	// Those that need different code for sim vs real hardware are templated using
@@ -166,6 +169,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<DigitalInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalOutputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DoubleSolenoidDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HootLoggerDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<JoystickDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<MatchDataDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<PCMDevices>(root_nh));
@@ -206,7 +210,9 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	// Create controller interfaces for all the types created above
 	for (const auto &d : devices_)
 	{
-		registerInterfaceManager(d->registerInterface());
+		auto i = d->registerInterface();
+		if (i)
+			registerInterfaceManager(i);
 	}
 
 	// Orchestra needs a set of previously created TalonFXs to use as instruments

@@ -75,6 +75,7 @@ void CANCoderDevice::read(const ros::Time &/*time*/, const ros::Duration &/*peri
             // These are used to convert position and velocity units - make sure the
             // read thread's local copy of state is kept up to date
             read_thread_state_->setConversionFactor(state_->getConversionFactor());
+            read_thread_state_->setEnableReadThread(state_->getEnableReadThread());
 
             state_->setVersionMajor(read_thread_state_->getVersionMajor());
             state_->setVersionMinor(read_thread_state_->getVersionMinor());
@@ -174,7 +175,9 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
             return;
         }
     }
-    }
+
+    state_->setEnableReadThread(command_->getEnableReadThread());
+}
 
 // Set of macros for common code used to read 
 // all signals with error checking.
@@ -197,12 +200,15 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
                                  const double poll_frequency)
 {
 #ifdef __linux__
-	if (std::stringstream thread_name{"cancdr_read_"}; pthread_setname_np(pthread_self(), thread_name.str().c_str()))
-	{
+    std::stringstream thread_name{"cancdr_rd_"};
+    thread_name << getId();
+    if (pthread_setname_np(pthread_self(), thread_name.str().c_str()))
+    {
 		ROS_ERROR_STREAM("Error setting thread name " << thread_name.str() << " " << errno);
 	}
 #endif
 	ros::Duration(2.452 + read_thread_state_->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
+    ROS_INFO_STREAM("Starting CANCoder read thead for " << getName() << " id = " << getId());
 
     std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
 
@@ -249,7 +255,11 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		// used by the read thread are copied over.  Update
 		// as needed when more are read
 		{
-			std::lock_guard l(*read_state_mutex_);
+			std::scoped_lock l(*read_state_mutex_);
+            if (!read_thread_state_->getEnableReadThread())
+            {
+                return;
+            }
 			conversion_factor = read_thread_state_->getConversionFactor();
 		}
 
@@ -288,7 +298,7 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the read_thread_state_ entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard l(*read_state_mutex_);
+			std::scoped_lock l(*read_state_mutex_);
             read_thread_state_->setVersionMajor(*version_major);
             read_thread_state_->setVersionMinor(*version_minor);
             read_thread_state_->setVersionBugfix(*version_bugfix);

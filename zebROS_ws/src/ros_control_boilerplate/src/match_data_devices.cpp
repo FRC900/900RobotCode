@@ -57,5 +57,4 @@ template <bool SIM>
 bool MatchDataDevices<SIM>::getControlWord(HAL_ControlWord &cw) const
 {
     return devices_[0]->getControlWord(cw);
-    return true;
 }

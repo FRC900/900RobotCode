@@ -10,13 +10,14 @@ from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 from behavior_actions.msg import Clawster2024Result, Clawster2024Goal, Clawster2024Action
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
+from talon_controller_msgs.srv import Command, CommandRequest
 
 class Clawster2024ActionServer(object):
     # create messages that are used to publish feedback/result
     _result = Clawster2024Result()
 
     def __init__(self, name):
-        self.claw_pub = rospy.Publisher(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Float64, queue_size=1)
+        self.claw_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
         self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback)
         self._action_name = name
         '''
@@ -56,7 +57,7 @@ class Clawster2024ActionServer(object):
     def execute_cb(self, goal: Clawster2024Goal):
         pct_out = Float64()
         success = True
-        r = rospy.Rate(10)
+        r = rospy.Rate(60)
         if goal.destination == goal.PRESHOOTER:
             rospy.loginfo("Clawster called with PRESHOOTER")
             intake_speed = self.preshooter_intake_speed
@@ -70,19 +71,19 @@ class Clawster2024ActionServer(object):
         if goal.mode == goal.INTAKE:
             rospy.loginfo("Clawster_server: Intaking!")
             pct_out.data = intake_speed
-            self.claw_pub.publish(pct_out)
+            self.claw_client.call(CommandRequest(pct_out.data))
             while self.get_current_switch(goal) == 0 and (not rospy.is_shutdown()):
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
                     rospy.logwarn("Clawster_server: Preempted!")
                     pct_out.data = 0
-                    self.claw_pub.publish(pct_out)
+                    self.claw_client.call(CommandRequest(pct_out.data))
                     success = False
                     return
                 r.sleep()
 
             pct_out.data = 0
-            self.claw_pub.publish(pct_out)
+            self.claw_client.call(CommandRequest(pct_out.data))
             if success:
                 self._result.has_game_piece = True
             else:
@@ -90,20 +91,21 @@ class Clawster2024ActionServer(object):
         else:
             rospy.loginfo("Clawster_server: Outtaking/Shooting!")
             pct_out.data = outtake_speed
-            self.claw_pub.publish(pct_out)
+            self.claw_client.call(CommandRequest(pct_out.data))
+            rospy.loginfo(f"clawster_server: {pct_out}")
             while self.get_current_switch(goal) != 0 and (not rospy.is_shutdown()):
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
                     rospy.logwarn("Clawster_server: Preempted!")
                     pct_out.data = 0
-                    self.claw_pub.publish(pct_out)
+                    self.claw_client.call(CommandRequest(pct_out.data))
                     success = False
                     return
                 r.sleep()
 
             rospy.Rate(self.outtake_delay).sleep()
             pct_out.data = 0
-            self.claw_pub.publish(pct_out)
+            self.claw_client.call(CommandRequest(pct_out.data))
             if success:
                 self._result.has_game_piece = False
             else:

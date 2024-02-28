@@ -31,7 +31,7 @@ hardware_interface:
        #- {name: as726x, local: true, type: as726x, port: mxp, address: 73 } # 73 = 0x49
        #- {name: do1, local: true, type: digital_output, dio_channel: 1}
        #- {name: do2, local_update: false, local_hardware: true, type: digital_output, dio_channel: 2}
-       - {name: servo, local: true, type: servo, servo_channel: 0}
+    #    - {name: servo, local: true, type: servo, servo_channel: 0}
        - {name: joystick0, type: joystick, id: 0 }
        - {name: button_box, type: joystick, id: 1, local: true}
 

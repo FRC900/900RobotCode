@@ -24,9 +24,10 @@ hardware_interface:
    joints:
        #- {name: terrance, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
        #- {name: phillip, type: can_talon_fx, can_bus: CANivore, can_id: 2, local: true}
+       - {name: candle1, can_id: 5, can_bus: CANivore, type: candle, local: true}
+       - {name: clawster, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
-       - {name: candle1, can_id: 5, can_bus: CANivore, type: candle, local: true}
        
 joint_state_controller:
    type:         joint_state_controller/JointStateController
@@ -132,3 +133,10 @@ pigeon2_imu_state_controller:
     type: imu_sensor_controller/ImuSensorController
     joint_name: pigeon2
     publish_rate: 100
+
+clawster_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: clawster
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+    voltage_compensation_saturation: 10

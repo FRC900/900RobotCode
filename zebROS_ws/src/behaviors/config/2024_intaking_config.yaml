@@ -1,4 +1,4 @@
 intaking_speed: 0.6 # duty cycle out
-intaking_timeout: 3.0
-safe_shooter_angle: 1.254 # rad
+intaking_timeout: 5.0
+safe_shooter_angle: 0.8 # rad
 current_threshold: 100.0

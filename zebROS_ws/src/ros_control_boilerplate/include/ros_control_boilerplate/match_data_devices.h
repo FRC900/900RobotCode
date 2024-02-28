@@ -8,7 +8,6 @@
 
 #include "hal/DriverStationTypes.h"
 
-class MatchDataDevice;
 namespace hardware_interface::match_data
 {
     class MatchStateInterface;

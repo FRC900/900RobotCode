@@ -61,21 +61,21 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 return false;
             }
 
-            if (!readIntoScalar(controller_nh, "motion_magic_velocity", motion_magic_velocity))
+            if (!readIntoScalar(controller_nh, "motion_magic_velocity", motion_magic_velocity_))
             {
-                ROS_ERROR("Could not find motion_magic_velocity");
+                ROS_ERROR("Could not find motion_magic_velocity_");
                 return false;
             }
 
-            if (!readIntoScalar(controller_nh, "motion_magic_acceleration", motion_magic_acceleration))
+            if (!readIntoScalar(controller_nh, "motion_magic_acceleration", motion_magic_acceleration_))
             {
-                ROS_ERROR("Could not find motion_magic_acceleration");
+                ROS_ERROR("Could not find motion_magic_acceleration_");
                 return false;
             }
 
-            if (!readIntoScalar(controller_nh, "motion_magic_jerk", motion_magic_jerk))
+            if (!readIntoScalar(controller_nh, "motion_magic_jerk", motion_magic_jerk_))
             {
-                ROS_ERROR("Could not find motion_magic_jerk");
+                ROS_ERROR("Could not find motion_magic_jerk_");
                 return false;
             }
 
@@ -134,28 +134,28 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 ddr_->registerVariable<double>(
                     "motion_magic_velocity",
                     [this]()
-                    { return motion_magic_velocity.load(); },
+                    { return motion_magic_velocity_.load(); },
                     [this](double b)
-                    { motion_magic_velocity.store(b); },
+                    { motion_magic_velocity_.store(b); },
                     "Motion Magic Velocity",
                     0.0, 20.0);
 
                 ddr_->registerVariable<double>(
                     "motion_magic_acceleration",
                     [this]()
-                    { return motion_magic_acceleration.load(); },
+                    { return motion_magic_acceleration_.load(); },
                     [this](double b)
-                    { motion_magic_acceleration.store(b); },
+                    { motion_magic_acceleration_.store(b); },
                     "Motion Magic Acceleration",
                     0.0, 200.0);
 
                 ddr_->registerVariable<double>(
                     "motion_magic_jerk",
                     [this]()
-                    { return motion_magic_jerk.load(); },
+                    { return motion_magic_jerk_.load(); },
                     [this](int b)
-                    { motion_magic_jerk.store(b); },
-                    "S Curve Strength",
+                    { motion_magic_jerk_.store(b); },
+                    "Motion Magic Jerk",
                     0, 500);
 
                 ddr_->publishServicesTopics();
@@ -195,9 +195,9 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
             */
 
             // if we're not zeroing, add an arbitrary feed forward to hold the shooter_pivot up
-            shooter_pivot_joint_.setMotionMagicAcceleration(motion_magic_acceleration);
-            shooter_pivot_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity);
-            shooter_pivot_joint_.setMotionMagicJerk(motion_magic_jerk);
+            shooter_pivot_joint_.setMotionMagicAcceleration(motion_magic_acceleration_);
+            shooter_pivot_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_);
+            shooter_pivot_joint_.setMotionMagicJerk(motion_magic_jerk_);
             shooter_pivot_joint_.setControlSlot(0);
 
             shooter_pivot_joint_.setControlFeedforward(angle_to_feed_forward_[shooter_pivot_joint_.getPosition()]);
@@ -215,28 +215,19 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
         std::atomic<double> position_command_; //this is the buffer for percent output commands to be published
         ros::ServiceServer shooter_pivot_service_; //service for receiving commands
 
-        bool zeroed_;
-        bool last_zeroed_;
-
         wpi::interpolating_map<double, double> angle_to_feed_forward_;
 
         std::atomic<double> max_angle_;
         std::atomic<double> min_angle_;
 
-        std::atomic<double> shooter_pivot_zeroing_percent_output;
-        std::atomic<double> shooter_pivot_zeroing_timeout;
-        std::atomic<double> motion_magic_velocity;
-        std::atomic<double> motion_magic_acceleration;
-        std::atomic<double> motion_magic_jerk;
-
-        std::atomic<bool> want_to_zero_;
+        std::atomic<double> motion_magic_velocity_;
+        std::atomic<double> motion_magic_acceleration_;
+        std::atomic<double> motion_magic_jerk_;
 
         std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
-        ros::ServiceServer rezero_service_;
-
         bool cmdService(controllers_2024_msgs::ShooterPivotSrv::Request &req,
-                        controllers_2024_msgs::ShooterPivotSrv::Response & /*response*/)
+                        controllers_2024_msgs::ShooterPivotSrv::Response &response)
         {
             if (req.angle > max_angle_)
             {

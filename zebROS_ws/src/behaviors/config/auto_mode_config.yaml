@@ -6,12 +6,12 @@
 
 
 
-auto_mode_1: ["start_intake", "four_note_source1_ALLIANCE_csv", "pause_half", "relocalize",  
-              "four_note_source2_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_source3_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_source4_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_source5_ALLIANCE_csv",
-              "stop_intake"]
+auto_mode_1: ["shoot_center_subwoofer", "start_intake", "four_note_source1_ALLIANCE_csv", "pause_half", "relocalize",  
+              "four_note_source2_ALLIANCE_csv", "pause_half", "relocalize", "shoot_inline_subwoofer", "start_intake",
+              "four_note_source3_ALLIANCE_csv", "pause_half", "relocalize", "shoot_diagonal", "start_intake", # not actually diagonal but far
+              "four_note_source4_ALLIANCE_csv", "pause_two", "relocalize",
+              "four_note_source5_ALLIANCE_csv", "pause_two", 
+              "stop_intake", "shoot_diagonal"]
 
 auto_mode_2: ["four_note_source1_ALLIANCE_csv", "pause_half", 
               "four_note_source2_ALLIANCE_csv", "pause_half", 
@@ -80,12 +80,16 @@ spin_down_shooter:
 # right in front
 shoot_center_subwoofer:
   type: shoot_distance
-  distance: 1.0 # meters
+  distance: 1.43 # meters
+
+shoot_inline_subwoofer:
+  type: shoot_distance
+  distance: 2.0 # meters
 
 # on the diagonal left/right 
 shoot_diagonal:
   type: shoot_distance
-  distance: 2.0 # meters
+  distance: 2.8 # meters
 
 
 ros_rate: 10 # in ms, used for all ros rate calls

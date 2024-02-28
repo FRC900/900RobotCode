@@ -48,13 +48,6 @@ class ShootingServer(object):
         self.angle_map = InterpolatingMap()
         self.angle_map.container = {l[0]: l[1] for l in rospy.get_param("angle_map")}
 
-        # Subwoofer (constant speeds and angle)
-        self.subwoofer_top_left_speed = rospy.get_param("subwoofer_top_left_speed")
-        self.subwoofer_top_right_speed = rospy.get_param("subwoofer_top_right_speed")
-        self.subwoofer_bottom_left_speed = rospy.get_param("subwoofer_bottom_left_speed")
-        self.subwoofer_bottom_right_speed = rospy.get_param("subwoofer_bottom_right_speed")
-        self.subwoofer_pivot_position = rospy.get_param("subwoofer_pivot_position")
-
         # Amp (constant speeds and angle)
         self.amp_top_left_speed = rospy.get_param("amp_top_left_speed")
         self.amp_top_right_speed = rospy.get_param("amp_top_right_speed")
@@ -62,10 +55,36 @@ class ShootingServer(object):
         self.amp_bottom_right_speed = rospy.get_param("amp_bottom_right_speed")
         self.amp_pivot_position = rospy.get_param("amp_pivot_position")
 
+        ddynrec = DDynamicReconfigure("shooting_dyn_rec")
+        ddynrec.add_variable("subwoofer_top_left_speed", "float/double variable", rospy.get_param("subwoofer_top_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("subwoofer_top_right_speed", "float/double variable", rospy.get_param("subwoofer_top_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("subwoofer_bottom_left_speed", "float/double variable", rospy.get_param("subwoofer_bottom_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("subwoofer_bottom_right_speed", "float/double variable", rospy.get_param("subwoofer_bottom_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("subwoofer_pivot_position", "float/double variable", rospy.get_param("subwoofer_pivot_position"), 0.5, 1.5)
+        ddynrec.start(self.dyn_rec_callback)
+
+        # Subwoofer (constant speeds and angle)
+        self.subwoofer_top_left_speed = rospy.get_param("subwoofer_top_left_speed")
+        self.subwoofer_top_right_speed = rospy.get_param("subwoofer_top_right_speed")
+        self.subwoofer_bottom_left_speed = rospy.get_param("subwoofer_bottom_left_speed")
+        self.subwoofer_bottom_right_speed = rospy.get_param("subwoofer_bottom_right_speed")
+        self.subwoofer_pivot_position = rospy.get_param("subwoofer_pivot_position")
+        self.subwoofer_reconfigured = False
+
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
+
+    def dyn_rec_callback(self, config, level):
+        rospy.loginfo("Received reconf call: " + str(config))
+        self.subwoofer_top_left_speed = config["subwoofer_top_left_speed"]
+        self.subwoofer_top_right_speed = config["subwoofer_top_right_speed"]
+        self.subwoofer_bottom_left_speed = config["subwoofer_bottom_left_speed"]
+        self.subwoofer_bottom_right_speed = config["subwoofer_bottom_right_speed"]
+        self.subwoofer_pivot_position = config["subwoofer_pivot_position"]
+        self.subwoofer_reconfigured = True
+        return config
 
     def execute_cb(self, goal: Shooting2024Goal):
         if goal.cancel_movement:
@@ -184,6 +203,9 @@ class ShootingServer(object):
                     return
                 r.sleep()
 
+            pivot_goal.pivot_position = 0.5
+            self.pivot_client.send_goal(pivot_goal)
+
             rospy.loginfo("2024_shooting_server: +5 points hopefully")
         
         if not goal.leave_spinning:
@@ -194,7 +216,7 @@ class ShootingServer(object):
             self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
             # ensure pivot stopped
-            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
+            # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
         # stop preshooter
         self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())

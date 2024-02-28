@@ -43,6 +43,9 @@ class CANCoderHWState
 		void   setConversionFactor(const double conversion_factor);
 		double getConversionFactor(void) const;
 
+		void setEnableReadThread(const bool enable_read_thread);
+		bool getEnableReadThread(void) const;
+
 		void setVersionMajor(const int version_major);
 		int  getVersionMajor(void) const;
 
@@ -97,6 +100,7 @@ class CANCoderHWState
 		bool getStickyFaultUnlicensedFeatureInUse(void) const;
 		void setStickyFaultBadMagnet(const bool sticky_fault_bad_magnet);
 		bool getStickyFaultBadMagnet(void) const;
+
 	private :
 		int                 device_number_{};
 
@@ -130,6 +134,7 @@ class CANCoderHWState
 		bool                sticky_fault_unlicensed_feature_in_use_{false};
 		bool                sticky_fault_bad_magnet_{false};
 
+		bool                enable_read_thread_{true};
 };
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is

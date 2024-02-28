@@ -1,11 +1,11 @@
 controller_name: "clawster_controller"
 outtake_delay: 0.5
 claw:
-  intake_speed: 0.4
-  outtake_speed: -0.5
+  intake_speed: 0.4 # doesnt exist
+  outtake_speed: -0.5 # doesnt exist
   switch_name: "claw_limit_switch"
   
 preshooter:
-  intake_speed: 0.7
-  outtake_speed: -0.9
+  intake_speed: 0.8
+  outtake_speed: 0.9
   switch_name: "preshooter_limit_switch"

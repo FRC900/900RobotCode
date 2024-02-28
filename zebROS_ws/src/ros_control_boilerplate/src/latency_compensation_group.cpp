@@ -216,6 +216,13 @@ void LatencyCompensationGroup::read(void)
 void LatencyCompensationGroup::read_thread()
 {
     ros::Duration(2.63).sleep();
+#ifdef __linux__
+    std::stringstream thread_name{"lat_comp"};
+    if (pthread_setname_np(pthread_self(), thread_name.str().c_str()))
+    {
+		ROS_ERROR_STREAM("Error setting thread name " << thread_name.str() << " " << errno);
+	}
+#endif
     Tracer tracer("latency compensation " + name_);
     ROS_INFO_STREAM("Starting latency compensation read thread for " << name_ << " at " << ros::Time::now());
     ROS_INFO_STREAM("CTRE / steady clock time = " << ctre:: phoenix6::GetCurrentTimeSeconds());

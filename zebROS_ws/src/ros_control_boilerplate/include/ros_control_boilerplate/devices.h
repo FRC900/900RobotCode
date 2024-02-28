@@ -41,7 +41,7 @@ public:
     Devices& operator= (const Devices &) = delete;
     Devices& operator= (Devices &&) noexcept = delete;
 
-    virtual hardware_interface::InterfaceManager *registerInterface() = 0;
+    virtual hardware_interface::InterfaceManager *registerInterface() {return nullptr;}
     // Read and write functions that are shared between hardware and sim interfaces
     virtual void read(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
     virtual void write(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
@@ -66,13 +66,16 @@ public:
 
     // Updates the robot's enable/disable state
     static void setEnabled(const bool enabled) { enabled_ = enabled; }
+    static void setHALRobot(const bool hal_robot) { hal_robot_ = hal_robot; }
 
 protected:
-    static bool isEnabled(void) { return enabled_; }
-    static bool isReady(void)   { return ready_; }
+    static bool isEnabled(void)  { return enabled_; }
+    static bool isHALRobot(void) { return hal_robot_; }
+    static bool isReady(void)    { return ready_; }
 
 private:
     static inline bool enabled_{true};
+    static inline bool hal_robot_{true};
     static inline bool ready_{false};
 };
 
