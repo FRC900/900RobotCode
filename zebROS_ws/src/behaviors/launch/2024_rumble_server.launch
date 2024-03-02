@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 	<group ns="rumble">
+		<rosparam command="load" file="$(find behaviors)/config/2024_rumble_server_config.yaml"/>
 		<node name="rumble_server" pkg="behaviors" type="2024_rumble_server.py" output="screen"/>
 	</group>
 </launch>

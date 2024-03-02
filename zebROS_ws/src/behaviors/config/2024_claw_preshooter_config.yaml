@@ -1,5 +1,5 @@
 controller_name: "clawster_controller"
-outtake_delay: 0.5
+outtake_delay: 0.1
 claw:
   intake_speed: 0.4 # doesnt exist
   outtake_speed: -0.5 # doesnt exist

@@ -9,7 +9,7 @@ namespace hardware_interface::cancoder
 {
     class CANCoderStateInterface;
     class CANCoderCommandInterface;
-    class RemoteCANCoderStateInterface;
+    class RemoteCANcoderStateInterface;
 }
 
 namespace ctre::phoenix6::hardware
@@ -39,7 +39,7 @@ private:
     std::vector<std::unique_ptr<CANCoderDevice>> devices_;
     std::unique_ptr<hardware_interface::cancoder::CANCoderStateInterface> state_interface_;
     std::unique_ptr<hardware_interface::cancoder::CANCoderCommandInterface> command_interface_;
-    std::unique_ptr<hardware_interface::cancoder::RemoteCANCoderStateInterface> remote_state_interface_;
+    std::unique_ptr<hardware_interface::cancoder::RemoteCANcoderStateInterface> remote_state_interface_;
     hardware_interface::InterfaceManager interface_manager_;
 };
 

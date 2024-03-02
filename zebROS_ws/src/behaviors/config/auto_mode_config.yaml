@@ -4,44 +4,65 @@
 
 # ALLIANCE will be replaced with whatever alliance we are "red" or "blue"
 
+# 1: four note source WORKS ON RED AND BLUE
+auto_mode_1: ["shoot_center_subwoofer", "start_intake", "four_note_source1_ALLIANCE_csv", "relocalize",  
+              "four_note_source2_ALLIANCE_csv", "pause_quarter", "relocalize", "shoot_dynamic", "start_intake",
+              "four_note_source3_ALLIANCE_csv", "pause_half", "shoot_dynamic", "relocalize", "start_intake", # not actually diagonal but far
+              "four_note_source4_ALLIANCE_csv", "pause_quarter", "relocalize",
+              "four_note_source5_ALLIANCE_csv", "shoot_dynamic", "stop_intake"]
 
+# 2: four note speaker NO TIME TO TEST
+#auto_mode_2: ["shoot_center_subwoofer", "start_intake", "four_note_speaker1_ALLIANCE_csv",
+#              "four_note_speaker2_ALLIANCE_csv", "relocalize", "shoot_dynamic", "start_intake",
+#              "four_note_speaker3_ALLIANCE_csv", "relocalize", "shoot_dynamic", "start_intake",
+#              "four_note_speaker4_ALLIANCE_csv", "pause_quarter", "relocalize", 
+#              "four_note_speaker5_ALLIANCE_csv", "pause_quarter", "relocalize", 
+#              "four_note_speaker6_ALLIANCE_csv", "stop_intake", "shoot_dynamic"]
 
-auto_mode_1: ["shoot_center_subwoofer", "start_intake", "four_note_source1_ALLIANCE_csv", "pause_half", "relocalize",  
-              "four_note_source2_ALLIANCE_csv", "pause_half", "relocalize", "shoot_inline_subwoofer", "start_intake",
-              "four_note_source3_ALLIANCE_csv", "pause_half", "relocalize", "shoot_diagonal", "start_intake", # not actually diagonal but far
-              "four_note_source4_ALLIANCE_csv", "pause_two", "relocalize",
-              "four_note_source5_ALLIANCE_csv", "pause_two", 
-              "stop_intake", "shoot_diagonal"]
+# 2: four note speaker no rotation
+auto_mode_2: ["relocalize", "shoot_center_subwoofer", "start_intake", "four_note_speaker_no_rotate1_ALLIANCE_csv", "pause_quarter", "relocalize",
+              "four_note_speaker_no_rotate2_ALLIANCE_csv", "shoot_dynamic", "start_intake",
+              "four_note_speaker_no_rotate3_ALLIANCE_csv", "shoot_dynamic", "start_intake",
+              "four_note_speaker_no_rotate4_ALLIANCE_csv", "pause_quarter", "relocalize",
+              "four_note_speaker_no_rotate5_ALLIANCE_csv", "pause_quarter", "shoot_dynamic", "stop_intake", "pause_half", "spin_down_shooter"]
 
-auto_mode_2: ["four_note_source1_ALLIANCE_csv", "pause_half", 
-              "four_note_source2_ALLIANCE_csv", "pause_half", 
-              "four_note_source3_ALLIANCE_csv", "pause_half", 
-              "four_note_source4_ALLIANCE_csv", 
-              "four_note_source5_ALLIANCE_csv"]
+# SIM ONLY
+# auto_mode_2: ["four_note_speaker_no_rotate1_ALLIANCE_csv", "pause_quarter",
+#              "four_note_speaker_no_rotate2_ALLIANCE_csv", "pause_quarter",
+#              "four_note_speaker_no_rotate3_ALLIANCE_csv", "pause_quarter",
+#              "four_note_speaker_no_rotate4_ALLIANCE_csv", "pause_quarter",              
+#              "four_note_speaker_no_rotate5_ALLIANCE_csv", "pause_quarter"]
 
-auto_mode_3: ["four_note_speaker1_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_speaker2_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_speaker3_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_speaker4_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_speaker5_ALLIANCE_csv", "pause_half", "relocalize", 
-              "four_note_speaker6_ALLIANCE_csv"]
+# 3: three note source
+auto_mode_3: ["shoot_center_subwoofer", "start_intake", "three_note_source1_ALLIANCE_csv", "pause_quarter", "relocalize",  
+              "three_note_source2_ALLIANCE_csv", "pause_quarter", "relocalize", "shoot_from_white_tape", "start_intake",
+              "three_note_source3_ALLIANCE_csv", "pause_quarter", "relocalize", "shoot_from_stage_note", "stop_intake"]
 
-auto_mode_4: ["start_intake", "four_note_speaker1_ALLIANCE_csv", "pause_half", 
-              "four_note_speaker2_ALLIANCE_csv", "pause_half", 
-              "four_note_speaker3_ALLIANCE_csv", "pause_half", 
-              "four_note_speaker4_ALLIANCE_csv", 
-              "four_note_speaker5_ALLIANCE_csv", 
-              "four_note_speaker6_ALLIANCE_csv",
-              "stop_intake"]
+# 4: three note speaker
+auto_mode_4: ["shoot_center_subwoofer", "start_intake", "three_note_speaker1_ALLIANCE_csv", "pause_quarter", "relocalize",  
+              "three_note_speaker2_ALLIANCE_csv", "pause_quarter", "relocalize", "shoot_from_white_tape", "start_intake",
+              "three_note_speaker3_ALLIANCE_csv", "pause_quarter", "relocalize", "shoot_from_stage_note", "stop_intake"]
 
-auto_mode_5: ["start_intake", "spin_up_shooter", "pause_two", "shoot_center_subwoofer", "pause_two", "shoot_diagonal", "stop_intake", "spin_down_shooter"]
-auto_mode_6: ["pause_half"]
-auto_mode_7: ["pause_half"]
-auto_mode_8: ["pause_half"]
-auto_mode_9: ["pause_half"]
+# 5: two note, speaker side
+auto_mode_5: ["shoot_center_subwoofer", "start_intake", "two_note_speaker1_ALLIANCE_csv", "pause_quarter", "relocalize", "two_note_speaker2_ALLIANCE_csv", "shoot_from_stage_note", "stop_intake"]
 
-#auto_mode_4_blue: ["map_rel_four_note_grid_right1_blue_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right2_blue_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right3_blue_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right4_blue_csv"]
-#auto_mode_4_red: ["map_rel_four_note_grid_right1_red_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right2_red_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right3_red_csv", "pause_half", "relocalize", "map_rel_four_note_grid_right4_red_csv"]
+# 6: two note, with the note in front TESTED AND WORKED
+auto_mode_6: ["shoot_center_subwoofer", "start_intake", "drive_1_5_m", "shoot_from_stage_note", "stop_intake"]
+
+# 7: shoot preloaded note SHOULD WORK
+auto_mode_7: ["shoot_center_subwoofer"]
+
+# 8: shoot preloaded note, drive back TESTED AND WORKS
+auto_mode_8: ["shoot_center_subwoofer", "drive_2_5_m"]
+
+# 9: no-op
+auto_mode_9: ["pause_quarter"]
+
+# 10: drive back
+auto_mode_10: ["drive_2_5_m"]
+
+#auto_mode_4_blue: ["map_rel_four_note_grid_right1_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_blue_csv"]
+#auto_mode_4_red: ["map_rel_four_note_grid_right1_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_red_csv"]
 #auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map_rel_four_note_grid3_csv", "map_rel_four_note_grid4_csv"]
 #auto_mode_6: ["relocalize", "map_rel_four_note_grid1_csv", "relocalize", "map_rel_four_note_grid2_csv", "relocalize", "map_rel_four_note_grid3_csv", "relocalize", "map_rel_four_note_grid4_csv"]
 
@@ -52,6 +73,10 @@ auto_mode_9: ["pause_half"]
 
 # ACTIONS ------------------------------------------------------------------------
 # must have a value for "type", other stuff varies
+
+pause_quarter:
+  type: pause
+  duration: 0.25
 
 pause_half:
   type: pause
@@ -82,15 +107,22 @@ shoot_center_subwoofer:
   type: shoot_distance
   distance: 1.43 # meters
 
-shoot_inline_subwoofer:
+shoot_from_white_tape:
   type: shoot_distance
   distance: 2.0 # meters
+
+shoot_from_stage_note:
+  type: shoot_distance
+  distance: 2.8 # meters
 
 # on the diagonal left/right 
 shoot_diagonal:
   type: shoot_distance
   distance: 2.8 # meters
 
+shoot_dynamic:
+  type: shoot_distance
+  distance: 0.0 # meters
 
 ros_rate: 10 # in ms, used for all ros rate calls
 angle_tolerance: 0.00872665 # 0.5 degrees
@@ -113,3 +145,19 @@ cmd_vel_1:
         x: 1.0 #1.0
         y: -0.4 # -0.4
         z: 0.0
+
+drive_2_5_m:
+  type: cmd_vel
+  duration: 2.5
+  cmd_vel:
+    x: 1.0
+    y: 0.0
+    z: 0.0
+
+drive_1_5_m:
+  type: cmd_vel
+  duration: 1.5
+  cmd_vel:
+    x: 1.0
+    y: 0.0
+    z: 0.0

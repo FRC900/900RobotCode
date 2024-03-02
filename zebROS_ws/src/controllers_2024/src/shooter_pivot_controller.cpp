@@ -176,7 +176,18 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
             shooter_pivot_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage);
             if (shooter_pivot_joint_.getControlMode() == hardware_interface::talonfxpro::TalonMode::Disabled)
             {
-                position_command_ = shooter_pivot_joint_.getPosition();
+                if (time_at_disable_ == ros::Time::MAX)
+                {
+                    time_at_disable_ = time;
+                }
+                else if ((time - time_at_disable_).toSec() > 0.5)
+                {
+                    position_command_ = shooter_pivot_joint_.getPosition();
+                }
+            }
+            else
+            {
+                time_at_disable_ = ros::Time::MAX;
             }
             shooter_pivot_joint_.setControlPosition(position_command_);
 
@@ -225,6 +236,8 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
         std::atomic<double> motion_magic_jerk_;
 
         std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
+
+        ros::Time time_at_disable_;
 
         bool cmdService(controllers_2024_msgs::ShooterPivotSrv::Request &req,
                         controllers_2024_msgs::ShooterPivotSrv::Response &response)

@@ -5,6 +5,7 @@ from behavior_actions.msg import Intaking2024Action, Intaking2024Goal, Intaking2
 
 from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse
 from talon_state_msgs.msg import TalonFXProState
+from sensor_msgs.msg import JointState
 
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 # Brings in the SimpleActionClient
@@ -23,19 +24,26 @@ class Rumble2024Server():
         rospy.loginfo("Rumble server starting")
 
         #self.shooter_pos_sub = rospy.Subscriber("/", TalonFXProState, shooter_pivot_callback)
-        self.rumble_srv = rospy.ServiceProxy("/RUMBLETOPIC", RumbleCommand)
+        self.rumble_srv = rospy.ServiceProxy("/frcrobot_rio/rumble_controller/command", RumbleCommand)
         
         self.intaking_current = 0.0
         self.intaking_talon_idx = None
         self.talonfxpro_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.talonfxpro_states_cb)
-        
-        self.norfair_sub = rospy.Subscriber('/norfair/output', Detections, self.notes_callback)
+        #self.norfair_sub = rospy.Subscriber('/norfair/output', Detections, self.notes_callback)
+        self.limit_switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.limit_switch_cb)
+
         self.notes_max_distance = rospy.get_param("note_distance_away")
+        self.intake_limit_switch_name = rospy.get_param("intake_limit_switch_name")
+        self.rumble_value = rospy.get_param("rumble_on_note")
 
         self.rumble = rospy.Timer(rospy.Duration(1.0/20.0), self.rumble_loop)
+        self.closest_note = 900
+        self.time_touched_note = rospy.Time.now()
+        self.touched_note = False
+
 
     def talonfxpro_states_cb(self, states: TalonFXProState):
-        rospy.loginfo_throttle(5, "Intaking node recived talonfx pro states")
+        #rospy.loginfo_throttle(5, "Intaking node recived talonfx pro states")
         if (self.intaking_talon_idx == None):
             for i in range(len(states.name)):
                 #rospy.loginfo(data.name[i])
@@ -58,26 +66,43 @@ class Rumble2024Server():
                 closest_dist = dist
             #rospy.loginfo(f"Note detection at {x, y}")
         self.closest_note = closest_dist
-    
-    def has_game_piece_callback(self, msg):
-        pass 
+
+    def limit_switch_cb(self, data):
+        #rospy.loginfo_throttle(1, "2024_rumble_server: limit switch callback")
+        # check claw switch
+        if self.intake_limit_switch_name in data.name:
+            if self.touched_note == False:
+                #rospy.loginfo(f'2024_rumble_server: {self.intake_limit_switch_name} found')
+                self.touched_note = data.position[data.name.index(self.intake_limit_switch_name)]
+                self.time_touched_note = rospy.Time.now()
+        else:
+            rospy.logerr_throttle(1.0, f'2024_rumble_server: {self.intake_limit_switch_name} not found')
+            pass
 
     # runs at some hz
     def rumble_loop(self, event):
-        rospy.loginfo("Rumble running")
+        #rospy.loginfo_throttle(1, "Rumble running")
         rumble_srv = RumbleCommandRequest()
         rumble_srv.left = 0
         rumble_srv.right = 0
 
-        if self.closest_note < self.notes_max_distance:
-            rumble_srv.left = 10000 # slight rumble if we can see a note
-            rumble_srv.right = 10000
+        # TODO add for next event
+        # if self.closest_note < self.notes_max_distance:
+        #     rumble_srv.left = 10000 # slight rumble if we can see a note
+        #     rumble_srv.right = 10000
 
-        
-         
+        if self.touched_note:
+            rospy.logerr_throttle(1, "2024 rumble server: touched note")
+            # TODO make this a parameter
+            # note should be gone after 1 second
+            if rospy.Time.now() - self.time_touched_note < rospy.Duration(1.0):
+                rumble_srv.left = self.rumble_value
+                rumble_srv.right = self.rumble_value
+            else:
+                rospy.logwarn("Runble server: note touch time expired")
+                self.touched_note = False
+
         self.rumble_srv.call(rumble_srv)
-
-
 
        
 if __name__ == '__main__':

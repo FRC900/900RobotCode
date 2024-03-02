@@ -7,7 +7,7 @@
 CANCoderDevices::CANCoderDevices(ros::NodeHandle &root_nh)
     : state_interface_{std::make_unique<hardware_interface::cancoder::CANCoderStateInterface>()}
     , command_interface_{std::make_unique<hardware_interface::cancoder::CANCoderCommandInterface>()}
-    , remote_state_interface_{std::make_unique<hardware_interface::cancoder::RemoteCANCoderStateInterface>()}
+    , remote_state_interface_{std::make_unique<hardware_interface::cancoder::RemoteCANcoderStateInterface>()}
 {
     ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop"); // TODO : this shouldn't be hard-coded?
     if(!param_nh.param("cancoder_read_hz", read_hz_, read_hz_)) 

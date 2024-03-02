@@ -1,2 +1,2 @@
 tolerance: 0.9 # percent difference
-pivot_tolerance: 0.01
+pivot_tolerance: 0.05

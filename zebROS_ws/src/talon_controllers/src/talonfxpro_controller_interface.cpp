@@ -530,7 +530,7 @@ bool TalonFXProCIParams::readFeedback(const ros::NodeHandle &n)
     {
         if (str == "RemoteSensor0")
         {
-            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANCoder;
+            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
         }
     }
     readIntoScalar(n, "remote_feedback_device_id0", feedback_remote_sensor_id_);
@@ -541,13 +541,29 @@ bool TalonFXProCIParams::readFeedback(const ros::NodeHandle &n)
         {
             feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RotorSensor;
         }
-        else if (str == "RemoteCANCoder")
+        else if (str == "RemoteCANcoder")
         {
-            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANCoder;
+            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
+        }
+        else if (str == "RemotePigeon2_Yaw")
+        {
+            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Yaw;
+        }
+        else if (str == "RemotePigeon2_Pitch")
+        {
+            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Pitch;
+        }
+        else if (str == "RemotePigeon2_Roll")
+        {
+            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Roll;
         }
         else if (str == "FusedCANcoder")
         {
             feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
+        }
+        else if (str == "SyncCANcoder")
+        {
+            feedback_sensor_source_ = hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder;
         }
         else
         {

@@ -28,6 +28,8 @@
     <param name="max_number_of_frames" value="$(arg max_number_of_frames)"/>
   </node>
 
+  <rosparam command="load" file="$(find tagslam_launch)/config_map_odom/map_to_odom.yaml"/>
+
   <node pkg="tagslam_launch" type="tagslam_launch_node" name="map_to_odom"/>
 
   <!-- to visualize both wheeled and tagslam trajectories, bolt the odometry to the map

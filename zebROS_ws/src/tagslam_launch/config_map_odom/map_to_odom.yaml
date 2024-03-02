@@ -1,0 +1,6 @@
+transform_timeout: 0.5 # seconds
+maximum_jump: 100.0 # meters
+cmd_vel_threshold: 0.2 # m/s, maximum speed we can be going at in order to relocalize
+time_stopped: 0.2 # seconds, time we need to be stopped for in order to publish
+publish_frequency: 50 # Hz
+localize_while_stopped: true

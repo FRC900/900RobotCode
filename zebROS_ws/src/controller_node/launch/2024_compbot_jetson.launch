@@ -55,11 +55,12 @@
 			 pivot_cancoder_controller
 			 shooter_pivot_controller
 			 note_diverter_controller
-			 clawster_controller
 			 pigeon2_imu_state_controller
+			 cancoder_state_controller
 			 robot_code_ready_controller" />
 			 
 			 <!--
+			 clawster_controller
 
 			 candle_controller
 			 orchestra_controller
@@ -115,7 +116,6 @@
 
 	<!-- Add 2024 actionlib servers here -->
 	<include file="$(find behaviors)/launch/2024_arm.launch"/>
-	<include file="$(find behaviors)/launch/2024_arm.launch"/>
 	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
 	<include file="$(find behaviors)/launch/2024_preshooter_and_claw.launch"/>
 	
@@ -124,6 +124,7 @@
 	<include file="$(find behaviors)/launch/2024_shooting.launch"/>
 
 	<include file="$(find behaviors)/launch/2024_align_and_shoot.launch"/>
+	<include file="$(find behaviors)/launch/2024_rumble_server.launch"/> 
 
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	<include file="$(find behaviors)/launch/2024_intaking.launch"/>
@@ -133,45 +134,15 @@
 
 	<include file="$(find drive_to_object)/launch/drive_to_object.launch"/>
 	<include file="$(find behaviors)/launch/2024_drive_to_object_and_intake.launch"/>
-
-
-	<include file="$(find tagslam_launch)/launch/2024_compbot_tagslam.launch"/>
+	<include file="$(find norfair_ros)/launch/norfair_node.launch">
+	</include>
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
-	<!-- <include file="$(find controller_node)/launch/zed_detection.launch">
-		<arg name="zed_name"             value="zedx_front" />
-		<arg name="zed_config_dir"       value="zedx" />
-		<arg name="camera_model"         value="zedx" />
-		<arg name="serial_number"	     value="43782465" />
-		<arg name="cam_pos_x"            value="0.3881" />
-		<arg name="cam_pos_y"            value="0.231140" />
-		<arg name="cam_pos_z"            value="0.249929" />
-		<arg name="cam_roll"             value="0.0" />
-		<arg name="cam_pitch"            value="0.0" />
-		<arg name="cam_yaw"              value="0.0" />
-		<arg name="run_camera"           value="true" />
-		<arg name="run_apriltag"         value="true" />
-		<arg name="run_object_detection" value="true" />
-		<arg name="startup_delay"        value="0.0" />
-	</include> -->
-
-	<include file="$(find controller_node)/launch/zed_detection.launch">
-		<arg name="zed_name"             value="zedx_back" />
-		<arg name="zed_config_dir"       value="zedx" />
-		<arg name="camera_model"         value="zedx" />
-		<!-- <arg name="serial_number"	     value="47536732" /> -->
-		<arg name="cam_pos_x"            value="-0.297" />
-		<arg name="cam_pos_y"            value="0.0" />
-		<arg name="cam_pos_z"            value="0.205" />
-		<arg name="cam_roll"             value="0.0" />
-		<arg name="cam_pitch"            value="-0.3141592653589793" />
-		<arg name="cam_yaw"              value="3.14159265" />
-		<arg name="run_camera"           value="true" />
-		<arg name="run_apriltag"         value="true" />
-		<arg name="run_object_detection" value="false" />
-		<arg name="startup_delay"        value="0.0" />
-	</include>
+	<!--
+		# Shooter ZED: Y Distance is 0, X distance is -0.299731, Z distance is 0.200852
+		# Intake ZED: Y distance is 0.231140, X distance is 0.395726, Z distance is 0.232149
+	-->
 
 	<!-- 
 	<group ns="wpilib_odom">

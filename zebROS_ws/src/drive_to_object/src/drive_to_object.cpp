@@ -195,7 +195,7 @@ public:
     // ROS_INFO_STREAM("HERE");
     std::optional<norfair_ros::Detection> closestObject = std::nullopt;
     if (detections.detections.size() == 0 || (ros::Time::now() - detections.header.stamp) > ros::Duration(timeout_)) {
-      ROS_ERROR_STREAM("RETURING NULLOPT");
+      ROS_ERROR_STREAM("RETURING NULLOPT, time delta is " << (ros::Time::now() - detections.header.stamp).toSec());
       ROS_ERROR_STREAM("Det size " << detections.detections.size());
       return std::nullopt;
     }

@@ -56,8 +56,15 @@ geometry_msgs::TransformStamped map_odom_tf;
 
 ros::Time last_tf_pub = ros::Time(0);
 
+double transform_timeout;
+double maximum_jump;
+double cmd_vel_threshold;
+double time_stopped;
+double publish_frequency;
+bool localize_while_stopped;
 
 void updateMapOdomTf() {
+    ros::spinOnce();
     // lookup odom->base_link transform
     geometry_msgs::TransformStamped base_link_to_odom_tf;
     // lookup map->base_link transform
@@ -72,6 +79,23 @@ void updateMapOdomTf() {
       ROS_ERROR_STREAM_THROTTLE(5, "map to odom : transform from base_link to " << odom_frame_id << " failed in map->odom broadcaser : " << ex.what());
       return;
     }
+
+    bool invalid = false;
+
+    if ((ros::Time::now() - base_link_to_odom_tf.header.stamp) > ros::Duration(transform_timeout)) {
+      ROS_ERROR_STREAM_THROTTLE(0.5, "map_to_odom: odom transform too old! " << base_link_to_odom_tf.header.stamp << " delta " << (ros::Time::now() - base_link_to_odom_tf.header.stamp));
+      invalid = true;
+    }
+
+    if ((ros::Time::now() - base_link_to_map_tf.header.stamp) > ros::Duration(transform_timeout)) {
+      ROS_ERROR_STREAM_THROTTLE(0.5, "map_to_odom: tagslam transform too old! " << base_link_to_map_tf.header.stamp << " delta " << (ros::Time::now() - base_link_to_map_tf.header.stamp));
+      invalid = true;
+    }
+
+    if (invalid) {
+      return;
+    }
+
     geometry_msgs::PoseStamped odom_to_map; // ans
     geometry_msgs::PoseStamped base_link_to_map;
     tf2::Transform base_link_to_odom_transform;
@@ -123,6 +147,12 @@ void updateMapOdomTf() {
       tf2::Transform odom_to_map_tf;
       tf2::convert(odom_to_map.pose, odom_to_map_tf);
       tf2::convert(odom_to_map_tf.inverse(), transformStamped.transform);
+
+      if (std::hypot(transformStamped.transform.translation.x - map_odom_tf.transform.translation.x, transformStamped.transform.translation.y - map_odom_tf.transform.translation.y) > maximum_jump) {
+        ROS_ERROR_STREAM_THROTTLE(0.5, "map_to_odom: jump is too big! not saving transform");
+        return;
+      }
+
       map_odom_tf = transformStamped;
       //tfbr->sendTransform(transformStamped);
     } catch (const tf2::TransformException &ex) {
@@ -141,7 +171,7 @@ void timerCallback(const ros::TimerEvent &event) {
 
 bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/) {
   updateMapOdomTf();
-  if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04) {
+  if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > (1./publish_frequency)) {
     tfbr->sendTransform(map_odom_tf);
     last_tf_pub = ros::Time::now();
   }
@@ -153,15 +183,17 @@ bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*
 }
 
 void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
-  if (hypot(msg->twist.linear.x, msg->twist.linear.y) > 0.1) {
-    last_tf_pub = ros::Time::now() + ros::Duration(0.1);
-  }
-  if (hypot(msg->twist.linear.x, msg->twist.linear.y) < 0.1) {
-    updateMapOdomTf();
-    if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > 0.04) {
-      ROS_INFO_STREAM_THROTTLE(2, "RELOCALIZING"); 
-      tfbr->sendTransform(map_odom_tf);
-      last_tf_pub = ros::Time::now();
+  if (localize_while_stopped) {
+    if (hypot(msg->twist.linear.x, msg->twist.linear.y) > cmd_vel_threshold) {
+      last_tf_pub = ros::Time::now() + ros::Duration(time_stopped);
+    }
+    if (hypot(msg->twist.linear.x, msg->twist.linear.y) < cmd_vel_threshold) {
+      updateMapOdomTf();
+      if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > (1./publish_frequency)) {
+        ROS_INFO_STREAM_THROTTLE(2, "RELOCALIZING"); 
+        tfbr->sendTransform(map_odom_tf);
+        last_tf_pub = ros::Time::now();
+      }
     }
   }
 }
@@ -173,6 +205,42 @@ int main(int argc, char **argv) {
   // static_broadcaster.sendTransform(static_transformStamped);
   tfbr = std::make_unique<tf2_ros::StaticTransformBroadcaster>();
   
+  if (!nh_.getParam("transform_timeout", transform_timeout))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find transform_timeout, exiting");
+    return -1;
+  }
+
+  if (!nh_.getParam("maximum_jump", maximum_jump))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find maximum_jump, exiting");
+    return -1;
+  }
+
+  if (!nh_.getParam("localize_while_stopped", localize_while_stopped))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find localize_while_stopped, exiting");
+    return -1;
+  }
+
+  if (!nh_.getParam("cmd_vel_threshold", cmd_vel_threshold))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find cmd_vel_threshold, exiting");
+    return -1;
+  }
+
+  if (!nh_.getParam("time_stopped", time_stopped))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find time_stopped, exiting");
+    return -1;
+  }
+
+  if (!nh_.getParam("publish_frequency", publish_frequency))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find publish_frequency, exiting");
+    return -1;
+  }
+
   // write a timer that gets called at 25Hz
   // ros::Timer timer = nh_.createTimer(ros::Duration(0.004), timerCallback);
   // write a service that takes in an empty message and publishes the tf

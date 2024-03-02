@@ -1,5 +1,6 @@
 uint8 SHOOTER=0
 uint8 CLAW=1
+uint8 OUTTAKE=2
 uint8 destination
 bool run_until_preempt # used for auto to run intake the entire time 
 ---

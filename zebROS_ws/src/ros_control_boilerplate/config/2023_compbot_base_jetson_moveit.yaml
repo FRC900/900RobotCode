@@ -84,7 +84,7 @@ minifrc_moveit_controller:
         type: talonfxpro_controllers/TalonFXProPositionVoltageController
         joint: base_arm
         # DONT SET THIS FOR SIM !!! 
-        #feedback_sensor_source: RemoteCANCoder
+        #feedback_sensor_source: RemoteCANcoder
         #remote_feedback_device_id0: 21
         #neutral_deadband: 0.01
         close_loop_values:
@@ -101,7 +101,7 @@ minifrc_moveit_controller:
         type: talonfxpro_controllers/TalonFXProPositionVoltageController
         joint: second_stage_arm
         # DONT SET THIS FOR SIM !!! 
-        #feedback_sensor_source: RemoteCANCoder
+        #feedback_sensor_source: RemoteCANcoder
         #remote_feedback_device_id0: 21
         #neutral_deadband: 0.01
         close_loop_values:
@@ -132,7 +132,7 @@ minifrc_moveit_controller:
 #         type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
 #         joint: base_arm
 #         # DONT SET THIS FOR SIM !!! 
-#         #feedback_sensor_source: RemoteCANCoder
+#         #feedback_sensor_source: RemoteCANcoder
 #         #remote_feedback_device_id0: 21
 #         #neutral_deadband: 0.01
 #         close_loop_values:
@@ -149,7 +149,7 @@ minifrc_moveit_controller:
 #         type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
 #         joint: second_stage_arm
 #         # DONT SET THIS FOR SIM !!! 
-#         #feedback_sensor_source: RemoteCANCoder
+#         #feedback_sensor_source: RemoteCANcoder
 #         #remote_feedback_device_id0: 21
 #         #neutral_deadband: 0.01
 #         close_loop_values:

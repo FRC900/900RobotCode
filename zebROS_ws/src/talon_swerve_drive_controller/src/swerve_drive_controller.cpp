@@ -403,7 +403,7 @@ bool init(hardware_interface::RobotHW *hw,
 
 		for (size_t row = 0; row < WHEELCOUNT; row++)
 		{
-			last_wheel_rot_[row] = speed_joints_[row].getPosition();
+			last_wheel_rot_[row] = latency_compensation_state_->getLatencyCompensatedValue(speed_names_[row], ros::Time::now());
 		}
 	}
 	controller_nh.param("use_cos_scaling", use_cos_scaling_, use_cos_scaling_);
@@ -420,7 +420,7 @@ void starting(const ros::Time &time) override
 	std::array<double, WHEELCOUNT> steer_angles;
 	for (size_t k = 0; k < WHEELCOUNT; k++)
 	{
-		steer_angles[k] = steering_joints_[k].getPosition();
+		steer_angles[k] = latency_compensation_state_->getLatencyCompensatedValue(steering_names_[k], time);
 		last_wheel_angle_[k] = swerveC_->getWheelAngle(k, steer_angles[k]);
 		last_wheel_sign_[k] = 1.0;
 		speeds_angles_[k][0] = 0;
@@ -446,7 +446,7 @@ void stopping(const ros::Time &time) override
 	std::array<double, WHEELCOUNT> steer_angles;
 	for (size_t k = 0; k < WHEELCOUNT; k++)
 	{
-		steer_angles[k] = steering_joints_[k].getPosition();
+		steer_angles[k] = latency_compensation_state_->getLatencyCompensatedValue(steering_names_[k], time);
 	}
 	brake(steer_angles, time, true);
 }

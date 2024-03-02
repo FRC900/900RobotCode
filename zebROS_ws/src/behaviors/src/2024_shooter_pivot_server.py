@@ -17,19 +17,24 @@ global motion_magic_value_index
 motion_magic_value_index = None
 motion_magic_value = 1.0
 
+vel = 0.0
+
 
 def callback(data):
     global motion_magic_value
     global motion_magic_value_index
+    global vel
     if (motion_magic_value_index == None):
         for i in range(len(data.name)):
             #rospy.loginfo(data.name[i])
             if (data.name[i] == "shooter_pivot_motionmagic_joint"): 
                 motion_magic_value = data.position[i]
+                vel = data.velocity[i]
                 motion_magic_value_index = i
                 break
     else:
         motion_magic_value = data.position[motion_magic_value_index]
+        vel = data.velocity[motion_magic_value_index]
 
 
 
@@ -82,7 +87,7 @@ class ShooterPivotServer2024:
                 self.server.set_preempted()
                 break
              
-            elif (abs(motion_magic_value - goal.pivot_position) < self.tolerance):
+            elif (abs(motion_magic_value - goal.pivot_position) < self.tolerance) and (abs(vel) < 0.05):
                 self._result.success = True
                 self._feedback.percent_complete = 100.0
                 self._feedback.is_at_pivot_position = True

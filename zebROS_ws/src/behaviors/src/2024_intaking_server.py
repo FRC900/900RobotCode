@@ -60,6 +60,9 @@ class Intaking2024Server(object):
         self.safe_shooter_angle = rospy.get_param("safe_shooter_angle")
 
         self.current_threshold = rospy.get_param("current_threshold")
+
+        self.outtaking_speed = rospy.get_param("outtaking_speed")
+        self.outtaking_time = rospy.get_param("outtaking_time")
         
         self.intaking_current = 0.0
         self.intaking_talon_idx = None
@@ -93,12 +96,41 @@ class Intaking2024Server(object):
     def execute_cb(self, goal: Intaking2024Goal):
         r = rospy.Rate(60)
 
+        if goal.destination == goal.OUTTAKE:
+            intake_srv = CommandRequest()
+            intake_srv.command = -self.outtaking_speed
+            self.intake_client.call(intake_srv)
+
+            start = rospy.Time.now()
+
+            while goal.run_until_preempt or (not (rospy.is_shutdown() or (rospy.Time.now() - start).to_sec() > self.outtaking_time)):
+                rospy.loginfo_throttle(0.5, f"2024_intaking_server: outtaking")
+                    
+                if self.server.is_preempt_requested():
+                    rospy.loginfo("2024_intaking_server: preempted")
+
+                    # stop intake
+                    intake_srv = CommandRequest()
+                    intake_srv.command = 0.0
+                    self.intake_client.call(intake_srv)
+
+                    self.server.set_preempted()
+                    return
+                r.sleep()
+            
+            # stop intake
+            intake_srv = CommandRequest()
+            intake_srv.command = 0.0
+            self.intake_client.call(intake_srv)
+
+            return
+
         self.feedback.state = self.feedback.SHOOTERPIVOTING
         self.server.publish_feedback(self.feedback)
 
         if self.pivot_position > self.safe_shooter_angle:
             pivot_goal = ShooterPivot2024Goal()
-            pivot_goal.pivot_position = self.safe_shooter_angle
+            pivot_goal.pivot_position = self.safe_shooter_angle - 0.2
             self.shooter_pivot_client.send_goal(pivot_goal)
             while self.pivot_position > self.safe_shooter_angle:
                 if self.server.is_preempt_requested():

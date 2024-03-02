@@ -21,28 +21,33 @@
 
 #include "teleop_joystick_control/teleop_joystick_comp_general.h"
 
+#include "behavior_actions/AlignAndShoot2024Action.h"
+
 class AutoModeCalculator2024 : public AutoModeCalculator {
 public:
-	AutoModeCalculator2024() = default;
-	uint8_t calculateAutoMode() override {
-		return auto_mode_;
+	explicit AutoModeCalculator2024(ros::NodeHandle &n)
+		: AutoModeCalculator(n)
+	{
 	}
 	void set_auto_mode(const uint8_t auto_mode) {
 		auto_mode_ = auto_mode;
 	}
 private:
-	uint8_t auto_mode_{0};
+	uint8_t calculateAutoMode() override {
+		return auto_mode_;
+	}
+	uint8_t auto_mode_{1};
 };
 
-AutoModeCalculator2024 auto_calculator;
+std::unique_ptr<AutoModeCalculator2024> auto_calculator;
 
 // TODO: Add 2024 versions, initialize in main before calling generic inititalizer
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2024Action>> intaking_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2024Action>> shooting_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>> aligned_shooting_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>> drive_and_intake_ac;
 
-
-void talonFXProStateCallback(const talon_state_msgs::TalonFXProState talon_state)
+void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 {    
 	ROS_WARN("Calling unimplemented function \"talonFXProStateCallback()\" in teleop_joystick_comp_2024.cpp ");
 }
@@ -84,29 +89,33 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			
 			}
 
-			//Joystick1: buttonX
+			//Joystick1: buttonX (button Y on controller with replaced white buttons)
+			// this is the top button on the ABXY set
 			if(joystick_state->buttonXPress)
 			{
-
+				behavior_actions::Shooting2024Goal goal;
+				goal.mode = goal.SUBWOOFER;
+				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonXButton)
 			{
 			}
 			if(joystick_state->buttonXRelease)
 			{
+				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 			//Joystick1: buttonY
 			if(joystick_state->buttonYPress)
 			{
-
+				
 			}
 			if(joystick_state->buttonYButton)
 			{
 			}
 			if(joystick_state->buttonYRelease)
 			{
-
+				
 			}
 
 			//Joystick1: bumperLeft
@@ -127,14 +136,16 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: bumperRight
 			if(joystick_state->bumperRightPress)
 			{
-				
+				behavior_actions::Shooting2024Goal goal;
+				goal.mode = goal.AMP;
+				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->bumperRightButton)
 			{
 			}
 			if(joystick_state->bumperRightRelease)
 			{
-				
+				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 
@@ -234,9 +245,8 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_right_trigger_pressed)
 				{
-					behavior_actions::Shooting2024Goal goal;
-					goal.mode = goal.SUBWOOFER;
-					shooting_ac->sendGoal(goal);
+					behavior_actions::AlignAndShoot2024Goal goal;
+					aligned_shooting_ac->sendGoal(goal);
 				}
 
 				joystick1_right_trigger_pressed = true;
@@ -245,7 +255,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(joystick1_right_trigger_pressed)
 				{
-					shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+					aligned_shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_right_trigger_pressed = false;
@@ -495,7 +505,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 
 	// TODO We'll probably want to check the actual value here
-	auto_calculator.set_auto_mode(button_box->auto_mode);
+	auto_calculator->set_auto_mode(button_box->auto_mode);
 
  
 	if(button_box->zeroButton) {
@@ -527,6 +537,8 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		ROS_WARN_STREAM("teleop_joystick_comp_2024: PREEMPTING all actions");
 		drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		aligned_shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 	if (button_box->redRelease)
 	{
@@ -699,13 +711,16 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "teleop_params");
 
+	auto_calculator = std::make_unique<AutoModeCalculator2024>(n);
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2024Action>>("/intaking/intaking_server_2024", true);
 	shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Shooting2024Action>>("/shooting/shooting_server_2024", true);
 	drive_and_intake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>>("/intaking/drive_object_intake", true);
+	aligned_shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>>("/align_and_shoot/align_and_shoot_2024", true);
+
+	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
 	TeleopInitializer initializer;
 	initializer.set_n_params(n_params);
-	initializer.init();
-	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
+	initializer.init(); // THIS SPINS
 	return 0;
 }

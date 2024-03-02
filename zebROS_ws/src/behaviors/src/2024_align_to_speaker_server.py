@@ -47,6 +47,27 @@ class Aligner:
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
         yaw = euler[2]
         self.current_yaw = yaw
+
+        offset_point = tf2_geometry_msgs.PointStamped()
+        offset_point.header.frame_id = 'bluespeaker' if self.color == 1 else 'redspeaker'
+        offset_point.header.stamp = rospy.get_rostime()
+
+        offset_point.point.y = 0
+
+        try:
+            trans = self.tfBuffer.lookup_transform('base_link', offset_point.header.frame_id, rospy.Time())
+            destination = tf2_geometry_msgs.do_transform_point(offset_point, trans)
+
+            msg = std_msgs.msg.Float64()
+            dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
+
+            dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
+            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
+            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
+
+            self.pub_dist_and_ang_vel.publish(dist_ang_msg)
+        except Exception as e:
+            rospy.logwarn_throttle(1, f"align_to_speaker: can't publish distance {e}")
         
     def data_callback(self, data_msg):
         self.color = data_msg.allianceColor
@@ -97,7 +118,7 @@ class Aligner:
             self.pub_dist_and_ang_vel.publish(dist_ang_msg)
             
             cmd_vel_msg = geometry_msgs.msg.Twist()
-            cmd_vel_msg.angular.x = 0 # todo, tune me
+            cmd_vel_msg.angular.x = 0
             cmd_vel_msg.angular.y = 0
             cmd_vel_msg.angular.z = self.current_orient_effort
             cmd_vel_msg.linear.x = 0
@@ -107,11 +128,20 @@ class Aligner:
 
             rospy.loginfo_throttle(0.5, f"{self.current_yaw} vs {msg.data}")
 
-            if self._feedback.error < self.tolerance:
+            if self._feedback.error < self.tolerance and abs(self.current_orient_effort) < self.tolerance:
                 rospy.loginfo_throttle(0.5, "2024_align_to_speaker: aligned")
                 success = True
                 self._as.publish_feedback(self._feedback)
-                if not goal.align_forever: break
+                if not goal.align_forever:
+                    cmd_vel_msg = geometry_msgs.msg.Twist()
+                    cmd_vel_msg.angular.x = 0
+                    cmd_vel_msg.angular.y = 0
+                    cmd_vel_msg.angular.z = 0.0
+                    cmd_vel_msg.linear.x = 0
+                    cmd_vel_msg.linear.y = 0
+                    cmd_vel_msg.linear.z = 0
+                    self.pub_cmd_vel.publish(cmd_vel_msg)
+                    break
 
             rate.sleep()
         if success:

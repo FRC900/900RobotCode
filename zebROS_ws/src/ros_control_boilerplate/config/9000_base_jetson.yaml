@@ -154,7 +154,7 @@ talonfxpro_controller:
     invert: counterclockwise_positive
     dynamic_reconfigure: True
     neutral_mode: Coast
-    forward_limit_type: RemoteCanCoder
+    forward_limit_type: RemoteCANcoder
     forward_limit_remote_sensor_id: 50
 
 swerve_drive_state_controller:

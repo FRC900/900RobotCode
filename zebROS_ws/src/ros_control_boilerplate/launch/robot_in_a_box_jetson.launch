@@ -25,9 +25,9 @@
 			 joint_state_controller
 			 joint_state_listener_controller
 			 match_state_listener_controller
-			 clawster_controller
 			 robot_code_ready_controller" />
 <!-- 
+			 clawster_controller
 			   do2_controller
 			   pdp_state_controller
 			   pcm_state_controller

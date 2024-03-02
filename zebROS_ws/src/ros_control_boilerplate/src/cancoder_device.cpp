@@ -21,7 +21,7 @@ CANCoderDevice::CANCoderDevice(const std::string &name_space,
                                const bool local_hardware,
                                const bool local_update,
                                const double read_hz_)
-    : CTREV6Device("CANCoder", joint_name, can_id)
+    : CTREV6Device("CANcoder", joint_name, can_id)
     , local_hardware_{local_hardware}
     , local_update_{local_update}
     , state_{std::make_unique<hardware_interface::cancoder::CANCoderHWState>(can_id)}
@@ -48,7 +48,7 @@ CANCoderDevice::~CANCoderDevice(void) = default;
 
 void CANCoderDevice::registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
                                         hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
-                                        hardware_interface::cancoder::RemoteCANCoderStateInterface &remote_state_interface) const
+                                        hardware_interface::cancoder::RemoteCANcoderStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for CANCoder : " << getName() << " at CAN id " << getId());
 

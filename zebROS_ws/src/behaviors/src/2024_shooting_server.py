@@ -192,8 +192,10 @@ class ShootingServer(object):
                     # ensure shooter turned off
                     self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
-                    # ensure pivot stopped
-                    self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                    # ensure pivot at good position
+                    pivot_goal.pivot_position = 0.5
+                    self.pivot_client.send_goal(pivot_goal)
+                    # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     # stop preshooter
                     self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())

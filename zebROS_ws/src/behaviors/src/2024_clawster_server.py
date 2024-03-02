@@ -4,6 +4,7 @@
 
 import rospy
 import actionlib
+import time
 
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
@@ -17,7 +18,7 @@ class Clawster2024ActionServer(object):
     _result = Clawster2024Result()
 
     def __init__(self, name):
-        self.claw_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
+        self.claw_client = rospy.ServiceProxy(f"/frcrobot_rio/{rospy.get_param('controller_name')}/command", Command)
         self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback)
         self._action_name = name
         '''
@@ -103,7 +104,7 @@ class Clawster2024ActionServer(object):
                     return
                 r.sleep()
 
-            rospy.Rate(self.outtake_delay).sleep()
+            time.sleep(self.outtake_delay)
             pct_out.data = 0
             self.claw_client.call(CommandRequest(pct_out.data))
             if success:

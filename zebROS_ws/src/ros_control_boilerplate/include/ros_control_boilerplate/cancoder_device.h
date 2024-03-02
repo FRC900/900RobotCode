@@ -16,7 +16,7 @@ namespace hardware_interface::cancoder
     class CANCoderHWCommand;
     class CANCoderStateInterface;
     class CANCoderCommandInterface;
-    class RemoteCANCoderStateInterface;
+    class RemoteCANcoderStateInterface;
 }
 class Tracer;
 
@@ -39,7 +39,7 @@ public:
 
     void registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
                             hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
-                            hardware_interface::cancoder::RemoteCANCoderStateInterface &remote_state_interface) const;
+                            hardware_interface::cancoder::RemoteCANcoderStateInterface &remote_state_interface) const;
     void read(const ros::Time &time, const ros::Duration &period);
     void write(const ros::Time &time, const ros::Duration &period);
 

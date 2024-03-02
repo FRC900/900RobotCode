@@ -26,9 +26,9 @@ def main():
     rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, callback)
 
     four_bar_start = 0.5
-    four_bar_target =  1.2 #four_bar_start
+    four_bar_target =  0.5 #four_bar_start
     four_bar_service = rospy.ServiceProxy('/frcrobot_jetson/shooter_pivot_controller/shooter_pivot_service', ShooterPivotSrv)
-    while (not rospy.is_shutdown()) and (four_bar_target <= 1.6):
+    while (not rospy.is_shutdown()) and (four_bar_target <= 1.0):
 
         four_bar_service(four_bar_start)
         rospy.sleep(2)

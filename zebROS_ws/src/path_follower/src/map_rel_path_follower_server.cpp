@@ -135,11 +135,11 @@ class PathAction
 			catch (tf2::TransformException &ex) {
 				ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
 			}
-			ROS_INFO_STREAM("Diff between tf and now " << ros::Time::now() - map_to_baselink_.header.stamp); 
+			// ROS_INFO_STREAM("Diff between tf and now " << ros::Time::now() - map_to_baselink_.header.stamp); 
 
 			const double final_pos_tol = (goal->final_pos_tol > 0) ? goal->final_pos_tol : final_pos_tol_;
 			const double final_rot_tol = (goal->final_rot_tol > 0) ? goal->final_rot_tol : final_rot_tol_;
-			ROS_INFO_STREAM("Path following with final_pos_tol = " << final_pos_tol << " final_rot_tol = " << final_rot_tol);
+			// ROS_INFO_STREAM("Path following with final_pos_tol = " << final_pos_tol << " final_rot_tol = " << final_rot_tol);
 
 			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
 			// Set this up as a transfrom to apply to each point in the path. This has the
@@ -279,7 +279,7 @@ class PathAction
 					continue;
 				}
 				// must be less than 0.01 100hz 
-				ROS_INFO_STREAM("Diff between tf and now " << ros::Time::now() - map_to_baselink_.header.stamp); 
+				// ROS_INFO_STREAM("Diff between tf and now " << ros::Time::now() - map_to_baselink_.header.stamp); 
 #ifdef DEBUG
 				// This gets the point closest to current time plus lookahead distance
 				// on the path. We use this to generate a target for the x,y,orientation
@@ -351,7 +351,7 @@ class PathAction
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
 				
 				auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_).count();
-				ROS_INFO_STREAM("Path follower calculations took " << duration);
+				// ROS_INFO_STREAM("Path follower calculations took " << duration);
 				if ((fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
 					(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) < final_rot_tol) &&

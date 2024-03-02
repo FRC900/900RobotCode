@@ -14,15 +14,15 @@ cam0:
   rig_body: frc_robot
 
 # FRONT CAM
-# cam1:
-#   camera_model: pinhole
-#   # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
-#   intrinsics: [367.779, 367.738, 485.0645, 311.0715]
-#   distortion_model: plumb_bob
-#   # are we sure they are all zero?
-#   distortion_coeffs: [0.0, 0.0, 0.0, 0.0, 0.0]
-#   resolution: [960, 640]
-#   rostopic: /DONTUSETHIS_front
-#   # CHECK THIS
-#   tagtopic: /apriltag_zedx_front/apriltag_detection/tags
-#   rig_body: frc_robot
+cam1:
+  camera_model: pinhole
+  # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
+  intrinsics: [367.779, 367.738, 485.0645, 311.0715]
+  distortion_model: plumb_bob
+  # are we sure they are all zero?
+  distortion_coeffs: [0.0, 0.0, 0.0, 0.0, 0.0]
+  resolution: [960, 640]
+  rostopic: /DONTUSETHIS_front
+  # CHECK THIS
+  tagtopic: /apriltag_zedx_front/apriltag_detection/tags
+  rig_body: frc_robot

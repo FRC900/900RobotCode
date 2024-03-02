@@ -5,7 +5,7 @@
 
 # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
 speeds_map: [[1.43, [360.0, 360.0, 360.0, 360.0]], [2.13, [360.0, 360.0, 360.0, 360.0]], [2.58, [360.0, 360.0, 360.0, 360.0]], [2.99, [420.0, 420.0, 420.0, 420.0]], [3.16, [420.0, 420.0, 420.0, 420.0]]]
-angle_map: [[1.43, 0.95], [2.13, 0.82], [2.58, 0.74], [2.99, 0.66], [3.16, 0.63]]
+angle_map: [[1.43, 0.98], [1.96, 0.87], [2.13, 0.82], [2.58, 0.74], [2.99, 0.66], [3.16, 0.61]]
 delay_after_shooting: 0.5
 
 # subwoofer (1.43 m from speaker tag)
@@ -17,8 +17,8 @@ subwoofer_pivot_position: 0.95 # rad
 
 # amp
 # (starting out with 575 rpm, 76 degrees which worked in the lab)
-amp_top_left_speed: 60.21 # rad/s
-amp_top_right_speed: 60.21 # rad/s
-amp_bottom_left_speed: 60.21 # rad/s
-amp_bottom_right_speed: 60.21 # rad/s
-amp_pivot_position: 1.32 # rad
+amp_top_left_speed: 120.0 # rad/s
+amp_top_right_speed: 120.0 # rad/s
+amp_bottom_left_speed: 150.0 # rad/s
+amp_bottom_right_speed: 150.0 # rad/s
+amp_pivot_position: 0.93 # rad

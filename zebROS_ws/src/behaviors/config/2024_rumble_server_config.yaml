@@ -1,1 +1,4 @@
-notes_distance_away: 5.0 # meters if note if farther away then we don't rumble
+# not respected
+note_distance_away: 5.0 # meters if note if farther away then we don't rumble
+intake_limit_switch_name: diverter_limit_switch
+rumble_on_note: 20000 # out of 65535

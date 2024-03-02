@@ -29,6 +29,7 @@
 			 joint_state_controller
 			 joint_state_listener_controller
 			 match_state_controller
+			 clawster_controller
 			 robot_code_ready_controller" />
 <!-- 
 			 button_box_controller

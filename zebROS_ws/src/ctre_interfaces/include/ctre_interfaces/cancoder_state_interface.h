@@ -142,7 +142,7 @@ class CANCoderHWState
 using CANCoderStateHandle = StateHandle<const CANCoderHWState>;
 using CANCoderWritableStateHandle = StateHandle<CANCoderHWState>;
 class CANCoderStateInterface : public HardwareResourceManager<CANCoderStateHandle> {};
-class RemoteCANCoderStateInterface : public HardwareResourceManager<CANCoderWritableStateHandle, ClaimResources> {};
+class RemoteCANcoderStateInterface : public HardwareResourceManager<CANCoderWritableStateHandle, ClaimResources> {};
 
 } // namespace hardware_interface::cancoder
 

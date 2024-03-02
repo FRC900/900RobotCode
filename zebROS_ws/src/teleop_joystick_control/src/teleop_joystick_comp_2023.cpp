@@ -31,9 +31,9 @@
 
 class AutoModeCalculator2023 : public AutoModeCalculator {
 public:
-	AutoModeCalculator2023() = default;
-	uint8_t calculateAutoMode() override {
-		return auto_mode_ * 3 + auto_starting_pos_;
+	explicit AutoModeCalculator2023(ros::NodeHandle &n)
+		: AutoModeCalculator(n)
+	{
 	}
 	void set_auto_mode(const uint8_t auto_mode) {
 		auto_mode_ = auto_mode;
@@ -42,11 +42,14 @@ public:
 		auto_starting_pos_ = auto_starting_pos;
 	}
 private:
+	uint8_t calculateAutoMode() override {
+		return auto_mode_ * 3 + auto_starting_pos_;
+	}
 	uint8_t auto_mode_{0};
 	uint8_t auto_starting_pos_{1};
 };
 
-AutoModeCalculator2023 auto_calculator;
+std::unique_ptr<AutoModeCalculator2023> auto_calculator;
 
 // start at waiting to align
 // when driver transition becomes true, and we are at waiting to align, then align
@@ -356,7 +359,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 	if(button_box->heightSelectSwitchUpPress) {
 		if (robot_is_disabled)
 		{
-			auto_calculator.set_auto_mode(0);
+			auto_calculator->set_auto_mode(0);
 		}
 		node = behavior_actions::Placing2023Goal::HIGH;
 	}
@@ -368,7 +371,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 			node = behavior_actions::Placing2023Goal::MID;
 			if (robot_is_disabled)
 			{
-				auto_calculator.set_auto_mode(1);
+				auto_calculator->set_auto_mode(1);
 			}
 		}
 
@@ -384,7 +387,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 		node = behavior_actions::Placing2023Goal::HYBRID;
 		if (robot_is_disabled)
 		{
-			auto_calculator.set_auto_mode(2);
+			auto_calculator->set_auto_mode(2);
 		}
 	}
 	if(button_box->heightSelectSwitchDownRelease) {
@@ -395,7 +398,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 	if(button_box->heightSelectSwitchLeftPress) {
 		if (robot_is_disabled)
 		{
-			auto_calculator.set_auto_starting_pos(1);
+			auto_calculator->set_auto_starting_pos(1);
 		}
 		grid_position = 0;
 	}
@@ -407,7 +410,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 			node = behavior_actions::Placing2023Goal::MID;
 			if (robot_is_disabled)
 			{
-				auto_calculator.set_auto_starting_pos(2);
+				auto_calculator->set_auto_starting_pos(2);
 			}
 		}
 		grid_position = 3;
@@ -421,7 +424,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2023ConstPtr &button_box)
 	if(button_box->heightSelectSwitchRightPress) {
 		if (robot_is_disabled)
 		{
-			auto_calculator.set_auto_starting_pos(3);
+			auto_calculator->set_auto_starting_pos(3);
 		}
 		grid_position = 6;
 	}
@@ -990,7 +993,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle n_diagnostics_params(n, "teleop_diagnostics_params");
 	ros::NodeHandle n_swerve_params(n, "/frcrobot_jetson/swerve_drive_controller");
 
-	auto_calculator.register_publisher(n);
+	auto_calculator = std::make_unique<AutoModeCalculator2023>(n);
 
 	if(!n_params.getParam("max_speed_elevator_extended", config2023.max_speed_elevator_extended))
 	{
@@ -1030,7 +1033,7 @@ int main(int argc, char **argv)
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
-	initializer.init();
+	initializer.init(); // Note, this never returns so do all year-specific init first
 
 	return 0;
 }

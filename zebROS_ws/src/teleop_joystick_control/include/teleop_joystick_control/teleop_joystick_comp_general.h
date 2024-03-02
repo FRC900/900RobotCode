@@ -9,21 +9,30 @@
 #include "frc_msgs/MatchSpecificData.h"
 
 // There's gotta be a better name for this
+// Maybe ask ChatGPT about it later <- from Github Copilot
+
+// Year-specific code should create a class derived from AutoModeCalculator
+// and implement the calculateAutoMode function to calculate the auto mode. Auto mode can be
+// calculated from whatever internal state the derived class needs to add.
+// That internal state can be set by whatever metods the derived class needs
+// to add.
 class AutoModeCalculator {
 public:
+	explicit AutoModeCalculator(ros::NodeHandle &n) 
+		: auto_mode_select_pub_{n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true)}
+		, timer_{n.createTimer(ros::Duration(0.1), &AutoModeCalculator::publisher_callback, this)}
+		{
+		}
+
+	virtual ~AutoModeCalculator() = default;
+private:
 	virtual uint8_t calculateAutoMode() = 0;
-	void register_publisher(ros::NodeHandle n) {
-		auto_mode_select_pub_ = n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true);
-		timer_ = n.createTimer(ros::Duration(0.1), &AutoModeCalculator::publisher_callback, this);
-	}	
 	void publisher_callback(const ros::TimerEvent&) {
 		behavior_actions::AutoMode msg;
 		msg.header.stamp = ros::Time::now();
 		msg.auto_mode = calculateAutoMode();
 		auto_mode_select_pub_.publish(msg);
 	}
-	virtual ~AutoModeCalculator() = default;
-private:
 	ros::Publisher auto_mode_select_pub_;
 	ros::Timer timer_;
 };

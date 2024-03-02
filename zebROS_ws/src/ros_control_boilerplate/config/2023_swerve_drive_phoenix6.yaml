@@ -105,7 +105,7 @@ swerve_drive_controller:
         #neutral_deadband: 0.01
     fl_angle:
         joint: fl_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: RemoteCANcoder
         feedback_remote_sensor_id: 11
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -118,7 +118,7 @@ swerve_drive_controller:
         invert: clockwise_positive
     fr_angle:
         joint: fr_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: RemoteCANcoder
         remote_feedback_device_id0: 12
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -131,7 +131,7 @@ swerve_drive_controller:
         invert: clockwise_positive
     br_angle:
         joint: br_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: RemoteCANcoder
         remote_feedback_device_id0: 14
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -144,7 +144,7 @@ swerve_drive_controller:
         invert: clockwise_positive
     bl_angle:
         joint: bl_angle
-        feedback_sensor_source: RemoteCANCoder
+        feedback_sensor_source: RemoteCANcoder
         remote_feedback_device_id0: 13
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -160,7 +160,7 @@ swerve_drive_controller:
 swerve_angle_phoenix6_controller:
     type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
     joint: bl_angle
-    feedback_sensor_source: RemoteCANCoder
+    feedback_sensor_source: RemoteCANcoder
     remote_feedback_device_id0: 13
     close_loop_values:
         - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}

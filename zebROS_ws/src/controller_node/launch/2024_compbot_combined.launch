@@ -33,7 +33,9 @@
     <!-- Jetson 2 Nodes -->
 	<group if="$(eval arg('hw_or_sim')=='hw')">
 		<machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
-	</gruoup>
-    <include file="$(find behaviors)/launch/2024_compbot_vision.launch"/> 
+	</group>
+    <include file="$(find controller_node)/launch/2024_compbot_vision.launch"> 
+		<arg name="run_camera" value="$(eval arg('hw_or_sim') == 'hw')" />
+	</include>
 
 </launch>

@@ -299,11 +299,23 @@ public:
 					case hardware_interface::talonfxpro::FeedbackSensorSource::RotorSensor:
 						m.feedback_sensor_source[i] = "RotorSensor";
 						break;
-					case hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANCoder:
-						m.feedback_sensor_source[i] = "RemoteCANCoder";
+					case hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder:
+						m.feedback_sensor_source[i] = "RemoteCANcoder";
+						break;
+					case hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Yaw:
+						m.feedback_sensor_source[i] = "RemotePigeon2_Yaw";
+						break;
+					case hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Pitch:
+						m.feedback_sensor_source[i] = "RemotePigeon2_Pitch";
+						break;
+					case hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Roll:
+						m.feedback_sensor_source[i] = "RemotePigeon2_Roll";
 						break;
 					case hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder:
 						m.feedback_sensor_source[i] = "FusedCANcoder";
+						break;
+					case hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder:
+						m.feedback_sensor_source[i] = "SyncCANcoder";
 						break;
 					default:
 						m.feedback_sensor_source[i] = "Unknown";

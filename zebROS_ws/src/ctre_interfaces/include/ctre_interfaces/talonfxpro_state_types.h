@@ -24,8 +24,12 @@ enum class FeedbackSensorSource
 {
 	Uninitialized,
 	RotorSensor,
-	RemoteCANCoder,
+	RemoteCANcoder,
+	RemotePigeon2_Yaw,
+	RemotePigeon2_Pitch,
+	RemotePigeon2_Roll,
 	FusedCANcoder,
+	SyncCANcoder,
 	Last
 };
 

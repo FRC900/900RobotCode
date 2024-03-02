@@ -681,14 +681,34 @@ static bool convertFeedbackSensorSource(const hardware_interface::talonfxpro::Fe
         out = ctre::phoenix6::signals::FeedbackSensorSourceValue::RotorSensor;
         return true;
     }
-    if (in == hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANCoder)
+    if (in == hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder)
     {
         out = ctre::phoenix6::signals::FeedbackSensorSourceValue::RemoteCANcoder;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Yaw)
+    {
+        out = ctre::phoenix6::signals::FeedbackSensorSourceValue::RemotePigeon2_Yaw;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Pitch)
+    {
+        out = ctre::phoenix6::signals::FeedbackSensorSourceValue::RemotePigeon2_Pitch;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Roll)
+    {
+        out = ctre::phoenix6::signals::FeedbackSensorSourceValue::RemotePigeon2_Roll;
         return true;
     }
     if (in == hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder)
     {
         out = ctre::phoenix6::signals::FeedbackSensorSourceValue::FusedCANcoder;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder)
+    {
+        out = ctre::phoenix6::signals::FeedbackSensorSourceValue::SyncCANcoder;
         return true;
     }
     ROS_ERROR_STREAM("Invalid Feedback Sensor Soruce value in TalonFXPro convertFeedbackSensorSource : in = " << static_cast<int>(in));
