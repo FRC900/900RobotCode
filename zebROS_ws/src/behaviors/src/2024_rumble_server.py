@@ -14,6 +14,7 @@ from std_msgs.msg import Float64
 from norfair_ros.msg import Detections, Detection
 from frc_msgs.srv import RumbleCommand, RumbleCommandRequest, RumbleCommandResponse
 import math
+import time
 
 class Rumble2024Server():
 
@@ -40,6 +41,9 @@ class Rumble2024Server():
         self.closest_note = 900
         self.time_touched_note = rospy.Time.now()
         self.touched_note = False
+        self.note_left = False
+
+        self.already_touched_note = False
 
 
     def talonfxpro_states_cb(self, states: TalonFXProState):
@@ -75,6 +79,11 @@ class Rumble2024Server():
                 #rospy.loginfo(f'2024_rumble_server: {self.intake_limit_switch_name} found')
                 self.touched_note = data.position[data.name.index(self.intake_limit_switch_name)]
                 self.time_touched_note = rospy.Time.now()
+                self.note_has_left = False
+            elif self.touched_note == True:
+                if not data.position[data.name.index(self.intake_limit_switch_name)]:
+                    self.note_left = True
+                    self.touched_note = False
         else:
             rospy.logerr_throttle(1.0, f'2024_rumble_server: {self.intake_limit_switch_name} not found')
             pass
@@ -91,18 +100,31 @@ class Rumble2024Server():
         #     rumble_srv.left = 10000 # slight rumble if we can see a note
         #     rumble_srv.right = 10000
 
-        if self.touched_note:
+        if self.touched_note and not self.already_touched_note:
             rospy.logerr_throttle(1, "2024 rumble server: touched note")
             # TODO make this a parameter
             # note should be gone after 1 second
-            if rospy.Time.now() - self.time_touched_note < rospy.Duration(1.0):
-                rumble_srv.left = self.rumble_value
-                rumble_srv.right = self.rumble_value
-            else:
-                rospy.logwarn("Runble server: note touch time expired")
-                self.touched_note = False
+            rumble_srv.left = self.rumble_value
+            rumble_srv.right = self.rumble_value
+            self.rumble_srv.call(rumble_srv)
+            time.sleep(1)
+            rospy.loginfo("Sleep done touched note")
+            self.touched_note = False
+            self.already_touched_note = True
 
+        if self.note_left:
+            rospy.loginfo("Note left")
+            rumble_srv.left = self.rumble_value
+            rumble_srv.right = self.rumble_value
+            self.rumble_srv.call(rumble_srv)
+            time.sleep(1)
+            rospy.loginfo("Sleep done note left")
+            self.note_left = False
+            self.note_has_left = True
+            self.already_touched_note = False
         self.rumble_srv.call(rumble_srv)
+        
+        
 
        
 if __name__ == '__main__':
