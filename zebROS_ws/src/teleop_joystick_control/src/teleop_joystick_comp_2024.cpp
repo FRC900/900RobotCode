@@ -65,7 +65,9 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: buttonA
 			if(joystick_state->buttonAPress)
 			{
-
+				behavior_actions::Shooting2024Goal goal;
+				goal.mode = goal.AMP;
+				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonAButton)
 			{
@@ -73,7 +75,8 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			}
 			if(joystick_state->buttonARelease)
 			{
-				
+				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+
 			}
 
 			//Joystick1: buttonB
@@ -108,14 +111,16 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: buttonY
 			if(joystick_state->buttonYPress)
 			{
-				
+				behavior_actions::Shooting2024Goal goal;
+				goal.mode = goal.PODIUM;
+				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonYButton)
 			{
 			}
 			if(joystick_state->buttonYRelease)
 			{
-				
+				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());	
 			}
 
 			//Joystick1: bumperLeft
@@ -136,16 +141,17 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: bumperRight
 			if(joystick_state->bumperRightPress)
 			{
-				behavior_actions::Shooting2024Goal goal;
-				goal.mode = goal.AMP;
-				shooting_ac->sendGoal(goal);
+				driver->teleop_cmd_vel_.setCaps(config.max_speed_slow, config.max_rot_slow);
+				//behavior_actions::Shooting2024Goal goal;
+				//goal.mode = goal.AMP;
+				//shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->bumperRightButton)
 			{
 			}
 			if(joystick_state->bumperRightRelease)
 			{
-				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				driver->teleop_cmd_vel_.resetCaps();
 			}
 
 
@@ -345,12 +351,16 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1 Diagnostics: buttonY
 			if(joystick_state->buttonYPress)
 			{
+				behavior_actions::Shooting2024Goal goal;
+				goal.mode = goal.PODIUM;
+				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonYButton)
 			{
 			}
 			if(joystick_state->buttonYRelease)
 			{
+				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 			//Joystick1: buttonBack
@@ -546,12 +556,19 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 
 	if (button_box->backupButton1Button)
 	{
+		driver->sendDirection(config.button_move_speed);
 	}
 	if (button_box->backupButton1Press)
 	{
+		driver->moveDirection(-1, 0, 0, config.button_move_speed);
+		behavior_actions::Intaking2024Goal intaking_goal;
+		intaking_goal.destination = intaking_goal.OUTTAKE;
+		intaking_ac->sendGoal(intaking_goal);
 	}
 	if (button_box->backupButton1Release)
 	{
+		driver->moveDirection(1, 0, 0, config.button_move_speed);
+		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if (button_box->backupButton2Button)
@@ -589,9 +606,13 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->subwooferShootPress)
 	{
+		behavior_actions::Shooting2024Goal goal;
+		goal.mode = goal.SUBWOOFER;
+		shooting_ac->sendGoal(goal);
 	}
 	if (button_box->subwooferShootRelease)
 	{
+		shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if (button_box->speedSwitchUpButton)

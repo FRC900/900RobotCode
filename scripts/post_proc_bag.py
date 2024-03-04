@@ -84,7 +84,7 @@ for topic, msg, t in bag.read_messages([match_topic]):
         # Combine that into one enabled period
         if (len(disable_times) > 0):
             elapsed_time = disable_times[-1] - enable_times[-1]
-            if (elapsed_time > 13) and (elapsed_time < 17) and ((this_time - disable_times[-1]) < 3) and (int(match_types[-1]) > 0):
+            if ((this_time - disable_times[-1]) < 5) and (int(match_types[-1]) > 0):
                 disable_times.pop()
                 print('Combining auto and teleop')
                 continue

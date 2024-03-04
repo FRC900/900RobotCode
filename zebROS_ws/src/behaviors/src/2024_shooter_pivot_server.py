@@ -71,7 +71,10 @@ class ShooterPivotServer2024:
 
         initial_motion_magic_value = motion_magic_value 
         self.shooter_pivot_client.call(ShooterPivotSrvRequest(goal.pivot_position))
-   
+        self._feedback.percent_complete = 0.0
+        self._feedback.is_at_pivot_position = False
+        self.server.publish_feedback(self._feedback)
+        r.sleep()
         while True:
             if rospy.is_shutdown():
                 break

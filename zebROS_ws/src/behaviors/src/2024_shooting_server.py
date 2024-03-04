@@ -2,7 +2,7 @@
 
 import rospy
 import actionlib
-
+import time
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
@@ -108,7 +108,7 @@ class ShootingServer(object):
             shooter_goal.bottom_right_speed = self.subwoofer_bottom_right_speed
             pivot_angle = self.subwoofer_pivot_position
 
-            rospy.loginfo(f"2024_shooting_server: spinning up for subwoofer")
+            rospy.loginfo(f"2024_shooting_server: spinning up for subwoofer angle")
         
         elif goal.mode == goal.AMP:
             shooter_goal.top_left_speed = self.amp_top_left_speed
@@ -118,7 +118,14 @@ class ShootingServer(object):
             pivot_angle = self.amp_pivot_position
 
             rospy.loginfo(f"2024_shooting_server: spinning up for amp")
-        
+        elif goal.mode == goal.PODIUM:
+            shooter_goal.top_left_speed = 500
+            shooter_goal.top_right_speed = 500
+            shooter_goal.bottom_left_speed = 500
+            shooter_goal.bottom_right_speed = 500
+            pivot_angle = 0.58
+
+            rospy.loginfo(f"2024_shooting_server: spinning up for amp")
         else:
             # Look up speed and angle to send to shooter and pivot server
             shooter_goal.top_left_speed = self.top_left_map[goal.distance]
@@ -148,7 +155,8 @@ class ShootingServer(object):
             nonlocal pivot_done
             pivot_done = True
         self.pivot_client.send_goal(pivot_goal, done_cb=pivot_done_cb)
-
+        rospy.loginfo("Sleeping for 0.25")
+        time.sleep(0.25)
         r = rospy.Rate(60.0)
 
         while not (shooter_done and pivot_done):

@@ -21,8 +21,8 @@ auto_mode_1: ["shoot_center_subwoofer", "start_intake", "four_note_source1_ALLIA
 
 # 2: four note speaker no rotation
 auto_mode_2: ["relocalize", "shoot_center_subwoofer", "start_intake", "four_note_speaker_no_rotate1_ALLIANCE_csv", "pause_quarter", "relocalize",
-              "four_note_speaker_no_rotate2_ALLIANCE_csv", "shoot_dynamic", "start_intake",
-              "four_note_speaker_no_rotate3_ALLIANCE_csv", "shoot_dynamic", "start_intake",
+              "four_note_speaker_no_rotate2_ALLIANCE_csv", "shoot_dynamic", "start_intake", 
+              "four_note_speaker_no_rotate3_ALLIANCE_csv", "pause_one", "shoot_dynamic", "start_intake",
               "four_note_speaker_no_rotate4_ALLIANCE_csv", "pause_quarter", "relocalize",
               "four_note_speaker_no_rotate5_ALLIANCE_csv", "pause_quarter", "shoot_dynamic", "stop_intake", "pause_half", "spin_down_shooter"]
 
@@ -50,7 +50,7 @@ auto_mode_5: ["shoot_center_subwoofer", "start_intake", "two_note_speaker1_ALLIA
 auto_mode_6: ["shoot_center_subwoofer", "start_intake", "drive_1_5_m", "shoot_from_stage_note", "stop_intake"]
 
 # 7: shoot preloaded note SHOULD WORK
-auto_mode_7: ["shoot_center_subwoofer"]
+auto_mode_7: ["shoot_center_subwoofer", "pause_two", "pause_two", "spin_down_shooter"]
 
 # 8: shoot preloaded note, drive back TESTED AND WORKS
 auto_mode_8: ["shoot_center_subwoofer", "drive_2_5_m"]
@@ -77,6 +77,10 @@ auto_mode_10: ["drive_2_5_m"]
 pause_quarter:
   type: pause
   duration: 0.25
+
+pause_one:
+  type: pause
+  duration: 1.0
 
 pause_half:
   type: pause

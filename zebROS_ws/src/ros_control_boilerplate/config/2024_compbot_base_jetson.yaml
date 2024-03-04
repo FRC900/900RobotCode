@@ -196,42 +196,47 @@ bottom_right_shooter_controller:
    neutral_mode: Coast
    forward_limit_enable: False
    reverse_limit_enable: False
-
-shooter_pivot_motionmagicvoltage_controller:
-    type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
-    joint: shooter_pivot_motionmagic_joint
-    feedback_sensor_source: FusedCANcoder
-    remote_feedback_device_id0: 55
-    motion_magic_cruise_velocity: 1.5
-    motion_magic_acceleration: 4.0
-    motion_magic_jerk: 100.0
-    sensor_to_mechanism_ratio: 1.0
-    rotor_to_sensor_ratio: 35.56
-    softlimit_forward_enable: True
-    softlimit_forward_threshold: 1.66
-    softlimit_reverse_enable: True
-    softlimit_reverse_threshold: 0.62
-    close_loop_values:
-        # note: kG derived by finding voltage needed to hold at position theta, then do voltage / cos(theta)
-        - {kP: 30.0, kI: 0.0, kD: 0.00, kV: 4.6, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
-    stator_current_limit: 60
-    stator_current_limit_enable: True
-    dynamic_reconfigure: True
    
 shooter_pivot_controller:
     type: shooter_pivot_controller_2024/ShooterPivotController_2024
 
     feed_forward_map:
-        - [0.5338253141842031, -0.16]
-        - [0.5583690067903734, 0.21]
-        - [0.6227961998815703, 0.03]
-        - [0.6933593161243098, -0.23]
-        - [0.7424467013366504, -0.24]
-        - [0.782330201821677, -0.09]
-        - [0.8436894333371027, -0.2]
-        - [0.8835729338221293, -0.09]
-        - [0.9295923574586985, -0.08]
-        - [0.9909515889741242, -0.23]
+        #- [0.5338253141842031, -0.16]
+        #- [0.5583690067903734, 0.21]
+        #- [0.6227961998815703, 0.03]
+        #- [0.6933593161243098, -0.23]
+        #- [0.7424467013366504, -0.24]
+        #- [0.782330201821677, -0.09]
+        #- [0.8436894333371027, -0.2]
+        #- [0.8835729338221293, -0.09]
+        #- [0.9295923574586985, -0.08]
+        #- [0.9909515889741242, -0.23]
+
+        # second map
+        #- [0.48473792897186263, 0.0]
+        #- [0.5553010452146021, 0.08]
+        #- [0.619728238305799, -0.24]
+        #- [0.6350680461846554, 0.14]
+        #- [0.6902913545485385, -0.09]
+        #- [0.7485826244881929, -0.21]
+        #- [0.7946020481247621, -0.07]
+        #- [0.8498253564886452, -0.18]
+        #- [0.9111845880040709, -0.23]
+        #- [0.9541360500648688, -0.21]
+        #- [1.57, 0.0]
+
+        - [0.5092816215780329, -0.13]
+        - [0.5338253141842031, 0.24]
+        - [0.5859806609723149, 0.07]
+        - [0.6442719309119693, 0.13]
+        - [0.6902913545485385, 0.07]
+        - [0.7332428166093364, 0.13]
+        - [0.7792622402459057, 0.12]
+        - [0.8375535101855601, 0.0]
+        - [0.880504972246358, 0.13]
+        - [0.9357282806102412, -0.16]
+        - [1.57, 0.0]
+
 
     shooter_pivot_joint: [ 'shooter_pivot_motionmagic_joint' ]
     dynamic_reconfigure: True
@@ -259,7 +264,7 @@ shooter_pivot_controller:
         neutral_mode: Brake
         close_loop_values:
             # note: kG derived by finding voltage needed to hold at position theta, then do voltage / cos(theta)
-            - {kP: 80.0, kI: 0.0, kD: 1.2, kV: 4.6, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            - {kP: 70.0, kI: 0.0, kD: 1.2, kV: 8.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
         dynamic_reconfigure: True
 
 
