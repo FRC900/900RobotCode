@@ -4,15 +4,15 @@
 # DISTANCE MEASURED FROM CENTER OF ROBOT TO SPEAKER TAG
 
 # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
-speeds_map: [[1.43, [360.0, 360.0, 360.0, 360.0]], [2.13, [360.0, 360.0, 360.0, 360.0]], [2.58, [360.0, 360.0, 360.0, 360.0]], [2.99, [420.0, 420.0, 420.0, 420.0]], [3.16, [420.0, 420.0, 420.0, 420.0]], [3.49, [420.0, 420.0, 420.0, 420.0]]]
-angle_map: [[1.43, 0.97], [1.96, 0.81], [2.13, 0.78], [2.58, 0.70], [2.99, 0.59], [3.16, 0.56], [3.49, 0.59]]
+speeds_map: [[1.43, [500.0, 300.0, 500.0, 300.0]], [2.13, [500.0, 300.0, 500.0, 300.0]], [2.58, [500.0, 300.0, 500.0, 300.0]], [2.77, [600.0, 300.0, 600.0, 300.0]], [2.99, [600.0, 300.0, 600.0, 300.0]], [3.16, [600.0, 300.0, 600.0, 300.0]], [3.49, [600.0, 300.0, 600.0, 300.0]]]
+angle_map: [[1.43, 0.97], [1.96, 0.81], [2.13, 0.78], [2.58, 0.70], [2.77, 0.65], [2.99, 0.59], [3.16, 0.56], [3.49, 0.59]]
 delay_after_shooting: 0.5
 
 # subwoofer (1.43 m from speaker tag)
-subwoofer_top_left_speed: 360.0 # rad/s
-subwoofer_top_right_speed: 360.0 # rad/s
-subwoofer_bottom_left_speed: 360.0 # rad/s
-subwoofer_bottom_right_speed: 360.0 # rad/s
+subwoofer_top_left_speed: 500.0 # rad/s
+subwoofer_top_right_speed: 300.0 # rad/s
+subwoofer_bottom_left_speed: 500.0 # rad/s
+subwoofer_bottom_right_speed: 300.0 # rad/s
 subwoofer_pivot_position: 0.97 # rad
 
 # amp

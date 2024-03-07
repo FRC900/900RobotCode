@@ -225,23 +225,13 @@ shooter_pivot_controller:
         #- [0.9541360500648688, -0.21]
         #- [1.57, 0.0]
 
-        - [0.5092816215780329, -0.13]
-        - [0.5338253141842031, 0.24]
-        - [0.5859806609723149, 0.07]
-        - [0.6442719309119693, 0.13]
-        - [0.6902913545485385, 0.07]
-        - [0.7332428166093364, 0.13]
-        - [0.7792622402459057, 0.12]
-        - [0.8375535101855601, 0.0]
-        - [0.880504972246358, 0.13]
-        - [0.9357282806102412, -0.16]
-        - [1.57, 0.0]
+        - [0.0, 0.0]
 
 
     shooter_pivot_joint: [ 'shooter_pivot_motionmagic_joint' ]
     dynamic_reconfigure: True
     min_angle: 0.45
-    max_angle: 1.0
+    max_angle: 1.5
 
     motion_magic_velocity: 3.0
     motion_magic_acceleration: 4.0
@@ -264,7 +254,7 @@ shooter_pivot_controller:
         neutral_mode: Brake
         close_loop_values:
             # note: kG derived by finding voltage needed to hold at position theta, then do voltage / cos(theta)
-            - {kP: 70.0, kI: 0.0, kD: 1.2, kV: 8.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            - {kP: 90.0, kI: 0.0, kD: 2.0, kV: 8.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
         dynamic_reconfigure: True
 
 
