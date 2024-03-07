@@ -94,9 +94,14 @@ private:
 
         const cv::Mat distortion_coeffs = (cv::Mat_<double>(1, 8) << model.distortionCoeffs().at<double>(0), model.distortionCoeffs().at<double>(1), model.distortionCoeffs().at<double>(2), model.distortionCoeffs().at<double>(3), model.distortionCoeffs().at<double>(4), 0, 0, 0);
 
+        bool tiled_detection = false;
+        nh_.param("tiled_detection", tiled_detection, tiled_detection);
+        bool use_scaled_image = true;
+        nh_.param("use_scaled_image", use_scaled_image, use_scaled_image);
+
         deep_tag_ = std::make_unique<DeepTag>(model.fullResolution(),      // input image, used for image resolution
-                                              false,                       // tiled detection - config item
-                                              true,                        // use scaled-down full image in addition to tiles - config item
+                                              tiled_detection,             // tiled detection - config item
+                                              use_scaled_image,            // use scaled-down full image in addition to tiles - config item
                                               tag_type,                    // tag type - config item
                                               intrinsic_matrix,            // from camera info
                                               distortion_coeffs,           // from camera info

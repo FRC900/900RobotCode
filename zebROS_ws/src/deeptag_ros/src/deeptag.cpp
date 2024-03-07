@@ -71,14 +71,14 @@ DeepTag::DeepTag(const cv::Size &imgSize,
     {
         makeImpl.operator()<0>();
     }
-    else if (imgSize.height <= 720)
+    else //if (imgSize.height <= 720)
     {
         makeImpl.operator()<4>();
     }
-    else
-    {
-        makeImpl.operator()<9>();
-    }
+    // else
+    // {
+    //     makeImpl.operator()<9>();
+    // }
 }
 
 DeepTag::~DeepTag() = default;
