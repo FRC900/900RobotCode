@@ -14,7 +14,6 @@ void print(const std::array<double, WHEELCOUNT> &positions, const std::array<Eig
 int main(void)
 {
 	std::array<Eigen::Vector2d, WHEELCOUNT> wheel_coords_;
-	std::array<double, WHEELCOUNT> offsets{0};
 	for (auto &w: wheel_coords_)
 	{
 		w[0] = 1;
@@ -32,7 +31,7 @@ int main(void)
 	swerveVar::driveModel driveModel;
 	driveModel.maxSpeed = 1;
 	driveModel.wheelRadius = 1;
-	swerve<WHEELCOUNT> swerveC(wheel_coords_, offsets, ratios, encoderUnits, driveModel);
+	swerve<WHEELCOUNT> swerveC(wheel_coords_, ratios, encoderUnits, driveModel);
 
 	std::array<double, WHEELCOUNT> positions;
 

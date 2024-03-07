@@ -217,21 +217,6 @@ bool init(hardware_interface::RobotHW *hw,
 	}
 
 	ROS_INFO_STREAM("Coords: " << wheel_coords_[0] << "   " << wheel_coords_[1] << "   " << wheel_coords_[2] << "   " << wheel_coords_[3]);
-	std::array<double, WHEELCOUNT> offsets;
-	for (size_t i = 0; i < WHEELCOUNT; i++)
-	{
-		ros::NodeHandle nh(controller_nh, steering_names_[i]);
-		if (!nh.getParam("offset", offsets[i]))
-		{
-			ROS_ERROR_STREAM("Can not read offset for " << steering_names_[i]);
-			return false;
-		}
-	}
-	for (const auto o : offsets)
-	{
-		ROS_INFO_STREAM("\t SWERVE: offset = " << o);
-	}
-
 	center_of_rotation_.writeFromNonRT(Eigen::Vector2d{0,0});
 	/*
 	if (!setOdomParamsFromUrdf(root_nh,
@@ -265,7 +250,7 @@ bool init(hardware_interface::RobotHW *hw,
 	swerveVar::encoderUnits units({1,1,1,1,1,1});
 	*/
 
-	swerveC_ = std::make_unique<swerve<WHEELCOUNT>>(wheel_coords_, offsets, driveRatios_, units_, model_);
+	swerveC_ = std::make_unique<swerve<WHEELCOUNT>>(wheel_coords_, driveRatios_, units_, model_);
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
 		ROS_INFO_STREAM_NAMED(name_,
@@ -366,7 +351,8 @@ bool init(hardware_interface::RobotHW *hw,
 		wheel_pos_.colwise() -= centroid;
 		neg_wheel_centroid_ = -centroid;
 
-		std::string odom_frame, base_frame;
+		std::string odom_frame;
+		std::string base_frame;
 		controller_nh.param("odometry_frame", odom_frame, DEF_ODOM_FRAME);
 		controller_nh.param("base_frame", base_frame, DEF_BASE_FRAME);
 
@@ -421,7 +407,7 @@ void starting(const ros::Time &time) override
 	for (size_t k = 0; k < WHEELCOUNT; k++)
 	{
 		steer_angles[k] = latency_compensation_state_->getLatencyCompensatedValue(steering_names_[k], time);
-		last_wheel_angle_[k] = swerveC_->getWheelAngle(k, steer_angles[k]);
+		last_wheel_angle_[k] = swerveC_->getWheelAngle(steer_angles[k]);
 		last_wheel_sign_[k] = 1.0;
 		speeds_angles_[k][0] = 0;
 		speeds_angles_[k][1] = steer_angles[k];
@@ -658,7 +644,7 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 		const double dist          = delta_rot * model_.wheelRadius * driveRatios_.encodertoRotations;
 
 		// Get the offset-corrected steering angle
-		const double steer_angle = swerveC_->getWheelAngle(k, steer_angles[k]);
+		const double steer_angle = swerveC_->getWheelAngle(steer_angles[k]);
 		// And then average it with the last reading - moving the full
 		// wheel rot distance in a direction of the average of the start
 		// and end steer directions for this timestep is an approximation
@@ -701,8 +687,9 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 	const Eigen::Matrix2d h = wheel_pos_ * new_wheel_pos;
 	const Eigen::JacobiSVD<Eigen::Matrix2d> svd(h, Eigen::ComputeFullU | Eigen::ComputeFullV);
 	Eigen::Matrix2d old_rot = svd.matrixV() * svd.matrixU().transpose();
-	if (old_rot.determinant() < 0)
+	if (old_rot.determinant() < 0) {
 		old_rot.col(1) *= -1;
+	}
 
 	// Find difference between last IMU yaw and current IMU yaw
 	double yaw = latency_compensation_state_->getLatencyCompensatedValue("pigeon2", time);

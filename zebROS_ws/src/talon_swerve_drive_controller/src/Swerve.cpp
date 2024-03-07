@@ -5,11 +5,10 @@
 
 template <size_t WHEELCOUNT>
 swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
-						   const std::array<double, WHEELCOUNT> &offsets,
 						   const swerveVar::ratios &ratio,
 						   const swerveVar::encoderUnits &units,
 						   const swerveVar::driveModel &drive)
-	: wheelCoordinates_(wheelCoordinates), swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates_)), offsets_(offsets), ratio_(ratio), units_(units), drive_(drive)
+	: wheelCoordinates_(wheelCoordinates), swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates_)), ratio_(ratio), units_(units), drive_(drive)
 {
 }
 
@@ -45,7 +44,7 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
-		const double currpos = getWheelAngle(i, positionsNew[i]);
+		const double currpos = getWheelAngle(positionsNew[i]);
 		bool reverse;
 		const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
 
@@ -58,8 +57,8 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 		const double cosScaling = useCosScaling ? cos(currpos - nearestangle) : 1.0;
 
 		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (reverse ? -1 : 1) * cosScaling;
-		speedsAndAngles[i][1] = nearestangle * units_.steeringSet + offsets_[i];
-		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " offset: " << offsets_[i] << " steeringSet: " << units_.steeringSet << " reverse: " << reverse);
+		speedsAndAngles[i][1] = nearestangle * units_.steeringSet - M_PI;
+		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " steeringSet: " << units_.steeringSet << " reverse: " << reverse);
 	}
 	return speedsAndAngles;
 }
@@ -70,11 +69,11 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 	std::array<double, WHEELCOUNT> retAngles;
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		const double currpos = getWheelAngle(i, positionsNew[i]);
+		const double currpos = getWheelAngle(positionsNew[i]);
 		bool reverse;
 		const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, swerveMath_.getParkingAngle(i), reverse);
 
-		retAngles[i] = nearestanglep * units_.steeringSet + offsets_[i];
+		retAngles[i] = nearestanglep * units_.steeringSet - M_PI;
 		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << " target: " << nearestanglep);
 		//ROS_INFO_STREAM("park[i]: " << swerveMath_.getParkingAngle(i) << " " << retAngles[i]);
 	}
@@ -84,9 +83,9 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 // Apply encoder offset and steering ratio to calculate desired
 // measured wheel angle from a wheel angle setpoint
 template<size_t WHEELCOUNT>
-double swerve<WHEELCOUNT>::getWheelAngle(size_t index, double pos) const
+double swerve<WHEELCOUNT>::getWheelAngle(double pos) const
 {
-	return (pos - offsets_[index]) * units_.steeringGet;
+	return (pos - M_PI) * units_.steeringGet;
 }
 
 template<size_t WHEELCOUNT>

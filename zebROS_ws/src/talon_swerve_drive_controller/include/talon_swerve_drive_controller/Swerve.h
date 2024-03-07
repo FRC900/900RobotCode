@@ -64,7 +64,6 @@ class swerve
 {
 	public:
 		swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
-			   const std::array<double, WHEELCOUNT> &offsets,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
 			   const swerveVar::driveModel &drive);
@@ -79,7 +78,7 @@ class swerve
 															 const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
-		double getWheelAngle(size_t index, double pos) const;
+		double getWheelAngle(double pos) const;
 	private:
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
 		swerveDriveMath<WHEELCOUNT> swerveMath_; //this should be public
@@ -87,10 +86,7 @@ class swerve
 		//the angle it passes out isn't normalized
 		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
 
-		std::array<double, WHEELCOUNT> offsets_;
-
 		//Second piece of data is here just for physics/modeling
-
 		//std::array<double, WHEELCOUNT> savedEncoderVals_;
 		//int8_t wheelAngleInvert_;
 
