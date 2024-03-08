@@ -69,10 +69,12 @@
 
   <group ns="apriltag_$(arg zed_name)" if="$(eval run_deeptag)">
 		<node pkg="deeptag_ros" name="deeptag_node" type="deeptag_node" output="screen">
-      <remap from="image_rect_color"  to="/$(arg zed_name)/left/image_rect_color" />
-      <remap from="camera_info"       to="/$(arg zed_name)/left/camera_info" />
-      <param name="tag_type"          value="36h11" />
-      <param name="tag_size_in_meter" value="0.152" />
+      <remap from="image_rect_color"    to="/$(arg zed_name)/left/image_rect_color" />
+      <remap from="camera_info"         to="/$(arg zed_name)/left/camera_info" />
+      <param name="tag_type"            value="36h11" />
+      <param name="tag_size_in_meter"   value="0.152" />
+      <param name="use_tiled_detection" value="false" />
+      <param name="use_scaled_image"    value="true" />
     </node>
 
     <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 
