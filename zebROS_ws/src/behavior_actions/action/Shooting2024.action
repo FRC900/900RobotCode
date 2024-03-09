@@ -5,6 +5,7 @@ uint8 AMP=2
 uint8 PLOP_FRONT=3
 uint8 SUBWOOFER=4
 uint8 PODIUM=5
+uint8 DYNAMIC_DISTANCE=6
 uint8 mode
 float64 distance
 bool setup_only # just spin up

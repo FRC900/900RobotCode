@@ -20,11 +20,7 @@ auto_mode_1: ["shoot_center_subwoofer", "start_intake", "four_note_source1_ALLIA
 #              "four_note_speaker6_ALLIANCE_csv", "stop_intake", "shoot_dynamic"]
 
 # 2: four note speaker no rotation
-auto_mode_2: ["relocalize", "shoot_center_subwoofer", "start_intake", "four_note_speaker_no_rotate1_ALLIANCE_csv", "pause_quarter", "relocalize",
-              "four_note_speaker_no_rotate2_ALLIANCE_csv", "shoot_dynamic", "start_intake", 
-              "four_note_speaker_no_rotate3_ALLIANCE_csv", "pause_one", "shoot_dynamic", "start_intake",
-              "four_note_speaker_no_rotate4_ALLIANCE_csv", "pause_quarter", "relocalize",
-              "four_note_speaker_no_rotate5_ALLIANCE_csv", "pause_quarter", "shoot_dynamic", "stop_intake", "pause_half", "spin_down_shooter"]
+auto_mode_2: ["start_intake", "shoot_dynamic", "start_intake", "four_note_speaker_no_rotate_ALLIANCE_csv", "relocalize", "shoot_dynamic", "stop_intake", "spin_down_shooter"]
 
 # SIM ONLY
 # auto_mode_2: ["four_note_speaker_no_rotate1_ALLIANCE_csv", "pause_quarter",
@@ -61,6 +57,8 @@ auto_mode_9: ["pause_quarter"]
 # 10: drive back
 auto_mode_10: ["drive_2_5_m"]
 
+auto_mode_11: ["pause_two", "four_note_speaker_no_rotate_ALLIANCE_csv"]
+
 #auto_mode_4_blue: ["map_rel_four_note_grid_right1_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_blue_csv"]
 #auto_mode_4_red: ["map_rel_four_note_grid_right1_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_red_csv"]
 #auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map_rel_four_note_grid3_csv", "map_rel_four_note_grid4_csv"]
@@ -73,6 +71,28 @@ auto_mode_10: ["drive_2_5_m"]
 
 # ACTIONS ------------------------------------------------------------------------
 # must have a value for "type", other stuff varies
+
+four_note_speaker_no_rotate_red_csv:
+  waypoint_actions: [[2, "pause_path", "shoot_dynamic", "unpause_path", "start_intake"], [3, "pause_path", "shoot_dynamic", "unpause_path", "start_intake"]]
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+four_note_speaker_no_rotate_blue_csv:
+  waypoint_actions: [[2, "pause_path", "shoot_dynamic", "unpause_path", "start_intake"], [3, "pause_path", "shoot_dynamic", "unpause_path", "start_intake"]]
+  type: path
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+
+pause_path:
+  type: pause_path
+  pause: true
+
+unpause_path:
+  type: pause_path
+  pause: false
 
 pause_quarter:
   type: pause

@@ -15,6 +15,7 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_phoenix6.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_pivot_cancoder.yaml" command="load"/>
 			
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
@@ -117,7 +118,7 @@
 	<!-- Add 2024 actionlib servers here -->
 	<include file="$(find behaviors)/launch/2024_arm.launch"/>
 	<include file="$(find behaviors)/launch/2024_diverter.launch"/>
-	<include file="$(find behaviors)/launch/2024_preshooter_and_claw.launch"/>
+	<include file="$(find behaviors)/launch/2024_clawster.launch"/>
 	
 	<include file="$(find behaviors)/launch/2024_align_to_speaker.launch"/>
     <include file="$(find behaviors)/launch/2024_shooter.launch"/>

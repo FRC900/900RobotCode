@@ -68,6 +68,7 @@ class AutoNode {
 		ros::ServiceClient brake_srv_;
 		ros::ServiceClient park_srv_;
 		ros::ServiceClient tagslam_relocalize_srv_;
+		ros::ServiceClient pause_srv_;
 		bool park_enabled = false;
 
 		//subscribers
@@ -150,6 +151,7 @@ class AutoNode {
 		brake_srv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 		park_srv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
 		tagslam_relocalize_srv_ = nh_.serviceClient<std_srvs::Empty>("/tagslam_pub_map_to_odom", false, service_connection_header);
+		pause_srv_ = nh_.serviceClient<std_srvs::SetBool>("/path_follower/pause_path", false, service_connection_header);
 
 		//subscribers
 		//rio match data (to know if we're in auto period)
@@ -200,6 +202,7 @@ class AutoNode {
 		first_point_pub_ = nh_.advertise<geometry_msgs::Pose>("first_point", 1, true);
 		functionMap_["relocalize"] = &AutoNode::relocalizefn;
 		functionMap_["pause"] = &AutoNode::pausefn;
+		functionMap_["pause_path"] = &AutoNode::pausePathfn;
 		functionMap_["path"] = &AutoNode::pathfn;
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
 		functionMap_["snap_to_orientation"] = &AutoNode::snapanglefn;
@@ -926,7 +929,7 @@ class AutoNode {
 		behavior_actions::Shooting2024Goal goal;
 		goal.leave_spinning = true; // keep spinning after 
 		goal.setup_only = true; // don't actually shoot anything
-		goal.distance = distance; 
+		goal.distance = distance;
 		goal.mode = goal.SPEAKER;
 		shooting_ac_.sendGoal(goal); // this goal will succeed almost right away, don't cancel
 		return true; 
@@ -1026,6 +1029,33 @@ class AutoNode {
 		return true;
 	}
 
+	bool pausePathfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		// make a std_srvs::SetBool request
+		std_srvs::SetBool srv;
+		bool pause;
+		if (!action_data.hasMember("pause"))
+		{
+			ROS_ERROR_STREAM("Auto action " << auto_step << " missing 'pause' field");
+			return false;
+		}
+		if (!readBoolParam("pause", action_data, pause))
+		{
+			shutdownNode(ERROR, "Auto node - pause is not a bool in pause path action");
+			return false;
+		}
+
+		srv.request.data = pause;
+
+		// call the pause service
+		if (!pause_srv_.call(srv)) {
+			shutdownNode(ERROR, "Auto node - pause path service call failed");
+			return false;
+		}
+
+		ROS_INFO_STREAM("Auto node - pause path service call succeeded");
+		return true;
+	}
+
 	bool snapanglefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) { 
 		double angle_in_rad;
 		if (!action_data.hasMember("angle"))
@@ -1074,16 +1104,19 @@ class AutoNode {
 			// could this fail?
 			readIntParam("iterations", action_data["goal"], iteration_value);
 		
-		std::map<int, std::string> waypoint_actions;
+		std::map<int, std::vector<std::string>> waypoint_actions;
 		if (action_data.hasMember("waypoint_actions")) {
 			XmlRpc::XmlRpcValue wpas = action_data["waypoint_actions"];
 			ROS_INFO_STREAM("Waypoint actions exist! Type is " << wpas.getType());
-			if (wpas.getType() == wpas.TypeStruct) {
-				for(auto it = wpas.begin(); it != wpas.end(); ++it) {
-					std::string str = static_cast<std::string>(it->first);
-					int wp = static_cast<int>(it->second);
-					ROS_INFO_STREAM("** Running " << str << " @ " << wp);
-					waypoint_actions[wp] = str;
+			if (wpas.getType() == wpas.TypeArray) {
+				for (int i = 0; i < wpas.size(); i++) {
+					std::vector<std::string> actions_at_waypoint;
+					if (wpas[i].getType() == wpas[i].TypeArray) {
+						for (int j = 1; j < wpas[i].size(); j++) {
+							actions_at_waypoint.push_back(wpas[i][j]);
+						}
+						waypoint_actions[wpas[i][0]] = actions_at_waypoint;
+					}
 				}
 			}
 		}
@@ -1113,10 +1146,11 @@ class AutoNode {
 						ROS_INFO_STREAM("No waypoint action");
 					} else {
 						// found
-						std::string action_name = waypoint_actions[waypoint];
-						ROS_INFO_STREAM("********** WAYPOINT ACTION " << action_name << " EXISTS!!!");
-						ROS_INFO_STREAM("Running action " << action_name);
-						runStep(action_name);
+						for (std::string action_name : waypoint_actions[waypoint]) {
+							ROS_INFO_STREAM("********** WAYPOINT ACTION " << action_name << " EXISTS!!!");
+							ROS_INFO_STREAM("Running action " << action_name);
+							runStep(action_name);
+						}
 					}
 				}
 				last_waypoint = waypoint;

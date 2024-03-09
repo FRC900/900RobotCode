@@ -19,8 +19,8 @@
   <group unless="$(arg usb_cam)">
   <node pkg="cuda_apriltag_ros" type="cuda_continuous_detector" name="cuda_continuous_detector" output="screen">
 
-	  <remap from="/usb_cam/image_raw" to="/zed_objdetect/left/image_rect_color"/>
-	  <remap from="/usb_cam/camera_info" to="/zed_objdetect/left/camera_info"/>
+	  <remap from="/usb_cam/image_raw" to="/zedx_back/left/image_rect_gray"/>
+	  <remap from="/usb_cam/camera_info" to="/zedx_back/left/camera_info"/>
   </node>
   </group>
 

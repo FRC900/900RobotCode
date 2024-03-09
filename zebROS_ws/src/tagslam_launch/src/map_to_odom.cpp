@@ -9,6 +9,7 @@
 
 #include <std_srvs/Empty.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <std_msgs/Bool.h>
 
 
 namespace tf2
@@ -51,6 +52,8 @@ std::string map_frame_id = "map";
 std::string tagslam_baselink = "frc_robot";
 
 std::unique_ptr<tf2_ros::StaticTransformBroadcaster> tfbr;
+ros::Publisher last_relocalized_pub;
+
 tf2_ros::Buffer tf_buffer;
 geometry_msgs::TransformStamped map_odom_tf;
 
@@ -58,7 +61,9 @@ ros::Time last_tf_pub = ros::Time(0);
 
 double transform_timeout;
 double maximum_jump;
+double max_z;
 double cmd_vel_threshold;
+double ang_vel_threshold;
 double time_stopped;
 double publish_frequency;
 bool localize_while_stopped;
@@ -70,11 +75,11 @@ void updateMapOdomTf() {
     // lookup map->base_link transform
     geometry_msgs::TransformStamped base_link_to_map_tf;
     try {
-      // dest source?
-      base_link_to_odom_tf = tf_buffer.lookupTransform("base_link", odom_frame_id, ros::Time(0));
       // invert base_link to odom
-      // 
       base_link_to_map_tf = tf_buffer.lookupTransform(tagslam_baselink, map_frame_id, ros::Time(0));
+      // get base_link -> odom transform at the timestamp of the tagslam transform
+      // maybe this allows us to relocalize while moving, since we know where we were?
+      base_link_to_odom_tf = tf_buffer.lookupTransform("base_link", odom_frame_id, base_link_to_map_tf.header.stamp);
     } catch (const tf2::TransformException &ex) {
       ROS_ERROR_STREAM_THROTTLE(5, "map to odom : transform from base_link to " << odom_frame_id << " failed in map->odom broadcaser : " << ex.what());
       return;
@@ -153,6 +158,11 @@ void updateMapOdomTf() {
         return;
       }
 
+      if (fabs(transformStamped.transform.translation.z) > max_z) {
+        ROS_ERROR_STREAM_THROTTLE(0.5, "map_to_odom: z value too high! " << transformStamped.transform.translation.z << " Not saving transofrm");
+        return;
+      }
+
       map_odom_tf = transformStamped;
       //tfbr->sendTransform(transformStamped);
     } catch (const tf2::TransformException &ex) {
@@ -160,19 +170,14 @@ void updateMapOdomTf() {
     }
 }
 
-void timerCallback(const ros::TimerEvent &event) {
-  updateMapOdomTf();
-  // map_odom_tf.header.stamp = ros::Time::now();
-  if (map_odom_tf.header.frame_id == map_frame_id) {
-    tfbr->sendTransform(map_odom_tf);
-  }
-  ROS_WARN_STREAM_THROTTLE(2, "Publishing map odom tf in timer");
-}
 
 bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/) {
   updateMapOdomTf();
   if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > (1./publish_frequency)) {
     tfbr->sendTransform(map_odom_tf);
+    std_msgs::Header msg;
+    msg.stamp = ros::Time::now();
+    last_relocalized_pub.publish(msg);
     last_tf_pub = ros::Time::now();
   }
   else {
@@ -184,14 +189,18 @@ bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*
 
 void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
   if (localize_while_stopped) {
-    if (hypot(msg->twist.linear.x, msg->twist.linear.y) > cmd_vel_threshold) {
+    if (hypot(msg->twist.linear.x, msg->twist.linear.y) > cmd_vel_threshold && fabs(msg->twist.angular.z) > ang_vel_threshold) {
       last_tf_pub = ros::Time::now() + ros::Duration(time_stopped);
+      
     }
-    if (hypot(msg->twist.linear.x, msg->twist.linear.y) < cmd_vel_threshold) {
+    if (hypot(msg->twist.linear.x, msg->twist.linear.y) < cmd_vel_threshold && fabs(msg->twist.angular.z) < ang_vel_threshold) {
       updateMapOdomTf();
       if (map_odom_tf.header.frame_id == map_frame_id && (ros::Time::now() - last_tf_pub).toSec() > (1./publish_frequency)) {
         ROS_INFO_STREAM_THROTTLE(2, "RELOCALIZING"); 
         tfbr->sendTransform(map_odom_tf);
+        std_msgs::Header msg;
+        msg.stamp = ros::Time::now();
+        last_relocalized_pub.publish(msg);
         last_tf_pub = ros::Time::now();
       }
     }
@@ -217,6 +226,12 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  if (!nh_.getParam("max_z", max_z))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find max_z, exiting");
+    return -1;
+  }
+
   if (!nh_.getParam("localize_while_stopped", localize_while_stopped))
   {
     ROS_ERROR_STREAM("map_to_odom: could not find localize_while_stopped, exiting");
@@ -226,6 +241,12 @@ int main(int argc, char **argv) {
   if (!nh_.getParam("cmd_vel_threshold", cmd_vel_threshold))
   {
     ROS_ERROR_STREAM("map_to_odom: could not find cmd_vel_threshold, exiting");
+    return -1;
+  }
+
+  if (!nh_.getParam("ang_vel_threshold", ang_vel_threshold))
+  {
+    ROS_ERROR_STREAM("map_to_odom: could not find ang_vel_threshold, exiting");
     return -1;
   }
 
@@ -242,13 +263,17 @@ int main(int argc, char **argv) {
   }
 
   // write a timer that gets called at 25Hz
-  // ros::Timer timer = nh_.createTimer(ros::Duration(0.004), timerCallback);
   // write a service that takes in an empty message and publishes the tf
   ros::ServiceServer service = nh_.advertiseService("tagslam_pub_map_to_odom", service_cb);
   ros::Subscriber cmd_vel_sub = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, cmdVelCallback);
+  last_relocalized_pub = nh_.advertise<std_msgs::Header>("/last_relocalize", 1, true);
   updateMapOdomTf();
   if (map_odom_tf.header.frame_id == map_frame_id) {
     tfbr->sendTransform(map_odom_tf);
+    std_msgs::Header msg;
+    msg.stamp = ros::Time::now();
+    last_relocalized_pub.publish(msg);
+    last_tf_pub = ros::Time::now();
   }
   ros::spin();
 

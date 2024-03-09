@@ -1,4 +1,4 @@
-intaking_speed: 0.6 # duty cycle out
+intaking_speed: 0.8 # duty cycle out
 outtaking_speed: 0.6 # duty cycle out, should be positive
 intaking_timeout: 5.0
 safe_shooter_angle: 0.7 # rad

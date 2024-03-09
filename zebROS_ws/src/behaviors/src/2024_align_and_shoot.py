@@ -7,9 +7,12 @@ from behavior_actions.msg import AlignAndShoot2024Goal, AlignAndShoot2024Result,
 from behavior_actions.msg import AlignToSpeaker2024Goal, AlignToSpeaker2024Result, AlignToSpeaker2024Feedback, AlignToSpeaker2024Action
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
 from behavior_actions.msg import AutoAlignSpeaker
+import behavior_actions.msg
+import std_srvs.srv
 
 #from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 from std_msgs.msg import Float64
+from std_msgs.msg import Header
 
 class AlignAndShoot:
     def __init__(self, name):
@@ -24,21 +27,39 @@ class AlignAndShoot:
         rospy.loginfo("2024_align_and_shoot: waiting for shooting server")
         # self.shooting_client.wait_for_server()
 
-        self.dist_sub = rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, self.distance_and_angle_callback) #use this to find the distance that we are from the spaerk thing
+        self.dist_sub = rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, self.distance_and_angle_callback, tcp_nodelay=True, queue_size=1) #use this to find the distance that we are from the spaerk thing
         if self.dist_sub.get_num_connections() > 0: rospy.loginfo("2024_align_and_shoot: distance and angle topic being published to")
-
+        
         self.server = actionlib.SimpleActionServer(self.action_name, AlignAndShoot2024Action, execute_cb=self.execute_cb, auto_start = False)
         rospy.loginfo("2024_align_and_shoot: starting server")
+        
+        self.last_relocalize_sub = rospy.Subscriber("/last_relocalize", Header, self.relocalized_cb, tcp_nodelay=True, queue_size=1)
+
+        self.last_relocalized = rospy.Time()
+
         self.server.start()
         rospy.loginfo("2024_align_and_shoot: server started")
 
+    def relocalized_cb(self, msg: Header):
+        rospy.loginfo_throttle(0.5, "2024_align_and_shoot : relocalized")
+        self.last_relocalized = msg.stamp
+
     def distance_and_angle_callback(self, msg: AutoAlignSpeaker):
         self.dist_value = msg.distance
+
 
     def execute_cb(self, goal: AlignAndShoot2024Goal):
         r = rospy.Rate(20)
         align_to_speaker_goal = AlignToSpeaker2024Goal()
         shooting_goal = Shooting2024Goal()
+
+        shooting_goal.mode = shooting_goal.SPEAKER # should use the dist and angle topic to keep adjusting speeds
+        shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
+        shooting_goal.setup_only = True
+        shooting_goal.leave_spinning = True
+
+        self.shooting_client.send_goal(shooting_goal)
+        rospy.loginfo("2024_align_and_shoot: spinning up shooter")
 
         align_to_speaker_goal.align_forever = goal.align_forever
         align_to_speaker_goal.offsetting = goal.offsetting
@@ -46,6 +67,7 @@ class AlignAndShoot:
         align_to_speaker_done = False
 
         def align_to_speaker_done_cb(state, result):
+            rospy.logerr("ALIGN TO SPEAKER FINISHED, HOPEFULLY WE HAVE ALREADY SHOT")
             nonlocal align_to_speaker_done
             align_to_speaker_done = True
         
@@ -69,7 +91,7 @@ class AlignAndShoot:
 
         shooting_goal.mode = shooting_goal.SPEAKER
         shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
-        shooting_goal.setup_only = goal.setup_only
+        shooting_goal.setup_only = False
         shooting_goal.leave_spinning = goal.leave_spinning
         shooting_done = False
 

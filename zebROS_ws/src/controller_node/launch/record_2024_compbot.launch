@@ -17,7 +17,7 @@
 	  /align_to_speaker/align_to_speaker_2024/goal
 	  /align_to_speaker/align_to_speaker_2024/result
 	  /align_to_speaker/align_to_speaker_2024/status
-  
+	  /last_relocalize
 	  /apriltag_zedx_back/apriltag_detection/parameter_descriptions
 	  /apriltag_zedx_back/apriltag_detection/parameter_updates
 	  /apriltag_zedx_back/apriltag_detection/tags
@@ -267,6 +267,7 @@
 	  /speaker_align/cmd_vel
 	  /speaker_align/dist_and_ang
 	  /tagslam/raw_odom/body_frc_robot
+	  /tagslam/odom/body_frc_robot
 	  /teleop/orient_strafing/control_effort
 	  /teleop/orient_strafing/orient_strafing_pid/parameter_descriptions
 	  /teleop/orient_strafing/orient_strafing_pid/parameter_updates

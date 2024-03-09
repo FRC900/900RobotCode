@@ -11,6 +11,7 @@
 #include "behavior_actions/Intaking2024Action.h"
 #include "behavior_actions/DriveObjectIntake2024Action.h"
 #include "behavior_actions/Shooting2024Action.h"
+#include "behavior_actions/AlignToSpeaker2024Action.h"
 //#define NEED_JOINT_STATES
 #ifdef NEED_JOINT_STATES
 #include "sensor_msgs/JointState.h"
@@ -22,6 +23,9 @@
 #include "teleop_joystick_control/teleop_joystick_comp_general.h"
 
 #include "behavior_actions/AlignAndShoot2024Action.h"
+
+#include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/PoseStamped.h>
 
 class AutoModeCalculator2024 : public AutoModeCalculator {
 public:
@@ -46,6 +50,11 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2024Acti
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2024Action>> shooting_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>> aligned_shooting_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>> drive_and_intake_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>> align_to_speaker_ac;
+
+// Set up transform listener using unique pointers
+std::unique_ptr<tf2_ros::TransformListener> tf_listener;
+std::unique_ptr<tf2_ros::Buffer> tf_buffer;
 
 void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 {    
@@ -135,7 +144,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			}
 			if(joystick_state->bumperLeftRelease)
 			{
-				intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				//intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 			//Joystick1: bumperRight
@@ -501,17 +510,86 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 	}
 }
 
+bool aligning = false;
+
 void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 {
 
+	// Check if we're behind half field (the field is 16.54 meters long, so half is 8.27 meters)
+	// (we're using the x coordinate of the robot in the odom frame to determine this)
+	// This is alliance-relative; the red interval is (8.27, 16.54) and the blue interval is (0.0, 8.27)
+
+	static bool past_half_field = false;
+
+	static geometry_msgs::PoseStamped robot_pose;
+
+	// get map -> base_link and store it in robot_pose
+	try
+	{
+		geometry_msgs::TransformStamped transformStamped = tf_buffer->lookupTransform("map", "base_link", ros::Time(0));
+		robot_pose.header = transformStamped.header;
+		robot_pose.pose.position.x = transformStamped.transform.translation.x;
+		robot_pose.pose.position.y = transformStamped.transform.translation.y;
+	}
+	catch (tf2::TransformException &ex)
+	{
+		ROS_WARN_STREAM_THROTTLE(1, ex.what());
+	}
+
+	ROS_INFO_STREAM_THROTTLE(1, "teleop_joystick_comp_2024 : robot_pose: " << robot_pose.pose.position.x << " " << robot_pose.pose.position.y);
+
+	if (alliance_color == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED)
+	{
+		if (robot_pose.pose.position.x > 8.27)
+		{
+			past_half_field = true;
+		}
+		else
+		{
+			if (past_half_field) {
+				// Stop aligning to speaker
+				align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				aligning = false;
+			}
+			past_half_field = false;
+		}
+	}
+	else
+	{
+		if (robot_pose.pose.position.x < 8.27)
+		{
+			past_half_field = true;
+		}
+		else
+		{
+			if (past_half_field) {
+				// Stop aligning to speaker
+				align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				aligning = false;
+			}
+			past_half_field = false;
+		}
+	}
+
 	if (button_box->lockingSwitchButton)
 	{
+		if (!aligning && past_half_field) {
+			// Align to speaker if past half field and not aligning
+			behavior_actions::AlignToSpeaker2024Goal goal;
+			goal.align_forever = true;
+			align_to_speaker_ac->sendGoal(goal);
+			aligning = true;
+		}
 	}
 	if (button_box->lockingSwitchPress)
 	{
+		
 	}
 	if (button_box->lockingSwitchRelease)
 	{
+		// Stop aligning to speaker
+		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		aligning = false;
 	}
 
 	// TODO We'll probably want to check the actual value here
@@ -549,6 +627,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		aligned_shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 	if (button_box->redRelease)
 	{
@@ -560,6 +639,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->backupButton1Press)
 	{
+		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		driver->moveDirection(-1, 0, 0, config.button_move_speed);
 		behavior_actions::Intaking2024Goal intaking_goal;
 		intaking_goal.destination = intaking_goal.OUTTAKE;
@@ -737,8 +817,13 @@ int main(int argc, char **argv)
 	shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Shooting2024Action>>("/shooting/shooting_server_2024", true);
 	drive_and_intake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>>("/intaking/drive_object_intake", true);
 	aligned_shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>>("/align_and_shoot/align_and_shoot_2024", true);
+	align_to_speaker_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>>("/align_to_speaker/align_to_speaker_2024", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
+
+	// initialize tf listener
+	tf_buffer = std::make_unique<tf2_ros::Buffer>();
+	tf_listener = std::make_unique<tf2_ros::TransformListener>(*tf_buffer);
 
 	TeleopInitializer initializer;
 	initializer.set_n_params(n_params);

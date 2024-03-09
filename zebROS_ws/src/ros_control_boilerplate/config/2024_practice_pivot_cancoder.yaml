@@ -1,0 +1,7 @@
+pivot_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: shooter_pivot_cancoder
+    sensor_direction: Clockwise_Positive
+    dynamic_reconfigure: True
+    magnet_offset: 0.7516505860639642
+    enable_read_thread: True

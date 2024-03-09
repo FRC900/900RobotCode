@@ -18,6 +18,7 @@
         /align_to_grid/cancel
         /align_to_grid/feedback
         /align_to_grid/goal
+		/last_relocalize
         /align_to_grid/result
         /align_to_grid/status
 		/align_to_grid_closed_loop/align_to_grid_closed_loop/cancel

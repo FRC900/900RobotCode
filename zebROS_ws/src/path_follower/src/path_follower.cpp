@@ -39,6 +39,11 @@ bool PathFollower::loadPath(const nav_msgs::Path &path, const nav_msgs::Path &ve
 	return true;
 }
 
+void PathFollower::addTimeOffset(const ros::Duration &time_offset)
+{
+	start_time_offset_ += time_offset;
+}
+
 double PathFollower::getPathLength() const
 {
 	return path_length_;

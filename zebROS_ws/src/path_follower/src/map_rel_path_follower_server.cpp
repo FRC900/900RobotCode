@@ -14,6 +14,7 @@
 #include "tf2_ros/transform_listener.h"
 #include "pid_velocity_msg/PIDVelocity.h"
 #include <angles/angles.h>
+#include <std_srvs/SetBool.h>
 
 // #define DEBUG
 
@@ -50,6 +51,11 @@ class PathAction
 
 		std::string map_frame_;
 
+		ros::ServiceServer pause_path_server_;
+
+		bool paused_ = false;
+		bool last_paused_ = false;
+
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
 				   double final_pos_tol,
@@ -74,6 +80,7 @@ class PathAction
 			, ros_rate_(ros_rate)
 			, tf_listener_(tf_buffer_)
 			, map_frame_(map_frame)
+			, pause_path_server_(nh_.advertiseService("pause_path", &PathAction::pausePath, this))
 
 		{
 			std_msgs::Bool bool_msg;
@@ -81,6 +88,12 @@ class PathAction
 			combine_cmd_vel_pub_.publish(bool_msg);
 
 			as_.start();
+		}
+
+		bool pausePath(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+		{
+			paused_ = req.data;
+			return true;
 		}
 
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
@@ -259,10 +272,45 @@ class PathAction
 			//in loop, send PID enable commands to rotation, x, y
 			double distance_travelled = 0;
 
-			const auto start_time = ros::Time::now().toSec();
+			auto start_time = ros::Time::now().toSec();
+
+			auto last_pause_time = start_time;
+			// If we pause, we need to offset the start time by the amount we paused for.
 
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
+				if (paused_ && !last_paused_) {
+					ROS_INFO_STREAM("Path follower paused");
+					last_pause_time = ros::Time::now().toSec();
+					// Shut off publishing both combined x+y+rotation messages
+					// along with the combined cmd_vel output generated from them
+					enable_msg.data = false;
+					combine_cmd_vel_pub_.publish(enable_msg);
+
+					x_axis.setEnable(false);
+					y_axis.setEnable(false);
+
+					ROS_WARN_STREAM("Path follower paused, publishing zero cmd_vel");
+					geometry_msgs::Twist zero_msg = geometry_msgs::Twist();
+					zero_msg.linear.x = 0.0;
+					zero_msg.linear.y = 0.0;
+					zero_msg.angular.z = 0.0;
+					zero_cmd_vel_pub_.publish(zero_msg);
+				}
+
+				if (last_paused_ && !paused_) {
+					ROS_INFO_STREAM("Path follower unpaused");
+					start_time += ros::Time::now().toSec() - last_pause_time;
+					path_follower_.addTimeOffset(ros::Duration(ros::Time::now().toSec() - last_pause_time));
+				}
+
+				last_paused_ = paused_;
+
+				if (paused_) {
+					ROS_INFO_STREAM_THROTTLE(0.5, "Path follower paused");
+					continue;
+				}
+
 				auto start_time_ = std::chrono::high_resolution_clock::now();
 				path_follower_msgs::PathFeedback feedback; // FIXME: Add velocity (probably?)
 				// Spin once to get the most up to date odom and yaw info

@@ -8,6 +8,7 @@ from behavior_actions.msg import Clawster2024Action, Clawster2024Feedback, Claws
 from behavior_actions.msg import Arm2024Action, Arm2024Feedback, Arm2024Result, Arm2024Goal
 from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse
 from talon_state_msgs.msg import TalonFXProState
+from sensor_msgs.msg import JointState
 
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 # Brings in the SimpleActionClient
@@ -68,8 +69,24 @@ class Intaking2024Server(object):
         self.intaking_talon_idx = None
         self.talonfxpro_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.talonfxpro_states_cb)
 
+        self.joint_state_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, callback=self.rio_callback)
+        self.diverter_switch = False
+        self.run_intake_backwards = None
+
         self.server = actionlib.SimpleActionServer(self.action_name, Intaking2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
+
+    def rio_callback(self, data):
+        # check diverter_switch
+        if "diverter_limit_switch" in data.name:
+            if self.diverter_switch and not data.position[data.name.index("diverter_limit_switch")]:
+                rospy.loginfo("Running backwards in 0.5 seconds!")
+                self.run_intake_backwards = rospy.Time.now() + rospy.Duration(0.5)
+            self.diverter_switch = data.position[data.name.index("diverter_limit_switch")]
+            #rospy.loginfo(f"Found {self.claw_switch_name} with value {self.claw_switch}")
+        else:
+            rospy.logwarn_throttle(1.0, f'2024_intaking_server: diverter_limit_switch not found')
+            pass
             
     def shooter_pivot_callback(self, data):
         if self.pivot_index is None:
@@ -95,6 +112,8 @@ class Intaking2024Server(object):
  
     def execute_cb(self, goal: Intaking2024Goal):
         r = rospy.Rate(60)
+
+        self.run_intake_backwards = None
 
         if goal.destination == goal.OUTTAKE:
             intake_srv = CommandRequest()
@@ -185,6 +204,11 @@ class Intaking2024Server(object):
         # if run until preempt want to just go for the entire auto
         while goal.run_until_preempt or (not (clawster_done or rospy.is_shutdown() or (rospy.Time.now() - start).to_sec() > self.intaking_timeout)):
             rospy.loginfo_throttle(0.5, f"2024_intaking_server: waiting for {'preshooter' if goal.destination == goal.SHOOTER else 'claw'}")
+            if self.run_intake_backwards is not None and rospy.Time.now() > self.run_intake_backwards:
+                rospy.loginfo("Running backwards!")
+                intake_srv.command = -self.outtaking_speed
+                self.intake_client.call(intake_srv)
+                self.run_intake_backwards = None
             if self.intaking_current > self.current_threshold:
                 rospy.logwarn(f"Intaking current = {self.intaking_current} is above {self.current_threshold}")
                 self.feedback.note_hit_intake = True

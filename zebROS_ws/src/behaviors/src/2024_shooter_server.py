@@ -25,7 +25,7 @@ class ShooterServer2024:
     def __init__(self):
         self.server = actionlib.SimpleActionServer('set_shooter_speed', Shooter2024Action, self.execute_cb, auto_start = False)
 
-        self.talon_states_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.callback) # subscribing here so that we can figure out the actual speed of said motor at a given time, talonfxpro_states gives us these values
+        self.talon_states_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.callback, tcp_nodelay=True, queue_size=1) # subscribing here so that we can figure out the actual speed of said motor at a given time, talonfxpro_states gives us these values
         
         self.top_left_client = rospy.ServiceProxy("/frcrobot_jetson/top_left_shooter_controller/command", Command)
         self.top_right_client = rospy.ServiceProxy("/frcrobot_jetson/top_right_shooter_controller/command", Command)

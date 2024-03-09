@@ -114,5 +114,8 @@ class PathFollower
 
 		// contains the main control loop
 		std::optional<PositionVelocity> run(double &distance_travelled, size_t &current_index);
+
+		// add time offset
+		void addTimeOffset(const ros::Duration &time_offset);
 };
 

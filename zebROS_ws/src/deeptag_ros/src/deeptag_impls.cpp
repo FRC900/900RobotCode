@@ -21,14 +21,13 @@ static cv::aruco::PREDEFINED_DICTIONARY_NAME deepTagTypeToCVName(const DeepTagTy
 {
     switch (type)
     {
-    using enum DeepTagType;
-    case APRILTAG_16H5:
+    case DeepTagType::APRILTAG_16H5:
         return cv::aruco::PREDEFINED_DICTIONARY_NAME::DICT_APRILTAG_16h5;
-    case APRILTAG_25H9:
+    case DeepTagType::APRILTAG_25H9:
         return cv::aruco::PREDEFINED_DICTIONARY_NAME::DICT_APRILTAG_25h9;
-    case APRILTAG_36H10:
+    case DeepTagType::APRILTAG_36H10:
         return cv::aruco::PREDEFINED_DICTIONARY_NAME::DICT_APRILTAG_36h10;
-    case APRILTAG_36H11:
+    case DeepTagType::APRILTAG_36H11:
         return cv::aruco::PREDEFINED_DICTIONARY_NAME::DICT_APRILTAG_36h11;
     default:
         throw std::runtime_error("Invalid tag type");

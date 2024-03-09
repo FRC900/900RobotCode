@@ -19,7 +19,6 @@ class Clawster2024ActionServer(object):
 
     def __init__(self, name):
         self.claw_client = rospy.ServiceProxy(f"/frcrobot_rio/{rospy.get_param('controller_name')}/command", Command)
-        self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback)
         self._action_name = name
         '''
             intake_speed: 0.4
@@ -41,6 +40,13 @@ class Clawster2024ActionServer(object):
         self.preshooter_intake_speed = rospy.get_param('preshooter/intake_speed')
         self.preshooter_outtake_speed = rospy.get_param('preshooter/outtake_speed')
 
+        self.diverter_switch_name = rospy.get_param("diverter_switch_name")
+        self.diverting_timeout = rospy.get_param("diverting_timeout")
+
+        self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback)
+
+        self.last_touched_diverter = rospy.Time()
+
         rospy.loginfo(f"Claw: switch name {self.claw_switch_name} claw intake speed {self.claw_intake_speed}")
         rospy.loginfo(f"Preshooter: switch name {self.preshooter_switch_name} claw intake speed {self.preshooter_intake_speed}")
 
@@ -58,7 +64,7 @@ class Clawster2024ActionServer(object):
     def execute_cb(self, goal: Clawster2024Goal):
         pct_out = Float64()
         success = True
-        r = rospy.Rate(60)
+        r = rospy.Rate(250)
         if goal.destination == goal.PRESHOOTER:
             rospy.loginfo("Clawster called with PRESHOOTER")
             intake_speed = self.preshooter_intake_speed
@@ -94,7 +100,7 @@ class Clawster2024ActionServer(object):
             pct_out.data = outtake_speed
             self.claw_client.call(CommandRequest(pct_out.data))
             rospy.loginfo(f"clawster_server: {pct_out}")
-            while self.get_current_switch(goal) != 0 and (not rospy.is_shutdown()):
+            while (self.get_current_switch(goal) != 0 or (rospy.Time.now() - self.last_touched_diverter).to_sec() < self.diverting_timeout) and (not rospy.is_shutdown()):
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
                     rospy.logwarn("Clawster_server: Preempted!")
@@ -130,6 +136,16 @@ class Clawster2024ActionServer(object):
             #rospy.loginfo(f"Found {self.preshooter_switch_name} with value {self.preshooter_switch}")
         else:
             rospy.logwarn_throttle(1.0, f'2024_clawster_server: {self.preshooter_switch_name} not found')
+            pass
+
+        # check diverter switch
+        if self.diverter_switch_name in data.name:
+            self.diverter_switch = data.position[data.name.index(self.diverter_switch_name)] 
+            if self.diverter_switch:
+                self.last_touched_diverter = rospy.Time.now()
+            #rospy.loginfo(f"Found {self.preshooter_switch_name} with value {self.preshooter_switch}")
+        else:
+            rospy.logwarn_throttle(1.0, f'2024_clawster_server: {self.diverter_switch_name} not found')
             pass
 
 

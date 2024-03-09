@@ -1,2 +1,4 @@
 tolerance: 0.9 # percent difference
 pivot_tolerance: 0.05
+pivot_velocity_tolerance: 0.05
+num_samples_required: 10

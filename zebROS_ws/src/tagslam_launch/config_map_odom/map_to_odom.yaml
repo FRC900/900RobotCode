@@ -1,6 +1,8 @@
 transform_timeout: 0.5 # seconds
 maximum_jump: 100.0 # meters
-cmd_vel_threshold: 0.2 # m/s, maximum speed we can be going at in order to relocalize
+cmd_vel_threshold: 0.5 # m/s, maximum speed we can be going at in order to relocalize
+ang_vel_threshold: 0.5 # rad/s, maximum angular speed we can be going at in order to relocalize
 time_stopped: 0.2 # seconds, time we need to be stopped for in order to publish
+max_z: 0.15 # meters, don't want to be more than this off the ground in the transform (usually means its bad)
 publish_frequency: 50 # Hz
 localize_while_stopped: true

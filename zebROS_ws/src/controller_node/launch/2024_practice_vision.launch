@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="run_camera"           default="true" />
+	<arg name="run_apriltag"         default="true" />
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="zed_name"             value="zedx_front" />
+		<arg name="zed_config_dir"       value="zedx" />
+		<arg name="camera_model"         value="zedx" />
+		<arg name="serial_number"	     value="43782465" />
+		<arg name="cam_pos_x"            value="0.395726" />
+		<arg name="cam_pos_y"            value="0.231140" />
+		<arg name="cam_pos_z"            value="0.232149" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_yaw"              value="0.0" />
+		<arg name="run_camera"           value="$(arg run_camera)" />
+		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
+		<arg name="run_object_detection" value="true" />
+		<arg name="startup_delay"        value="15.0" />
+	</include>
+
+	<include file="$(find controller_node)/launch/zed_detection.launch">
+		<arg name="zed_name"             value="zedx_back" />
+		<arg name="zed_config_dir"       value="zedx" />
+		<arg name="camera_model"         value="zedx" />
+		<arg name="serial_number"	     value="49607378" />
+		<arg name="cam_pos_x"            value="-0.289731" />
+		<arg name="cam_pos_y"            value="0.0" />
+		<arg name="cam_pos_z"            value="0.200852" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="-0.2617993877991494" />
+		<arg name="cam_yaw"              value="3.14159265" />
+		<arg name="run_camera"           value="$(arg run_camera)" />
+		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
+		<arg name="run_object_detection" value="false" />
+		<arg name="startup_delay"        value="0.0" />
+	</include>
+
+	<include file="$(find tagslam_launch)/launch/2024_compbot_tagslam.launch"/>
+</launch>

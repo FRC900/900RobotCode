@@ -1,5 +1,4 @@
 #goal
-bool setup_only # just spin up
 bool leave_spinning
 
 bool align_forever

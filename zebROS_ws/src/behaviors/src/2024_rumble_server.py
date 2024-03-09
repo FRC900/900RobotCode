@@ -27,6 +27,9 @@ class Rumble2024Server():
 
         #self.shooter_pos_sub = rospy.Subscriber("/", TalonFXProState, shooter_pivot_callback)
         self.rumble_srv = rospy.ServiceProxy("/frcrobot_rio/rumble_controller/command", RumbleCommand)
+
+        self.previous_intake_switch = 0
+        self.previous_preshooter_switch = 0
         
         self.intaking_current = 0.0
         self.intaking_talon_idx = None
@@ -35,6 +38,7 @@ class Rumble2024Server():
         self.limit_switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.limit_switch_cb)
         
         self.notes_max_distance = rospy.get_param("note_distance_away")
+        self.preshooter_limit_switch_name = rospy.get_param("preshooter_limit_switch_name")
         self.intake_limit_switch_name = rospy.get_param("intake_limit_switch_name")
         self.rumble_value = rospy.get_param("rumble_on_note")
 
@@ -42,13 +46,11 @@ class Rumble2024Server():
         self.rumble = rospy.Timer(rospy.Duration(1.0/20.0), self.rumble_loop)
         self.closest_note = 900
         self.time_touched_note = rospy.Time.now()
-        self.touched_note = False
-        self.note_left = False
 
-        self.already_touched_note = False
+        self.intaking_rumble = False
+        self.shot_note = False
 
-        self.should_run_loop = True
-
+        self.current_rumble_state = 0
 
     def talonfxpro_states_cb(self, states: TalonFXProState):
         #rospy.loginfo_throttle(5, "Intaking node recived talonfx pro states")
@@ -85,19 +87,38 @@ class Rumble2024Server():
     def limit_switch_cb(self, data):
         #rospy.loginfo_throttle(1, "2024_rumble_server: limit switch callback")
         # check claw switch
-        if self.intake_limit_switch_name in data.name:
-            if self.touched_note == False:
-                #rospy.loginfo(f'2024_rumble_server: {self.intake_limit_switch_name} found')
-                self.touched_note = data.position[data.name.index(self.intake_limit_switch_name)]
-                self.time_touched_note = rospy.Time.now()
-                self.note_has_left = False
-            elif self.touched_note == True:
-                if not data.position[data.name.index(self.intake_limit_switch_name)]:
-                    self.note_left = True
-                    self.touched_note = False
-        else:
-            rospy.logerr_throttle(1.0, f'2024_rumble_server: {self.intake_limit_switch_name} not found')
-            pass
+        
+        # intake preshooter
+        #   0        0      -> No change from previous state
+        #   1        0      -> Start rumble
+        #   0        1      -> Stop rumble
+        #   1        1      -> Stop rumble
+
+        if (not self.preshooter_limit_switch_name in data.name) or (not self.intake_limit_switch_name in data.name):
+            rospy.logerr_throttle(1.0, f'2024_rumble_server: intake or preshooter limit not found')
+            return
+        
+        
+        current_intake_switch = data.position[data.name.index(self.intake_limit_switch_name)]
+        current_preshooter_switch = data.position[data.name.index(self.preshooter_limit_switch_name)]
+        rospy.loginfo_throttle(1, f"Current intake {current_intake_switch} preshooter {current_preshooter_switch} \n previous intake {self.previous_intake_switch} shooter prev {self.previous_preshooter_switch}")
+        # we see note, rumble until preshooter switch
+        if self.previous_intake_switch == 0 and current_intake_switch:
+            rospy.loginfo("Intaking rumble")
+            self.intaking_rumble = True
+
+        # note hits preshooter, stop rumble
+        if self.previous_preshooter_switch == 0 and current_preshooter_switch:
+            rospy.loginfo("Intaking rumble STOP")
+            self.intaking_rumble = False
+        
+        # note left (shot), rumble for a half second
+        if current_preshooter_switch == 0 and self.previous_preshooter_switch:
+            rospy.loginfo("SHOT NOTE")
+            self.shot_note = True
+        
+        self.previous_intake_switch = current_intake_switch
+        self.previous_preshooter_switch = current_preshooter_switch
 
     # runs at some hz
     def rumble_loop(self, event):
@@ -105,44 +126,38 @@ class Rumble2024Server():
         rumble_srv = RumbleCommandRequest()
         rumble_srv.left = 0
         rumble_srv.right = 0
+        
+        rospy.loginfo_throttle(1, "Rumble loop")
+        # TODO make this a parameter
+        # note should be gone after 1 second
+        if self.intaking_rumble:
+            if self.current_rumble_state != self.rumble_value:
+                rumble_srv.left = self.rumble_value
+                rumble_srv.right = self.rumble_value
+                self.rumble_srv.call(rumble_srv) # could optimize this to not call rumble_srv a lot
+                self.current_rumble_state = self.rumble_value
+        else:
+            if self.current_rumble_state != 0:
+                rumble_srv.left = 0
+                rumble_srv.right = 0
+                self.rumble_srv.call(rumble_srv) 
+                self.current_rumble_state = 0
 
-        if not self.should_run_loop:
-            rospy.loginfo("NOT RUNNING RUMBLE LOOP")
-            self.rumble_srv.call(rumble_srv)
-            return
-
-        # TODO add for next event
-        # if self.closest_note < self.notes_max_distance:
-        #     rumble_srv.left = 10000 # slight rumble if we can see a note
-        #     rumble_srv.right = 10000
-
-        if self.touched_note and not self.already_touched_note:
-            rospy.logerr_throttle(1, "2024 rumble server: touched note")
-            # TODO make this a parameter
-            # note should be gone after 1 second
-            rumble_srv.left = self.rumble_value
-            rumble_srv.right = self.rumble_value
-            self.rumble_srv.call(rumble_srv)
-            time.sleep(1)
-            rospy.loginfo("Sleep done touched note")
-            self.touched_note = False
-            self.already_touched_note = True
-
-        if self.note_left:
+        if self.shot_note:
             rospy.loginfo("Note left")
             rumble_srv.left = self.rumble_value
             rumble_srv.right = self.rumble_value
             self.rumble_srv.call(rumble_srv)
             time.sleep(1)
             rospy.loginfo("Sleep done note left")
-            self.note_left = False
-            self.note_has_left = True
-            self.already_touched_note = False
-        self.rumble_srv.call(rumble_srv)
+            self.shot_note = False
+            rumble_srv.left = 0
+            rumble_srv.right = 0
+            self.rumble_srv.call(rumble_srv)
         
         
 if __name__ == '__main__':
-    time.sleep(20)
+    time.sleep(2)
     rospy.logwarn("STARTING RUMBLE SERVER")
     rospy.init_node('rumble_server_2024')
     server = Rumble2024Server(rospy.get_name())

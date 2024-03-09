@@ -1,0 +1,14 @@
+controller_name: "clawster_controller"
+outtake_delay: 0.1
+claw:
+  intake_speed: 0.4 # doesnt exist
+  outtake_speed: -0.5 # doesnt exist
+  switch_name: "claw_limit_switch"
+  
+preshooter:
+  intake_speed: 0.95
+  outtake_speed: 0.9
+  switch_name: "preshooter_limit_switch"
+
+diverter_switch_name: "diverter_limit_switch"
+diverting_timeout: 0.5 # if outtaking and diverter was pressed shorter than this time ago but note hasn't gotten to preshooter, keep going
