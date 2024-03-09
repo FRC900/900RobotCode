@@ -52,6 +52,11 @@ class ShootingServer(object):
         self.angle_map = InterpolatingMap()
         self.angle_map.container = {l[0]: l[1] for l in rospy.get_param("angle_map")}
 
+
+
+      
+
+
         # Amp (constant speeds and angle)
         self.amp_top_left_speed = rospy.get_param("amp_top_left_speed")
         self.amp_top_right_speed = rospy.get_param("amp_top_right_speed")
@@ -189,8 +194,8 @@ class ShootingServer(object):
             self.server.set_succeeded(self.result)
             return
         
-        self.feedback.current_stage = self.feedback.SPINNING
-        self.server.publish_feedback(self.feedback)
+        #self.feedback.current_stage = self.feedback.SPINNING
+        #self.server.publish_feedback(self.feedback)
 
         shooter_goal = Shooter2024Goal()
         pivot_angle = None # default
@@ -255,19 +260,7 @@ class ShootingServer(object):
 
             rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
 
-        #elif goal.mode == goal.move_while_shooting:
-            #time_now = rospy.get_time()
-
-            '''
-            if (time_now - goal.dynamic_move_while_shoot_time) >= set_time_dynamic_value:
-                shooter_goal.top_left_speed = self.top_left_map[goal.distance_moving]
-                shooter_goal.top_right_speed = self.top_right_map[goal.distance_moving]
-                shooter_goal.bottom_left_speed = self.bottom_left_map[goal.distance_moving]
-                shooter-goal.bottom_right_speed = self.bottom_right_map[goal.distance_moving]
-                pivot_angle = self.angle_map[goal.distance_moving]
-                
-                rospy.loginfo(f"2024_shooting server: distancimg moving shooting conditions true: {goal.distance_moving}")
-            '''
+      
 
 
 
@@ -293,7 +286,7 @@ class ShootingServer(object):
         rospy.loginfo(f"2024_shooting_server: pivoting to angle {pivot_angle}")
 
         self.feedback.current_stage = self.feedback.PIVOTING
-        self.server.publish_feedback(self.feedback)
+        #self.server.publish_feedback(self.feedback)
 
         pivot_goal = ShooterPivot2024Goal()
         pivot_goal.pivot_position = pivot_angle
@@ -337,7 +330,7 @@ class ShootingServer(object):
                 preshooter_done = True
                 rospy.logwarn("2024_shooting_server: PRESHOOTER CB DONE")
 
-            self.preshooter_client.send_goal(preshooter_goal, done_cb=preshooter_done_cb)
+            #self.preshooter_client.send_goal(preshooter_goal, done_cb=preshooter_done_cb)
 
             while not preshooter_done and not rospy.is_shutdown():
                 rospy.loginfo_throttle(0.5, "2024_shooting_server: waiting for preshooter")
@@ -349,7 +342,7 @@ class ShootingServer(object):
 
                     # ensure pivot at good position
                     pivot_goal.pivot_position = 0.5
-                    self.pivot_client.send_goal(pivot_goal)
+                    #self.pivot_client.send_goal(pivot_goal)
                     # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     # stop preshooter
@@ -407,7 +400,7 @@ class ShootingServer(object):
                 self.cmd_vel_pub.publish(cmd_vel_msg)
 
             pivot_goal.pivot_position = 0.5
-            self.pivot_client.send_goal(pivot_goal)
+            #self.pivot_client.send_goal(pivot_goal)
 
             rospy.loginfo("2024_shooting_server: +5 points hopefully")
         
@@ -426,7 +419,7 @@ class ShootingServer(object):
 
         self.result.success = True
         rospy.loginfo("2024_shooting_server: succeeded")
-        self.server.set_succeeded(self.result)
+        #self.server.set_succeeded(self.result)
 
 if __name__ == '__main__':
     rospy.init_node('shooting_server_2024')

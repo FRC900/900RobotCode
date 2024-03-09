@@ -29,11 +29,23 @@ class Aligner:
         self.tolerance = rospy.get_param("tolerance")
         self.velocity_tolerance = rospy.get_param("velocity_tolerance")
         self.min_samples = rospy.get_param("min_samples")
+        self.dynamic_move_time = rospy.get_param("dynamic_move_time")
+
         self.color = 0
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.AlignToSpeaker2024Action, execute_cb=self.aligner_callback, auto_start = False)
         self._as.start()
         self.current_yaw = 0
         self.current_orient_effort = 0
+        self.x_field_relative_vel_imu = 0
+        self.y_field_relative_vel_imu = 0
+
+        self.x_field_relative_vel_align = 0
+        self.y_field_relative_vel_align = 0
+
+        self.angle_dist_x = 0
+        self.angle_dist_y = 0
+
+
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
         self.object_publish = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size =1)
@@ -44,11 +56,8 @@ class Aligner:
         self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
         self.pub_cmd_vel = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
 
-
-
         #for shooting while moving
         self.current_robot_cmd_vel = 0
-        self.dynamic_move_while_shoot_time = 0
         self.robot_cmd_vel = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.msg.TwistStamped, self.robot_cmd_vel_callback )    #is twist stamped the correct type of output???
         self.pub_dist_and_ang_vel = rospy.Publisher("/speaker_align/dist_and_ang", behavior_actions.msg.AutoAlignSpeaker, queue_size=1) #distance and angle
 
@@ -56,16 +65,18 @@ class Aligner:
         
         self.feed_forward = True
 
-        self.dynamic_move_time = rospy.get_param("dynamic_move_time")
         self.move_time_reconfigured = False
 
-        ddynrec = DDynamicReconfigure("dynamic_move_time_setter")
+        ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
+        ddynrec.add_variable("tolerance", "float/double variable", rospy.get_param("tolerance"), 0.0, 3.0)
         ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
         ddynrec.start(self.dyn_rec_callback)
 
     def dyn_rec_callback(self, config, level):
         rospy.loginfo("Received reconf call: " + str(config))
+        self.tolerance = config["tolerance"]
         self.dynamic_move_time = config["dynamic_move_time"]
+
         self.move_time_reconfigured = True
         return config
 
@@ -86,12 +97,23 @@ class Aligner:
 
             self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
-            dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
-            self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
 
-            #let time be .5
-            dist_ang_msg.distance_moving = math.sqrt((self.current_robot_cmd_vel.linear.x ** 2 ) + (self.current_robot_cmd_vel.linear.y ** 2))(self.dynamic_move_time) + dist_ang_msg.distance
+            #rotate angle should just be self.current_yaw, though the sign may or may not be negative due to the amount of negatives that we have throughout code
+            self.x_field_relative_vel_imu = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
+            self.y_field_relative_vel_imu = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
+        
+
+            p_distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
+            v_distance = math.hypot(self.x_field_relative_vel_imu, self.y_field_relative_vel_imu)(self.dynamic_move_time)
+
+            angle_dist_x = (self.x_field_relative_vel_imu)(self.dynamic_move_time) + destination.point.x
+            angle_dist_y = (self.y_field_relative_vel_imu)(self.dynamic_move_time) + destination.point.y
+            dist_ang_msg.distance =  v_distance + p_distance
+            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
+            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
+            #accounting for moving cases? 
+            #dist_ang_msg.angle = math.atan2(angle_dist_y, angle_dist_x)
+
             dist_ang_msg.dynamic_move_while_shoot_time = rospy.get_time()
 
             #for this to be accurate, in .5 seconds, we have to moving at the same velocity, in addition to this, we shoot, in .5 seconds
@@ -157,9 +179,24 @@ class Aligner:
             self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
 
-            dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
+            self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
+            self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
+
+
+            self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
+            self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
+            #accounting for moving cases? 
+            #dist_ang_msg.angle = math.atan2(y_field_relative_vel, x_field_relative_vel)
+            #dist_ang_msg.angle = math.atan2(self.angle_dist_y, self.angle_dist_x)
+
+
+            p_distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
+            v_distance = math.hypot(self.x_field_relative_vel_align, self.y_field_relative_vel_align) * (self.dynamic_move_time)
+            dist_ang_msg.distance =  v_distance + p_distance
+            dist_ang_msg.x_vel = self.x_field_relative_vel_align
+            dist_ang_msg.y_vel = self.y_field_relative_vel_align
 
             self._feedback.aligned = False
 

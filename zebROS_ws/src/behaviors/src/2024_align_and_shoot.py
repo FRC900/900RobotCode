@@ -2,7 +2,6 @@
 
 import rospy
 import actionlib
-
 from behavior_actions.msg import AlignAndShoot2024Goal, AlignAndShoot2024Result, AlignAndShoot2024Feedback, AlignAndShoot2024Action   
 from behavior_actions.msg import AlignToSpeaker2024Goal, AlignToSpeaker2024Result, AlignToSpeaker2024Feedback, AlignToSpeaker2024Action
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
@@ -42,6 +41,7 @@ class AlignAndShoot:
         if self.dist_sub.get_num_connections() > 0: rospy.loginfo("2024_align_and_shoot: distance and angle topic being published to")
         
         self.server = actionlib.SimpleActionServer(self.action_name, AlignAndShoot2024Action, execute_cb=self.execute_cb, auto_start = False)
+
         rospy.loginfo("2024_align_and_shoot: starting server")
         
         self.last_relocalize_sub = rospy.Subscriber("/last_relocalize", Header, self.relocalized_cb, tcp_nodelay=True, queue_size=1)
@@ -236,6 +236,5 @@ class AlignAndShoot:
 
 if __name__ == '__main__':
     rospy.init_node('align_and_shoot_2024')
-    
     server = AlignAndShoot(rospy.get_name())
     rospy.spin()

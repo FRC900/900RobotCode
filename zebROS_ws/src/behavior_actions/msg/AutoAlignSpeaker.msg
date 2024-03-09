@@ -1,4 +1,5 @@
 float64 distance
-float64 distance_moving
+float64 x_vel
+float64 y_vel
 float64 dynamic_move_while_shoot_time
 float64 angle
