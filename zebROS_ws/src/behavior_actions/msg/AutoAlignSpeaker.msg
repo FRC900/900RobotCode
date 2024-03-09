@@ -6,5 +6,6 @@ float64 offset_angle_degrees
 float64 destination_y
 float64 destination_x
 float64 degree_angle
+float64 distance_moving
 float64 dynamic_move_while_shoot_time
 float64 angle

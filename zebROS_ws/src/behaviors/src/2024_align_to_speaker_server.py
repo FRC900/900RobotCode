@@ -57,8 +57,11 @@ class Aligner:
         self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
         self.pub_cmd_vel = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
 
+
+
         #for shooting while moving
         self.current_robot_cmd_vel = 0
+        self.dynamic_move_while_shoot_time = 0
         self.robot_cmd_vel = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.msg.TwistStamped, self.robot_cmd_vel_callback )    #is twist stamped the correct type of output???
         self.pub_dist_and_ang_vel = rospy.Publisher("/speaker_align/dist_and_ang", behavior_actions.msg.AutoAlignSpeaker, queue_size=1) #distance and angle
 
@@ -66,12 +69,20 @@ class Aligner:
         
         self.feed_forward = True
 
+<<<<<<< HEAD
         self.move_time_reconfigured = False
 
         ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
         ddynrec.add_variable("tolerance", "float/double variable", rospy.get_param("tolerance"), 0.0, 3.0)
         ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
         ddynrec.add_variable("offset_angle_radians", "float/double variable", rospy.get_param("offset_angle_radians"), 0.0, 3.14)
+=======
+        self.dynamic_move_time = rospy.get_param("dynamic_move_time")
+        self.move_time_reconfigured = False
+
+        ddynrec = DDynamicReconfigure("dynamic_move_time_setter")
+        ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
+>>>>>>> 5f77b91a (base code for making this possibly work?)
         ddynrec.start(self.dyn_rec_callback)
 
     def dyn_rec_callback(self, config, level):
@@ -79,6 +90,7 @@ class Aligner:
         self.tolerance = config["tolerance"]
         self.dynamic_move_time = config["dynamic_move_time"]
 
+        self.dynamic_move_time = config["dynamic_move_time"]
         self.move_time_reconfigured = True
         return config
 
