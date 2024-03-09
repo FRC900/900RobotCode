@@ -9,6 +9,8 @@ uint8 LOB_PASS=6
 uint8 SHOT_PASS=7
 uint8 mode
 float64 distance
+float64 distance_moving
+float64 dynamic_move_while_shoot_time
 bool setup_only # just spin up
 bool leave_spinning
 bool cancel_movement # will OVERRIDE other fields, cancels lower level servers and exits 

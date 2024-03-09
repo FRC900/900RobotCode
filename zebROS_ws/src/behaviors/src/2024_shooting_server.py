@@ -255,6 +255,22 @@ class ShootingServer(object):
 
             rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
 
+        #elif goal.mode == goal.move_while_shooting:
+            #time_now = rospy.get_time()
+
+            '''
+            if (time_now - goal.dynamic_move_while_shoot_time) >= set_time_dynamic_value:
+                shooter_goal.top_left_speed = self.top_left_map[goal.distance_moving]
+                shooter_goal.top_right_speed = self.top_right_map[goal.distance_moving]
+                shooter_goal.bottom_left_speed = self.bottom_left_map[goal.distance_moving]
+                shooter-goal.bottom_right_speed = self.bottom_right_map[goal.distance_moving]
+                pivot_angle = self.angle_map[goal.distance_moving]
+                
+                rospy.loginfo(f"2024_shooting server: distancimg moving shooting conditions true: {goal.distance_moving}")
+            '''
+
+
+
         shooter_done = False
         # def shooter_feedback_cb(feedback: Shooter2024Feedback):
         #     nonlocal shooter_done

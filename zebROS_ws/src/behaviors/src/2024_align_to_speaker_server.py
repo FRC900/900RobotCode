@@ -9,6 +9,7 @@ import geometry_msgs.msg
 import std_msgs.msg
 import sensor_msgs.msg
 import math
+from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 import behavior_actions.msg
 from tf.transformations import euler_from_quaternion # may look like tf1 but is actually tf2
 from frc_msgs.msg import MatchSpecificData
@@ -43,11 +44,30 @@ class Aligner:
         self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
         self.pub_cmd_vel = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
 
+
+
+        #for shooting while moving
+        self.current_robot_cmd_vel = 0
+        self.dynamic_move_while_shoot_time = 0
+        self.robot_cmd_vel = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.msg.TwistStamped, self.robot_cmd_vel_callback )    #is twist stamped the correct type of output???
         self.pub_dist_and_ang_vel = rospy.Publisher("/speaker_align/dist_and_ang", behavior_actions.msg.AutoAlignSpeaker, queue_size=1) #distance and angle
 
         self._feedback.aligned = False
         
         self.feed_forward = True
+
+        self.dynamic_move_time = rospy.get_param("dynamic_move_time")
+        self.move_time_reconfigured = False
+
+        ddynrec = DDynamicReconfigure("dynamic_move_time_setter")
+        ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
+        ddynrec.start(self.dyn_rec_callback)
+
+    def dyn_rec_callback(self, config, level):
+        rospy.loginfo("Received reconf call: " + str(config))
+        self.dynamic_move_time = config["dynamic_move_time"]
+        self.move_time_reconfigured = True
+        return config
 
     def imu_callback(self, imu_msg):
         q = imu_msg.orientation
@@ -66,11 +86,20 @@ class Aligner:
 
             self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
-
             dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
 
+            #let time be .5
+            dist_ang_msg.distance_moving = math.sqrt((self.current_robot_cmd_vel.linear.x ** 2 ) + (self.current_robot_cmd_vel.linear.y ** 2))(self.dynamic_move_time) + dist_ang_msg.distance
+            dist_ang_msg.dynamic_move_while_shoot_time = rospy.get_time()
+
+            #for this to be accurate, in .5 seconds, we have to moving at the same velocity, in addition to this, we shoot, in .5 seconds
+
+            #here we use the kiematic equation to find hte distance that we are going to be at in t time, where t is predefined 
+            #(v_o)(t) + dist_ang_msg.distance
+            #(cmd_vel)(time_value) + dist_ang_msg.distance
+            #
             self.pub_dist_and_ang_vel.publish(dist_ang_msg)
         except Exception as e:
             rospy.logwarn_throttle(1, f"align_to_speaker: can't publish distance {e}")
@@ -89,7 +118,10 @@ class Aligner:
         
     def robot_orientation_effort_callback(self, msg):
         self.current_orient_effort = msg.data
-    
+
+    def robot_cmd_vel_callback(self, msg):
+        self.current_robot_cmd_vel = msg.twist
+
     def aligner_callback(self, goal: behavior_actions.msg.AlignToSpeaker2024Goal):
         self.feed_forward = True
         success = True
