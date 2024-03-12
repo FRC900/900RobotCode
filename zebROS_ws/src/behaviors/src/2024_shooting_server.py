@@ -76,6 +76,8 @@ class ShootingServer(object):
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
+        rospy.loginfo("2024_shooting_server: initialized")
+
     def dyn_rec_callback(self, config, level):
         rospy.loginfo("Received reconf call: " + str(config))
         self.subwoofer_top_left_speed = config["subwoofer_top_left_speed"]
@@ -89,6 +91,14 @@ class ShootingServer(object):
     def execute_cb(self, goal: Shooting2024Goal):
         if goal.cancel_movement:
             rospy.logwarn("2024_shooting_server: CANCELING SPIN UP")
+            shooter_goal = Shooter2024Goal()
+            shooter_goal.top_left_speed = 0.0
+            shooter_goal.top_right_speed = 0.0
+            shooter_goal.bottom_left_speed = 0.0
+            shooter_goal.bottom_right_speed = 0.0
+            shooter_goal.leave_spinning = False
+            self.shooter_client.send_goal(shooter_goal)
+            time.sleep(0.25)
             self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
             self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
             self.result.success = True
@@ -137,12 +147,25 @@ class ShootingServer(object):
             rospy.loginfo(f"2024_shooting_server: spinning up to distance {goal.distance}")
 
         shooter_done = False
-        def shooter_feedback_cb(feedback: Shooter2024Feedback):
-            nonlocal shooter_done
-            shooter_done = feedback.is_shooting_at_speed
-        self.shooter_client.send_goal(shooter_goal, feedback_cb=shooter_feedback_cb)
+        # def shooter_feedback_cb(feedback: Shooter2024Feedback):
+        #     nonlocal shooter_done
+        #     rospy.loginfo(f"2024_shooting_server: shooter feedback is {feedback.is_shooting_at_speed}")
+        #     shooter_done = feedback.is_shooting_at_speed
 
-        rospy.loginfo("2024_shooting_server: pivoting")
+        def shooter_done_cb(state, result):
+            nonlocal shooter_done
+            rospy.loginfo(f"2024_shooting_server: shooter DONE called")
+            shooter_done = True
+        
+        shooter_goal.leave_spinning = goal.leave_spinning
+        rospy.loginfo(f"2024_shooting_server: sending shooter goal {shooter_goal}")
+        self.shooter_client.send_goal(shooter_goal, done_cb=shooter_done_cb) # there was a feedback callback here too, but I believe it contributes to a race condition
+        # what likely happens is feedback that we're not done yet is sent, then the result that we are done is sent as well as the feedback that we are done
+        # we then receive that we are done (setting shooter_done=True) slightly *before* the second to last feedback message (saying we're not done) is received
+        # this leads to shooter_done being set to False. we then don't receive the final feedback message, because SimpleActionClient ignores feedback sent after
+        # the goal is done (source: https://github.com/ros/actionlib/blob/23acb6e7364dda9380f823e03284536574764c6a/actionlib/src/actionlib/action_client.py#L416)
+
+        rospy.loginfo(f"2024_shooting_server: pivoting to angle {pivot_angle}")
 
         self.feedback.current_stage = self.feedback.PIVOTING
         self.server.publish_feedback(self.feedback)
@@ -160,7 +183,7 @@ class ShootingServer(object):
         r = rospy.Rate(60.0)
 
         while not (shooter_done and pivot_done):
-            rospy.loginfo_throttle(0.5, "2024_shooting_server: waiting for shooter and pivot")
+            rospy.loginfo_throttle(0.5, f"2024_shooting_server: waiting for {'shooter' if not shooter_done else ''} and {'pivot' if not pivot_done else ''}")
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_shooting_server: preempted")
 
@@ -174,11 +197,10 @@ class ShootingServer(object):
             
             r.sleep()
 
+        self.feedback.current_stage = self.feedback.SHOOTING
+        self.server.publish_feedback(self.feedback)
         if not goal.setup_only:
             rospy.loginfo("2024_shooting_server: shooting")
-
-            self.feedback.current_stage = self.feedback.SHOOTING
-            self.server.publish_feedback(self.feedback)
 
             preshooter_goal = Clawster2024Goal()
             preshooter_goal.mode = preshooter_goal.OUTTAKE

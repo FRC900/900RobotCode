@@ -3,6 +3,7 @@
 
 #include "ros/ros.h"
 #include "std_srvs/Empty.h"
+#include "std_srvs/SetBool.h"
 
 #include "frc_msgs/ButtonBoxState2024.h"
 #include "frc_msgs/JoystickState.h"
@@ -52,9 +53,7 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot202
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>> drive_and_intake_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>> align_to_speaker_ac;
 
-// Set up transform listener using unique pointers
-std::unique_ptr<tf2_ros::TransformListener> tf_listener;
-std::unique_ptr<tf2_ros::Buffer> tf_buffer;
+ros::ServiceClient enable_continuous_autoalign_client;
 
 void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 {    
@@ -514,82 +513,22 @@ bool aligning = false;
 
 void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 {
-
-	// Check if we're behind half field (the field is 16.54 meters long, so half is 8.27 meters)
-	// (we're using the x coordinate of the robot in the odom frame to determine this)
-	// This is alliance-relative; the red interval is (8.27, 16.54) and the blue interval is (0.0, 8.27)
-
-	static bool past_half_field = false;
-
-	static geometry_msgs::PoseStamped robot_pose;
-
-	// get map -> base_link and store it in robot_pose
-	try
-	{
-		geometry_msgs::TransformStamped transformStamped = tf_buffer->lookupTransform("map", "base_link", ros::Time(0));
-		robot_pose.header = transformStamped.header;
-		robot_pose.pose.position.x = transformStamped.transform.translation.x;
-		robot_pose.pose.position.y = transformStamped.transform.translation.y;
-	}
-	catch (tf2::TransformException &ex)
-	{
-		ROS_WARN_STREAM_THROTTLE(1, ex.what());
-	}
-
-	ROS_INFO_STREAM_THROTTLE(1, "teleop_joystick_comp_2024 : robot_pose: " << robot_pose.pose.position.x << " " << robot_pose.pose.position.y);
-
-	if (alliance_color == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED)
-	{
-		if (robot_pose.pose.position.x > 8.27)
-		{
-			past_half_field = true;
-		}
-		else
-		{
-			if (past_half_field) {
-				// Stop aligning to speaker
-				align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-				aligning = false;
-			}
-			past_half_field = false;
-		}
-	}
-	else
-	{
-		if (robot_pose.pose.position.x < 8.27)
-		{
-			past_half_field = true;
-		}
-		else
-		{
-			if (past_half_field) {
-				// Stop aligning to speaker
-				align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-				aligning = false;
-			}
-			past_half_field = false;
-		}
-	}
-
 	if (button_box->lockingSwitchButton)
 	{
-		if (!aligning && past_half_field) {
-			// Align to speaker if past half field and not aligning
-			behavior_actions::AlignToSpeaker2024Goal goal;
-			goal.align_forever = true;
-			align_to_speaker_ac->sendGoal(goal);
-			aligning = true;
-		}
 	}
 	if (button_box->lockingSwitchPress)
 	{
-		
+		std_srvs::SetBool srv;
+		srv.request.data = true;
+		enable_continuous_autoalign_client.call(srv);
+		ROS_INFO_STREAM("teleop_joystick_comp_2024 : enabling continuous autoalign");
 	}
 	if (button_box->lockingSwitchRelease)
 	{
-		// Stop aligning to speaker
-		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-		aligning = false;
+		std_srvs::SetBool srv;
+		srv.request.data = false;
+		enable_continuous_autoalign_client.call(srv);
+		ROS_INFO_STREAM("teleop_joystick_comp_2024 : disabling continuous autoalign");
 	}
 
 	// TODO We'll probably want to check the actual value here
@@ -821,9 +760,7 @@ int main(int argc, char **argv)
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
-	// initialize tf listener
-	tf_buffer = std::make_unique<tf2_ros::Buffer>();
-	tf_listener = std::make_unique<tf2_ros::TransformListener>(*tf_buffer);
+	enable_continuous_autoalign_client = n.serviceClient<std_srvs::SetBool>("/align_and_shoot/enable_autoalign", false, {{"tcp_nodelay", "1"}});
 
 	TeleopInitializer initializer;
 	initializer.set_n_params(n_params);

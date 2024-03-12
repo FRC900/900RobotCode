@@ -3,7 +3,7 @@
     <group ns="align_to_speaker">
         <rosparam command="load" file="$(find behaviors)/config/2024_align_speaker_config.yaml"/>
         <node name="align_to_speaker_2024" pkg="behaviors" type="2024_align_to_speaker_server.py" output="screen"/>
-        <node pkg="tf2_ros" type="static_transform_publisher" name="link_maptobluespeaker" args="0 5.548 0 0 0 0 1 map bluespeaker" />
-        <node pkg="tf2_ros" type="static_transform_publisher" name="link_maptoredspeaker" args="16.580 5.548 0 0 0 0 1 map redspeaker" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_maptobluespeaker" args="0 5.572 0 0 0 0 1 map bluespeaker" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_maptoredspeaker" args="16.580 5.572 0 0 0 0 1 map redspeaker" />
     </group>
 </launch>

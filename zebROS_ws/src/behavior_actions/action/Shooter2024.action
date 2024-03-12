@@ -3,6 +3,7 @@ float64 top_left_speed
 float64 top_right_speed
 float64 bottom_left_speed
 float64 bottom_right_speed
+bool leave_spinning
 
 ---
 #defining result

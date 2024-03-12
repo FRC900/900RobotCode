@@ -14,6 +14,7 @@ hardware_interface:
    joints:
        - {name: joystick0, type: joystick, id: 0, local: true}
        - {name: robot_code_ready_rio, local: true, type: ready}
+       - {name: preshooter_limit_switch, type: digital_input, dio_channel: 9, invert: true, local: true}
 
 joint_state_controller_rio:
    type:         joint_state_controller/JointStateController

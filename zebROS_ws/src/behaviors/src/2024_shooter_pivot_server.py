@@ -28,7 +28,7 @@ class ShooterPivotServer2024:
                 #rospy.loginfo(data.name[i])
                 if (data.name[i] == "shooter_pivot_motionmagic_joint"): 
                     self.motion_magic_value = data.position[i]
-                    self.vel = data.velocity[i]
+                    self.vel = data.rotor_velocity[i] / 35.56
                     self.motion_magic_value_index = i
                     self.control_pos = data.control_position[i]
                     break

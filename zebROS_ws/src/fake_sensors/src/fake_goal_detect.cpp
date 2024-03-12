@@ -92,7 +92,7 @@ class FakeGoalDetection
 					obj.id = objMap_[msgIn->markers[i].ids[0]];
 					if (obj.id == "note") {
 						// ROS_INFO_STREAM("Found a note!");
-						if (hypot(p.x, p.y) < 2.0) {
+						if (hypot(p.x, p.y) < 1.0) {
 							ROS_INFO_STREAM_THROTTLE(1, "Note too close! Dropping");
 							continue;
 						}

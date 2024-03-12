@@ -253,7 +253,7 @@ shooter_pivot_controller:
 
     shooter_pivot_joint: [ 'shooter_pivot_motionmagic_joint' ]
     dynamic_reconfigure: True
-    min_angle: 0.45
+    min_angle: 0.40
     max_angle: 1.5
 
     motion_magic_velocity: 3.5

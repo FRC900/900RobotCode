@@ -22,6 +22,7 @@ class Aligner:
     _result = behavior_actions.msg.AlignToSpeaker2024Result()
 
     def __init__(self, name):   
+        self.valid_samples = 0
         self._action_name = name
         self.tolerance = rospy.get_param("tolerance")
         self.velocity_tolerance = rospy.get_param("velocity_tolerance")
@@ -45,7 +46,7 @@ class Aligner:
 
         self._feedback.aligned = False
 
-        self.valid_samples = 0
+        self.feed_forward = True
 
     def imu_callback(self, imu_msg):
         q = imu_msg.orientation
@@ -85,6 +86,7 @@ class Aligner:
         self.current_orient_effort = msg.data
     
     def aligner_callback(self, goal: behavior_actions.msg.AlignToSpeaker2024Goal):
+        self.feed_forward = True
         success = True
         rospy.loginfo(f"Auto Aligning Actionlib called with goal {goal}")
         rate = rospy.Rate(60.0)
@@ -131,7 +133,7 @@ class Aligner:
             cmd_vel_msg = geometry_msgs.msg.Twist()
             cmd_vel_msg.angular.x = 0
             cmd_vel_msg.angular.y = 0
-            cmd_vel_msg.angular.z = self.current_orient_effort + 0.5 * numpy.sign(self.current_orient_effort)
+            cmd_vel_msg.angular.z = self.current_orient_effort + 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward)
             cmd_vel_msg.linear.x = 0
             cmd_vel_msg.linear.y = 0
             cmd_vel_msg.linear.z = 0
@@ -142,6 +144,7 @@ class Aligner:
             if self.valid_samples >= self.min_samples:
                 self._feedback.aligned = True
                 rospy.loginfo_throttle(0.5, "2024_align_to_speaker: aligned")
+                self.feed_forward = False
                 if not goal.align_forever:
                     # moved down here because we don't want to exit if align forever is true
                     success = True

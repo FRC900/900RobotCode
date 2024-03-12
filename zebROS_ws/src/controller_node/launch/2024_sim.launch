@@ -133,6 +133,8 @@
 	<include file="$(find behaviors)/launch/2024_align_to_speaker.launch">
 	</include>
 
+	<include file="$(find behaviors)/launch/2024_align_and_shoot.launch"/>
+
 	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>
 	<!--  
 	<include file="$(find tf_object_detection)/launch/detection.launch">

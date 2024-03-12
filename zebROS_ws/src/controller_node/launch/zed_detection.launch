@@ -73,8 +73,8 @@
       <remap from="camera_info"         to="/$(arg zed_name)/left/camera_info" />
       <param name="tag_type"            value="36h11" />
       <param name="tag_size_in_meter"   value="0.152" />
-      <param name="use_tiled_detection" value="false" />
-      <param name="use_scaled_image"    value="true" />
+      <param name="use_tiled_detection" value="true" />
+      <param name="use_scaled_image"    value="false" />
     </node>
 
     <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 

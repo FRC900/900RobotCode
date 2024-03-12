@@ -188,7 +188,7 @@ public:
 
   std::optional<norfair_ros::Detection> findClosestObject(const norfair_ros::Detections &detections, const std::string &object_id, const int &tracked_object_id) {
     double minDistance = std::numeric_limits<double>::max();
-    // ROS_INFO_STREAM("Finding closest object");
+    ROS_INFO_STREAM("\nFinding closest object");
     auto map_to_baselink = tf_buffer_.lookupTransform("odom", "base_link", ros::Time::now(), ros::Duration(0.1));
     double map_x = map_to_baselink.transform.translation.x;
     double map_y = map_to_baselink.transform.translation.y;
@@ -201,6 +201,11 @@ public:
     }
     // ROS_INFO_STREAM("BEFORE LOOP");
     for (const norfair_ros::Detection &obj : detections.detections) {
+      // print out size of points
+      ROS_INFO_STREAM("Object with name " << obj.label << " has " << obj.points.size() << " points");
+      // print size of first point
+
+      ROS_INFO_STREAM("Object with name " << obj.label << " at x,y " << obj.points[0].point[0] << "," << obj.points[0].point[1]);
       // ROS_INFO_STREAM("LOOP");
       if (obj.points.size() > 1) {
         ROS_ERROR_STREAM("SHOULD ONLY CONTAIN ONE POINT");
@@ -266,17 +271,32 @@ public:
     ROS_INFO_STREAM("Execute callback");
     auto x_axis_it = axis_states_.find("x");
     auto &x_axis = x_axis_it->second;
-
-    x_axis.setEnable(true);
-    std::optional<norfair_ros::Detection> closestObject = findClosestObject(latest_, goal->id, tracked_object_id);
-    if (closestObject == std::nullopt) {
-      ROS_ERROR_STREAM("No inital object, exiting");
-      result_.success = false;
-      as_.setSucceeded(result_);
-      return;
-    } else {
-      tracked_object_id = closestObject->id;
+    std::optional<norfair_ros::Detection> closestObject;
+    while (true)
+    {
+      r.sleep();
+      ros::spinOnce(); // grab latest callback data
+      if (as_.isPreemptRequested() || !ros::ok())
+      {
+        ROS_ERROR_STREAM("drive_to_object : Preempted");
+        as_.setPreempted();
+        x_axis.setEnable(false);
+        return;
+      }
+      closestObject = findClosestObject(latest_, goal->id, tracked_object_id);
+      if (closestObject == std::nullopt) {
+        ROS_WARN_THROTTLE(0.5, "Drive to object: No object found, waiting for next frame");
+      } else {
+        tracked_object_id = closestObject->id;
+        ROS_INFO_STREAM("Drive to object: Found object with id " << tracked_object_id << " and label " << closestObject->label);
+        break;
+      }
     }
+
+
+    // shouldn't enable this until we have actually seen a note
+    x_axis.setEnable(true);
+
     // we don't know this until we go once in the loop, set to large value to signal that
     double field_relative_object_angle = 900;
     std_msgs::Float64 msg;
@@ -298,8 +318,17 @@ public:
         x_axis.setEnable(false);
         return;
       }
-
-      closestObject = findClosestObject(latest_, goal->id, tracked_object_id);
+      try { 
+        closestObject = findClosestObject(latest_, goal->id, tracked_object_id);
+      }
+      // catch everything and print it out
+      catch (const std::exception &e) {
+        ROS_ERROR_STREAM("Caught exception " << e.what());
+      }
+      catch (...) {
+        ROS_ERROR_STREAM("Caught unknown exception");
+      }
+      
       geometry_msgs::PointStamped base_link_point;
       if (closestObject != std::nullopt) {
         geometry_msgs::PointStamped object_point;

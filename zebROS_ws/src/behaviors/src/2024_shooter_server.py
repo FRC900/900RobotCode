@@ -24,6 +24,7 @@ class ShooterServer2024:
 
     def __init__(self):
         self.server = actionlib.SimpleActionServer('set_shooter_speed', Shooter2024Action, self.execute_cb, auto_start = False)
+        self.tolerance = rospy.get_param("tolerance")
 
         self.talon_states_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.callback, tcp_nodelay=True, queue_size=1) # subscribing here so that we can figure out the actual speed of said motor at a given time, talonfxpro_states gives us these values
         
@@ -38,7 +39,6 @@ class ShooterServer2024:
         self.bottom_left_client.wait_for_service()
         self.bottom_right_client.wait_for_service()
 
-        self.tolerance = rospy.get_param("tolerance")
 
         rospy.loginfo("2024_shooter_server: starting up")
 
@@ -92,22 +92,24 @@ class ShooterServer2024:
                 self._feedback.bottom_right_percent_complete = 100.0
                 self._feedback.is_shooting_at_speed = True
                 self.server.publish_feedback(self._feedback)
+                rospy.loginfo("SHOOTER SERVER, publishing feedback ALL ZEROS")
+                r.sleep()
                 self.server.set_succeeded(self._result)
                 return
         
             else:
                 self._feedback.top_left_percent_complete = (((self.top_left_joint_velocity - initial_top_left_speed) / (goal.top_left_speed - initial_top_left_speed))) * 100
-                top_left_percent_difference = (((abs(self.top_left_joint_velocity - goal.top_left_speed)) / ((self.top_left_joint_velocity + goal.top_left_speed))) / 2) * 100
+                top_left_percent_difference = abs((((abs(self.top_left_joint_velocity - goal.top_left_speed)) / ((self.top_left_joint_velocity + goal.top_left_speed))) / 2) * 100)
                 self._feedback.top_right_percent_complete = (((self.top_right_joint_velocity - initial_top_right_speed) / (goal.top_right_speed - initial_top_right_speed))) * 100
-                top_right_percent_difference = (((abs(self.top_right_joint_velocity - goal.top_right_speed)) / ((self.top_right_joint_velocity + goal.top_right_speed))) / 2) * 100
+                top_right_percent_difference = abs((((abs(self.top_right_joint_velocity - goal.top_right_speed)) / ((self.top_right_joint_velocity + goal.top_right_speed))) / 2) * 100)
                 self._feedback.bottom_left_percent_complete = (((self.bottom_left_joint_velocity - initial_bottom_left_speed) / (goal.bottom_left_speed - initial_bottom_left_speed))) * 100
-                bottom_left_percent_difference = (((abs(self.bottom_left_joint_velocity - goal.bottom_left_speed)) / ((self.bottom_left_joint_velocity + goal.bottom_left_speed))) / 2) * 100
+                bottom_left_percent_difference = abs((((abs(self.bottom_left_joint_velocity - goal.bottom_left_speed)) / ((self.bottom_left_joint_velocity + goal.bottom_left_speed))) / 2) * 100)
                 self._feedback.bottom_right_percent_complete = (((self.bottom_right_joint_velocity - initial_bottom_right_speed) / (goal.bottom_right_speed - initial_bottom_right_speed))) * 100
-                bottom_right_percent_difference = (((abs(self.bottom_right_joint_velocity - goal.bottom_right_speed)) / ((self.bottom_right_joint_velocity + goal.bottom_right_speed))) / 2) * 100
+                bottom_right_percent_difference = abs((((abs(self.bottom_right_joint_velocity - goal.bottom_right_speed)) / ((self.bottom_right_joint_velocity + goal.bottom_right_speed))) / 2) * 100)
 
             self.server.publish_feedback(self._feedback)
 
-            if self.server.is_preempt_requested():
+            if self.server.is_preempt_requested() and not goal.leave_spinning:
                 rospy.loginfo("2024_shooter_server: preempted")
                 self.top_left_client.call(CommandRequest(command=0))
                 self.top_right_client.call(CommandRequest(command=0))
@@ -124,6 +126,10 @@ class ShooterServer2024:
                 self._feedback.bottom_right_percent_complete = 100.0
                 self._feedback.is_shooting_at_speed = True
                 self.server.publish_feedback(self._feedback)
+                rospy.loginfo("SHOOTER SERVER, publishing feedback and setting succeeded")
+                r.sleep()
+                self.server.set_succeeded(self._result)
+                return
             
             r.sleep()
 

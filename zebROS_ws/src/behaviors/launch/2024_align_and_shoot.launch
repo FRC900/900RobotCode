@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <group ns="align_and_shoot">
+        <rosparam command="load" file="$(find behaviors)/config/2024_align_and_shoot_config.yaml"/>
         <node name="align_and_shoot_2024" pkg="behaviors" type="2024_align_and_shoot.py" output="screen"/>
     </group>
 </launch>
