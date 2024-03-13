@@ -54,5 +54,10 @@ topics:
   topic   : /align/cmd_vel
   timeout : 0.2
   priority: 129
+-
+  name    : align_to_trap
+  topic   : /align_to_trap/align_to_trap_pid/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 129
 
 locks: []

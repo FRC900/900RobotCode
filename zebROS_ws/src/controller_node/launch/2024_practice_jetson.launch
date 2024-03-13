@@ -121,6 +121,8 @@
 	<include file="$(find behaviors)/launch/2024_clawster.launch"/>
 	
 	<include file="$(find behaviors)/launch/2024_align_to_speaker.launch"/>
+	<include file="$(find behaviors)/launch/2024_align_to_trap.launch">
+	</include>
     <include file="$(find behaviors)/launch/2024_shooter.launch"/>
 	<include file="$(find behaviors)/launch/2024_shooting.launch"/>
 

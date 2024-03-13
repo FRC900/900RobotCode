@@ -24,6 +24,7 @@
 #include "teleop_joystick_control/teleop_joystick_comp_general.h"
 
 #include "behavior_actions/AlignAndShoot2024Action.h"
+#include "behavior_actions/AlignToTrap2024Action.h"
 
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -52,6 +53,7 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2024Acti
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>> aligned_shooting_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>> drive_and_intake_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>> align_to_speaker_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>> align_to_trap_ac;
 
 ros::ServiceClient enable_continuous_autoalign_client;
 
@@ -564,9 +566,13 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		ROS_WARN_STREAM("teleop_joystick_comp_2024: PREEMPTING all actions");
 		drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-		shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		// send shooting goal with cancel_movement=true
+		behavior_actions::Shooting2024Goal goal;
+		goal.cancel_movement = true;
+		shooting_ac->sendGoal(goal);
 		aligned_shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 	if (button_box->redRelease)
 	{
@@ -605,9 +611,14 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->trapPress)
 	{
+		// align to trap
+		behavior_actions::AlignToTrap2024Goal goal;
+		goal.destination = goal.TRAP;
+		align_to_trap_ac->sendGoal(goal);
 	}
 	if (button_box->trapRelease)
 	{
+		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if (button_box->climbButton)
@@ -625,8 +636,9 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->subwooferShootPress)
 	{
+		// this is now trap shoot
 		behavior_actions::Shooting2024Goal goal;
-		goal.mode = goal.SUBWOOFER;
+		goal.mode = goal.TRAP;
 		shooting_ac->sendGoal(goal);
 	}
 	if (button_box->subwooferShootRelease)
@@ -757,6 +769,7 @@ int main(int argc, char **argv)
 	drive_and_intake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>>("/intaking/drive_object_intake", true);
 	aligned_shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>>("/align_and_shoot/align_and_shoot_2024", true);
 	align_to_speaker_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>>("/align_to_speaker/align_to_speaker_2024", true);
+	align_to_trap_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>>("/align_to_trap/align_to_trap_2024", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 

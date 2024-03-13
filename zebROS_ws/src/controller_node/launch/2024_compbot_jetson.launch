@@ -16,7 +16,8 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_phoenix6.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_pivot_cancoder.yaml" command="load"/>
-			
+		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_arm_cancoder.yaml" command="load"/>
+
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
 		-->
@@ -55,6 +56,8 @@
 			 bottom_right_shooter_controller
 			 pivot_cancoder_controller
 			 shooter_pivot_controller
+			 arm_cancoder_controller
+			 arm_controller
 			 note_diverter_controller
 			 pigeon2_imu_state_controller
 			 cancoder_state_controller
@@ -125,7 +128,11 @@
 	<include file="$(find behaviors)/launch/2024_shooting.launch"/>
 
 	<include file="$(find behaviors)/launch/2024_align_and_shoot.launch"/>
+	
 	<include file="$(find behaviors)/launch/2024_rumble_server.launch"/> 
+
+	<include file="$(find behaviors)/launch/2024_align_to_trap.launch">
+	</include>
 
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	<include file="$(find behaviors)/launch/2024_intaking.launch"/>
@@ -137,6 +144,8 @@
 	<include file="$(find behaviors)/launch/2024_drive_to_object_and_intake.launch"/>
 	<include file="$(find norfair_ros)/launch/norfair_node.launch">
 	</include>
+	<include file="$(find behaviors)/launch/2024_drive_and_score.launch"/>
+
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	

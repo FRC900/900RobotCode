@@ -29,10 +29,10 @@ class Intaking2024Server(object):
     def __init__(self, name):
         self.action_name = name
         
-        #self.arm_client = actionlib.SimpleActionClient('/arm/move_arm_server_2024', Arm2024Action)
-        #rospy.loginfo("2024_intaking_server: waiting for arm server")
-        #self.arm_client.wait_for_server()
-        rospy.logerr("ARM CLIENT NOT INITALIZED BECAUSE IT DOESN'T EXIST")
+        self.arm_client = actionlib.SimpleActionClient('/arm/move_arm_server_2024', Arm2024Action)
+        rospy.loginfo("2024_intaking_server: waiting for arm server")
+        self.arm_client.wait_for_server()
+        # rospy.logerr("ARM CLIENT NOT INITALIZED BECAUSE IT DOESN'T EXIST")
 
         self.shooter_pivot_client = actionlib.SimpleActionClient('/shooter/set_shooter_pivot', ShooterPivot2024Action)
         rospy.loginfo("2024_intaking_server: waiting for shooter pivot server")
@@ -72,7 +72,7 @@ class Intaking2024Server(object):
         self.joint_state_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, callback=self.rio_callback)
         self.diverter_switch = False
         self.run_intake_backwards = None
-
+        self.arm_done = False
         self.server = actionlib.SimpleActionServer(self.action_name, Intaking2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
@@ -99,7 +99,7 @@ class Intaking2024Server(object):
             self.pivot_position = data.position[self.pivot_index]
 
     def talonfxpro_states_cb(self, states: TalonFXProState):
-        rospy.loginfo_throttle(5, "Intaking node recived talonfx pro states")
+        #rospy.loginfo_throttle(5, "Intaking node recived talonfx pro states")
         if (self.intaking_talon_idx == None):
             for i in range(len(states.name)):
                 #rospy.loginfo(data.name[i])
@@ -109,7 +109,8 @@ class Intaking2024Server(object):
                     break
         else:
             self.intaking_current = states.torque_current[self.intaking_talon_idx]
- 
+    
+
     def execute_cb(self, goal: Intaking2024Goal):
         r = rospy.Rate(60)
 
@@ -147,17 +148,40 @@ class Intaking2024Server(object):
         self.feedback.state = self.feedback.SHOOTERPIVOTING
         self.server.publish_feedback(self.feedback)
 
+        # need ensure claw is in correct position
+        if goal.destination == goal.CLAW:
+            self.arm_done = False
+            def arm_result(state, arm_result: Arm2024Result):
+                rospy.loginfo(f"Arm server finished with {arm_result.success} ")
+                self.arm_done = True
+                # not anything great to do if we failed, so just keep going
+            
+            arm_goal = Arm2024Goal()
+            # move us to diverting position
+            arm_goal.path = arm_goal.DIVERTER 
+            self.arm_client.send_goal(arm_goal, done_cb=arm_result)
+            while not self.arm_done and not rospy.is_shutdown():
+                if self.server.is_preempt_requested():
+                    rospy.loginfo("2024_intaking_server: preempted")
+                    self.arm_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                    self.server.set_preempted()
+                    return
+                r.sleep()
+                rospy.loginfo_throttle(0.5, "2024_intaking_server: waiting for arm")
+            rospy.logwarn("2024_intaking_server: ARM DONE")
+
         if self.pivot_position > self.safe_shooter_angle:
             pivot_goal = ShooterPivot2024Goal()
             pivot_goal.pivot_position = self.safe_shooter_angle - 0.2
             self.shooter_pivot_client.send_goal(pivot_goal)
-            while self.pivot_position > self.safe_shooter_angle:
+            while self.pivot_position > self.safe_shooter_angle and not rospy.is_shutdown():
                 if self.server.is_preempt_requested():
                     rospy.loginfo("2024_intaking_server: preempted")
                     self.shooter_pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
                     self.server.set_preempted()
                     return
                 r.sleep()
+                rospy.loginfo_throttle(0.5, "2024_intaking_server: waiting for shooter pivot")
         
             self.shooter_pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 

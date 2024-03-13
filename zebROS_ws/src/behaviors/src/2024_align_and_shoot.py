@@ -48,7 +48,7 @@ class AlignAndShoot:
         self.joint_state_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, callback=self.rio_callback)
 
         self.enable_continuous_autoalign_server = rospy.Service("enable_autoalign", std_srvs.srv.SetBool, self.enable_cb)
-        self.enable_continuous_autoalign = True
+        self.enable_continuous_autoalign = False
 
         self.dont_send_shooting_goal = False
 

@@ -52,8 +52,8 @@ hardware_interface:
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 15, local: true}
        
        #arm
-       - {name: arm, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
-       - {name: arm, type: cancoder, can_bus: CANivore, can_id: 31, local: true}
+       - {name: arm_joint, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
+       - {name: arm_cancoder, type: cancoder, can_bus: CANivore, can_id: 31, local: true}
 
        #climb
        #- {name: climb_leader, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
@@ -357,20 +357,60 @@ latency_compensation_state_controller:
   type: latency_compensation_state_controller/LatencyCompensationStateController
   publish_rate: 250
 
+# arm_controller:
+#     type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+#     joint: arm
+#     # DONT SET THIS FOR SIM !!! 
+#     #feedback_sensor_source: RemoteCANcoder
+#     #remote_feedback_device_id0: 21
+#     #neutral_deadband: 0.01
+#     close_loop_values:
+#         - {kP: 1, kI: 0.000, kD: 0.0, kV: 0, kS: 0}
+#     invert: counterclockwise_positive
+#     neutral_deadband: 0.01
+#     motion_magic_cruise_velocity: 0.1
+#     motion_magic_acceleration: 0.1
+#     motion_magic_jerk: 350.0
+#     forward_limit_enable: False
+#     reverse_limit_enable: False
+#     dynamic_reconfigure: True
+
 arm_controller:
-    type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
-    joint: arm
-    # DONT SET THIS FOR SIM !!! 
-    #feedback_sensor_source: RemoteCANcoder
-    #remote_feedback_device_id0: 21
-    #neutral_deadband: 0.01
-    close_loop_values:
-        - {kP: 1, kI: 0.000, kD: 0.0, kV: 0, kS: 0}
-    invert: counterclockwise_positive
-    neutral_deadband: 0.01
-    motion_magic_cruise_velocity: 0.1
-    motion_magic_acceleration: .1
-    motion_magic_jerk: 350.0
-    forward_limit_enable: False
-    reverse_limit_enable: False
+    # ignore that it is shooter_pivot_controller using so we can have dynamic feedforward and angle limits 
+    type: shooter_pivot_controller_2024/ShooterPivotController_2024
+
+    feed_forward_map:
+      - [0.0, 0.0] # add a actual map if needed
+
+    shooter_pivot_joint: [ 'arm_joint' ]
     dynamic_reconfigure: True
+    # this is false
+    min_angle: 0.0
+    max_angle: 3.14
+
+    motion_magic_velocity: 0.1
+    motion_magic_acceleration: 1.0
+    motion_magic_jerk: 100.0
+
+    arm_joint:
+        type: talonfxpro_controllers/TalonFXProControllerInterface
+        joint: arm_joint
+        feedback_sensor_source: FusedCANcoder
+        remote_feedback_device_id0: 31
+        motion_magic_velocity: 0.1
+        motion_magic_acceleration: 1.0
+        motion_magic_jerk: 100.0
+        sensor_to_mechanism_ratio: 1.0
+
+        # NO IDEA, THIS IS WRONG
+        rotor_to_sensor_ratio: 1.0
+
+        softlimit_forward_enable: False
+        softlimit_forward_threshold: 1.66
+        softlimit_reverse_enable: False
+        softlimit_reverse_threshold: 0.4
+        neutral_mode: Brake
+        close_loop_values:
+            # Tried kI of around 12, it did help but was very slow and higher caused a bit of windup
+            - {kP: 30.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+        dynamic_reconfigure: True

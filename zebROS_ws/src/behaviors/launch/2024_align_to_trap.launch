@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="align_to_trap">
+
+        <node name="align_to_trap_2024" pkg="behaviors" type="2024_align_to_trap.py" output="screen"/>
+        <rosparam command="load" file="$(find behaviors)/config/2024_align_to_trap.yaml"/>
+
+        <!--
+            objdet_target ( pose [ 11.905 3.713 1.321 -60.000 ] fiducial_return 111 color "red")
+            objdet_target ( pose [ 11.905 4.498 1.321 60.000 ] fiducial_return 112 color "red")
+            objdet_target ( pose [ 11.220 4.105 1.321 180.000 ] fiducial_return 113 color "red")
+            objdet_target ( pose [ 5.321 4.105 1.321 0.000 ] fiducial_return 114 color "blue")
+            objdet_target ( pose [ 4.641 4.498 1.321 120.000 ] fiducial_return 115 color "blue")
+            objdet_target ( pose [ 4.641 3.713 1.321 -120.000 ] fiducial_return 116 color "blue")
+        -->
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag11" args="11.905 3.713 1.321 0 0 -0.5 0.8660254 map red_trap_11" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag12" args="11.905 4.498 1.321 0 0 0.5 0.8660254 map red_trap_12" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag13" args="11.220 4.105 1.321 0 0 1 0 map red_trap_13" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag14" args="5.321 4.105 1.321 0 0 0 1 map blue_trap_14" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag15" args="4.641 4.498 1.321 0 0 0.8660254 0.5 map blue_trap_15" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag16" args="4.641 3.713 1.321 0 0 -0.8660254 0.5 map blue_trap_16" />
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag6" args="1.841 8.204 1.356 0 0 -0.7071068, 0.7071068 map blue_amp_6" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag5" args="14.701 8.204 1.356 0 0 -0.7071068, 0.7071068 map red_amp_5" />
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag7" args="-0.013 5.548 1.451 0 0 0 1 map blue_subwoofer_7" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="link_tag4" args="16.579 5.548 1.451 0 0 1 0 map red_subwoofer_4" />
+
+        <!-- lower kP -> slower movement -> relocalization possible -> more accurate -->
+
+        <node name="x_position_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="x_position_pid" />
+            <param name="Kp" value="1.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="2.0" />
+            <param name="lower_limit" value="-2.0" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="250.0" />
+            <param name="min_loop_frequency" value="250.0" />
+            <param name="topic_from_controller" value="x_position_pid/x_command" />
+            <param name="setpoint_topic" value="x_position_pid/x_cmd_pub" />
+            <param name="topic_from_plant" value="x_position_pid/x_state_pub" />
+            <remap from="pid_debug" to="x_position_pid/pid_debug" />
+            <remap from="pid_enable" to="x_position_pid/pid_enable" />
+        </node>
+
+        <node name="y_position_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="y_position_pid" />
+            <param name="Kp" value="1.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="2.0" />
+            <param name="lower_limit" value="-2.0" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="250.0" />
+            <param name="min_loop_frequency" value="250.0" />
+            <param name="topic_from_controller" value="y_position_pid/y_command" />
+            <param name="setpoint_topic" value="y_position_pid/y_cmd_pub" />
+            <param name="topic_from_plant" value="y_position_pid/y_state_pub" />
+            <remap from="pid_debug" to="y_position_pid/pid_debug" />
+            <remap from="pid_enable" to="y_position_pid/pid_enable" />
+        </node>
+
+        <node name="align_to_trap_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+            <param name="orient_topic" value="/teleop/orient_strafing/control_effort" />
+            <param name="x_topic" value="x_position_pid/x_command" />
+            <param name="y_topic" value="y_position_pid/y_command" />
+            <param name="command_timeout" value="0.5" />
+            <param name="enable_topic" value="align_to_trap_pid/pid_enable" />
+            <param name="name" value="align_to_trap_pid" />
+            <param name="orient_state_topic" value="/teleop/orient_strafing/state"/>
+            <param name="transform_yaw" value="true"/>
+        </node>
+        
+    </group>
+
+</launch>

@@ -48,19 +48,24 @@ class ShootingServer(object):
         self.angle_map = InterpolatingMap()
         self.angle_map.container = {l[0]: l[1] for l in rospy.get_param("angle_map")}
 
-        # Amp (constant speeds and angle)
-        self.amp_top_left_speed = rospy.get_param("amp_top_left_speed")
-        self.amp_top_right_speed = rospy.get_param("amp_top_right_speed")
-        self.amp_bottom_left_speed = rospy.get_param("amp_bottom_left_speed")
-        self.amp_bottom_right_speed = rospy.get_param("amp_bottom_right_speed")
-        self.amp_pivot_position = rospy.get_param("amp_pivot_position")
-
         ddynrec = DDynamicReconfigure("shooting_dyn_rec")
         ddynrec.add_variable("subwoofer_top_left_speed", "float/double variable", rospy.get_param("subwoofer_top_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("subwoofer_top_right_speed", "float/double variable", rospy.get_param("subwoofer_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("subwoofer_bottom_left_speed", "float/double variable", rospy.get_param("subwoofer_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("subwoofer_bottom_right_speed", "float/double variable", rospy.get_param("subwoofer_bottom_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("subwoofer_pivot_position", "float/double variable", rospy.get_param("subwoofer_pivot_position"), 0.5, 1.5)
+
+        ddynrec.add_variable("amp_top_left_speed", "float/double variable", rospy.get_param("amp_top_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("amp_top_right_speed", "float/double variable", rospy.get_param("amp_top_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("amp_bottom_left_speed", "float/double variable", rospy.get_param("amp_bottom_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("amp_bottom_right_speed", "float/double variable", rospy.get_param("amp_bottom_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("amp_pivot_position", "float/double variable", rospy.get_param("amp_pivot_position"), 0.5, 1.5)
+
+        ddynrec.add_variable("trap_top_left_speed", "float/double variable", rospy.get_param("trap_top_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("trap_top_right_speed", "float/double variable", rospy.get_param("trap_top_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("trap_bottom_left_speed", "float/double variable", rospy.get_param("trap_bottom_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("trap_bottom_right_speed", "float/double variable", rospy.get_param("trap_bottom_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("trap_pivot_position", "float/double variable", rospy.get_param("trap_pivot_position"), 0.5, 1.5)
         ddynrec.start(self.dyn_rec_callback)
 
         # Subwoofer (constant speeds and angle)
@@ -69,7 +74,20 @@ class ShootingServer(object):
         self.subwoofer_bottom_left_speed = rospy.get_param("subwoofer_bottom_left_speed")
         self.subwoofer_bottom_right_speed = rospy.get_param("subwoofer_bottom_right_speed")
         self.subwoofer_pivot_position = rospy.get_param("subwoofer_pivot_position")
-        self.subwoofer_reconfigured = False
+
+        # Amp (constant speeds and angle)
+        self.amp_top_left_speed = rospy.get_param("amp_top_left_speed")
+        self.amp_top_right_speed = rospy.get_param("amp_top_right_speed")
+        self.amp_bottom_left_speed = rospy.get_param("amp_bottom_left_speed")
+        self.amp_bottom_right_speed = rospy.get_param("amp_bottom_right_speed")
+        self.amp_pivot_position = rospy.get_param("amp_pivot_position")
+
+        # Trap (constant speeds and angle)
+        self.trap_top_left_speed = rospy.get_param("trap_top_left_speed")
+        self.trap_top_right_speed = rospy.get_param("trap_top_right_speed")
+        self.trap_bottom_left_speed = rospy.get_param("trap_bottom_left_speed")
+        self.trap_bottom_right_speed = rospy.get_param("trap_bottom_right_speed")
+        self.trap_pivot_position = rospy.get_param("trap_pivot_position")
 
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
@@ -85,7 +103,18 @@ class ShootingServer(object):
         self.subwoofer_bottom_left_speed = config["subwoofer_bottom_left_speed"]
         self.subwoofer_bottom_right_speed = config["subwoofer_bottom_right_speed"]
         self.subwoofer_pivot_position = config["subwoofer_pivot_position"]
-        self.subwoofer_reconfigured = True
+
+        self.amp_top_left_speed = config["amp_top_left_speed"]
+        self.amp_top_right_speed = config["amp_top_right_speed"]
+        self.amp_bottom_left_speed = config["amp_bottom_left_speed"]
+        self.amp_bottom_right_speed = config["amp_bottom_right_speed"]
+        self.amp_pivot_position = config["amp_pivot_position"]
+
+        self.trap_top_left_speed = config["trap_top_left_speed"]
+        self.trap_top_right_speed = config["trap_top_right_speed"]
+        self.trap_bottom_left_speed = config["trap_bottom_left_speed"]
+        self.trap_bottom_right_speed = config["trap_bottom_right_speed"]
+        self.trap_pivot_position = config["trap_pivot_position"]
         return config
 
     def execute_cb(self, goal: Shooting2024Goal):
@@ -128,6 +157,14 @@ class ShootingServer(object):
             pivot_angle = self.amp_pivot_position
 
             rospy.loginfo(f"2024_shooting_server: spinning up for amp")
+        elif goal.mode == goal.TRAP:
+            shooter_goal.top_left_speed = self.trap_top_left_speed
+            shooter_goal.top_right_speed = self.trap_top_right_speed
+            shooter_goal.bottom_left_speed = self.trap_bottom_left_speed
+            shooter_goal.bottom_right_speed = self.trap_bottom_right_speed
+            pivot_angle = self.trap_pivot_position
+
+            rospy.loginfo(f"2024_shooting_server: spinning up for trap")
         elif goal.mode == goal.PODIUM:
             shooter_goal.top_left_speed = 500
             shooter_goal.top_right_speed = 500
@@ -135,7 +172,7 @@ class ShootingServer(object):
             shooter_goal.bottom_right_speed = 500
             pivot_angle = 0.58
 
-            rospy.loginfo(f"2024_shooting_server: spinning up for amp")
+            rospy.loginfo(f"2024_shooting_server: spinning up for podium")
         else:
             # Look up speed and angle to send to shooter and pivot server
             shooter_goal.top_left_speed = self.top_left_map[goal.distance]

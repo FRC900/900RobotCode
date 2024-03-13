@@ -39,6 +39,8 @@ class Rumble2024Server():
         
         self.notes_max_distance = rospy.get_param("note_distance_away")
         self.preshooter_limit_switch_name = rospy.get_param("preshooter_limit_switch_name")
+        self.claw_limit_switch_name = rospy.get_param("claw_limit_switch_name")
+
         self.intake_limit_switch_name = rospy.get_param("intake_limit_switch_name")
         self.rumble_value = rospy.get_param("rumble_on_note")
 
@@ -127,7 +129,7 @@ class Rumble2024Server():
         rumble_srv.left = 0
         rumble_srv.right = 0
         
-        rospy.loginfo_throttle(1, "Rumble loop")
+        #rospy.loginfo_throttle(1, "Rumble loop")
         # TODO make this a parameter
         # note should be gone after 1 second
         if self.intaking_rumble:
