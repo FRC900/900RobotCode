@@ -29,3 +29,20 @@ trap_top_right_speed: 325.0 # rad/s
 trap_bottom_left_speed: 325.0 # rad/s
 trap_bottom_right_speed: 325.0 # rad/s
 trap_pivot_position: 1.0 # rad
+
+#lob_shot pass 
+lob_top_left_speed: 360.0 #rad/s
+lob_top_right_speed: 360.0 #rad/s
+lob_bottom_left_speed: 360.0 #rad/s
+lob_bottom_right_speed: 360.0 #rad/s
+lob_pivot_position: 0.75 #rad
+
+#shot pass
+shot_top_left_speed: 825.0 #rad/s
+shot_top_right_speed: 825.0
+shot_bottom_left_speed: 825.0
+shot_bottom_right_speed: 825.0
+shot_pivot_position: 0.51 #rad
+
+
+
