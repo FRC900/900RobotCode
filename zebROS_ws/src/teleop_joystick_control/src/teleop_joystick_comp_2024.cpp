@@ -26,6 +26,8 @@
 #include "behavior_actions/AlignAndShoot2024Action.h"
 #include "behavior_actions/AlignToTrap2024Action.h"
 
+#include "behavior_actions/Climb2024Action.h"
+
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -54,6 +56,8 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot202
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntake2024Action>> drive_and_intake_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>> align_to_speaker_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>> align_to_trap_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2024Action>> climb_ac;
+bool reset_climb = true;
 
 ros::ServiceClient enable_continuous_autoalign_client;
 
@@ -573,6 +577,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		aligned_shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 	if (button_box->redRelease)
 	{
@@ -626,6 +631,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->climbPress)
 	{
+		ROS_INFO_STREAM("teleop 2024: climbing!");
+		behavior_actions::Climb2024Goal climb_goal;
+		climb_goal.reset = reset_climb;
+		climb_ac->sendGoal(climb_goal);
+		reset_climb = false;
 	}
 	if (button_box->climbRelease)
 	{
@@ -770,6 +780,7 @@ int main(int argc, char **argv)
 	aligned_shooting_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndShoot2024Action>>("/align_and_shoot/align_and_shoot_2024", true);
 	align_to_speaker_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>>("/align_to_speaker/align_to_speaker_2024", true);
 	align_to_trap_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>>("/align_to_trap/align_to_trap_2024", true);
+	climb_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Climb2024Action>>("/climbing/climbing_server_2024", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 

@@ -4,3 +4,4 @@ intaking_timeout: 5.0
 safe_shooter_angle: 0.7 # rad
 current_threshold: 100.0
 outtaking_time: 0.5
+backwards_time: 0.25

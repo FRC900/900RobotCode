@@ -93,6 +93,23 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 ROS_INFO_STREAM("2024_shooter_pivot_controller : Inserted " << s[0] << " " << s[1] << " " << s[2]);
             }
 
+            if (controller_nh.hasParam("switch_control_slot")) {
+                if (!controller_nh.hasParam("slot_switchover_threshold")) {
+                    ROS_WARN_STREAM("2024_shooter_pivot_controller: told to switch slots but not told threshold");
+                } else {
+                    if (!controller_nh.getParam("switch_control_slot", switch_control_slot_))
+                    {
+                        ROS_WARN_STREAM("2024_shooter_pivot_controller : could not find switch control slot even though it exists??");
+                        return false;
+                    }
+                    if (!controller_nh.getParam("slot_switchover_threshold", slot_switchover_threshold_))
+                    {
+                        ROS_WARN_STREAM("2024_shooter_pivot_controller : could not find slot_switchover_threshold even though it exists??");
+                        return false;
+                    }
+                }
+            }
+
             // get config values for the shooter_pivot talon
             XmlRpc::XmlRpcValue shooter_pivot_params;
             if (!controller_nh.getParam("shooter_pivot_joint", shooter_pivot_params))
@@ -209,7 +226,15 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
             shooter_pivot_joint_.setMotionMagicAcceleration(motion_magic_acceleration_);
             shooter_pivot_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_);
             shooter_pivot_joint_.setMotionMagicJerk(motion_magic_jerk_);
-            shooter_pivot_joint_.setControlSlot(0);
+            if (switch_control_slot_) {
+                if (shooter_pivot_joint_.getPosition() > slot_switchover_threshold_) {
+                    shooter_pivot_joint_.setControlSlot(1);
+                } else {
+                    shooter_pivot_joint_.setControlSlot(0);
+                }
+            } else {
+                shooter_pivot_joint_.setControlSlot(0);
+            }
 
             shooter_pivot_joint_.setControlFeedforward(angle_to_feed_forward_[shooter_pivot_joint_.getPosition()]);
         }
@@ -238,6 +263,9 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
         std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
         ros::Time time_at_disable_;
+
+        bool switch_control_slot_ = false;
+        double slot_switchover_threshold_;
 
         bool cmdService(controllers_2024_msgs::ShooterPivotSrv::Request &req,
                         controllers_2024_msgs::ShooterPivotSrv::Response &response)

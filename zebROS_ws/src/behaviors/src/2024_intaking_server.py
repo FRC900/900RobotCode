@@ -64,6 +64,8 @@ class Intaking2024Server(object):
 
         self.outtaking_speed = rospy.get_param("outtaking_speed")
         self.outtaking_time = rospy.get_param("outtaking_time")
+
+        self.backwards_time = rospy.get_param("backwards_time")
         
         self.intaking_current = 0.0
         self.intaking_talon_idx = None
@@ -115,6 +117,8 @@ class Intaking2024Server(object):
         r = rospy.Rate(60)
 
         self.run_intake_backwards = None
+
+        # self.feedback.have_note = False
 
         if goal.destination == goal.OUTTAKE:
             intake_srv = CommandRequest()
@@ -222,7 +226,10 @@ class Intaking2024Server(object):
 
         intake_srv = CommandRequest()
         intake_srv.command = self.intaking_speed
+        orig_command = intake_srv.command
         self.intake_client.call(intake_srv)
+
+        backwards_start_time = None
 
         start = rospy.Time.now()
         # if run until preempt want to just go for the entire auto
@@ -233,11 +240,20 @@ class Intaking2024Server(object):
                 intake_srv.command = -self.outtaking_speed
                 self.intake_client.call(intake_srv)
                 self.run_intake_backwards = None
+                backwards_start_time = rospy.Time.now()
+            if backwards_start_time is not None and rospy.Time.now() > backwards_start_time + rospy.Duration(self.backwards_time):
+                rospy.loginfo("Running forward again!")
+                intake_srv.command = orig_command
+                self.intake_client.call(intake_srv)
+                backwards_start_time = None
             if self.intaking_current > self.current_threshold:
                 rospy.logwarn(f"Intaking current = {self.intaking_current} is above {self.current_threshold}")
                 self.feedback.note_hit_intake = True
                 self.server.publish_feedback(self.feedback)
-                
+            # if clawster_done:
+            #     self.feedback.have_note = True
+            #     self.server.publish_feedback(self.feedback)
+            
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_intaking_server: preempted")
 

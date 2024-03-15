@@ -56,9 +56,10 @@
 			 bottom_right_shooter_controller
 			 pivot_cancoder_controller
 			 shooter_pivot_controller
-			 arm_cancoder_controller
 			 arm_controller
+			 arm_cancoder_controller
 			 note_diverter_controller
+			 climb_controller
 			 pigeon2_imu_state_controller
 			 cancoder_state_controller
 			 robot_code_ready_controller" />
@@ -69,6 +70,16 @@
 			 candle_controller
 			 orchestra_controller
 			 orchestra_state_controller
+			 pigeon2_imu_state_controller
+			 latency_compensation_state_controller
+			 note_diverter_controller
+			 note_conveyor_controller
+			 claw_controller
+			 left_shooter_voltage_velocity_controller
+			 right_shooter_voltage_velocity_controller
+			 shooter_pivot_motionmagicvoltage_controller
+			 robot_code_ready_controller" />
+			 swerve_drive_state_controller
 			-->
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
@@ -133,6 +144,7 @@
 
 	<include file="$(find behaviors)/launch/2024_align_to_trap.launch">
 	</include>
+	<include file="$(find behaviors)/launch/2024_climb.launch"/>
 
 	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	<include file="$(find behaviors)/launch/2024_intaking.launch"/>

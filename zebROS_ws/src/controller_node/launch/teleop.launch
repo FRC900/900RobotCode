@@ -10,7 +10,7 @@
       <node name="orient_strafing_pid" pkg="pid" type="velocity_controller" >
         <param name="node_name" value="orient_strafing_pid" />
         <!-- <param name="Kp" value="-1.2" /> DEFINITELY SHOULD NOT BE NEGATIVE (unless you want angular acceleration) -->
-        <param name="Kp" value="5.5" />
+        <param name="Kp" value="4.5" />
         <param name="Ki" value="0.0" />
         <param name="Kd" value="0.2" />
         <param name="Kf" value="1.0" />

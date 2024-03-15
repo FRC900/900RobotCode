@@ -12,3 +12,4 @@ uint8 INTAKING=2
 uint8 SHOOTERPIVOTING=3
 uint8 state
 bool note_hit_intake # current sensing tells us when we first get a note for haptic feedback/stop auto driving
+bool have_note

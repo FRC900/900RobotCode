@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 	<arg name="run_camera"           default="true" />
-	<arg name="run_apriltag"         default="false" />
+	<arg name="run_apriltag"         default="true" />
 	<arg name="run_deeptag"         default="false" />
 	<include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="zed_name"             value="zedx_front" />

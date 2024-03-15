@@ -1,7 +1,13 @@
 <library path="lib/libcontrollers_2024">
+	<class name="climb_controller/ClimbController" type="climb_controller::ClimbController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make climb_controller exist.
+		</description>
+	</class>
+
 	<class name="shooter_pivot_controller_2024/ShooterPivotController_2024" type="shooter_pivot_controller_2024::ShooterPivotController_2024" base_class_type="controller_interface::ControllerBase">
 		<description>
-			Library file. Does stuff to make elevator_controller exist.
+			Library file. Does stuff to make shooter_pivot_controller exist.
 		</description>
 	</class>
 </library>

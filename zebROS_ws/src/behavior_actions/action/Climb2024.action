@@ -1,0 +1,20 @@
+# goal
+uint8 FAST=0 # fast climb, just get up there
+uint8 TRAP=1 # trap climb, probably have to climb for longer
+uint8 REVERSE=2 # climb back down (raise arms then lower arms then exit)
+uint8 mode
+
+bool override_angle_check
+
+bool reset # if true and paused, resets state machine instead of continuing from current state
+---
+# result
+bool success
+---
+# feedback
+# 0. raise arms up until hit configurable max
+uint8 RAISING_ARMS=0
+# 1. drive arms down to a configured height (will be different for trap vs fast climb)
+uint8 LOWERING_ARMS=1
+
+uint8 state

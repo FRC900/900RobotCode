@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="climbing">
+		<rosparam command="load" file="$(find behaviors)/config/2024_climbing_config.yaml"/>
+		<node name="climbing_server_2024" pkg="behaviors" type="2024_climbing_server.py" output="screen"/>
+	</group>
+</launch>

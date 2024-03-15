@@ -56,7 +56,7 @@ hardware_interface:
        - {name: arm_cancoder, type: cancoder, can_bus: CANivore, can_id: 31, local: true}
 
        #climb
-       #- {name: climb_leader, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+       - {name: climb_leader, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
        #- {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
 
        #shooter
@@ -226,35 +226,54 @@ shooter_pivot_controller:
         #- [0.9541360500648688, -0.21]
         #- [1.57, 0.0]
 
-        - [0.4387185053352934, 0.6]
         - [0.49394181369917645, 0.58]
-        - [0.500077736850719, 0.55]
         - [0.5460971604872883, 0.58]
-        - [0.5951845456996288, 0.53]
+        - [0.5951845456996288, 0.54]
         - [0.6473398924877406, 0.48]
-        - [0.6964272777000811, 0.48]
-        - [0.7485826244881929, 0.45]
-        - [0.7976700097005334, 0.44]
-        - [0.8467573949128739, 0.43]
-        - [0.8958447801252144, 0.42]
-        - [0.944932165337555, 0.39]
-        - [0.9909515889741242, 0.38]
-        - [1.043106935762236, 0.35000000000000003]
-        - [1.0891263593988052, 0.34]
-        - [1.1290098598838318, 0.38]
-        - [1.184233168247715, 0.32]
-        - [1.2241166687327416, 0.36]
-        - [1.2793399770966247, 0.28]
-        - [1.325359400733194, 0.3]
-        - [1.368310862793992, 0.31]
-        - [1.4173982480063325, 0.28]
+        - [0.7025632008516236, 0.45]
+        - [0.7547185476397354, 0.41000000000000003]
+        - [0.8068738944278473, 0.38]
+        - [0.8528933180644165, 0.4]
+        - [0.9111845880040709, 0.35000000000000003]
+        - [0.9510680884890975, 0.36]
+        - [1.000155473701438, 0.35000000000000003]
+        - [1.055378782065321, 0.31]
+        - [1.1075341288534328, 0.3]
+        - [1.1566215140657734, 0.3]
+        - [1.1995729761265714, 0.33]
+        - [1.2425244381873692, 0.35000000000000003]
+        - [1.2916118233997098, 0.3]
+        - [1.346835131763593, 0.31]
+        - [1.402058440127476, 0.26]
+        - [1.4480778637640452, 0.28]
+        - [1.4971652489763858, 0.28]
+        - [1.6260196351587797, -0.08]
+        - [1.6996507129772904, -0.2]
+        - [1.761009944492716, -0.26]
+        - [1.8285050991596843, -0.33]
+        - [1.8775924843720249, -0.33]
+        - [1.9297478311601366, -0.34]
+        - [1.9880391010997909, -0.37]
+        - [2.043262409463674, -0.4]
+        - [2.0923497946760143, -0.4]
+        - [2.150641064615669, -0.46]
+        - [2.2120002961310945, -0.5]
+        - [2.2580197197676637, -0.48]
+        - [2.325514874434632, -0.5700000000000001]
+        - [2.371534298071201, -0.55]
+        - [2.414485760131999, -0.52]
+
+        
 
 
 
     shooter_pivot_joint: [ 'shooter_pivot_motionmagic_joint' ]
     dynamic_reconfigure: True
     min_angle: 0.40
-    max_angle: 1.5
+    max_angle: 2.3
+
+    switch_control_slot: True
+    slot_switchover_threshold: 1.57
 
     motion_magic_velocity: 3.5
     motion_magic_acceleration: 7.0
@@ -278,6 +297,7 @@ shooter_pivot_controller:
         close_loop_values:
             # Tried kI of around 12, it did help but was very slow and higher caused a bit of windup
             - {kP: 30.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            - {kP: 10.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
         dynamic_reconfigure: True
 
 cancoder_state_controller:
@@ -395,22 +415,73 @@ arm_controller:
     arm_joint:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: arm_joint
-        feedback_sensor_source: FusedCANcoder
+        feedback_sensor_source: RemoteCANcoder
         remote_feedback_device_id0: 31
         motion_magic_velocity: 0.1
         motion_magic_acceleration: 1.0
         motion_magic_jerk: 100.0
-        sensor_to_mechanism_ratio: 1.0
-
-        # NO IDEA, THIS IS WRONG
-        rotor_to_sensor_ratio: 1.0
+        rotor_to_sensor_ratio: 41.66
+        sensor_to_mechanism_ratio: 1
 
         softlimit_forward_enable: False
         softlimit_forward_threshold: 1.66
         softlimit_reverse_enable: False
         softlimit_reverse_threshold: 0.4
         neutral_mode: Brake
+        invert: clockwise_positive
         close_loop_values:
             # Tried kI of around 12, it did help but was very slow and higher caused a bit of windup
             - {kP: 30.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+        dynamic_reconfigure: True
+
+arm_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: arm
+    dynamic_reconfigure: False
+    magnet_offset: 0
+    enble_read_thread: False
+
+climb_controller:
+    type: climb_controller/ClimbController
+    joint: ['climb_leader']
+
+    zeroing_percent_output: -0.1 # TODO SET TO AN ACTUAL VALUE ONCE WE HAVE A LIMIT SWITCH
+    zeroing_timeout: 5.0
+
+    # TODO fix these
+    max_current_iterations: 10
+    current_threshold: 100.0
+
+    climb_leader:
+        type: talonfxpro_controllers/TalonFXProControllerInterface
+        joint: climb_leader
+        close_loop_values:
+            - {kP: 1.0, kI: 0.0, kD: 0.0, kV: 3.9}
+
+        invert: counterclockwise_positive
+
+        feedback_sensor_source: RotorSensor
+
+        forward_limit_enable: false
+
+        reverse_limit_switch_source: LimitSwitchPin
+        reverse_limit_switch_type: NormallyOpen
+        reverse_limit_enable: true
+
+        # Remember these are in centemeters per ...
+
+        # 20 cm = climbed
+        # 55 cm = all the way up, ready to climb
+        # NEED ZERO STUFF, this is hacky
+        motion_magic_cruise_velocity: 20.0
+        motion_magic_acceleration: 40.0
+        motion_magic_jerk: 9999.0
+
+        # maximum: 55cm
+
+
+        sensor_to_mechanism_ratio: 32.37
+        rotor_to_sensor_ratio: 1.0
+        neutral_mode: Brake
+
         dynamic_reconfigure: True

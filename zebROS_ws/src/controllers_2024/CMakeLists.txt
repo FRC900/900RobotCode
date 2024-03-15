@@ -127,18 +127,16 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# ======== uncomment me later 
 add_library(controllers_2024 
   src/shooter_pivot_controller.cpp
+  src/climb_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-
-# ======== uncomment 
-# add_dependencies(controllers_2024 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(controllers_2024 ${catkin_LIBRARIES})
+add_dependencies(controllers_2024 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(controllers_2024 ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -163,17 +161,17 @@ add_library(controllers_2024
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
 
-# ======== uncomment me later
-#install(TARGETS controllers_2024
-#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-#)
-#
-#install(FILES
-#  controllers_2024_plugins.xml
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
+
+install(TARGETS controllers_2024
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(FILES
+  controllers_2024_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
