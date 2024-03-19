@@ -73,6 +73,56 @@
             <param name="orient_state_topic" value="/teleop/orient_strafing/state"/>
             <param name="transform_yaw" value="true"/>
         </node>
+
+        <!-- ALIGN TO AMP -->
+
+        <node name="x_position_pid_amp" pkg="pid" type="controller" >
+            <param name="node_name" value="x_position_pid_amp" />
+            <param name="Kp" value="2.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="2.0" />
+            <param name="lower_limit" value="-2.0" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="250.0" />
+            <param name="min_loop_frequency" value="250.0" />
+            <param name="topic_from_controller" value="x_position_pid_amp/x_command" />
+            <param name="setpoint_topic" value="x_position_pid_amp/x_cmd_pub" />
+            <param name="topic_from_plant" value="x_position_pid_amp/x_state_pub" />
+            <remap from="pid_debug" to="x_position_pid_amp/pid_debug" />
+            <remap from="pid_enable" to="x_position_pid_amp/pid_enable" />
+        </node>
+
+        <node name="y_position_pid_amp" pkg="pid" type="controller" >
+            <param name="node_name" value="y_position_pid_amp" />
+            <param name="Kp" value="2.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="2.0" />
+            <param name="lower_limit" value="-2.0" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="250.0" />
+            <param name="min_loop_frequency" value="250.0" />
+            <param name="topic_from_controller" value="y_position_pid_amp/y_command" />
+            <param name="setpoint_topic" value="y_position_pid_amp/y_cmd_pub" />
+            <param name="topic_from_plant" value="y_position_pid_amp/y_state_pub" />
+            <remap from="pid_debug" to="y_position_pid_amp/pid_debug" />
+            <remap from="pid_enable" to="y_position_pid_amp/pid_enable" />
+        </node>
+
+        <node name="align_to_amp_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+            <param name="orient_topic" value="/teleop/orient_strafing/control_effort" />
+            <param name="x_topic" value="x_position_pid_amp/x_command" />
+            <param name="y_topic" value="y_position_pid_amp/y_command" />
+            <param name="command_timeout" value="0.5" />
+            <param name="enable_topic" value="align_to_amp_pid/pid_enable" />
+            <param name="name" value="align_to_trap_pid" />
+            <param name="orient_state_topic" value="/teleop/orient_strafing/state"/>
+            <param name="transform_yaw" value="true"/>
+        </node>
+        <!-- ALIGN TO AMP END -->
+
+
         
     </group>
 

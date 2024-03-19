@@ -25,6 +25,8 @@
 
 #include "behavior_actions/AlignAndShoot2024Action.h"
 #include "behavior_actions/AlignToTrap2024Action.h"
+#include "behavior_actions/DriveAndScore2024Action.h"
+
 
 #include "behavior_actions/Climb2024Action.h"
 
@@ -57,6 +59,9 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveObjectIntak
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>> align_to_speaker_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>> align_to_trap_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2024Action>> climb_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveAndScore2024Action>> drive_and_score_ac;
+
+
 bool reset_climb = true;
 
 ros::ServiceClient enable_continuous_autoalign_client;
@@ -90,7 +95,6 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->buttonARelease)
 			{
 				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-
 			}
 
 			//Joystick1: buttonB
@@ -578,6 +582,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		driver->setJoystickOverride(false);
 	}
 	if (button_box->redRelease)
 	{
@@ -606,9 +611,13 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->backupButton2Press)
 	{
+		behavior_actions::Shooting2024Goal goal;
+		goal.mode = goal.SHOT_PASS;
+		shooting_ac->sendGoal(goal);
 	}
 	if (button_box->backupButton2Release)
 	{
+		shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if (button_box->trapButton)
@@ -617,13 +626,18 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	if (button_box->trapPress)
 	{
 		// align to trap
-		behavior_actions::AlignToTrap2024Goal goal;
+		// MAKE ENTIRE ALIGN AND TRAP
+		// behavior_actions::AlignToTrap2024Goal goal;
+		// goal.destination = goal.TRAP;
+		// align_to_trap_ac->sendGoal(goal);
+		behavior_actions::DriveAndScore2024Goal goal;
 		goal.destination = goal.TRAP;
-		align_to_trap_ac->sendGoal(goal);
+		drive_and_score_ac->sendGoal(goal);
 	}
+	
 	if (button_box->trapRelease)
 	{
-		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		drive_and_score_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if (button_box->climbButton)
@@ -643,17 +657,23 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 
 	if (button_box->subwooferShootButton)
 	{
+		driver->setJoystickOverride(true);
+		driver->setTargetOrientation(angles::from_degrees(270), true);
 	}
 	if (button_box->subwooferShootPress)
 	{
-		// this is now trap shoot
+		// actually align to amp
 		behavior_actions::Shooting2024Goal goal;
-		goal.mode = goal.TRAP;
+		goal.mode = goal.AMP;
+		goal.leave_spinning = true;
+		goal.setup_only = true;
 		shooting_ac->sendGoal(goal);
+
+		driver->setTargetOrientation(angles::from_degrees(270), true);
 	}
 	if (button_box->subwooferShootRelease)
 	{
-		shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		driver->setJoystickOverride(false);
 	}
 
 	if (button_box->speedSwitchUpButton)
@@ -781,6 +801,7 @@ int main(int argc, char **argv)
 	align_to_speaker_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToSpeaker2024Action>>("/align_to_speaker/align_to_speaker_2024", true);
 	align_to_trap_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>>("/align_to_trap/align_to_trap_2024", true);
 	climb_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Climb2024Action>>("/climbing/climbing_server_2024", true);
+	drive_and_score_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveAndScore2024Action>>("/drive_and_score/drive_and_score_2024", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 

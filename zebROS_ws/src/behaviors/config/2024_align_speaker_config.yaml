@@ -1,3 +1,3 @@
 tolerance: 0.05
 velocity_tolerance: 0.5
-min_samples: 5
+min_samples: 50 # 0.2 seconds 

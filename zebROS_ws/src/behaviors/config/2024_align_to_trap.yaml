@@ -2,9 +2,15 @@ x_tolerance: 0.03
 y_tolerance: 0.03
 angle_tolerance: 0.03
 
-x_offset: 0.65
+amp_x_tolerance: 0.2
+amp_y_tolerance: 0.05
+amp_angle_tolerance: 0.05
+
+
+x_offset: 0.85
 y_offset: 0.0
 
+# CHECK THESE OFFSETS
 x_offset_amp: 0.0
 y_offset_amp: 0.0
 

@@ -49,7 +49,7 @@ auto_mode_6: ["shoot_center_subwoofer", "start_intake", "drive_1_5_m", "shoot_fr
 auto_mode_7: ["shoot_center_subwoofer", "pause_two", "pause_two", "spin_down_shooter"]
 
 # 8: shoot preloaded note, drive back TESTED AND WORKS
-auto_mode_8: ["shoot_center_subwoofer", "drive_2_5_m"]
+auto_mode_8: ["shoot_center_subwoofer", "drive_2_5_m", "spin_down_shooter"]
 
 # 9: no-op
 auto_mode_9: ["pause_quarter"]

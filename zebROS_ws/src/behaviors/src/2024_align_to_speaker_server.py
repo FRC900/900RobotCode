@@ -22,6 +22,7 @@ class Aligner:
     _result = behavior_actions.msg.AlignToSpeaker2024Result()
 
     def __init__(self, name):   
+        self.msg = None
         self.valid_samples = 0
         self._action_name = name
         self.tolerance = rospy.get_param("tolerance")
@@ -45,7 +46,7 @@ class Aligner:
         self.pub_dist_and_ang_vel = rospy.Publisher("/speaker_align/dist_and_ang", behavior_actions.msg.AutoAlignSpeaker, queue_size=1) #distance and angle
 
         self._feedback.aligned = False
-
+        
         self.feed_forward = True
 
     def imu_callback(self, imu_msg):
@@ -63,18 +64,22 @@ class Aligner:
             trans = self.tfBuffer.lookup_transform('base_link', offset_point.header.frame_id, rospy.Time())
             destination = tf2_geometry_msgs.do_transform_point(offset_point, trans)
 
-            msg = std_msgs.msg.Float64()
+            self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
 
             dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
-            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
+            self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
 
             self.pub_dist_and_ang_vel.publish(dist_ang_msg)
         except Exception as e:
             rospy.logwarn_throttle(1, f"align_to_speaker: can't publish distance {e}")
 
-        if self._feedback.error < self.tolerance and abs(self.current_orient_effort) < self.velocity_tolerance:
+        if self.msg is not None:
+            self._feedback.error = abs(angles.shortest_angular_distance(self.msg.data, self.current_yaw))
+
+        #rospy.loginfo(f"errr {self._feedback.error} tolerance {self.tolerance}")
+        if self._feedback.error < self.tolerance: # and abs(self.current_orient_effort) < self.velocity_tolerance
             self.valid_samples += 1
         else:
             self.valid_samples = 0
@@ -117,29 +122,30 @@ class Aligner:
                 rate.sleep()
                 continue
 
-            msg = std_msgs.msg.Float64()
+            self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
 
             dist_ang_msg.distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
-            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
+            self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
 
-            self._feedback.error = abs(angles.shortest_angular_distance(msg.data, self.current_yaw))
             self._feedback.aligned = False
 
-            self.object_publish.publish(msg) 
+            self.object_publish.publish(self.msg) 
             self.pub_dist_and_ang_vel.publish(dist_ang_msg)
             
             cmd_vel_msg = geometry_msgs.msg.Twist()
             cmd_vel_msg.angular.x = 0
             cmd_vel_msg.angular.y = 0
-            cmd_vel_msg.angular.z = self.current_orient_effort + 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward)
+            cmd_vel_msg.angular.z = self.current_orient_effort 
+            if abs(self._feedback.error) > 0.1: 
+                cmd_vel_msg.angular.z += 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward)
             cmd_vel_msg.linear.x = 0
             cmd_vel_msg.linear.y = 0
             cmd_vel_msg.linear.z = 0
             self.pub_cmd_vel.publish(cmd_vel_msg)
 
-            rospy.loginfo_throttle(0.5, f"Align to speaker {abs(angles.shortest_angular_distance(msg.data, self.current_yaw))}")
+            rospy.loginfo_throttle(0.5, f"Align to speaker {abs(angles.shortest_angular_distance(self.msg.data, self.current_yaw))}")
 
             if self.valid_samples >= self.min_samples:
                 self._feedback.aligned = True

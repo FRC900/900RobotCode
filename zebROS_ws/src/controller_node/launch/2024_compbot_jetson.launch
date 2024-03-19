@@ -61,13 +61,14 @@
 			 note_diverter_controller
 			 climb_controller
 			 pigeon2_imu_state_controller
+			 
 			 cancoder_state_controller
 			 robot_code_ready_controller" />
 			 
 			 <!--
 			 clawster_controller
-
-			 candle_controller
+				candle_controller
+			 
 			 orchestra_controller
 			 orchestra_state_controller
 			 pigeon2_imu_state_controller

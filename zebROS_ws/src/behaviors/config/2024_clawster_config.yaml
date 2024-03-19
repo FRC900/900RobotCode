@@ -6,7 +6,7 @@ claw:
   switch_name: "claw_limit_switch"
   
 preshooter:
-  intake_speed: 0.90
+  intake_speed: 0.85
   outtake_speed: 0.9
   switch_name: "preshooter_limit_switch"
 

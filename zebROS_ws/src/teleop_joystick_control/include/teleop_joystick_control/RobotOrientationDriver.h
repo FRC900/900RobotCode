@@ -84,6 +84,10 @@ public:
 	// Timer to publish to PID nodes? Or only in callbacks from odom yaw or in response to set/inc orientation?
 	// match data subscriber
 	bool mostRecentCommandIsFromTeleop(void) const;
+
+	bool isJoystickOverridden() const;
+
+	void setJoystickOverride(bool should_override);
 	
 
 private:
@@ -123,6 +127,8 @@ private:
 	void checkFromTeleopTimeout(const ros::TimerEvent &/*event*/);
 	bool holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request &req,
 							   teleop_joystick_control::AlignToOrientation::Response & /* res*/);
+	
+	bool joystick_overridden_ = false;
 };
 
 #endif

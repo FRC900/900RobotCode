@@ -182,3 +182,11 @@ bool RobotOrientationDriver::holdTargetOrientation(teleop_joystick_control::Alig
 	setTargetOrientation(req.angle, true /* from telop */);
 	return true;
 }
+
+bool RobotOrientationDriver::isJoystickOverridden() const {
+	return joystick_overridden_;
+}
+
+void RobotOrientationDriver::setJoystickOverride(bool should_override) {
+	joystick_overridden_ = should_override;
+}

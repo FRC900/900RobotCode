@@ -73,6 +73,7 @@ public:
 	bool orientCallback(teleop_joystick_control::RobotOrient::Request &req,
 						teleop_joystick_control::RobotOrient::Response & /* res*/);
 	bool waitForBrakeSrv(ros::Duration startup_wait_time);
+	void setJoystickOverride(bool override);
 
 	TeleopCmdVel<DynamicReconfigVars> teleop_cmd_vel_;
 private:

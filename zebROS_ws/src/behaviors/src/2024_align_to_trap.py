@@ -36,9 +36,13 @@ class Aligner:
 
     def __init__(self, name):   
         self._action_name = name
-        self.x_tolerance = rospy.get_param("x_tolerance")
-        self.y_tolerance = rospy.get_param("y_tolerance")
-        self.angle_tolerance = rospy.get_param("angle_tolerance")
+        self.trap_x_tolerance = rospy.get_param("x_tolerance")
+        self.trap_y_tolerance = rospy.get_param("y_tolerance")
+        self.trap_angle_tolerance = rospy.get_param("angle_tolerance")
+
+        self.amp_x_tolerance = rospy.get_param("amp_x_tolerance")
+        self.amp_y_tolerance = rospy.get_param("amp_y_tolerance")
+        self.amp_angle_tolerance = rospy.get_param("amp_angle_tolerance")
 
         self.x_offset = rospy.get_param("x_offset")
         self.y_offset = rospy.get_param("y_offset")
@@ -59,21 +63,36 @@ class Aligner:
         self.orientation_command_pub = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size=1)
         self.object_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback)
 
-        self.x_state_pub = rospy.Publisher("x_position_pid/x_state_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
-        self.x_cmd_pub = rospy.Publisher("x_position_pid/x_cmd_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
-        self.x_enable_pub = rospy.Publisher("x_position_pid/x_enable_pub", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
-        self.x_command = 0
+        self.trap_x_state_pub = rospy.Publisher("x_position_pid/x_state_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.trap_x_cmd_pub = rospy.Publisher("x_position_pid/x_cmd_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.trap_x_enable_pub = rospy.Publisher("x_position_pid/x_enable_pub", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+        self.trap_x_command = 0
         # self.x_command_sub = rospy.Publisher("x_position_pid/x_command", std_msgs.msg.Float64, self.x_command_callback, tcp_nodelay=True)
 
-        self.y_state_pub = rospy.Publisher("y_position_pid/y_state_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
-        self.y_cmd_pub = rospy.Publisher("y_position_pid/y_cmd_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
-        self.y_enable_pub = rospy.Publisher("y_position_pid/y_enable_pub", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
-        self.y_command = 0
+        self.trap_y_state_pub = rospy.Publisher("y_position_pid/y_state_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.trap_y_cmd_pub = rospy.Publisher("y_position_pid/y_cmd_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.trap_y_enable_pub = rospy.Publisher("y_position_pid/y_enable_pub", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+        self.trap_y_command = 0
+
+
+
+        self.amp_x_state_pub = rospy.Publisher("x_position_pid_amp/x_state_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.amp_x_cmd_pub = rospy.Publisher("x_position_pid_amp/x_cmd_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.amp_x_enable_pub = rospy.Publisher("x_position_pid_amp/x_enable_pub", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+        self.amp_x_command = 0
+        # self.x_command_sub = rospy.Publisher("x_position_pid/x_command", std_msgs.msg.Float64, self.x_command_callback, tcp_nodelay=True)
+
+        self.amp_y_state_pub = rospy.Publisher("y_position_pid_amp/y_state_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.amp_y_cmd_pub = rospy.Publisher("y_position_pid_amp/y_cmd_pub", std_msgs.msg.Float64, queue_size=1, tcp_nodelay=True)
+        self.amp_y_enable_pub = rospy.Publisher("y_position_pid_amp/y_enable_pub", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+        self.amp_y_command = 0
         # self.y_command_sub = rospy.Publisher("y_position_pid/y_command", std_msgs.msg.Float64, self.y_command_callback, tcp_nodelay=True)
 
         self.team_subscribe = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_callback)
 
-        self.enable_pub = rospy.Publisher("align_to_trap_pid/pid_enable", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+        self.trap_enable_pub = rospy.Publisher("align_to_trap_pid/pid_enable", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+        self.amp_enable_pub = rospy.Publisher("align_to_amp_pid/pid_enable", std_msgs.msg.Bool, queue_size=1, tcp_nodelay=True)
+
 
         self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback)
 
@@ -105,9 +124,39 @@ class Aligner:
         if goal.destination == goal.AMP:
             rospy.loginfo("2024_align_to_trap: Aligning to amp")
             closest_frame = self.RED_AMP if self.color == MatchSpecificData.ALLIANCE_COLOR_RED else self.BLUE_AMP
+            self.x_enable_pub = self.amp_x_enable_pub
+            self.y_enable_pub = self.amp_y_enable_pub
+            self.enable_pub = self.amp_enable_pub
+            self.x_state_pub = self.amp_x_state_pub 
+            self.x_cmd_pub = self.amp_x_cmd_pub 
+            self.x_enable_pub = self.amp_x_enable_pub 
+            self.x_command = self.amp_x_command 
+            self.y_state_pub = self.amp_y_state_pub 
+            self.y_cmd_pub = self.amp_y_cmd_pub 
+            self.y_enable_pub = self.amp_y_enable_pub 
+            self.y_command = self.amp_y_command 
+            self.x_tolerance = self.amp_x_tolerance
+            self.y_tolerance = self.amp_y_tolerance
+            self.angle_tolerance = self.amp_angle_tolerance
+
         elif goal.destination == goal.SUBWOOFER:
             rospy.loginfo("2024_align_to_trap: Aligning to subwoofer")
             closest_frame = self.RED_SUBWOOFER if self.color == MatchSpecificData.ALLIANCE_COLOR_RED else self.BLUE_SUBWOOFER
+            self.x_enable_pub = self.amp_x_enable_pub
+            self.y_enable_pub = self.amp_y_enable_pub
+            self.enable_pub = self.amp_enable_pub
+            self.x_state_pub = self.amp_x_state_pub 
+            self.x_cmd_pub = self.amp_x_cmd_pub 
+            self.x_enable_pub = self.amp_x_enable_pub 
+            self.x_command = self.amp_x_command 
+            self.y_state_pub = self.amp_y_state_pub 
+            self.y_cmd_pub = self.amp_y_cmd_pub 
+            self.y_enable_pub = self.amp_y_enable_pub 
+            self.y_command = self.amp_y_command 
+            self.x_tolerance = self.amp_x_tolerance
+            self.y_tolerance = self.amp_y_tolerance
+            self.angle_tolerance = self.amp_angle_tolerance
+
         else:
             rospy.loginfo("2024_align_to_trap: Aligning to trap")
             for frame in (self.RED_TAGS if self.color == MatchSpecificData.ALLIANCE_COLOR_RED else self.BLUE_TAGS):
@@ -116,6 +165,21 @@ class Aligner:
                 if distance < closest_distance:
                     closest_frame = frame
                     closest_distance = distance
+            self.x_enable_pub = self.trap_x_enable_pub
+            self.y_enable_pub = self.trap_y_enable_pub
+            self.enable_pub = self.trap_enable_pub
+            self.x_state_pub = self.trap_x_state_pub 
+            self.x_cmd_pub = self.trap_x_cmd_pub 
+            self.x_enable_pub = self.trap_x_enable_pub 
+            self.x_command = self.trap_x_command 
+            self.y_state_pub = self.trap_y_state_pub 
+            self.y_cmd_pub = self.trap_y_cmd_pub 
+            self.y_enable_pub = self.trap_y_enable_pub 
+            self.y_command = self.trap_y_command 
+            self.x_tolerance = self.trap_x_tolerance
+            self.y_tolerance = self.trap_y_tolerance
+            self.angle_tolerance = self.trap_angle_tolerance
+
 
         trans = self.tfBuffer.lookup_transform(closest_frame, "map", rospy.Time())
         if goal.destination == goal.TRAP:

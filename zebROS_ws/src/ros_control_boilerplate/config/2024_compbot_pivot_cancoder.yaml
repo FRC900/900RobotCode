@@ -3,5 +3,5 @@ pivot_cancoder_controller:
     joint_name: shooter_pivot_cancoder
     sensor_direction: Clockwise_Positive
     dynamic_reconfigure: True
-    magnet_offset: 1.5953400194010667
+    magnet_offset: 0.5246214294568894
     enable_read_thread: True

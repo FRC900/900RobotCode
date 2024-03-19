@@ -3,7 +3,7 @@
   <arg name="config_dir" default="$(find tagslam_launch)/y2024_comp"/>
   
   <arg name="tagslam_config_file" default="$(arg config_dir)/tagslam.yaml"/>
-  <arg name="calibration_file" default="$(arg config_dir)/cameras_HD1200.yaml"/>
+  <arg name="calibration_file" default="$(arg config_dir)/cameras.yaml"/>
   <arg name="camera_poses_file"
        default="/home/ubuntu/2023RobotCode/zebROS_ws/src/tagslam_launch/y2024_comp/camera_poses.yaml"/>
   <arg name="run_online" default="true"/>

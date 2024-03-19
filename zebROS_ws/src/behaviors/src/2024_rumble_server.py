@@ -14,6 +14,8 @@ from std_msgs.msg import Float64
 from norfair_ros.msg import Detections, Detection
 from frc_msgs.srv import RumbleCommand, RumbleCommandRequest, RumbleCommandResponse
 from frc_msgs.msg import MatchSpecificData
+from candle_controller_msgs.srv import AnimationRequest, AnimationResponse, Animation
+
 import math
 import time
 
@@ -43,6 +45,13 @@ class Rumble2024Server():
 
         self.intake_limit_switch_name = rospy.get_param("intake_limit_switch_name")
         self.rumble_value = rospy.get_param("rumble_on_note")
+
+        self.candle_srv = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/animation', Animation)
+
+        '''
+rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, start: 8, count: 18, animation_type: 2, red: 255, green: 0, blue: 0, white: 0,
+  direction: 0, brightness: 0.0, reversed: false, param4: 0.0, param5: 0.0}"
+        '''
 
         self.match_data_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_cb) 
         self.rumble = rospy.Timer(rospy.Duration(1.0/20.0), self.rumble_loop)
@@ -81,6 +90,15 @@ class Rumble2024Server():
 
 
     def match_data_cb(self, data: MatchSpecificData):
+        if not data.Enabled:
+            rospy.loginfo_throttle(5, "TERMINATING")
+            candle_req = AnimationRequest()
+            candle_req.animation_type = candle_req.ANIMATION_TYPE_LARSON 
+            candle_req.red = 255
+            candle_req.start = 8
+            candle_req.count = 18
+            self.candle_srv.call(candle_req)
+        
         if data.Autonomous and data.Enabled:
             self.should_run_loop = False
         else:

@@ -11,6 +11,7 @@ from behavior_actions.msg import ShooterPivot2024Goal, ShooterPivot2024Feedback,
 from behavior_actions.msg import Clawster2024Goal, Clawster2024Feedback, Clawster2024Result, Clawster2024Action
 from std_msgs.msg import Float64
 from interpolating_map import InterpolatingMap
+from geometry_msgs.msg import Twist
 
 class ShootingServer(object):
 
@@ -29,6 +30,9 @@ class ShootingServer(object):
         self.preshooter_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
         rospy.loginfo("2024_shooting_server: waiting for clawster")
         self.preshooter_client.wait_for_server()
+
+        # used for driving back after amp shot
+        self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
 
         # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
         speeds_map_param = rospy.get_param("speeds_map")
@@ -104,6 +108,8 @@ class ShootingServer(object):
         self.amp_bottom_left_speed = rospy.get_param("amp_bottom_left_speed")
         self.amp_bottom_right_speed = rospy.get_param("amp_bottom_right_speed")
         self.amp_pivot_position = rospy.get_param("amp_pivot_position")
+        self.amp_drive_back_time = rospy.get_param("amp_drive_back_time")
+        self.amp_drive_back_speed = rospy.get_param("amp_drive_back_speed")
 
         # Trap (constant speeds and angle)
         self.trap_top_left_speed = rospy.get_param("trap_top_left_speed")
@@ -320,7 +326,7 @@ class ShootingServer(object):
             while not preshooter_done and not rospy.is_shutdown():
                 rospy.loginfo_throttle(0.5, "2024_shooting_server: waiting for preshooter")
                 if self.server.is_preempt_requested():
-                    rospy.loginfo("2024_shooting_server: preempted")
+                    rospy.loginfo("2024_shooting_server: preempted preshooter")
 
                     # ensure shooter turned off
                     self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
@@ -334,9 +340,55 @@ class ShootingServer(object):
                     self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     self.server.set_preempted()
+                    if goal.AMP:
+                        rospy.loginfo("DRIVING BACK")
+                        cmd_vel_msg = Twist()
+                        start = rospy.Time.now()
 
+                        while (rospy.Time.now() - start) < rospy.Duration(self.amp_drive_back_time):
+                            cmd_vel_msg.angular.x = 0
+                            cmd_vel_msg.angular.y = 0
+                            cmd_vel_msg.angular.z = 0
+                            cmd_vel_msg.linear.x = self.amp_drive_back_speed
+                            cmd_vel_msg.linear.y = 0
+                            cmd_vel_msg.linear.z = 0
+                            self.cmd_vel_pub.publish(cmd_vel_msg)
+                            rospy.loginfo("Publishing cmd _vel ")
+                            r.sleep()
+                        
+                        cmd_vel_msg.angular.x = 0
+                        cmd_vel_msg.angular.y = 0
+                        cmd_vel_msg.angular.z = 0
+                        cmd_vel_msg.linear.x = 0
+                        cmd_vel_msg.linear.y = 0
+                        cmd_vel_msg.linear.z = 0
+                        self.cmd_vel_pub.publish(cmd_vel_msg)
                     return
                 r.sleep()
+
+            if goal.mode == goal.AMP:
+                rospy.loginfo("AMP DRIVE BACK")
+                cmd_vel_msg = Twist()
+                start = rospy.Time.now()
+
+                while (rospy.Time.now() - start) < rospy.Duration(self.amp_drive_back_time):
+                    cmd_vel_msg.angular.x = 0
+                    cmd_vel_msg.angular.y = 0
+                    cmd_vel_msg.angular.z = 0
+                    cmd_vel_msg.linear.x = self.amp_drive_back_speed
+                    cmd_vel_msg.linear.y = 0
+                    cmd_vel_msg.linear.z = 0
+                    self.cmd_vel_pub.publish(cmd_vel_msg)
+                    rospy.loginfo("Publishing cmd _vel ")
+                    r.sleep()
+                
+                cmd_vel_msg.angular.x = 0
+                cmd_vel_msg.angular.y = 0
+                cmd_vel_msg.angular.z = 0
+                cmd_vel_msg.linear.x = 0
+                cmd_vel_msg.linear.y = 0
+                cmd_vel_msg.linear.z = 0
+                self.cmd_vel_pub.publish(cmd_vel_msg)
 
             pivot_goal.pivot_position = 0.5
             self.pivot_client.send_goal(pivot_goal)

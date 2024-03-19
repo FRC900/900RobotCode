@@ -11,14 +11,16 @@ import sensor_msgs.msg
 import math
 
 from behavior_actions.msg import DriveAndScore2024Action, DriveAndScore2024Goal, DriveAndScore2024Feedback, DriveAndScore2024Result 
-from behavior_actions.msg import Clawster2024Action, Clawster2024Feedback, Clawster2024Result, Clawster2024Goal
-from behavior_actions.msg import Arm2024Action, Arm2024Feedback, Arm2024Result, Arm2024Goal
 import behavior_actions.msg
 from tf.transformations import euler_from_quaternion # may look like tf1 but is actually tf2
 from frc_msgs.msg import MatchSpecificData
 import std_srvs.srv
 import angles
 import numpy
+import geometry_msgs.msg
+
+# While the snap to angle button is held, spin up the shooter for amp and override driver
+# Once amp shot button is pressed, call shooting server with goal=AMP. make shooting server drive backwards for amp.
 
 # Used for anytime we need to drive to a position and then score, (amp/trap) as opposed to shooting where we just need to align (2024_align_to_speaker_server.py and other)
 
@@ -38,16 +40,9 @@ class DriveAndScore:
         self.shooting_client = actionlib.SimpleActionClient('/shooting/shooting_server_2024', behavior_actions.msg.Shooting2024Action)
         rospy.loginfo("2024_intaking_server: waiting for shooting server")
         self.shooting_client.wait_for_server()
-        
-        self.arm_client = actionlib.SimpleActionClient('/arm/move_arm_server_2024', Arm2024Action)
-        rospy.loginfo("2024_intaking_server: waiting for arm server")
-        self.arm_client.wait_for_server()
-
-        self.clawster_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
-        rospy.loginfo("2024_intaking_server: waiting for clawster server")
-        self.clawster_client.wait_for_server()
+        self.pub_cmd_vel = rospy.Publisher("/align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)        
         self.align_done = False
-        self.arm_done = False
+        
         self.shooting_done = False 
         self._as = actionlib.SimpleActionServer(self._action_name, DriveAndScore2024Action, execute_cb=self.score_cb, auto_start = False)
         self._as.start()
@@ -55,22 +50,16 @@ class DriveAndScore:
     def align_done_cb(self, status, result):
         rospy.loginfo("2024 drive and score, align server done")
         self.align_done = True
-
-    def arm_done_cb(self, status, result):
-        rospy.loginfo("2024 drive and score, arm server done")
-        self.arm_done = True
     
     def shooting_done_cb(self, status, result):
-        rospy.loginfo("2024 drive and score, shooting server done")
         self.shooting_done = True
-
+    
     def score_cb(self, goal: DriveAndScore2024Goal):
         self.feed_forward = True
         success = True
         self.align_done = False
-        self.arm_done = False
         self.shooting_done = False
-
+        have_shot = False 
         rospy.loginfo(f"Drive and score 2024 - called with goal {goal}")
         r = rospy.Rate(60.0)
         align_goal = behavior_actions.msg.AlignToTrap2024Goal()
@@ -79,57 +68,84 @@ class DriveAndScore:
             rospy.loginfo(f"Drive and score 2024 - going amp")
             align_goal.destination = align_goal.AMP
             self.align_client.send_goal(align_goal, done_cb=self.align_done_cb)
-            # also start moving arm
-            arm_goal = Arm2024Goal() 
-            arm_goal.path = arm_goal.AMP
-            self.arm_client.send_goal(arm_goal, done_cb=self.arm_done_cb)
+            shooting_goal = behavior_actions.msg.Shooting2024Goal()
+            shooting_goal.mode = shooting_goal.AMP
+            shooting_goal.leave_spinning = True
+            shooting_goal.setup_only = True
+            self.shooting_client.send_goal(shooting_goal)
+
         elif goal.destination == goal.TRAP:
             rospy.loginfo(f"Drive and score 2024 - going trap")
             align_goal.destination = align_goal.TRAP
             self.align_client.send_goal(align_goal, done_cb=self.align_done_cb)
+            shooting_goal = behavior_actions.msg.Shooting2024Goal()
+            shooting_goal.mode = shooting_goal.TRAP
+            shooting_goal.leave_spinning = True
+            shooting_goal.setup_only = True
+            self.shooting_client.send_goal(shooting_goal)
             # for this case we just wait until we are done and then send shooting
 
         # for telling if we hvae 
-        shooting = False
         while not rospy.is_shutdown():
             # check that preempt has not been requested by the client
             if self._as.is_preempt_requested():
                 rospy.loginfo('%s: Preempted' % self._action_name)
                 self._as.set_preempted()
-                self.arm_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self.align_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self.shooting_client.cancel_goals_at_and_before_time(rospy.Time.now())
-                self.clawster_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 success = False
                 break
-            rospy.loginfo_throttle(0.1, f"2024_align_and_SCORE: waiting on {'aligning' if not self.align_done else ''} {'arm' if not self.arm_done and goal.destination == goal.AMP else ''} {'shooting' if not self.shooting_done  and goal.destination == goal.TRAP else ''}")
+            rospy.loginfo_throttle(0.1, f"2024_align_and_SCORE: waiting on {'aligning' if not self.align_done else ''} {'shooting' if not self.shooting_done  and goal.destination == goal.TRAP else ''}")
 
             # should be good to outake
-            if goal.destination == goal.AMP and self.align_done and self.arm_done:
-                rospy.loginfo("Drive and score 2024 - align and arm done")
-                # want to outtake from claw 
-                clawster_goal = Clawster2024Goal()
-                clawster_goal.mode = clawster_goal.OUTTAKE
-                clawster_goal.destination = clawster_goal.CLAW
-                self.clawster_client.send_goal(clawster_goal)
-                # we have fired the note at this point so we are done
+            if goal.destination == goal.AMP and self.align_done and not have_shot:
+                rospy.loginfo("Drive and score 2024 - align and amp done")
+                cmd_vel_msg = geometry_msgs.msg.Twist()
+                start = rospy.Time.now()
+
+                while (rospy.Time.now() - start < rospy.Duration(0.5)):
+                    cmd_vel_msg.angular.x = 0
+                    cmd_vel_msg.angular.y = 0
+                    cmd_vel_msg.angular.z = 0
+                    cmd_vel_msg.linear.x = -1.0
+                    cmd_vel_msg.linear.y = 0
+                    cmd_vel_msg.linear.z = 0
+                    self.pub_cmd_vel.publish(cmd_vel_msg)
+                    r.sleep()
+                shooting_goal = behavior_actions.msg.Shooting2024Goal()
+                shooting_goal.mode = shooting_goal.AMP
+                shooting_goal.leave_spinning = False
+                self.shooting_client.send_goal(shooting_goal, done_cb=self.shooting_done_cb)
+                have_shot = True
+
+            if goal.destination == goal.AMP and self.align_done and self.shooting_done:
+                rospy.loginfo("DRIVE AND SCORE, shooting and align done")
+                # drive back
+                cmd_vel_msg = geometry_msgs.msg.Twist()
+                start = rospy.Time.now()
+
+                while (rospy.Time.now() - start < rospy.Duration(0.25)):
+                    cmd_vel_msg.angular.x = 0
+                    cmd_vel_msg.angular.y = 0
+                    cmd_vel_msg.angular.z = 0
+                    cmd_vel_msg.linear.x = 2.0
+                    cmd_vel_msg.linear.y = 0
+                    cmd_vel_msg.linear.z = 0
+                    self.pub_cmd_vel.publish(cmd_vel_msg)
+                    r.sleep()
+
                 self._result.success = True
                 self._as.set_succeeded(self._result)
-                return
+                return 
 
-            if goal.destination == goal.TRAP and self.align_done and not shooting:
+            if goal.destination == goal.TRAP and self.align_done:
                 rospy.loginfo("2024 drive and score - trap aligned, shooting")
                 # need to shoot 
-                shooting = True
                 shooting_goal = behavior_actions.msg.Shooting2024Goal()
                 shooting_goal.mode = shooting_goal.TRAP
-                self.shooting_client.send_goal(shooting_goal, done_cb=self.shooting_done_cb)
-            
-            if goal.destination == goal.TRAP and self.shooting_done:
-                # have sent note so we are done
+                self.shooting_client.send_goal(shooting_goal)
                 self._result.success = True
                 self._as.set_succeeded(self._result)
-                rospy.loginfo('%s: Succeeded Trap (hopefully)' % self._action_name)
                 return
 
             self._as.publish_feedback(self._feedback)

@@ -123,6 +123,10 @@ void Driver::setTargetOrientation(const double angle, const bool from_teleop, co
 	robot_orientation_driver_.setTargetOrientation(angle, from_teleop, velocity);
 }
 
+void Driver::setJoystickOverride(bool override) {
+	robot_orientation_driver_.setJoystickOverride(override);
+}
+
 ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config) {
 
 	teleop_cmd_vel_.updateRateLimit(config);
@@ -153,7 +157,7 @@ ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state
 		}
 		ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z" << cmd_vel.angular.z);
 
-		if (cmd_vel.angular.z == 0.0)
+		if (cmd_vel.angular.z == 0.0 || robot_orientation_driver_.isJoystickOverridden())
 		{
 			cmd_vel.angular.z = robot_orientation_driver_.getOrientationVelocityPIDOutput();
 			if (fabs(cmd_vel.angular.z) < config.rotation_epsilon) {

@@ -66,7 +66,7 @@ class ClimbController : public controller_interface::MultiInterfaceController<ha
         ros::Publisher zeroed_publisher_;
         bool zeroed_;
         bool last_zeroed_;
-        bool do_zero_ = false;
+        bool do_zero_ = true;
 
         double zeroing_percent_output_;
         double zeroing_timeout_;
@@ -138,6 +138,7 @@ bool ClimbController::init(hardware_interface::RobotHW *hw,
 
 void ClimbController::starting(const ros::Time &time)
 {
+    do_zero_ = true;
     zeroed_ = false;
     last_zeroed_  = false;
     last_time_down_ = ros::Time::now();

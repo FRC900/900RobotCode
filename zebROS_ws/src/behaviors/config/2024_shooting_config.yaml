@@ -22,6 +22,8 @@ amp_top_right_speed: 60.0 # rad/s
 amp_bottom_left_speed: 100.0 # rad/s
 amp_bottom_right_speed: 100.0 # rad/s
 amp_pivot_position: 1.0 # rad
+amp_drive_back_time: 0.5 # sec
+amp_drive_back_speed: 2.0 # m/s
 
 # trap 
 trap_top_left_speed: 325.0 # rad/s
