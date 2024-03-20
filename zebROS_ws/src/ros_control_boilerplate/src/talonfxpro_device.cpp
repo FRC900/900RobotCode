@@ -622,7 +622,7 @@ int TalonFXProDevice::getCANID(void) const
 }
 
 static bool convertGravityType(const hardware_interface::talonfxpro::GravityType in,
-                            ctre::phoenix6::signals::GravityTypeValue &out)
+                               ctre::phoenix6::signals::GravityTypeValue &out)
 {
     if (in == hardware_interface::talonfxpro::GravityType::Elevator_Static)
     {
@@ -635,6 +635,23 @@ static bool convertGravityType(const hardware_interface::talonfxpro::GravityType
         return true;
     }
     ROS_ERROR_STREAM("Invalid GravityType value in TalonFXPro convertGravityType : in = " << static_cast<int>(in));
+    return false;
+}
+
+static bool convertStaticFeedforwardSign(const hardware_interface::talonfxpro::StaticFeedforwardSign in,
+                                         ctre::phoenix6::signals::StaticFeedforwardSignValue &out)
+{
+    if (in == hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign)
+    {
+        out = ctre::phoenix6::signals::StaticFeedforwardSignValue::UseVelocitySign;
+        return true;
+    }
+    if (in == hardware_interface::talonfxpro::StaticFeedforwardSign::UseClosedLoopSign)
+    {
+        out = ctre::phoenix6::signals::StaticFeedforwardSignValue::UseClosedLoopSign;
+        return true;
+    }
+    ROS_ERROR_STREAM("Invalid StaticFeedforwardSign value in TalonFXPro convertStaticFeedforwardSign : in = " << static_cast<int>(in));
     return false;
 }
 
@@ -887,6 +904,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     //        reset the changed flag for the config so it is retried the next time through
     //        return; (since the motor controller isn't in the expected state)
     hardware_interface::talonfxpro::GravityType gravity_type;
+    hardware_interface::talonfxpro::StaticFeedforwardSign static_feedforward_sign;
     if (command_->slotChanged(config_->Slot0.kP,
                               config_->Slot0.kI,
                               config_->Slot0.kD,
@@ -895,8 +913,10 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                               config_->Slot0.kA,
                               config_->Slot0.kG,
                               gravity_type,
+                              static_feedforward_sign,
                               0) &&
-        convertGravityType(gravity_type, config_->Slot0.GravityType))
+        convertGravityType(gravity_type, config_->Slot0.GravityType) &&
+        convertStaticFeedforwardSign(static_feedforward_sign, config_->Slot0.StaticFeedforwardSign))
     {
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot0), "GetConfigurator().Apply(config_->Slot0)"))
         {
@@ -909,6 +929,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
             state_->setkA(config_->Slot0.kA, 0);
             state_->setkG(config_->Slot0.kG, 0);
             state_->setGravityType(gravity_type, 0);
+            state_->setStaticFeedforwardSign(static_feedforward_sign, 0);
         }
         else
         {
@@ -925,8 +946,10 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                               config_->Slot1.kA,
                               config_->Slot1.kG,
                               gravity_type,
+                              static_feedforward_sign,
                               1) &&
-        convertGravityType(gravity_type, config_->Slot1.GravityType))
+        convertGravityType(gravity_type, config_->Slot1.GravityType) &&
+        convertStaticFeedforwardSign(static_feedforward_sign, config_->Slot1.StaticFeedforwardSign))
     {
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot1), "GetConfigurator().Apply(config_->Slot1)"))
         {
@@ -939,6 +962,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
             state_->setkV(config_->Slot1.kA, 1);
             state_->setkV(config_->Slot1.kG, 1);
             state_->setGravityType(gravity_type, 1);
+            state_->setStaticFeedforwardSign(static_feedforward_sign, 1);
 
         }
         else
@@ -956,8 +980,10 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
                               config_->Slot2.kA,
                               config_->Slot2.kG,
                               gravity_type,
+                              static_feedforward_sign,
                               2) &&
-        convertGravityType(gravity_type, config_->Slot2.GravityType))
+        convertGravityType(gravity_type, config_->Slot2.GravityType) &&
+        convertStaticFeedforwardSign(static_feedforward_sign, config_->Slot2.StaticFeedforwardSign))
     {
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot2), "GetConfigurator().Apply(config_->Slot2)"))
         {
@@ -970,6 +996,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
             state_->setkV(config_->Slot2.kA, 2);
             state_->setkV(config_->Slot2.kG, 2);
             state_->setGravityType(gravity_type, 2);
+            state_->setStaticFeedforwardSign(static_feedforward_sign, 2);
         }
         else
         {

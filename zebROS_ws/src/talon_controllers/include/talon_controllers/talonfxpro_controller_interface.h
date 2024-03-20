@@ -104,6 +104,11 @@ public:
         hardware_interface::talonfxpro::GravityType::Elevator_Static,
         hardware_interface::talonfxpro::GravityType::Elevator_Static,
         };
+	std::array<std::atomic<hardware_interface::talonfxpro::StaticFeedforwardSign>, hardware_interface::talonfxpro::TALON_PIDF_SLOTS> static_feedforward_sign_{
+        hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign,
+        hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign,
+        hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign,
+        };
 
     std::atomic<hardware_interface::talonfxpro::Inverted> invert_{hardware_interface::talonfxpro::Inverted::CounterClockwise_Positive};
     std::atomic<hardware_interface::talonfxpro::NeutralMode> neutral_mode_{hardware_interface::talonfxpro::NeutralMode::Coast};
@@ -125,7 +130,7 @@ public:
     std::atomic<double> peak_reverse_voltage_{-16.};
 
     std::atomic<double> peak_forward_torque_current_{800.};
-    std::atomic<double> peak_reverse_torque_current_{800.};
+    std::atomic<double> peak_reverse_torque_current_{-800.};
     std::atomic<double> torque_neutral_deadband_{0.0};
 
     std::atomic<double> feedback_rotor_offset_{0.0};
@@ -258,6 +263,7 @@ public:
     void setkA(const double kA, const size_t index, const bool update_ddr = true);
     void setkG(const double kG, const size_t index, const bool update_ddr = true);
     void setGravityType(const hardware_interface::talonfxpro::GravityType gravity_type, const size_t index, const bool update_ddr = true);
+    void setStaticFeedforwardSign(const hardware_interface::talonfxpro::StaticFeedforwardSign static_feedforward_sign, const size_t index, const bool update_ddr = true);
     void setInvert(const hardware_interface::talonfxpro::Inverted invert, const bool update_ddr = true);
     void setNeutralMode(const hardware_interface::talonfxpro::NeutralMode neutral_mode, const bool update_ddr = true);
     void setDutyCycleNeutralDeadband(const double duty_cycle_neutral_deadband, const bool update_ddr = true);
@@ -338,6 +344,7 @@ public:
     double getkA(const int index) const { return talon_.state()->getkA(index); }
     double getkG(const int index) const { return talon_.state()->getkG(index); }
     hardware_interface::talonfxpro::GravityType getGravityType(const size_t index) const { return talon_.state()->getGravityType(index); }
+    hardware_interface::talonfxpro::StaticFeedforwardSign getStaticFeedforwardSign(const size_t index) const { return talon_.state()->getStaticFeedforwardSign(index); }
 	STATE_PASSTHRU_FN(getInvert)
 	STATE_PASSTHRU_FN(getNeutralMode)
 	STATE_PASSTHRU_FN(getDutyCycleNeutralDeadband)

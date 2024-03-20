@@ -117,6 +117,14 @@ enum class GravityType
 	Last
 };
 
+enum class StaticFeedforwardSign
+{
+	First,
+	UseVelocitySign,
+	UseClosedLoopSign,
+	Last
+};
+
 enum class DifferentialSensorSource
 {
 	First,

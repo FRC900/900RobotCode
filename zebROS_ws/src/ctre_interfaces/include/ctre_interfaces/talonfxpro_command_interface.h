@@ -58,6 +58,9 @@ public:
 	void setGravityType(const GravityType gravity_type, const size_t index);
 	GravityType getGravityType(const size_t index) const;
 
+	void setStaticFeedforwardSign(const StaticFeedforwardSign static_feedforward_sign, const size_t index);
+	StaticFeedforwardSign getStaticFeedforwardSign(const size_t index) const;
+
 	bool slotChanged(double &kP,
 					 double &kI,
 					 double &kD,
@@ -66,6 +69,7 @@ public:
 					 double &kA,
 					 double &kG,
 					 GravityType &gravity_type,
+					 StaticFeedforwardSign &static_feedforward_sign,
 					 size_t index) const;
 	void resetSlot(size_t index);
 
@@ -401,6 +405,7 @@ private :
 	std::array<double, TALON_PIDF_SLOTS> kA_{0.0, 0.0, 0.0};
 	std::array<double, TALON_PIDF_SLOTS> kG_{0.0, 0.0, 0.0};
 	std::array<GravityType, TALON_PIDF_SLOTS> gravity_type_{GravityType::Elevator_Static, GravityType::Elevator_Static, GravityType::Elevator_Static};
+	std::array<StaticFeedforwardSign, TALON_PIDF_SLOTS> static_feedforward_sign_{StaticFeedforwardSign::UseVelocitySign, StaticFeedforwardSign::UseVelocitySign, StaticFeedforwardSign::UseVelocitySign};
 	mutable std::array<bool, TALON_PIDF_SLOTS> slot_changed_{true, true, true};
 	
 	// MotorOutputConfigs
@@ -427,7 +432,7 @@ private :
 	mutable bool voltage_configs_changed_{true};
 
 	double peak_forward_torque_current_{800.};
-	double peak_reverse_torque_current_{800.};
+	double peak_reverse_torque_current_{-800.};
 	double torque_neutral_deadband_{0.0};
 	mutable bool   torque_current_changed_{true};
 

@@ -73,6 +73,7 @@ public:
 			m.ka0.push_back(0);
 			m.kg0.push_back(0);
 			m.gravity_type0.emplace_back("Unknown");
+			m.static_feedforward_sign0.emplace_back("Unknown");
 			m.kp1.push_back(0);
 			m.ki1.push_back(0);
 			m.kd1.push_back(0);
@@ -81,6 +82,7 @@ public:
 			m.ka1.push_back(0);
 			m.kg1.push_back(0);
 			m.gravity_type1.emplace_back("Unknown");
+			m.static_feedforward_sign1.emplace_back("Unknown");
 			m.kp2.push_back(0);
 			m.ki2.push_back(0);
 			m.kd2.push_back(0);
@@ -89,6 +91,7 @@ public:
 			m.ka2.push_back(0);
 			m.kg2.push_back(0);
 			m.gravity_type2.emplace_back("Unknown");
+			m.static_feedforward_sign2.emplace_back("Unknown");
 			m.invert.emplace_back("");
 			m.neutral_mode.emplace_back("");
 			m.duty_cycle_neutral_deadband.push_back(0);
@@ -187,6 +190,19 @@ public:
 		return "Unknown";
 	}
 
+	static std::string staticFeedforwardSignToString(const hardware_interface::talonfxpro::StaticFeedforwardSign static_feedforward_sign)
+	{
+		if (static_feedforward_sign == hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign)
+		{
+			return "UseVelocitySign";
+		}
+		if (static_feedforward_sign == hardware_interface::talonfxpro::StaticFeedforwardSign::UseClosedLoopSign)
+		{
+			return "UseClosedLoopSign";
+		}
+		return "Unknown";
+	}
+
 	static std::string differentialSensorSourceToString(const hardware_interface::talonfxpro::DifferentialSensorSource diffrential_sensor_source)
 	{
 		switch(diffrential_sensor_source)
@@ -230,6 +246,7 @@ public:
 					m.ka0[i] = ts->getkA(0);
 					m.kg0[i] = ts->getkG(0);
 					m.gravity_type0[i] = gravityTypeToString(ts->getGravityType(0));
+					m.static_feedforward_sign0[i] = staticFeedforwardSignToString(ts->getStaticFeedforwardSign(0));
 					m.kp1[i] = ts->getkP(1);
 					m.ki1[i] = ts->getkI(1);
 					m.kd1[i] = ts->getkD(1);
@@ -238,6 +255,7 @@ public:
 					m.ka1[i] = ts->getkA(0);
 					m.kg1[i] = ts->getkG(0);
 					m.gravity_type1[i] = gravityTypeToString(ts->getGravityType(1));
+					m.static_feedforward_sign1[i] = staticFeedforwardSignToString(ts->getStaticFeedforwardSign(1));
 					m.kp2[i] = ts->getkP(2);
 					m.ki2[i] = ts->getkI(2);
 					m.kd2[i] = ts->getkD(2);
@@ -246,6 +264,7 @@ public:
 					m.ka2[i] = ts->getkA(0);
 					m.kg2[i] = ts->getkG(0);
 					m.gravity_type2[i] = gravityTypeToString(ts->getGravityType(2));
+					m.static_feedforward_sign2[i] = staticFeedforwardSignToString(ts->getStaticFeedforwardSign(2));
 
 					switch (ts->getInvert())
 					{

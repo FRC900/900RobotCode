@@ -180,6 +180,31 @@ GravityType TalonFXProHWState::getGravityType(const size_t index) const
 	return gravity_type_[index];
 }
 
+void TalonFXProHWState::setStaticFeedforwardSign(const StaticFeedforwardSign static_feedforward_sign, const size_t index)
+{
+	if (index >= static_feedforward_sign_.size())
+	{
+		ROS_WARN_STREAM("Invalid index passed to " << __PRETTY_FUNCTION__);
+		return;
+	}
+	if ((static_feedforward_sign <= StaticFeedforwardSign::First) ||
+		(static_feedforward_sign >= StaticFeedforwardSign::Last))
+	{
+		ROS_WARN_STREAM("Invalid gravity type (" << static_cast<int>(static_feedforward_sign) << ") passed to " << __PRETTY_FUNCTION__);
+		return;
+	}
+	static_feedforward_sign_[index] = static_feedforward_sign;
+}
+StaticFeedforwardSign TalonFXProHWState::getStaticFeedforwardSign(const size_t index) const
+{
+	if (index >= static_feedforward_sign_.size())
+	{
+		ROS_WARN_STREAM("Invalid index passed to " << __PRETTY_FUNCTION__);
+		return StaticFeedforwardSign::Last;
+	}
+	return static_feedforward_sign_[index];
+}
+
 void TalonFXProHWState::setInvert(const Inverted invert)
 {
 	if (invert == Inverted::Uninitialized)

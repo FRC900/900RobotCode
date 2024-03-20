@@ -61,6 +61,9 @@ public:
 	void setGravityType(const GravityType gravity_type, const size_t index);
 	GravityType getGravityType(const size_t index) const;
 
+	void setStaticFeedforwardSign(const StaticFeedforwardSign static_feedforward_sign, const size_t index);
+	StaticFeedforwardSign getStaticFeedforwardSign(const size_t index) const;
+
 	void setInvert(const Inverted invert);
 	Inverted getInvert(void) const;
 
@@ -509,7 +512,8 @@ private:
 	std::array<double, TALON_PIDF_SLOTS> kV_{0.0, 0.0, 0.0};
 	std::array<double, TALON_PIDF_SLOTS> kA_{0.0, 0.0, 0.0};
 	std::array<double, TALON_PIDF_SLOTS> kG_{0.0, 0.0, 0.0};
-	std::array<GravityType, TALON_PIDF_SLOTS> gravity_type_{GravityType::Elevator_Static};
+	std::array<GravityType, TALON_PIDF_SLOTS> gravity_type_{GravityType::Elevator_Static, GravityType::Elevator_Static, GravityType::Elevator_Static};
+	std::array<StaticFeedforwardSign, TALON_PIDF_SLOTS> static_feedforward_sign_{StaticFeedforwardSign::UseVelocitySign, StaticFeedforwardSign::UseVelocitySign, StaticFeedforwardSign::UseVelocitySign};
 	
 	// MotorOutputConfigs
 	Inverted    invert_{Inverted::CounterClockwise_Positive};
@@ -533,7 +537,7 @@ private:
 	double peak_reverse_voltage_{-16.};
 
 	double peak_forward_torque_current_{800.};
-	double peak_reverse_torque_current_{800.};
+	double peak_reverse_torque_current_{-800.};
 	double torque_neutral_deadband_{0.0};
 
 	double feedback_rotor_offset_{0.0};

@@ -10,6 +10,7 @@ float64[] kv0
 float64[] ka0
 float64[] kg0
 string[]  gravity_type0
+string[]  static_feedforward_sign0
 float64[] kp1
 float64[] ki1
 float64[] kd1
@@ -18,6 +19,7 @@ float64[] kv1
 float64[] ka1
 float64[] kg1
 string[]  gravity_type1
+string[]  static_feedforward_sign1
 float64[] kp2
 float64[] ki2
 float64[] kd2
@@ -26,6 +28,7 @@ float64[] kv2
 float64[] ka2
 float64[] kg2
 string[]  gravity_type2
+string[]  static_feedforward_sign2
 string[]  invert
 string[]  neutral_mode
 float64[] duty_cycle_neutral_deadband

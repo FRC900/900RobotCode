@@ -203,6 +203,35 @@ GravityType TalonFXProHWCommand::getGravityType(const size_t index) const
 	return gravity_type_[index];
 }
 
+void TalonFXProHWCommand::setStaticFeedforwardSign(const StaticFeedforwardSign static_feedforward_sign, const size_t index)
+{
+	if (index >= static_feedforward_sign_.size())
+	{
+		ROS_WARN_STREAM("Invalid index passed to " << __PRETTY_FUNCTION__);
+		return;
+	}
+	if ((static_feedforward_sign <= StaticFeedforwardSign::First) ||
+		(static_feedforward_sign >= StaticFeedforwardSign::Last))
+	{
+		ROS_WARN_STREAM("Invalid gravity type (" << static_cast<int>(static_feedforward_sign) << ") passed to " << __PRETTY_FUNCTION__);
+		return;
+	}
+	if (static_feedforward_sign != static_feedforward_sign_[index])
+	{
+		slot_changed_[index] = true;
+		static_feedforward_sign_[index] = static_feedforward_sign;
+	}
+}
+StaticFeedforwardSign TalonFXProHWCommand::getStaticFeedforwardSign(const size_t index) const
+{
+	if (index >= static_feedforward_sign_.size())
+	{
+		ROS_WARN_STREAM("Invalid index passed to " << __PRETTY_FUNCTION__);
+		return StaticFeedforwardSign::Last;
+	}
+	return static_feedforward_sign_[index];
+}
+
 bool TalonFXProHWCommand::slotChanged(double &kP,
 									  double &kI,
 									  double &kD,
@@ -211,6 +240,7 @@ bool TalonFXProHWCommand::slotChanged(double &kP,
 									  double &kA,
 									  double &kG,
 									  GravityType &gravity_type,
+									  StaticFeedforwardSign &static_feedforward_sign,
 									  size_t index) const
 {
 	if (index >= TALON_PIDF_SLOTS)
@@ -226,6 +256,7 @@ bool TalonFXProHWCommand::slotChanged(double &kP,
 	kA = kA_[index];
 	kG = kG_[index];
 	gravity_type = gravity_type_[index];
+	static_feedforward_sign = static_feedforward_sign_[index];
 	const auto ret = slot_changed_[index];
 	slot_changed_[index] = false;
 	return ret;

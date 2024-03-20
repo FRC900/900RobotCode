@@ -54,16 +54,12 @@ bool findFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, 
         val.store(static_cast<double>(param));
         return true;
     }
-    else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+    if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
     {
         val.store(static_cast<int>(param));
         return true;
     }
-    else
-    {
-        throw std::runtime_error("A non-double value was passed for " + param_name);
-    }
-
+    throw std::runtime_error("A non-double value was passed for " + param_name);
     return false;
 }
 
@@ -83,11 +79,29 @@ bool findIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, st
     if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
     {
         val.store(static_cast<int>(param));
+        return true;
     }
-    else
+    throw std::runtime_error("A non-int value was passed for " + param_name);
+    return false;
+}
+
+bool findStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, std::string &val)
+{
+    if (!params.hasMember(param_name))
     {
-        throw std::runtime_error("A non-int value was passed for " + param_name);
+        return false;
     }
+    XmlRpc::XmlRpcValue &param = params[param_name];
+    if (!param.valid())
+    {
+        throw std::runtime_error(param_name + " was not a valid string type");
+    }
+    if (param.getType() == XmlRpc::XmlRpcValue::TypeString)
+    {
+        val = static_cast<std::string>(param);
+        return true;
+    }
+    throw std::runtime_error("A non-string value was passed for " + param_name);
     return false;
 }
 
@@ -95,9 +109,13 @@ bool stringToLimitType(const std::string &str,
                        hardware_interface::talonfxpro::LimitType &limit_type) 
 {
     if (str == "NormallyOpen")
+    {
         limit_type = hardware_interface::talonfxpro::LimitType::NormallyOpen;
+    }
     else if (str == "NormallyClosed")
+    {
         limit_type = hardware_interface::talonfxpro::LimitType::NormallyClosed;
+    }
     else
     {
         ROS_ERROR_STREAM("Invalid limit switch type: " << str);
@@ -139,6 +157,7 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept
         kA_[i].exchange(other.kA_[i]);
         kG_[i].exchange(other.kG_[i]);
         gravity_type_[i].exchange(other.gravity_type_[i]);
+        static_feedforward_sign_[i].exchange(other.static_feedforward_sign_[i]);
     }
 
     invert_.exchange(other.invert_);
@@ -251,6 +270,7 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
             kA_[i].store(other.kA_[i].load());
             kG_[i].store(other.kG_[i].load());
             gravity_type_[i].store(other.gravity_type_[i].load());
+            static_feedforward_sign_[i].store(other.static_feedforward_sign_[i].load());
         }
         invert_.store(other.invert_.load());
         neutral_mode_.store(other.neutral_mode_.load());
@@ -389,7 +409,7 @@ bool TalonFXProCIParams::readCloseLoopParams(const ros::NodeHandle &n)
             findFloatParam("kV", pidparams, kV_[i]);
             findFloatParam("kA", pidparams, kA_[i]);
             findFloatParam("kG", pidparams, kG_[i]);
-            if (std::string str; n.getParam("gravity_type", str))
+            if (std::string str; findStringParam("gravity_type", pidparams, str))
             {
                 if (str == "elevator_static")
                 {
@@ -398,10 +418,27 @@ bool TalonFXProCIParams::readCloseLoopParams(const ros::NodeHandle &n)
                 else if (str == "arm_cosine")
                 {
                     gravity_type_[i] = hardware_interface::talonfxpro::GravityType::Arm_Cosine;
+                    ROS_WARN_STREAM("Gravity type for joint " << joint_name_ << " closed loop values entry " << i << " : " << str);
                 }
                 else
                 {
                     ROS_ERROR_STREAM("Invalid gravity_type for joint " << joint_name_ << " closed loop values entry " << i << " : " << str);
+                    return false;
+                }
+            }
+            if (std::string str; findStringParam("static_feedforward_sign", pidparams, str))
+            {
+                if (str == "use_velocity_sign")
+                {
+                    static_feedforward_sign_[i] = hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign;
+                }
+                else if (str == "use_closed_loop_sign")
+                {
+                    static_feedforward_sign_[i] = hardware_interface::talonfxpro::StaticFeedforwardSign::UseClosedLoopSign;
+                }
+                else
+                {
+                    ROS_ERROR_STREAM("Invalid static_feedforward_sign for joint " << joint_name_ << " closed loop values entry " << i << " : " << str);
                     return false;
                 }
             }
@@ -1175,6 +1212,15 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                             {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
                                                         }
                                                         );
+            ddr_updater_->ddr_.registerEnumVariable<int>("static_feedforward_sign_0",
+                                                        [this]() { return static_cast<int>(params_.static_feedforward_sign_[0].load());},
+                                                        [this](const int static_feedforward_sign_int) { this->setStaticFeedforwardSign(static_cast<hardware_interface::talonfxpro::StaticFeedforwardSign>(static_feedforward_sign_int), 0, false);},
+                                                        "Static feed forward sign for slot 0 kS term", 
+                                                        std::map<std::string, int>{
+                                                            {"Velocity Sign", static_cast<int>(hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign)},
+                                                            {"Closed Loop Sign", static_cast<int>(hardware_interface::talonfxpro::StaticFeedforwardSign::UseClosedLoopSign)}
+                                                        }
+                                                        );
             ddr_updater_->ddr_.registerVariable<double>("kP_1",
                                                         [this]() { return params_.kP_[1].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 1, false),
@@ -1219,6 +1265,15 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                             {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
                                                         }
                                                         );
+            ddr_updater_->ddr_.registerEnumVariable<int>("static_feedforward_sign_1",
+                                                        [this]() { return static_cast<int>(params_.static_feedforward_sign_[1].load());},
+                                                        [this](const int static_feedforward_sign_int) { this->setStaticFeedforwardSign(static_cast<hardware_interface::talonfxpro::StaticFeedforwardSign>(static_feedforward_sign_int), 1, false);},
+                                                        "Static feed forward sign for slot 1 kS term", 
+                                                        std::map<std::string, int>{
+                                                            {"Velocity Sign", static_cast<int>(hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign)},
+                                                            {"Closed Loop Sign", static_cast<int>(hardware_interface::talonfxpro::StaticFeedforwardSign::UseClosedLoopSign)}
+                                                        }
+                                                        );
             ddr_updater_->ddr_.registerVariable<double>("kP_2",
                                                         [this]() { return params_.kP_[2].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 2, false),
@@ -1261,6 +1316,15 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         std::map<std::string, int>{
                                                             {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
                                                             {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerEnumVariable<int>("static_feedforward_sign_2",
+                                                        [this]() { return static_cast<int>(params_.static_feedforward_sign_[2].load());},
+                                                        [this](const int static_feedforward_sign_int) { this->setStaticFeedforwardSign(static_cast<hardware_interface::talonfxpro::StaticFeedforwardSign>(static_feedforward_sign_int), 2, false);},
+                                                        "Static feed forward sign for slot 2 kS term", 
+                                                        std::map<std::string, int>{
+                                                            {"Velocity Sign", static_cast<int>(hardware_interface::talonfxpro::StaticFeedforwardSign::UseVelocitySign)},
+                                                            {"Closed Loop Sign", static_cast<int>(hardware_interface::talonfxpro::StaticFeedforwardSign::UseClosedLoopSign)}
                                                         }
                                                         );
             ddr_updater_->ddr_.registerEnumVariable<int>("invert",
@@ -1661,6 +1725,7 @@ SET_PARAM_IDX_FN(params_.kV_, setkV)
 SET_PARAM_IDX_FN(params_.kA_, setkA)
 SET_PARAM_IDX_FN(params_.kG_, setkG)
 SET_PARAM_IDX_FN(params_.gravity_type_, setGravityType)
+SET_PARAM_IDX_FN(params_.static_feedforward_sign_, setStaticFeedforwardSign)
 
 // Template to generate functions for normal param entries
 // Takes the param name and talon function to call to set the value
@@ -1997,6 +2062,7 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
         talon->setkA(params.kA_[i], i);
         talon->setkG(params.kG_[i], i);
         talon->setGravityType(params.gravity_type_[i], i);
+        talon->setStaticFeedforwardSign(params.static_feedforward_sign_[i], i);
     }
     talon->setInvert(params.invert_);
     talon->setNeutralMode(params.neutral_mode_);
