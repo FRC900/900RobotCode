@@ -418,7 +418,6 @@ bool TalonFXProCIParams::readCloseLoopParams(const ros::NodeHandle &n)
                 else if (str == "arm_cosine")
                 {
                     gravity_type_[i] = hardware_interface::talonfxpro::GravityType::Arm_Cosine;
-                    ROS_WARN_STREAM("Gravity type for joint " << joint_name_ << " closed loop values entry " << i << " : " << str);
                 }
                 else
                 {
