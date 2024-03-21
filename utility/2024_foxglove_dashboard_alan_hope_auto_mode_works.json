@@ -1,15 +1,71 @@
 {
   "configById": {
+    "RawMessages!yra6my": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/tf.transforms"
+    },
+    "RawMessages!eyckwi": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/zedx_front/left/camera_info"
+    },
+    "RawMessages!1whn9tj": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/norfair/output"
+    },
+    "RawMessages!prgbf6": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/zedx_back/left/camera_info"
+    },
+    "RawMessages!4aj2lkg": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/imu/zeroed_imu.orientation"
+    },
+    "RawMessages!44zk5rt": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/tagslam/odom/body_frc_robot"
+    },
+    "RawMessages!1xpjhfr": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/auto/auto_mode.auto_mode"
+    },
+    "RawMessages!1uvhbdw": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/intaking/intaking_server_2024/feedback.feedback.have_note"
+    },
     "3D!1slpkig": {
       "cameraState": {
         "perspective": false,
-        "distance": 19.99999999999953,
-        "phi": 59.99999999999991,
-        "thetaOffset": 44.99999999999999,
+        "distance": 45.441463615921975,
+        "phi": 59.27653301887066,
+        "thetaOffset": 2.2040094339807763,
         "targetOffset": [
-          5.54398743114082,
-          3.8309845485288787,
-          1.5012901810064167e-20
+          8.007411466327536,
+          2.196431236782369,
+          -7.423612201414655e-16
         ],
         "target": [
           0,
@@ -28,7 +84,710 @@
       },
       "followMode": "follow-pose",
       "scene": {},
-      "transforms": {},
+      "transforms": {
+        "frame:obj_7_0": {
+          "visible": false
+        },
+        "frame:zedx_back_left_camera_frame": {
+          "visible": false
+        },
+        "frame:base_link": {
+          "visible": false
+        },
+        "frame:odom": {
+          "visible": false
+        },
+        "frame:map": {
+          "visible": true
+        },
+        "frame:body_link": {
+          "visible": true
+        },
+        "frame:frc_robot": {
+          "visible": false
+        },
+        "frame:zebracorn_labs": {
+          "visible": false
+        },
+        "frame:tag_1": {
+          "visible": false
+        },
+        "frame:tag_2": {
+          "visible": false
+        },
+        "frame:tag_3": {
+          "visible": false
+        },
+        "frame:tag_4": {
+          "visible": false
+        },
+        "frame:tag_5": {
+          "visible": false
+        },
+        "frame:tag_6": {
+          "visible": false
+        },
+        "frame:tag_7": {
+          "visible": false
+        },
+        "frame:tag_8": {
+          "visible": false
+        },
+        "frame:tag_9": {
+          "visible": false
+        },
+        "frame:tag_10": {
+          "visible": false
+        },
+        "frame:tag_11": {
+          "visible": false
+        },
+        "frame:tag_12": {
+          "visible": false
+        },
+        "frame:tag_13": {
+          "visible": false
+        },
+        "frame:tag_14": {
+          "visible": false
+        },
+        "frame:tag_15": {
+          "visible": false
+        },
+        "frame:tag_16": {
+          "visible": false
+        },
+        "frame:cam0": {
+          "visible": false
+        },
+        "frame:cam1": {
+          "visible": false
+        },
+        "frame:blue_tape_corner_0": {
+          "visible": false
+        },
+        "frame:zedx_front_left_camera_frame": {
+          "visible": false
+        },
+        "frame:track_note_21": {
+          "visible": false
+        },
+        "frame:red_robot_0": {
+          "visible": false
+        },
+        "frame:obj_8_0": {
+          "visible": false
+        },
+        "frame:blue_tape_corner_1": {
+          "visible": false
+        },
+        "frame:track_note_22": {
+          "visible": false
+        },
+        "frame:obj_8_1": {
+          "visible": false
+        },
+        "frame:note_0": {
+          "visible": false
+        },
+        "frame:obj_6_0": {
+          "visible": false
+        },
+        "frame:track_note_23": {
+          "visible": false
+        },
+        "frame:obj_9_0": {
+          "visible": false
+        },
+        "frame:obj_10_1": {
+          "visible": false
+        },
+        "frame:blue_ds_light_0": {
+          "visible": false
+        },
+        "frame:note_1": {
+          "visible": false
+        },
+        "frame:blue_ds_light_1": {
+          "visible": false
+        },
+        "frame:track_note_24": {
+          "visible": false
+        },
+        "frame:track_note_25": {
+          "visible": false
+        },
+        "frame:obj_10_0": {
+          "visible": false
+        },
+        "frame:obj_7_1": {
+          "visible": false
+        },
+        "frame:red_robot_1": {
+          "visible": false
+        },
+        "frame:track_note_26": {
+          "visible": false
+        },
+        "frame:track_note_27": {
+          "visible": false
+        },
+        "frame:red_ds_number_1": {
+          "visible": false
+        },
+        "frame:red_triangle_text_2": {
+          "visible": false
+        },
+        "frame:green_crescendo_logo_3": {
+          "visible": false
+        },
+        "frame:red_ds_number_4": {
+          "visible": false
+        },
+        "frame:obj_13_0": {
+          "visible": false
+        },
+        "frame:green_crescendo_logo_1": {
+          "visible": false
+        },
+        "frame:red_ds_number_2": {
+          "visible": false
+        },
+        "frame:red_triangle_text_3": {
+          "visible": false
+        },
+        "frame:red_ds_light_4": {
+          "visible": false
+        },
+        "frame:red_ds_light_5": {
+          "visible": false
+        },
+        "frame:track_note_29": {
+          "visible": false
+        },
+        "frame:red_ds_number_3": {
+          "visible": false
+        },
+        "frame:track_note_28": {
+          "visible": false
+        },
+        "frame:track_note_30": {
+          "visible": false
+        },
+        "frame:red_ds_number_0": {
+          "visible": false
+        },
+        "frame:note_2": {
+          "visible": false
+        },
+        "frame:red_robot_5": {
+          "visible": false
+        },
+        "frame:red_robot_6": {
+          "visible": false
+        },
+        "frame:red_ds_light_2": {
+          "visible": false
+        },
+        "frame:red_ds_light_3": {
+          "visible": false
+        },
+        "frame:obj_14_0": {
+          "visible": false
+        },
+        "frame:red_ds_light_1": {
+          "visible": false
+        },
+        "frame:red_ds_light_0": {
+          "visible": false
+        },
+        "frame:track_note_31": {
+          "visible": false
+        },
+        "frame:track_note_32": {
+          "visible": false
+        },
+        "frame:track_note_33": {
+          "visible": false
+        },
+        "frame:track_note_34": {
+          "visible": false
+        },
+        "frame:blue_robot_3": {
+          "visible": false
+        },
+        "frame:blue_robot_2": {
+          "visible": false
+        },
+        "frame:red_tape_to_wall_0": {
+          "visible": false
+        },
+        "frame:green_crescendo_logo_0": {
+          "visible": false
+        },
+        "frame:obj_15_0": {
+          "visible": false
+        },
+        "frame:blue_ds_number_0": {
+          "visible": false
+        },
+        "frame:obj_15_1": {
+          "visible": false
+        },
+        "frame:track_note_35": {
+          "visible": false
+        },
+        "frame:blue_tape_to_wall_1": {
+          "visible": false
+        },
+        "frame:blue_tape_corner_2": {
+          "visible": false
+        },
+        "frame:blue_tape_to_wall_2": {
+          "visible": false
+        },
+        "frame:track_note_36": {
+          "visible": false
+        },
+        "frame:track_note_37": {
+          "visible": false
+        },
+        "frame:blue_ds_number_1": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_0": {
+          "visible": false
+        },
+        "frame:track_note_38": {
+          "visible": false
+        },
+        "frame:obj_15_2": {
+          "visible": false
+        },
+        "frame:track_note_39": {
+          "visible": false
+        },
+        "frame:track_note_40": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_1": {
+          "visible": false
+        },
+        "frame:track_note_41": {
+          "visible": false
+        },
+        "frame:obj_8_2": {
+          "visible": false
+        },
+        "frame:track_note_42": {
+          "visible": false
+        },
+        "frame:track_note_43": {
+          "visible": false
+        },
+        "frame:track_note_44": {
+          "visible": false
+        },
+        "frame:track_note_45": {
+          "visible": false
+        },
+        "frame:green_crescendo_logo_2": {
+          "visible": false
+        },
+        "frame:white_tape_to_wall_2": {
+          "visible": false
+        },
+        "frame:white_tape_to_wall_1": {
+          "visible": false
+        },
+        "frame:red_robot_2": {
+          "visible": false
+        },
+        "frame:track_note_46": {
+          "visible": false
+        },
+        "frame:track_note_47": {
+          "visible": false
+        },
+        "frame:blue_tape_to_wall_0": {
+          "visible": false
+        },
+        "frame:track_note_48": {
+          "visible": false
+        },
+        "frame:track_note_49": {
+          "visible": false
+        },
+        "frame:blue_robot_0": {
+          "visible": false
+        },
+        "frame:red_robot_3": {
+          "visible": false
+        },
+        "frame:green_crescendo_logo_4": {
+          "visible": false
+        },
+        "frame:blue_robot_1": {
+          "visible": false
+        },
+        "frame:track_note_50": {
+          "visible": false
+        },
+        "frame:track_note_51": {
+          "visible": false
+        },
+        "frame:track_note_53": {
+          "visible": false
+        },
+        "frame:track_note_52": {
+          "visible": false
+        },
+        "frame:crescendo_logo_1": {
+          "visible": false
+        },
+        "frame:track_note_54": {
+          "visible": false
+        },
+        "frame:track_note_55": {
+          "visible": false
+        },
+        "frame:crescendo_logo_2": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_2": {
+          "visible": false
+        },
+        "frame:track_note_56": {
+          "visible": false
+        },
+        "frame:track_note_57": {
+          "visible": false
+        },
+        "frame:track_note_58": {
+          "visible": false
+        },
+        "frame:track_note_59": {
+          "visible": false
+        },
+        "frame:blue_ds_number_2": {
+          "visible": false
+        },
+        "frame:note_3": {
+          "visible": false
+        },
+        "frame:blue_ds_light_4": {
+          "visible": false
+        },
+        "frame:blue_ds_number_3": {
+          "visible": false
+        },
+        "frame:blue_ds_light_3": {
+          "visible": false
+        },
+        "frame:note_4": {
+          "visible": false
+        },
+        "frame:track_note_60": {
+          "visible": false
+        },
+        "frame:blue_ds_light_2": {
+          "visible": false
+        },
+        "frame:blue_ds_number_4": {
+          "visible": false
+        },
+        "frame:blue_ds_light_5": {
+          "visible": false
+        },
+        "frame:blue_ds_number_6": {
+          "visible": false
+        },
+        "frame:track_note_61": {
+          "visible": false
+        },
+        "frame:track_note_62": {
+          "visible": false
+        },
+        "frame:track_note_63": {
+          "visible": false
+        },
+        "frame:crescendo_logo_0": {
+          "visible": false
+        },
+        "frame:track_note_64": {
+          "visible": false
+        },
+        "frame:track_note_65": {
+          "visible": false
+        },
+        "frame:track_note_66": {
+          "visible": false
+        },
+        "frame:track_note_67": {
+          "visible": false
+        },
+        "frame:track_note_68": {
+          "visible": false
+        },
+        "frame:track_note_69": {
+          "visible": false
+        },
+        "frame:track_note_70": {
+          "visible": false
+        },
+        "frame:track_note_71": {
+          "visible": false
+        },
+        "frame:track_note_72": {
+          "visible": false
+        },
+        "frame:track_note_73": {
+          "visible": false
+        },
+        "frame:crescendo_logo_4": {
+          "visible": false
+        },
+        "frame:obj_9_2": {
+          "visible": false
+        },
+        "frame:obj_10_3": {
+          "visible": false
+        },
+        "frame:track_note_74": {
+          "visible": false
+        },
+        "frame:obj_10_2": {
+          "visible": false
+        },
+        "frame:crescendo_logo_5": {
+          "visible": false
+        },
+        "frame:track_note_75": {
+          "visible": false
+        },
+        "frame:track_note_76": {
+          "visible": false
+        },
+        "frame:blue_ds_number_5": {
+          "visible": false
+        },
+        "frame:track_note_77": {
+          "visible": false
+        },
+        "frame:track_note_78": {
+          "visible": false
+        },
+        "frame:track_note_79": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_4": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_3": {
+          "visible": false
+        },
+        "frame:crescendo_logo_7": {
+          "visible": false
+        },
+        "frame:crescendo_logo_6": {
+          "visible": false
+        },
+        "frame:blue_ds_number_7": {
+          "visible": false
+        },
+        "frame:track_note_81": {
+          "visible": false
+        },
+        "frame:track_note_80": {
+          "visible": false
+        },
+        "frame:blue_ds_light_6": {
+          "visible": false
+        },
+        "frame:track_note_82": {
+          "visible": false
+        },
+        "frame:blue_ds_light_8": {
+          "visible": false
+        },
+        "frame:blue_ds_light_7": {
+          "visible": false
+        },
+        "frame:crescendo_logo_8": {
+          "visible": false
+        },
+        "frame:blue_robot_4": {
+          "visible": false
+        },
+        "frame:red_ds_number_6": {
+          "visible": false
+        },
+        "frame:red_ds_number_5": {
+          "visible": false
+        },
+        "frame:track_note_83": {
+          "visible": false
+        },
+        "frame:note_5": {
+          "visible": false
+        },
+        "frame:note_7": {
+          "visible": false
+        },
+        "frame:blue_ds_number_8": {
+          "visible": false
+        },
+        "frame:track_note_84": {
+          "visible": false
+        },
+        "frame:track_note_85": {
+          "visible": false
+        },
+        "frame:red_ds_number_7": {
+          "visible": false
+        },
+        "frame:red_ds_number_8": {
+          "visible": false
+        },
+        "frame:note_8": {
+          "visible": false
+        },
+        "frame:blue_ds_number_9": {
+          "visible": false
+        },
+        "frame:crescendo_logo_9": {
+          "visible": false
+        },
+        "frame:blue_ds_light_10": {
+          "visible": false
+        },
+        "frame:track_note_86": {
+          "visible": false
+        },
+        "frame:track_note_88": {
+          "visible": false
+        },
+        "frame:track_note_87": {
+          "visible": false
+        },
+        "frame:blue_ds_light_9": {
+          "visible": false
+        },
+        "frame:track_note_89": {
+          "visible": false
+        },
+        "frame:note_6": {
+          "visible": false
+        },
+        "frame:track_note_90": {
+          "visible": false
+        },
+        "frame:track_note_91": {
+          "visible": false
+        },
+        "frame:crescendo_logo_3": {
+          "visible": false
+        },
+        "frame:blue_robot_5": {
+          "visible": false
+        },
+        "frame:track_note_92": {
+          "visible": false
+        },
+        "frame:track_note_93": {
+          "visible": false
+        },
+        "frame:track_note_94": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_5": {
+          "visible": false
+        },
+        "frame:blue_triangle_text_6": {
+          "visible": false
+        },
+        "frame:blue_robot_6": {
+          "visible": false
+        },
+        "frame:track_note_95": {
+          "visible": false
+        },
+        "frame:track_note_96": {
+          "visible": false
+        },
+        "frame:track_note_97": {
+          "visible": false
+        },
+        "frame:track_note_98": {
+          "visible": false
+        },
+        "frame:obj_9_1": {
+          "visible": false
+        },
+        "frame:track_note_99": {
+          "visible": false
+        },
+        "frame:track_note_100": {
+          "visible": false
+        },
+        "frame:track_note_101": {
+          "visible": false
+        },
+        "frame:track_note_104": {
+          "visible": false
+        },
+        "frame:track_note_105": {
+          "visible": false
+        },
+        "frame:track_note_102": {
+          "visible": false
+        },
+        "frame:track_note_103": {
+          "visible": false
+        },
+        "frame:track_note_106": {
+          "visible": false
+        },
+        "frame:track_note_107": {
+          "visible": false
+        },
+        "frame:track_note_108": {
+          "visible": false
+        },
+        "frame:track_note_110": {
+          "visible": false
+        },
+        "frame:track_note_109": {
+          "visible": false
+        },
+        "frame:track_note_111": {
+          "visible": false
+        },
+        "frame:track_note_112": {
+          "visible": false
+        },
+        "frame:track_note_113": {
+          "visible": false
+        },
+        "frame:track_note_114": {
+          "visible": false
+        },
+        "frame:track_note_115": {
+          "visible": false
+        },
+        "frame:track_note_116": {
+          "visible": false
+        },
+        "frame:track_note_117": {
+          "visible": false
+        },
+        "frame:track_note_118": {
+          "visible": false
+        },
+        "frame:track_note_119": {
+          "visible": false
+        }
+      },
       "topics": {},
       "layers": {
         "fd67fb06-c340-4bbe-a0e1-325fe0740e32": {
@@ -59,48 +818,6 @@
       },
       "imageMode": {},
       "followTf": "map"
-    },
-    "RawMessages!3wbkb6m": {
-      "diffEnabled": false,
-      "diffMethod": "custom",
-      "diffTopicPath": "",
-      "showFullMessageForDiff": false,
-      "topicPath": "/frcrobot_rio/match_data",
-      "expansion": {
-        "header": "c",
-        "stamp~header": "e"
-      }
-    },
-    "Plot!40imq72": {
-      "paths": [
-        {
-          "value": "/frcrobot_rio/match_data.BatteryVoltage",
-          "enabled": true,
-          "timestampMethod": "receiveTime"
-        }
-      ],
-      "showXAxisLabels": true,
-      "showYAxisLabels": true,
-      "showLegend": true,
-      "legendDisplay": "floating",
-      "showPlotValuesInLegend": false,
-      "isSynced": true,
-      "xAxisVal": "timestamp",
-      "sidebarDimension": 240
-    },
-    "RawMessages!2bzyqch": {
-      "diffEnabled": false,
-      "diffMethod": "custom",
-      "diffTopicPath": "",
-      "showFullMessageForDiff": false,
-      "topicPath": "/auto/auto_mode"
-    },
-    "RawMessages!2tgtx5a": {
-      "diffEnabled": false,
-      "diffMethod": "custom",
-      "diffTopicPath": "",
-      "showFullMessageForDiff": false,
-      "topicPath": "/imu/zeroed_imu"
     }
   },
   "globalVariables": {},
@@ -110,22 +827,39 @@
   },
   "layout": {
     "direction": "row",
-    "first": "3D!1slpkig",
+    "first": {
+      "first": "RawMessages!yra6my",
+      "second": "RawMessages!eyckwi",
+      "direction": "column"
+    },
     "second": {
       "direction": "row",
       "first": {
-        "direction": "column",
-        "second": "Plot!40imq72",
-        "first": "RawMessages!3wbkb6m",
-        "splitPercentage": 65.44117647058823
+        "first": "RawMessages!1whn9tj",
+        "second": {
+          "first": "RawMessages!prgbf6",
+          "second": "RawMessages!4aj2lkg",
+          "direction": "column"
+        },
+        "direction": "row",
+        "splitPercentage": 54.96828752642706
       },
       "second": {
-        "first": "RawMessages!2bzyqch",
-        "second": "RawMessages!2tgtx5a",
-        "direction": "column"
+        "direction": "row",
+        "first": {
+          "first": "RawMessages!44zk5rt",
+          "second": {
+            "first": "RawMessages!1xpjhfr",
+            "second": "RawMessages!1uvhbdw",
+            "direction": "row"
+          },
+          "direction": "column"
+        },
+        "second": "3D!1slpkig",
+        "splitPercentage": 29.58656330749354
       },
-      "splitPercentage": 29.142562273835548
+      "splitPercentage": 37.931034482758626
     },
-    "splitPercentage": 31.798051372896367
+    "splitPercentage": 16.203703703703702
   }
 }
