@@ -3,13 +3,13 @@
 class SSDSpec
 {
 public:
-    SSDSpec(const int featureMapSizeH,
-            const int featureMapSizeW,
-            const int shrinkage,
-            const int boxSizeMin,
-            const int boxSizeMax,
-            const int aspectRatioMin,
-            const int aspectRatioMax)
+    SSDSpec(const size_t featureMapSizeH,
+            const size_t featureMapSizeW,
+            const size_t shrinkage,
+            const size_t boxSizeMin,
+            const size_t boxSizeMax,
+            const size_t aspectRatioMin,
+            const size_t aspectRatioMax)
         : m_featureMapSizeH{featureMapSizeH}
         , m_featureMapSizeW{featureMapSizeW}
         , m_shrinkage{shrinkage}
@@ -19,14 +19,14 @@ public:
         , m_aspectRatioMax{aspectRatioMax}
     {
     }
-    int m_featureMapSizeH;
-    int m_featureMapSizeW;
+    size_t m_featureMapSizeH;
+    size_t m_featureMapSizeW;
 
-    int m_shrinkage;
-    int m_boxSizeMin;
-    int m_boxSizeMax;
-    int m_aspectRatioMin;
-    int m_aspectRatioMax;
+    size_t m_shrinkage;
+    size_t m_boxSizeMin;
+    size_t m_boxSizeMax;
+    size_t m_aspectRatioMin;
+    size_t m_aspectRatioMax;
 };
 static constexpr uint32_t boxesPerSize = 6;
 
@@ -115,13 +115,6 @@ __global__ void generateSSDGridPriorsKernel(SSDBoxCenterForm *output,
 template <size_t NUM_TILES, bool USE_SCALED_IMAGE, bool CLAMP>
 SSDGridPrior<NUM_TILES, USE_SCALED_IMAGE, CLAMP>::SSDGridPrior(void)
 {
-    // Network definition of SSD layers
-    // Hard-code this for now
-    m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(80, 136,  8,  32,  64, 2, 3));
-    m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(40,  68, 16,  64, 128, 2, 3));
-    m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(20,  34, 32, 128, 256, 2, 3));
-    m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(10,  17, 64, 256, 512, 2, 3));
-
     if constexpr (NUM_TILES > 0)
     {
         cudaSafeCall(cudaMalloc(&m_dOffsets, sizeof(*m_dOffsets) * NUM_TILES));
@@ -149,6 +142,11 @@ bool SSDGridPrior<NUM_TILES, USE_SCALED_IMAGE, CLAMP>::generate(const ushort2 &m
     if ((modelInputSize.x != m_modelInputSize.x) || (modelInputSize.y != m_modelInputSize.y) ||
         (imageSize.x != m_imageSize.x) || (imageSize.y != m_imageSize.y))
     {
+        m_ssdSpecs.clear();
+        m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(80, modelInputSize.x /  8,  8,  32,  64, 2, 3));
+        m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(40, modelInputSize.x / 16, 16,  64, 128, 2, 3));
+        m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(20, modelInputSize.x / 32, 32, 128, 256, 2, 3));
+        m_ssdSpecs.emplace_back(std::make_unique<SSDSpec>(10, modelInputSize.x / 64, 64, 256, 512, 2, 3));
         if constexpr (NUM_TILES > 0)
         {
             for (size_t i = 0; i < NUM_TILES; i++)

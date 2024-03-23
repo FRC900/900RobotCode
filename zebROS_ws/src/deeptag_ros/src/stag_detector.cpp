@@ -160,6 +160,14 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runSoftmax()
     const auto stage1SSDGridCount = m_ssdGridPrior.getOutput().size();
     m_ssdSoftmax.computeSoftmax(m_detectEngine->getBufferByName("ssd_confidences_pred"), 2, 1, stage1SSDGridCount, m_ssdCudaStream);
     m_timing.end("ssd_softmax", m_ssdCudaStream);
+
+#ifdef DEBUG
+    dumpOutputToCSV("grid_confidences_pred", m_detectEngine->getBufferByName("grid_confidences_pred"), stage1GridCount, 2, 1, stage1GridCount);
+    dumpOutputToCSV("ssd_confidences_pred", m_detectEngine->getBufferByName("ssd_confidences_pred"), stage1SSDGridCount, 2, 2, 1);
+    dumpOutputToCSV("grid_confidences_softmax", m_gridSoftmax.getOutput().data(), m_gridSoftmax.getOutput().size(), 1, 1, 0);
+    cudaSafeCall(cudaStreamSynchronize(m_ssdCudaStream));
+    dumpOutputToCSV("ssd_confidences_softmax", m_ssdSoftmax.getOutput().data(), m_ssdSoftmax.getOutput().size(), 1, 1, 0);
+#endif
 }
 
 // These reduce the full set of results down to just a list of those above a min
@@ -231,6 +239,14 @@ std::vector<TagDetectInfo> STagDetector<NUM_TILES, USE_SCALED_IMAGE>::detectTags
     {
         m_regenCudaGraph = true;
     }
+    if (m_saveInputImage)
+    {
+        cv::Mat img = m_detectEngine->getDebugImage(0);
+        cv::Mat out;
+        img.convertTo(out, CV_8UC3, 255);
+        cv::imwrite("detect_input.jpg", out);
+        m_saveInputImage = false;
+    }
     // Record an event that triggers once inference is complete
     m_timing.end("detect_inference", m_detectEngine->getCudaStream());
     cudaSafeCall(cudaEventRecord(m_engineDoneCudaEvent, m_detectEngine->getCudaStream()));
@@ -249,6 +265,7 @@ std::vector<TagDetectInfo> STagDetector<NUM_TILES, USE_SCALED_IMAGE>::detectTags
     // inference output is ready before proceeding.
     // Since the grid code runs on the same stream as the engine inference, the wait
     // there is automatic.
+
 
     generatePriors(imgSize);
     runSoftmax();
@@ -412,6 +429,65 @@ template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
 int STagDetector<NUM_TILES, USE_SCALED_IMAGE>::getSSDGrouperSigma(void) const
 {
     return m_ssdGrouperSigma;
+}
+
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE>
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::visualizeGrid(cv::Mat &image)
+{
+    const tcb::span<const Stage1GridGroup<NUM_TILES + NUM_SCALED_IMAGES>> hstage1GridGroup = m_gridGrouper.getOutput();
+    for (size_t i = 0; i < hstage1GridGroup.size(); i++)
+    {
+        const auto &g = hstage1GridGroup[i];
+        cv::circle(image, cv::Point2d(g.m_corner.x, g.m_corner.y), 5, cv::Scalar(128, 128, 0));
+        cv::line(image, cv::Point2d(g.m_corner.x, g.m_corner.y), cv::Point2d(g.m_corner.x - g.m_cornerDirection.x * 150, g.m_corner.y - g.m_cornerDirection.y * 150), cv::Scalar(128, 128, 0));
+        std::stringstream s;
+        s << i;
+        cv::putText(image, s.str().c_str(), cv::Point2f(g.m_corner.x, g.m_corner.y - 10), 0, 0.75, cv::Scalar(128, 128, 0), 1);
+    }
+}
+
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE>
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::visualizeSSD(cv::Mat &image)
+{
+    const tcb::span<const Stage1SSDGroup> hstage1SSDGroup = m_ssdGrouper.getOutput();
+    for (size_t i = 0; i < hstage1SSDGroup.size(); i++)
+    {
+        const auto &g = hstage1SSDGroup[i];
+        cv::circle(image, cv::Point2d(g.m_center.x, g.m_center.y), 5, cv::Scalar(128, 128, 0));
+        cv::rectangle(image, cv::Rect2d(cv::Point2d(g.m_bbox.m_tl.x, g.m_bbox.m_tl.y), cv::Point2d(g.m_bbox.m_br.x, g.m_bbox.m_br.y)), cv::Scalar(128, 128, 0), 2);
+        for (const auto &a : g.m_anchorsInBox)
+        {
+            cv::circle(image, cv::Point2d(a.x, a.y), 4, cv::Scalar(128, 0, 128));
+        }
+        std::stringstream s;
+        s << i;
+        cv::putText(image, s.str().c_str(), cv::Point2f(g.m_center.x, g.m_center.y), 0, 0.75, cv::Scalar(128, 128, 0), 1);
+    }
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE>
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::saveInputImage(void)
+{
+    m_saveInputImage = true;
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE>
+void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::dumpOutputToCSV(const std::string &outputName, const float *dBuffer, const size_t entries, const size_t valsPerEntry, const size_t mul, const size_t add)
+{
+    cudaSafeCall(cudaStreamSynchronize(m_detectEngine->getCudaStream()));
+    auto hBuffer = std::make_unique<float[]>(entries * valsPerEntry);
+    cudaSafeCall(cudaMemcpy(hBuffer.get(),
+                            dBuffer,
+                            entries * valsPerEntry * sizeof(float),
+                            cudaMemcpyDeviceToHost));
+    std::ofstream os(outputName + ".csv");
+    for (size_t i = 0; i < entries; i++)
+    {
+        os << i << ", ";
+        for (size_t j = 0; j < valsPerEntry; j++)
+        {
+            os << hBuffer[i * mul + j * add] << ", ";
+        }
+        os << std::endl;
+    }
 }
 
 #include "deeptag_ros/detection_engine.h"

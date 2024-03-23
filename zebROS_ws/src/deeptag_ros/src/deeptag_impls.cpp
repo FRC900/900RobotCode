@@ -138,6 +138,21 @@ void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::visualize(cv::M
     }
 }
 template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::visualizeStage1Grid(cv::Mat &image)
+{
+    m_sTagDetector.visualizeGrid(image);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::visualizeStage1SSD(cv::Mat &image)
+{
+    m_sTagDetector.visualizeSSD(image);
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
+void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::saveInputImage(void)
+{
+    m_sTagDetector.saveInputImage();
+}
+template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
 void DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::setCornerMinCenterScore(const double cornerMinCenterScore)
 {
     m_sTagDetector.setCornerMinCenterScore(cornerMinCenterScore);

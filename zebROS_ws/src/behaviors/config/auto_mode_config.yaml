@@ -59,6 +59,10 @@ auto_mode_10: ["drive_2_5_m"]
 
 auto_mode_11: ["pause_two", "four_note_speaker_no_rotate_ALLIANCE_csv"]
 
+# auto_mode_12: ["auto_note_pickup"]
+# 
+# auto_mode_13: ["align_and_shoot_dynamic", "path_center", "auto_note_pickup", ""]
+
 #auto_mode_4_blue: ["map_rel_four_note_grid_right1_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_blue_csv"]
 #auto_mode_4_red: ["map_rel_four_note_grid_right1_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_red_csv"]
 #auto_mode_5: ["map_rel_four_note_grid1_csv", "map_rel_four_note_grid2_csv", "map_rel_four_note_grid3_csv", "map_rel_four_note_grid4_csv"]
@@ -71,6 +75,9 @@ auto_mode_11: ["pause_two", "four_note_speaker_no_rotate_ALLIANCE_csv"]
 
 # ACTIONS ------------------------------------------------------------------------
 # must have a value for "type", other stuff varies
+
+# auto_note_pickup:
+#   type: autoNotefn 
 
 four_note_speaker_no_rotate_red_csv:
   waypoint_actions: [[2, "pause_path", "shoot_dynamic", "unpause_path", "start_intake"], [3, "pause_path", "shoot_dynamic", "unpause_path", "start_intake"]]

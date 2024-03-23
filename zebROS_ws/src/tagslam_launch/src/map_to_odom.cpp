@@ -191,7 +191,6 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
   if (localize_while_stopped) {
     if (hypot(msg->twist.linear.x, msg->twist.linear.y) > cmd_vel_threshold && fabs(msg->twist.angular.z) > ang_vel_threshold) {
       last_tf_pub = ros::Time::now() + ros::Duration(time_stopped);
-      
     }
     if (hypot(msg->twist.linear.x, msg->twist.linear.y) < cmd_vel_threshold && fabs(msg->twist.angular.z) < ang_vel_threshold) {
       updateMapOdomTf();
@@ -199,7 +198,7 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
         ROS_INFO_STREAM_THROTTLE(2, "RELOCALIZING"); 
         tfbr->sendTransform(map_odom_tf);
         std_msgs::Header msg;
-        msg.stamp = ros::Time::now();
+        msg.stamp = map_odom_tf.header.stamp;
         last_relocalized_pub.publish(msg);
         last_tf_pub = ros::Time::now();
       }
