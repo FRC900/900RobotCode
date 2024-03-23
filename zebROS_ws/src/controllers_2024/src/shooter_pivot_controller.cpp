@@ -94,7 +94,7 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
             }
 
             if (controller_nh.hasParam("switch_control_slot")) {
-                if (!controller_nh.hasParam("slot_switchover_threshold")) {
+                if (!(controller_nh.hasParam("slot_switchover_lower") && controller_nh.hasParam("slot_switchover_upper"))) {
                     ROS_WARN_STREAM("2024_shooter_pivot_controller: told to switch slots but not told threshold");
                 } else {
                     if (!controller_nh.getParam("switch_control_slot", switch_control_slot_))
@@ -102,9 +102,14 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                         ROS_WARN_STREAM("2024_shooter_pivot_controller : could not find switch control slot even though it exists??");
                         return false;
                     }
-                    if (!controller_nh.getParam("slot_switchover_threshold", slot_switchover_threshold_))
+                    if (!controller_nh.getParam("slot_switchover_lower", slot_switchover_lower_))
                     {
-                        ROS_WARN_STREAM("2024_shooter_pivot_controller : could not find slot_switchover_threshold even though it exists??");
+                        ROS_WARN_STREAM("2024_shooter_pivot_controller : could not find slot_switchover_lower even though it exists??");
+                        return false;
+                    }
+                    if (!controller_nh.getParam("slot_switchover_upper", slot_switchover_upper_))
+                    {
+                        ROS_WARN_STREAM("2024_shooter_pivot_controller : could not find slot_switchover_upper even though it exists??");
                         return false;
                     }
                 }
@@ -227,7 +232,7 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
             shooter_pivot_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_);
             shooter_pivot_joint_.setMotionMagicJerk(motion_magic_jerk_);
             if (switch_control_slot_) {
-                if (shooter_pivot_joint_.getPosition() > slot_switchover_threshold_) {
+                if (shooter_pivot_joint_.getPosition() > slot_switchover_lower_ && shooter_pivot_joint_.getPosition() < slot_switchover_upper_) {
                     shooter_pivot_joint_.setControlSlot(1);
                 } else {
                     shooter_pivot_joint_.setControlSlot(0);
@@ -265,7 +270,8 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
         ros::Time time_at_disable_;
 
         bool switch_control_slot_ = false;
-        double slot_switchover_threshold_;
+        double slot_switchover_lower_;
+        double slot_switchover_upper_;
 
         bool cmdService(controllers_2024_msgs::ShooterPivotSrv::Request &req,
                         controllers_2024_msgs::ShooterPivotSrv::Response &response)

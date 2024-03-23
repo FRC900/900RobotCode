@@ -340,7 +340,7 @@ class ShootingServer(object):
                     self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     self.server.set_preempted()
-                    if goal.AMP:
+                    if goal.mode == goal.AMP:
                         rospy.loginfo("DRIVING BACK")
                         cmd_vel_msg = Twist()
                         start = rospy.Time.now()

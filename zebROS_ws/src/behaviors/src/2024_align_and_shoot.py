@@ -18,7 +18,9 @@ from std_msgs.msg import Header
 
 from sensor_msgs.msg import JointState
 
-import tf2_ros, time
+from geometry_msgs.msg import TwistStamped
+
+import tf2_ros, time, math
 
 class AlignAndShoot:
     def __init__(self, name):
@@ -62,6 +64,11 @@ class AlignAndShoot:
         self.is_teleop_and_enabled = False
         self.match_data_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, callback=self.match_data_cb, tcp_nodelay=True, queue_size=1)
 
+        self.linear_vel_threshold = 0.2
+        self.angular_vel_threshold = 0.2
+        self.stopped = False
+        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, self.cmd_vel_cb)
+
         self.last_relocalized = rospy.Time()
         self.align_to_speaker_done = False
         self.shooting_done = False
@@ -69,6 +76,9 @@ class AlignAndShoot:
         rospy.loginfo("2024_align_and_shoot: starting timer")
         self.half_field_timer.start()
         rospy.loginfo("2024_align_and_shoot: server started")
+
+    def cmd_vel_cb(self, msg: TwistStamped):
+        self.stopped = math.hypot(msg.twist.linear.x, msg.twist.linear.y) <= self.linear_vel_threshold and msg.twist.angular.z <= self.angular_vel_threshold
 
     def match_data_cb(self, msg: MatchSpecificData):
         self.alliance_color = msg.allianceColor
@@ -191,9 +201,9 @@ class AlignAndShoot:
 
         # We want to run this loop while rospy is not shutdown, and:
         # we have not relocalized recently OR we have not aligned to speaker OR we are not done shooting
-        while not (relocalized_recently and self.align_to_speaker_done) and not rospy.is_shutdown():
+        while not (relocalized_recently and self.align_to_speaker_done) and not self.stopped and not rospy.is_shutdown():
             relocalized_recently = (rospy.Time.now() - self.last_relocalized) < rospy.Duration(self.localization_timeout)
-            rospy.loginfo_throttle(0.1, f"2024_align_and_shoot: aligning waiting on {'speaker' if not self.align_to_speaker_done else ''} {'shooting' if not self.shooting_done else ''} {'localization' if not relocalized_recently else ''}")
+            rospy.loginfo_throttle(0.1, f"2024_align_and_shoot: aligning waiting on {'speaker' if not self.align_to_speaker_done else ''} {'shooting' if not self.shooting_done else ''} {'stopping' if not self.stopped else ''}")
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_align_and_shoot: preempted")
                 self.align_to_speaker_client.cancel_goals_at_and_before_time(rospy.Time.now())

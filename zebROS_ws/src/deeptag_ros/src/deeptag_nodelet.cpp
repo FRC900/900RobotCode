@@ -11,6 +11,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <std_srvs/Trigger.h>
 
 #include "apriltag_msgs/ApriltagArrayStamped.h"
 #include "apriltag_msgs/ApriltagPoseStamped.h"
@@ -28,7 +29,7 @@ private:
     void onInit() override
     {
         nh_ = getMTPrivateNodeHandle();
-        ros::NodeHandle base_nh;
+        auto base_nh = getNodeHandle();
 
         image_transport::ImageTransport base_it(base_nh);
         camera_image_sub_ = base_it.subscribe("image_rect_color", 1, &DeeptagRosNodelet::callback, this);
@@ -37,6 +38,9 @@ private:
         pub_apriltag_poses_ = nh_.advertise<apriltag_msgs::ApriltagPoseStamped>("poses", 2);
         image_transport::ImageTransport it(nh_);
         pub_debug_image_ = it.advertise("debug_image", 2);
+        pub_stage1_grid_debug_image_ = it.advertise("stage1_grid_debug_image", 2);
+        pub_stage1_ssd_debug_image_ = it.advertise("stage1_ssd_debug_image", 2);
+        save_input_image_srv_ = base_nh.advertiseService("save_input_image", &DeeptagRosNodelet::saveInputImageCallback, this);
     }
 
     void camera_info_callback(const sensor_msgs::CameraInfo::ConstPtr &msg)
@@ -174,6 +178,11 @@ private:
             return;
 
         cv_bridge::CvImageConstPtr cv_frame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
+        // One-shot to save current post-proc input image to a file
+        if (save_input_image_.exchange(false))
+        {
+            deep_tag_->saveInputImage();
+        }
         const auto result = deep_tag_->runInference(cv_frame->image);
 
         apriltag_msgs::ApriltagArrayStamped apriltag_array_msg;
@@ -220,9 +229,33 @@ private:
             deep_tag_->visualize(debug_image_.image, result);
             pub_debug_image_.publish(debug_image_.toImageMsg());
         }
+        if (pub_stage1_grid_debug_image_.getNumSubscribers() > 0)
+        {
+            stage1_grid_debug_image_.header = frameMsg->header;
+            stage1_grid_debug_image_.encoding = sensor_msgs::image_encodings::BGR8;
+            stage1_grid_debug_image_.image = cv_frame->image.clone();
+            deep_tag_->visualizeStage1Grid(stage1_grid_debug_image_.image);
+            pub_stage1_grid_debug_image_.publish(stage1_grid_debug_image_.toImageMsg());
+        }
+        if (pub_stage1_ssd_debug_image_.getNumSubscribers() > 0)
+        {
+            stage1_ssd_debug_image_.header = frameMsg->header;
+            stage1_ssd_debug_image_.encoding = sensor_msgs::image_encodings::BGR8;
+            stage1_ssd_debug_image_.image = cv_frame->image.clone();
+            deep_tag_->visualizeStage1SSD(stage1_ssd_debug_image_.image);
+            pub_stage1_ssd_debug_image_.publish(stage1_ssd_debug_image_.toImageMsg());
+        }
 
         pub_apriltag_detections_.publish(apriltag_array_msg);
         pub_apriltag_poses_.publish(apriltag_pose_msg);
+    }
+
+    bool saveInputImageCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+    {
+        save_input_image_ = true;
+        res.success = true;
+        res.message = "Input image will be saved";
+        return true;
     }
 
     ros::NodeHandle nh_;
@@ -230,7 +263,11 @@ private:
     image_transport::Subscriber camera_image_sub_;
     ros::Subscriber camera_info_sub_;
     image_transport::Publisher pub_debug_image_;
+    image_transport::Publisher pub_stage1_grid_debug_image_;
+    image_transport::Publisher pub_stage1_ssd_debug_image_;
     cv_bridge::CvImage debug_image_;
+    cv_bridge::CvImage stage1_grid_debug_image_;
+    cv_bridge::CvImage stage1_ssd_debug_image_;
     ros::Publisher pub_apriltag_detections_;
     ros::Publisher pub_apriltag_poses_;
 
@@ -240,6 +277,8 @@ private:
     std::unique_ptr<DeepTag> deep_tag_;
 
     ddynamic_reconfigure::DDynamicReconfigure ddr_;
+    ros::ServiceServer save_input_image_srv_;
+    std::atomic<bool> save_input_image_{false};
 };
 }
 

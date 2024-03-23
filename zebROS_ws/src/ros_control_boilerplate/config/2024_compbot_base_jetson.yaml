@@ -202,29 +202,6 @@ shooter_pivot_controller:
     type: shooter_pivot_controller_2024/ShooterPivotController_2024
 
     feed_forward_map:
-        #- [0.5338253141842031, -0.16]
-        #- [0.5583690067903734, 0.21]
-        #- [0.6227961998815703, 0.03]
-        #- [0.6933593161243098, -0.23]
-        #- [0.7424467013366504, -0.24]
-        #- [0.782330201821677, -0.09]
-        #- [0.8436894333371027, -0.2]
-        #- [0.8835729338221293, -0.09]
-        #- [0.9295923574586985, -0.08]
-        #- [0.9909515889741242, -0.23]
-
-        # second map
-        #- [0.48473792897186263, 0.0]
-        #- [0.5553010452146021, 0.08]
-        #- [0.619728238305799, -0.24]
-        #- [0.6350680461846554, 0.14]
-        #- [0.6902913545485385, -0.09]
-        #- [0.7485826244881929, -0.21]
-        #- [0.7946020481247621, -0.07]
-        #- [0.8498253564886452, -0.18]
-        #- [0.9111845880040709, -0.23]
-        #- [0.9541360500648688, -0.21]
-        #- [1.57, 0.0]
 
         - [0.49394181369917645, 0.58]
         - [0.5460971604872883, 0.58]
@@ -263,29 +240,26 @@ shooter_pivot_controller:
         - [2.371534298071201, -0.55]
         - [2.414485760131999, -0.52]
 
-        
-
-
-
     shooter_pivot_joint: [ 'shooter_pivot_motionmagic_joint' ]
     dynamic_reconfigure: True
     min_angle: 0.40
     max_angle: 2.3
 
     switch_control_slot: True
-    slot_switchover_threshold: 1.57
+    slot_switchover_lower: 1.57
+    slot_switchover_upper: 5.0
 
-    motion_magic_velocity: 3.5
-    motion_magic_acceleration: 7.0
+    motion_magic_velocity: 2.0
+    motion_magic_acceleration: 5.0
     motion_magic_jerk: 100.0
 
     shooter_pivot_motionmagic_joint:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: shooter_pivot_motionmagic_joint
-        feedback_sensor_source: FusedCANcoder
+        feedback_sensor_source: RemoteCANcoder
         remote_feedback_device_id0: 55
-        motion_magic_cruise_velocity: 3.5
-        motion_magic_acceleration: 7.0
+        motion_magic_cruise_velocity: 2.0
+        motion_magic_acceleration: 5.0
         motion_magic_jerk: 100.0
         sensor_to_mechanism_ratio: 1.0
         rotor_to_sensor_ratio: 35.56
@@ -296,8 +270,9 @@ shooter_pivot_controller:
         neutral_mode: Brake
         close_loop_values:
             # Tried kI of around 12, it did help but was very slow and higher caused a bit of windup
-            - {kP: 30.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
-            - {kP: 10.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            # note: kG derived by finding voltage needed to hold at position theta, then do voltage / cos(theta)
+            - {kP: 50.0, kI: 5.0, kD: 1.0, kV: 5.5, kS: 0.0, kG: 0.05, gravity_type: "arm_cosine"}
+            - {kP: 20.0, kI: 5.0, kD: 1.0, kV: 5.5, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
         dynamic_reconfigure: True
 
 cancoder_state_controller:
@@ -445,8 +420,9 @@ climb_controller:
     type: climb_controller/ClimbController
     joint: ['climb_leader']
 
-    zeroing_percent_output: -0.2 # TODO SET TO AN ACTUAL VALUE ONCE WE HAVE A LIMIT SWITCH
-    zeroing_timeout: 10.0
+    # @TODO change to voltage 
+    zeroing_percent_output: -0.1 # TODO SET TO AN ACTUAL VALUE ONCE WE HAVE A LIMIT SWITCH
+    zeroing_timeout: 25.0
 
     # TODO fix these
     max_current_iterations: 10

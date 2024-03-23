@@ -33,14 +33,14 @@ int main(int argc, char *argv[])
     if (cpuImg.rows <= 720)
     {
         // 720p
-        cameraMatrix = (cv::Mat_<double>(3, 3) << 530.11, 0, 643.09, 0, 530.01, 358.5255, 0, 0, 1);
-        distCoeffs = (cv::Mat_<double>(1, 8) << -0.0414513, 0.0097052, -0.00014156, 0.000671092, -0.00485765, 0, 0, 0);
+        cameraMatrix = (cv::Mat_<double>(3, 3) << 527.1866455078125, 0.0, 643.0565185546875, 0.0, 527.1866455078125, 353.23980712890625, 0.0, 0.0, 1.0);
+        distCoeffs = (cv::Mat_<double>(1, 8) << 0, 0, 0, 0, 0, 0, 0, 0);
     }
     else
     {
         // 1080p
         cameraMatrix = (cv::Mat_<double>(3, 3) << 1060.22, 0, 969.18, 0, 1060.02, 540.051, 0, 0, 1);
-        distCoeffs = (cv::Mat_<double>(1, 8) << -0.0414513, 0.0097052, -0.00014156, 0.000671092, -0.00485765, 0, 0, 0);
+        distCoeffs = (cv::Mat_<double>(1, 8) << 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     DeepTag deepTag{cpuImg.size(),               // input image size, used for image resolution
@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
                     modelPath,                   // use rospkg to find?
                     detectOnnxModelFileName,     // onnx model filename - config item?
                     decodeOnnxModelFileName};    // onnx model filename - config item?
+    deepTag.setCornerMinCenterScore(0.05);
+    deepTag.setSSDMinCenterScore(0.05);
 
     // while(true)
     {

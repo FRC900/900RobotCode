@@ -79,7 +79,7 @@ class Aligner:
             self._feedback.error = abs(angles.shortest_angular_distance(self.msg.data, self.current_yaw))
 
         #rospy.loginfo(f"errr {self._feedback.error} tolerance {self.tolerance}")
-        if self._feedback.error < self.tolerance: # and abs(self.current_orient_effort) < self.velocity_tolerance
+        if self._feedback.error < self.tolerance and abs(self.current_orient_effort) < self.velocity_tolerance:
             self.valid_samples += 1
         else:
             self.valid_samples = 0

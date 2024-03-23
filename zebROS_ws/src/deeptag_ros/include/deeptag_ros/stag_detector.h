@@ -55,6 +55,10 @@ public:
     double getSSDMinCenterScore(void) const;
     int    getGridGrouperSigma(void) const;
     int    getSSDGrouperSigma(void) const;
+    void   visualizeGrid(cv::Mat &image);
+    void   visualizeSSD(cv::Mat &image);
+
+    void   saveInputImage(void);
 
 private:
     ushort2 generateInputs(const cv::Mat &cpuImg);
@@ -62,6 +66,7 @@ private:
     void runSoftmax();
     void runConfidenceFilter(const ushort2 &imgSize);
     void runGroupers(const ushort2 &imgSize);
+    void dumpOutputToCSV(const std::string &outputName, const float *dBuffer, const size_t entries, const size_t vals_per_entry, const size_t mul, const size_t add);
     cudaStream_t m_ssdCudaStream;
     cudaEvent_t  m_engineDoneCudaEvent;
     cudaEvent_t  m_ssdDoneCudaEvent;
@@ -86,6 +91,8 @@ private:
     double m_ssdMinCenterScore{0.08f};
     int    m_gridGrouperSigma{8};
     int    m_ssdGrouperSigma{8};
+    
+    bool   m_saveInputImage{false};
 };
 
 #endif
