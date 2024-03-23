@@ -179,8 +179,8 @@ class Aligner:
             self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
 
-            self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
-            self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
+            self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos((self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin((self.current_yaw))
+            self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin((self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos((self.current_yaw))
 
 
             self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
