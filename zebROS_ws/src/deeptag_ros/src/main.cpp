@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
     }
 
     DeepTag deepTag{cpuImg.size(),               // input image size, used for image resolution
-                    false,                       // tiled detection - config item
-                    true,                        // use scaled-down full image in addition to tiles - config item
+                    true,                        // tiled detection - config item
+                    false,                       // use scaled-down full image in addition to tiles - config item
                     DeepTagType::APRILTAG_36H11, // tag type - config item
                     cameraMatrix,                // from camera info
                     distCoeffs,                  // from camera info
@@ -76,6 +76,19 @@ int main(int argc, char *argv[])
         cv::Mat debugImg = cpuImg.clone();
         deepTag.visualize(debugImg, result);
         cv::imshow(inputImage.c_str(), debugImg);
+
+        cv::Mat stage1SSDDebugImg = cpuImg.clone();
+        deepTag.visualizeStage1SSD(stage1SSDDebugImg);
+        cv::imshow((inputImage + "_stage_1_ssd").c_str(), stage1SSDDebugImg);
+
+        cv::Mat stage1GridDebugImg = cpuImg.clone();
+        deepTag.visualizeStage1Grid(stage1GridDebugImg);
+        cv::imshow((inputImage + "_stage_1_grid").c_str(), stage1GridDebugImg);
+
+        cv::Mat stage2DebugImg = cpuImg.clone();
+        deepTag.visualizeStage2(stage2DebugImg, result);
+        cv::imshow((inputImage + "_stage_2").c_str(), stage2DebugImg);
+
         // cv::imwrite(inputImage + "_out.png", debugImg);
         cv::waitKey(0);
 #endif

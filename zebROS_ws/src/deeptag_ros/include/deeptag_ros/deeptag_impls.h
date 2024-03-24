@@ -25,6 +25,7 @@ class DeepTagImplBase
         virtual void visualizeStage1Grid(cv::Mat &image) = 0;
         virtual void visualizeStage1SSD(cv::Mat &image) = 0;
         virtual void saveInputImage(void) = 0;
+        virtual void visualizeStage2(cv::Mat &image, const std::vector<DeepTagResult> &results) const = 0;
 
         void setTimingsEnabled(const bool enabled);
 
@@ -74,6 +75,7 @@ class DeepTagImpl : public DeepTagImplBase
         void visualize(cv::Mat &image, const std::vector<DeepTagResult> &results) const override;
         void visualizeStage1Grid(cv::Mat &image) override;
         void visualizeStage1SSD(cv::Mat &image) override;
+        void visualizeStage2(cv::Mat &image, const std::vector<DeepTagResult> &results) const override;
         void saveInputImage(void) override;
 
         void   setCornerMinCenterScore(const double cornerMinCenterScore) override;

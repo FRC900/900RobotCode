@@ -92,12 +92,12 @@ void STagDecoder<MARKER_DICT, GRID_SIZE>::runInference(std::vector<std::vector<S
     // Priors are the same for each batch # in the output, generate
     // them just once here
     m_timing.start("stage2_corner_priors", m_decodeEngine->getCudaStream());
-    ushort2 priorSize{256, 256}; // model input size and image size are the same
-    m_stage2CornerPrior.generate(priorSize, 128, priorSize, {}, m_decodeEngine->getCudaStream());
+    // model input size and image size are the same
+    m_stage2CornerPrior.generate(getModelSize(), 128, getModelSize(), {}, m_decodeEngine->getCudaStream());
     m_timing.end("stage2_corner_priors", m_decodeEngine->getCudaStream());
 
     m_timing.start("stage2_grid_priors", m_decodeEngine->getCudaStream());
-    m_stage2GridPrior.generate(priorSize, 8, priorSize, {}, m_decodeEngine->getCudaStream());
+    m_stage2GridPrior.generate(getModelSize(), 8, getModelSize(), {}, m_decodeEngine->getCudaStream());
     m_timing.end("stage2_grid_priors", m_decodeEngine->getCudaStream());
 
     for (size_t roiNum = 0; roiNum < rois.size(); roiNum++)
@@ -115,7 +115,7 @@ void STagDecoder<MARKER_DICT, GRID_SIZE>::runInference(std::vector<std::vector<S
                                   m_stage2GridPrior.getOutput(),
                                   0.05f,             // centerVariance
                                   0.0f,              // sizeVariance - not used for corners
-                                  0.6f,              // min confidence
+                                  0.6f,              // min confidence // TODO : configurable
                                   m_decodeEngine->getCudaStream(),
                                   buffersResized);
         buffersResized = false; // only need to re-do cuda graphs once per iteration, they're the same until the next infer call at least
@@ -163,13 +163,13 @@ void STagDecoder<MARKER_DICT, GRID_SIZE>::runInference(std::vector<std::vector<S
 }
 
 template <class MARKER_DICT, size_t GRID_SIZE>
-std::vector<DecodedTag<GRID_SIZE>> STagDecoder<MARKER_DICT, GRID_SIZE>::detectTags(const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
+std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> STagDecoder<MARKER_DICT, GRID_SIZE>::detectTags(const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
                                                                                    const std::vector<std::array<cv::Point2d, 4>> &rois)
 {
     std::vector<std::array<cv::Point2d, 4>> thisRois{rois};
     std::vector<std::vector<Stage2KeypointGroup>> stage2KeypointGroups;
     std::vector<std::vector<float2>> stage2Corners;
-    std::vector<DecodedTag<GRID_SIZE>> ret;
+    std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> ret;
     for (size_t iter = 0; iter < 2; iter++)
     {
 #ifdef DEBUG
@@ -189,14 +189,14 @@ std::vector<DecodedTag<GRID_SIZE>> STagDecoder<MARKER_DICT, GRID_SIZE>::detectTa
             {
                 if (iter == 0)
                 {
-                    ret.push_back(DecodedTag<GRID_SIZE>{});
-                    ret[retIdx].m_HCrop = m_decodeEngine->getH(ii);
+                    ret.push_back(std::array<DecodedTag<GRID_SIZE>, 2>{});
+                    ret[retIdx][0].m_HCrop = m_decodeEngine->getH(ii);
                 }
-                ret[retIdx].m_isValid = stage2KeypointGroups[retIdx].size() > 0;
+                ret[retIdx][iter].m_isValid = stage2KeypointGroups[retIdx].size() > 0;
 #ifdef DEBUG
                 std::cout << "iter = " << iter << " ret[" << retIdx << "].m_isValid = " << ret[retIdx].m_isValid << std::endl;
 #endif
-                if (ret[retIdx].m_isValid)
+                if (ret[retIdx][iter].m_isValid)
                 {
 #ifdef DEBUG
                     std::cout << "MatchFineGrid : ii = " << ii << " retIdx = " << retIdx << std::endl;
@@ -232,15 +232,15 @@ std::vector<DecodedTag<GRID_SIZE>> STagDecoder<MARKER_DICT, GRID_SIZE>::detectTa
 
                         m_timing.start("stage2_getmainindex", m_decodeEngine->getCudaStream());
                         thisRois[retIdx] = roiUpdated;
-                        ret[retIdx].m_roi = roiUpdated;
+                        ret[retIdx][iter].m_roi = roiUpdated;
                         std::array<int, FINE_GRID_SIZE * FINE_GRID_SIZE> tagBits;
                         for (size_t i = 0; i < orderedFineGridPointsIds.size(); i++)
                         {
                             tagBits[i] = orderedFineGridPointsIds[i].m_id;
                         }
-                        int hammingDist = 2;
+                        int hammingDist = 2; // TODO - configurable, dynamic reconfig potential
 
-                        m_markerDict.getMainIdx(ret[retIdx].m_mainIdx, ret[retIdx].m_tagId, ret[retIdx].m_binaryId, tagBits, hammingDist);
+                        m_markerDict.getMainIdx(ret[retIdx][iter].m_mainIdx, ret[retIdx][iter].m_tagId, ret[retIdx][iter].m_binaryId, tagBits, hammingDist);
 #ifdef DEBUG
                         std::cout << "mainIdx = " << ret[retIdx].m_mainIdx << " tagId = " << ret[retIdx].m_tagId << std::endl;
 #endif
@@ -248,15 +248,15 @@ std::vector<DecodedTag<GRID_SIZE>> STagDecoder<MARKER_DICT, GRID_SIZE>::detectTa
 
                         m_timing.start("stage2_reorderpointswithmainidx", m_decodeEngine->getCudaStream());
                         std::array<PointsAndIDs, GRID_SIZE * GRID_SIZE> orderedKptsWithIds;
-                        m_markerDict.getUnitTagTemplate().reorderPointsWithMainIdx(ret[retIdx].m_keypointsWithIds, // [re] orderedFineGridPointsIds
+                        m_markerDict.getUnitTagTemplate().reorderPointsWithMainIdx(ret[retIdx][iter].m_keypointsWithIds, // [re] orderedFineGridPointsIds
                                                                                    orderedKptsWithIds,
-                                                                                   ret[retIdx].m_mainIdx,
+                                                                                   ret[retIdx][iter].m_mainIdx,
                                                                                    orderedFineGridPointsIds);
-                        for (size_t i = 0; i < ret[retIdx].m_keypointsWithIds.size(); i++)
+                        for (size_t i = 0; i < ret[retIdx][iter].m_keypointsWithIds.size(); i++)
                         {
-                            ret[retIdx].m_keypointsInImage[i] = ret[retIdx].m_keypointsWithIds[i].m_point;
+                            ret[retIdx][iter].m_keypointsInImage[i] = ret[retIdx][iter].m_keypointsWithIds[i].m_point;
                         }
-                        warpPerspectivePts(ret[retIdx].m_HCrop.inv(), ret[retIdx].m_keypointsInImage);
+                        warpPerspectivePts(ret[retIdx][0].m_HCrop.inv(), ret[retIdx][iter].m_keypointsInImage);
                         m_timing.end("stage2_reorderpointswithmainidx", m_decodeEngine->getCudaStream());
 #ifdef DEBUG
                         for (const auto &r : orderedFineGridPointsIds)
@@ -310,7 +310,7 @@ std::vector<DecodedTag<GRID_SIZE>> STagDecoder<MARKER_DICT, GRID_SIZE>::detectTa
                     }
                     else
                     {
-                        ret[retIdx].m_isValid = false;
+                        ret[retIdx][iter].m_isValid = false;
                     }
                 }
                 retIdx += 1;
@@ -354,6 +354,13 @@ template <class MARKER_DICT, size_t GRID_SIZE>
 double STagDecoder<MARKER_DICT, GRID_SIZE>::getMinGridMatchRatio(void) const
 {
     return m_minGridMatchRatio;
+} 
+
+template <class MARKER_DICT, size_t GRID_SIZE>
+ushort2 STagDecoder<MARKER_DICT, GRID_SIZE>::getModelSize(void) const
+{
+    auto inputDim = m_decodeEngine->getInputDims()[0];
+    return ushort2{inputDim.d[2], inputDim.d[3]};
 }
 
 #include "deeptag_ros/marker_dict.h"

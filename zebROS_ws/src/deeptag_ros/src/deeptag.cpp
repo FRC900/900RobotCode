@@ -90,24 +90,27 @@ std::vector<DeepTagResult> DeepTag::runInference(const cv::Mat &cpuImg)
 
 void DeepTag::visualize(cv::Mat &image, const std::vector<DeepTagResult> &results) const
 {
-    return m_pImpl->visualize(image, results);
+    m_pImpl->visualize(image, results);
 }
-
 void DeepTag::visualizeStage1Grid(cv::Mat &image)
 {
-    return m_pImpl->visualizeStage1Grid(image);
+    m_pImpl->visualizeStage1Grid(image);
 }
 void DeepTag::visualizeStage1SSD(cv::Mat &image)
 {
-    return m_pImpl->visualizeStage1SSD(image);
+    m_pImpl->visualizeStage1SSD(image);
+}
+void DeepTag::visualizeStage2(cv::Mat &image, const std::vector<DeepTagResult> &results) const
+{
+    m_pImpl->visualizeStage2(image, results);
 }
 void DeepTag::saveInputImage(void)
 {
-    return m_pImpl->saveInputImage();
+    m_pImpl->saveInputImage();
 }
 void DeepTag::setTimingsEnabled(const bool enabled)
 {
-    return m_pImpl->setTimingsEnabled(enabled);
+    m_pImpl->setTimingsEnabled(enabled);
 }
 
 // Expose a bunch of config params for dynamic reconfigure
@@ -146,11 +149,11 @@ int DeepTag::getSSDGrouperSigma(void) const
 
 void DeepTag::setNMSConfidenceThreshold(const double nms_confidence_threshold)
 {
-    return m_pImpl->setNMSConfidenceThreshold(nms_confidence_threshold);
+    m_pImpl->setNMSConfidenceThreshold(nms_confidence_threshold);
 }
 void DeepTag::setNMSNMSThreshold(const double nms_nms_threshold)
 {
-    return m_pImpl->setNMSNMSThreshold(nms_nms_threshold);
+    m_pImpl->setNMSNMSThreshold(nms_nms_threshold);
 }
 double DeepTag::getNMSConfidenceThreshold(void) const
 {

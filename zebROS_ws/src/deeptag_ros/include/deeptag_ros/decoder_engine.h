@@ -49,8 +49,7 @@ private:
     nvinfer1::Dims inputDimsFromInputImage(const GpuImageWrapper& batchInput, const nvinfer1::Dims &modelInputDims) override;
     void blobFromGpuImageWrappers(const std::vector<GpuImageWrapper>& batchInput, size_t bufferIdx) override;
 
-    std::vector<std::array<cv::Point2d, 4>> m_rois; // regions of interest detected in pass 1
-    size_t m_roiBatchIndex{0};
+    std::vector<std::array<cv::Point2d, 4>> m_rois; // regions of interest of the stage 1 image to decode as tags in this batch
 
     // Decoder preprocess has internal state which needs to be
     // kept separate per batch input when running preproc in parallel
