@@ -41,11 +41,13 @@ for bagfile_name in bagfile_names:
 # Save locations and tags to a CSV file
 with open("relocalize_locations.csv", "w") as f:
     f.write("x,y,tag1,tag1Dist,tag2,tag2Dist,tag3,tag3Dist,tag4,tag4Dist,tag5,tag5Dist,tag6,tag6Dist\n")
-    for loc in locations:
+    for j in range(len(locations)):
+        loc = locations[j]
         f.write(f"{loc[0]},{loc[1]}")
+        these_tags = tags[j][0] + tags[j][1]
         for i in range(6):
-            if i < len(tags):
-                f.write(f",{tags[i][0][0] if len(tags[i][0]) > 0 else '0'},{tags[i][0][1] if len(tags[i][0]) > 1 else '0'}")
+            if i < len(these_tags):
+                f.write(f",{these_tags[i][0] if len(these_tags) > i else '0'},{these_tags[i][1] if len(these_tags) > i else '0'}")
             else:
                 f.write(",0,0")
         f.write("\n")
