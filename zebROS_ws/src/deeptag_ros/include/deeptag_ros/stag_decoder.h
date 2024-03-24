@@ -38,13 +38,14 @@ public:
 
     void initEngine(const std::string &modelPath, const std::string &onnxModelFilename);
 
-    std::vector<DecodedTag<GRID_SIZE>> detectTags(const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
-                                                  const std::vector<std::array<cv::Point2d, 4>> &rois);
+    std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> detectTags(const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
+                                                                 const std::vector<std::array<cv::Point2d, 4>> &rois);
 
     virtual ~STagDecoder() = default;
 
     void   setMinGridMatchRatio(const double minGridMatchRatio);
     double getMinGridMatchRatio(void) const;
+    ushort2 getModelSize(void) const;
 
 private:
     void runInference(std::vector<std::vector<Stage2KeypointGroup>> &stage2KeypointGroupss,

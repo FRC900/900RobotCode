@@ -32,15 +32,19 @@ struct DeepTagResult
         , m_rVec(3, 1, CV_64FC3)
     {
     }
-    std::array<cv::Point2d, 4> m_stage1Corners{};
-    std::array<cv::Point2d, 4> m_stage2Corners{};
-    cv::Point2d m_center{};
+    // Corners of tags in the input image coord space ...
+    std::array<cv::Point2d, 4> m_stage1Corners{}; // detected from stage 1
+    std::array<cv::Point2d, 4> m_stage2Corners{}; // detected using stage 2 refinement of tag keypoints
+    cv::Point2d m_center{}; // Center of the tag in input image coord space
     uint16_t m_tagId{std::numeric_limits<uint16_t>::max()};
     cv::Mat m_tVec;
     cv::Mat m_rVec;
     double m_centerScore;
     std::array<double, 4> m_cornerScores;
-    std::vector<double> m_keypointScores{};
+    // Keypoint location, in stage 2 RoI coordinate system
+    std::array<std::vector<cv::Point2d>, 2> m_keypoints{};
+    std::array<std::vector<int>, 2> m_keypointIds{};
+    std::array<std::vector<double>, 2> m_keypointScores{};
 
     friend std::ostream &operator<<(std::ostream &os, const DeepTagResult &result)
     {
@@ -53,8 +57,10 @@ struct DeepTagResult
         os << "\tcenterScore = " << result.m_centerScore << std::endl;
         os << "\tcornerScores = ";
         std::ranges::copy(result.m_cornerScores, std::ostream_iterator<double>(os, " "));
-        os << std::endl << "\tkeypointScores = ";
-        std::ranges::copy(result.m_keypointScores, std::ostream_iterator<double>(os, " "));
+        os << std::endl << "\tkeypointScores[0] = ";
+        std::ranges::copy(result.m_keypointScores[0], std::ostream_iterator<double>(os, " "));
+        os << std::endl << "\tkeypointScores[1] = ";
+        std::ranges::copy(result.m_keypointScores[1], std::ostream_iterator<double>(os, " "));
         os << std::endl;
         return os;
     }
@@ -84,6 +90,7 @@ class DeepTag
         void visualize(cv::Mat &image, const std::vector<DeepTagResult> &results) const;
         void visualizeStage1Grid(cv::Mat &image);
         void visualizeStage1SSD(cv::Mat &image);
+        void visualizeStage2(cv::Mat &image, const std::vector<DeepTagResult> &results) const;
         void saveInputImage(void);
         void setTimingsEnabled(const bool enabled);
 

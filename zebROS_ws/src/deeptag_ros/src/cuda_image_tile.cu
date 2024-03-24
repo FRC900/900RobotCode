@@ -20,20 +20,31 @@ __global__ void gpuImageTile(const T *input,		 // RGB / BGR input image
 	if (x >= oSize.x || y >= oSize.y)
 		return;
 
-	// Input pixel coords cald'c by shifting the output pixel coords
-	const T px = input[(y + shift.y) * iSize.x + x + shift.x];
-
-	// Basically free bgr->rgb if needed
-	const float3 rgb = isBGR ? make_float3(px.z, px.y, px.x)
-							 : make_float3(px.x, px.y, px.z);
-
 	// n is channel offset
 	// m is x,y pixel offset into that particular channel
 	const uint32_t n = static_cast<uint32_t>(oSize.x) * oSize.y;
 	const uint32_t m = y * oSize.x + x;
-	output[n * 0 + m] = rgb.x * multiplier + min_value;
-	output[n * 1 + m] = rgb.y * multiplier + min_value;
-	output[n * 2 + m] = rgb.z * multiplier + min_value;
+	// Don't read past end of input image if it is smaller
+	// that model input size
+	if (((x + shift.x) < iSize.x) && ((y + shift.y) < iSize.y))
+	{
+		// Input pixel coords cald'c by shifting the output pixel coords
+		const T px = input[(y + shift.y) * iSize.x + x + shift.x];
+
+		// Basically free bgr->rgb if needed
+		const float3 rgb = isBGR ? make_float3(px.z, px.y, px.x)
+								 : make_float3(px.x, px.y, px.z);
+
+		output[n * 0 + m] = rgb.x * multiplier + min_value;
+		output[n * 1 + m] = rgb.y * multiplier + min_value;
+		output[n * 2 + m] = rgb.z * multiplier + min_value;
+	}
+	else
+	{
+		output[n * 0 + m] = 0;
+		output[n * 1 + m] = 0;
+		output[n * 2 + m] = 0;
+	}
 }
 
 template <bool isBGR>

@@ -2,11 +2,8 @@
 #include <cuda_runtime.h>                  // for cudaFreeHost, cudaMallocHost
 #include <opencv2/core/hal/interface.h>    // for CV_64FC1
 #include <algorithm>                       // for min
-#include <iostream>                        // for operator<<, endl, basic_ostream
 #include <opencv2/calib3d.hpp>             // for findHomography
-#include <opencv2/core/cvstd.inl.hpp>      // for operator<<
 #include <opencv2/core/mat.inl.hpp>        // for Mat::at, _InputArray::_Input...
-#include <opencv2/highgui.hpp>             // for imshow, waitKey
 #include "deeptag_ros/cuda_utils.h"        // for cudaSafeCall
 #include "deeptag_ros/gpu_image_wrapper.h" // for GpuImageWrapper
 #include "deeptag_ros/image_format.h"      // for imageFormat
@@ -15,6 +12,9 @@
 
 // #define DEBUG
 #ifdef DEBUG
+#include <iostream>                        // for operator<<, endl, basic_ostream
+#include <opencv2/core/cvstd.inl.hpp>      // for operatoro<
+#include <opencv2/highgui.hpp>             // for imshow, waitKey
 static void showDebugImage(cv::Mat &hR, cv::Mat &hG, cv::Mat &hB, const std::string &windowName)
 {
     std::vector<cv::Mat> channels;
@@ -119,6 +119,12 @@ bool DecoderEngine::loadNetwork()
     return true;
 }
 
+// Identify which regions of the original image in stage 1
+// to extract and decode in stage 2.  This is kind of a 
+// hack to allow the base class runInference to be run as
+// is. Code sets the RoIs to use with this method, calls
+// runInference, then gets the H matrix for each RoI
+// by calling getH below.
 void DecoderEngine::setROIs(const tcb::span<const std::array<cv::Point2d, 4>> &rois)
 {
     m_rois.clear();
@@ -126,7 +132,6 @@ void DecoderEngine::setROIs(const tcb::span<const std::array<cv::Point2d, 4>> &r
     {
         m_rois.push_back(r);
     }
-    m_roiBatchIndex = 0;
     m_Hs.clear();
 }
 
@@ -148,7 +153,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
 #endif
     constexpr size_t outputHW = 256;
     constexpr size_t imgSize = outputHW * outputHW * 3;
-    const size_t thisBatchSize = std::min(m_rois.size() - m_roiBatchIndex, static_cast<size_t>(m_options.maxBatchSize));
+    const size_t thisBatchSize = std::min(m_rois.size(), static_cast<size_t>(m_options.maxBatchSize));
     //std::cout << "thisBatchSize = " << thisBatchSize << std::endl;
     // Get crop images ordered corners
     // Map the input tag to fixed positions in the output
@@ -171,8 +176,8 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         // std::cout << "batchIdx = " << batchIdx << std::endl;
         for (int i = 0; i < 4; i++)
         {
-            inputRoi.at<double>(i, 0) = m_rois[batchIdx + m_roiBatchIndex][i].x;
-            inputRoi.at<double>(i, 1) = m_rois[batchIdx + m_roiBatchIndex][i].y;
+            inputRoi.at<double>(i, 0) = m_rois[batchIdx][i].x;
+            inputRoi.at<double>(i, 1) = m_rois[batchIdx][i].y;
         }
 
         // Note - we run output->input since this is how the preproc kernel works,
@@ -223,7 +228,6 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         cv::imwrite(s.str() + ".png", m);
 #endif
     }
-    m_roiBatchIndex += thisBatchSize;
     for (size_t batchIdx = 0; batchIdx < thisBatchSize; batchIdx++)
     {
         cudaSafeCall(cudaStreamWaitEvent(getCudaStream(), m_preprocCudaEvents[batchIdx]));

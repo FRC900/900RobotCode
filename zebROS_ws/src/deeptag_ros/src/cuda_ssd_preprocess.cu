@@ -6,7 +6,7 @@
 // gpuSSDPreprocess
 template <typename T, bool isBGR>
 __global__ void gpuSSDPreprocess(const float2 scale,
-								 T *input,
+								 const T *input,
 								 const ushort2 iSize,
 								 float *output,
 								 const ushort2 oSize,
@@ -33,11 +33,16 @@ __global__ void gpuSSDPreprocess(const float2 scale,
 	const uint32_t x2 = min(x1 + 1, iSize.x - 1);    // bounds check
 	const uint32_t y2 = min(y1 + 1, iSize.y - 1);
 
+	// Input bounds check for cases where the input image is smaller than
+	// the model input size
+	// I don't know T{} is, but it has to be better than running past
+	// the end of the input image data
 	const T samples[4] = {
-		input[y1 * iSize.x + x1],
-		input[y1 * iSize.x + x2],
-		input[y2 * iSize.x + x1],
-		input[y2 * iSize.x + x2]};
+		((x1 < iSize.x) && (y1 < iSize.y)) ? input[y1 * iSize.x + x1] : T{},
+		((x2 < iSize.x) && (y1 < iSize.y)) ? input[y1 * iSize.x + x2] : T{},
+		((x1 < iSize.x) && (y2 < iSize.y)) ? input[y2 * iSize.x + x1] : T{},
+		((x2 < iSize.x) && (y2 < iSize.y)) ? input[y2 * iSize.x + x2] : T{},
+	};
 
 	// compute bilinear weights
 	const float x1d = cx - static_cast<float>(x1);
