@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   field_obj_tracker
   image_transport
   message_filters
+  nodelet
   roscpp
   rospy
   sensor_msgs
@@ -21,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   apriltag_msgs
+  pluginlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -142,7 +144,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(tf_object_screen_to_world src/screen_to_world.cpp src/depth_algorithms.cpp)
+add_executable(tf_object_screen_to_world src/screen_to_world_node.cpp)
 add_executable(test_depth_detection src/test_depth_detection.cpp src/depth_algorithms.cpp)
 add_executable(cargo_detection_filter src/cargo_filter.cpp)
 add_executable(dummy_camerainfo src/dummy_camerainfo.cpp)
@@ -160,19 +162,33 @@ add_dependencies(test_depth_detection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 add_dependencies(cargo_detection_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(dummy_camerainfo ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_library(screen_to_world_nodelet
+  src/screen_to_world.cpp
+  src/depth_algorithms.cpp
+)
+
+target_link_libraries(screen_to_world_nodelet
+	${catkin_LIBRARIES}
+)
+
+add_dependencies(screen_to_world_nodelet
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+)
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(tf_object_screen_to_world
- ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 target_link_libraries(test_depth_detection
- ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 target_link_libraries(cargo_detection_filter
- ${catkin_LIBRARIES}
- )
+  ${catkin_LIBRARIES}
+)
 target_link_libraries(dummy_camerainfo
- ${catkin_LIBRARIES}
- )
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -218,6 +234,10 @@ target_link_libraries(dummy_camerainfo
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
+install(FILES nodelet_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

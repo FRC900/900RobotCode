@@ -1,0 +1,7 @@
+<library path="lib/libscreen_to_world_nodelet">
+	<class name="tf_object_detection/ScreenToWorld" type="tf_object_detection::ScreenToWorld" base_class_type="nodelet::Nodelet">
+		<description>
+			Nodelet for converting screen coordinates to world coordinates
+		</description>
+	</class>
+</library>

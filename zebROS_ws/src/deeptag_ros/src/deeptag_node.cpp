@@ -7,6 +7,9 @@ int main(int argc, char** argv) {
     nodelet::Loader nodelet;
     nodelet::M_string remap(ros::names::getRemappings());
     nodelet::V_string nargv;
+    for (int i = 0; i < argc; i++) {
+        nargv.emplace_back(argv[i]);
+    }
     nodelet.load(ros::this_node::getName(), "deeptag_ros/DeeptagRosNodelet",
                  remap, nargv);
 
