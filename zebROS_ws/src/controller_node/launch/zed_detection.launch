@@ -19,25 +19,29 @@
   <arg name="run_object_detection" default="true" />
   <arg name="run_pub_video"        default="false" />
   <arg name="startup_delay"        default="0.0" />
+  <!-- Name of the Nodelet Manager -->
+  <arg name="nodelet_manager_name"  default="$(arg zed_name)_nodelet_manager" />
 
-  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval run_camera)">
-    <arg name="camera_name"          value="$(arg zed_name)" />
-    <arg name="camera_model"         value="$(arg camera_model)" />
-    <arg name="node_name"            value="$(arg zed_node_name)" />
-    <arg name="base_frame"           value="base_link" />
-    <arg name="publish_urdf"         value="true" />
-    <arg name="camera_id"            value="$(arg camera_id)" />
-    <arg name="serial_number"        value="$(arg serial_number)" />
-    <arg name="cam_pos_x"            value="$(arg cam_pos_x)" />
-    <arg name="cam_pos_y"            value="$(arg cam_pos_y)" />
-    <arg name="cam_pos_z"            value="$(arg cam_pos_z)" />
-    <arg name="cam_roll"             value="$(arg cam_roll)"  />
-    <arg name="cam_pitch"            value="$(arg cam_pitch)" />
-    <arg name="cam_yaw"              value="$(arg cam_yaw)"   />
-    <arg name="startup_delay"        value="$(arg startup_delay)" />
+  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
+    <include file="$(find zed_wrapper)/launch/include/zed_camera_nodelet.launch" if="$(eval run_camera)">
+      <arg name="camera_name"          value="$(arg zed_name)" />
+      <arg name="camera_model"         value="$(arg camera_model)" />
+      <arg name="node_name"            value="$(arg zed_node_name)" />
+      <arg name="base_frame"           value="base_link" />
+      <arg name="publish_urdf"         value="true" />
+      <arg name="camera_id"            value="$(arg camera_id)" />
+      <arg name="serial_number"        value="$(arg serial_number)" />
+      <arg name="cam_pos_x"            value="$(arg cam_pos_x)" />
+      <arg name="cam_pos_y"            value="$(arg cam_pos_y)" />
+      <arg name="cam_pos_z"            value="$(arg cam_pos_z)" />
+      <arg name="cam_roll"             value="$(arg cam_roll)"  />
+      <arg name="cam_pitch"            value="$(arg cam_pitch)" />
+      <arg name="cam_yaw"              value="$(arg cam_yaw)"   />
+      <arg name="startup_delay"        value="$(arg startup_delay)" />
 
-    <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
-    <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
+      <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
+      <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
+      <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
   </include>
 
   <group ns="apriltag_$(arg zed_name)" if="$(eval run_apriltag)">
@@ -57,7 +61,7 @@
 			<remap from="tags_in" to="/apriltag_$(arg zed_name)/apriltag_detection/tags"/>
     </node>
     <!-- Use depth info to generate apriltag world coords -->
-		<node pkg="tf_object_detection" name="tf_object_screen_to_world_tags" type="tf_object_screen_to_world" output="screen">
+    <node pkg="nodelet" type="nodelet" name="tf_object_screen_to_world_tags" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" output="screen" >
 			<remap from="obj_detection_msg" to="tag_detection_msg"/>
 			<remap from="object_detection_world" to="tag_detection_world"/>
 			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
@@ -68,7 +72,8 @@
   </group>
 
   <group ns="apriltag_$(arg zed_name)" if="$(eval run_deeptag)">
-		<node pkg="deeptag_ros" name="deeptag_node" type="deeptag_node" output="screen">
+		<!-- <node pkg="nodelet" type="nodelet" name="deeptag_ros" args="load deeptag_ros/DeeptagRosNodelet /$(arg nodelet_manager_name)" output="screen"> -->
+    <node pkg="deeptag_ros" name="deeptag_ros" type="deeptag_node" output="screen">
       <remap from="image_rect_color"    to="/$(arg zed_name)/left/image_rect_color" />
       <remap from="camera_info"         to="/$(arg zed_name)/left/camera_info" />
       <param name="tag_type"            value="36h11" />
@@ -81,10 +86,11 @@
         Publishes to $(ns)/tag_detection_msgs
     -->
     <node pkg="tf_object_detection" name="deeptag_tag_depth" type="tag_depth.py" output="screen">
-			<remap from="tags_in" to="/apriltag_$(arg zed_name)/deeptag_node/tags"/>
+			<remap from="tags_in" to="/apriltag_$(arg zed_name)/deeptag_ros/tags"/>
     </node>
+
     <!-- Use depth info to generate apriltag world coords -->
-		<node pkg="tf_object_detection" name="tf_object_screen_to_world_deeptags" type="tf_object_screen_to_world" output="screen">
+    <node pkg="nodelet" type="nodelet" name="tf_object_screen_to_world_deeptag" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" output="screen" >
 			<remap from="obj_detection_msg" to="tag_detection_msg"/>
 			<remap from="object_detection_world" to="tag_detection_world"/>
 			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
@@ -100,12 +106,11 @@
 			<param name="min_confidence" type="double" value="0.05" />
 		</node>
 
-		<node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
+    <node pkg="nodelet" type="nodelet" name="tf_object_screen_to_world" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" output="screen" >
 			<remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
 			<remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
 			<param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
 		</node>
-
 	</group>
 
 	<group ns="tf_object_detection_$(arg zed_name)" if="$(eval run_pub_video)">

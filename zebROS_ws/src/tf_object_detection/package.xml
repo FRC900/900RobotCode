@@ -54,15 +54,18 @@
   <build_depend>field_obj_tracker</build_depend>
   <build_depend>frc_msgs</build_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>nodelet</build_depend>
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>nodelet</build_export_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>nodelet</exec_depend>
   <depend>apriltag_msgs</depend>
 
 
-  <!-- The export tag contains other, unspecified, tags -->
+   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
-
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>

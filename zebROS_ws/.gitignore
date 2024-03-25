@@ -16,3 +16,4 @@ callgrind.out.*
 .native_build.status
 .catkin_workspace
 allwpilib/ntcore/generated
+zebROS_ws/src/.vscode/settings.json
