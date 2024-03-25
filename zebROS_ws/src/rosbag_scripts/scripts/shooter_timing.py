@@ -29,7 +29,8 @@ control_effort = None
 # total_time_in_seconds,time_to_align,time_to_pivot,time_to_shoot,time_from_spun_up_to_shot
 print("total_time_in_seconds,time_to_align,time_to_pivot,time_to_shoot,time_from_spun_up_to_shot")
 
-for topic, msg, t in rosbag.Bag(sys.argv[1]).read_messages(["/align_and_shoot/align_and_shoot_2024/goal", "/align_to_speaker/align_to_speaker_2024/goal", "/align_to_speaker/align_to_speaker_2024/feedback", "/teleop/orient_strafing/setpoint", "/teleop/orient_strafing/state", "/shooting/shooting_server_2024/goal", "/shooter/set_shooter_pivot/goal", "/shooter/set_shooter_pivot/feedback", "/shooter/set_shooter_speed/goal", "/shooter/set_shooter_speed/feedback", "/frcrobot_rio/joint_states", "/frcrobot_rio/joystick_states1", "/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"]):
+for topic, msg, t in rosbag.Bag(sys.argv[1]).read_messages(["/align_and_shoot/align_and_shoot_2024/goal", "/align_to_speaker/align_to_speaker_2024/goal", "/align_to_speaker/align_to_speaker_2024/feedback", "/teleop/orient_strafing/setpoint", "/teleop/orient_strafing/state", "/shooting/shooting_server_2024/goal", "/shooter/set_shooter_pivot/goal", "/shooter/set_shooter_pivot/feedback", "/shooter/set_shooter_speed/goal", "/shooter/set_shooter_speed/result", "/shooter/set_shooter_speed/feedback", "/frcrobot_rio/joint_states", "/frcrobot_rio/joystick_states1", "/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"]):
+    #derive method to check time between the shooting goal being sent and the success state from the set_shooter_speed goal and result
     if topic == "/align_and_shoot/align_and_shoot_2024/goal":
         align_and_shoot_goal_sent = t
         align_goal_sent = None

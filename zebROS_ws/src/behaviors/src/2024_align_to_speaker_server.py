@@ -30,6 +30,7 @@ class Aligner:
         self.velocity_tolerance = rospy.get_param("velocity_tolerance")
         self.min_samples = rospy.get_param("min_samples")
         self.dynamic_move_time = rospy.get_param("dynamic_move_time")
+        self.offset_angle_radians = rospy.get_param("offset_angle_radians")
 
         self.color = 0
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.AlignToSpeaker2024Action, execute_cb=self.aligner_callback, auto_start = False)
@@ -70,6 +71,7 @@ class Aligner:
         ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
         ddynrec.add_variable("tolerance", "float/double variable", rospy.get_param("tolerance"), 0.0, 3.0)
         ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
+        ddynrec.add_variable("offset_angle_radians", "float/double variable", rospy.get_param("offset_angle_radians"), 0.0, 1.57)
         ddynrec.start(self.dyn_rec_callback)
 
     def dyn_rec_callback(self, config, level):
@@ -186,11 +188,27 @@ class Aligner:
             self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
             self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
+
+             #so, take the self.x_field_relative_vel_align value and multiply that by some offset angle in radians?
+            #we're probably going to be moving 1 m/s or 2 m/s so this radian value could be fairly small?
+            #make it dynamic
+            #so increase the angle by which we adjust by mulitplying (self.x_field_relative_vel_align) * self.offset_angle_radians
+            #which is the additional angle that we're going to add onto the angle that we already have on the align to angle callback?
+            #so just add given value to hte angle value?
+
+            #calculate readjustmnet angle using 15 degrees as the constant offset angle
+            offset_angle = self.x_field_relative_vel_align * self.offset_angle_radians
+
+            dist_ang_msg.angle = (math.atan2(destination.point.y, destination.point.x)) + offset_angle
+
+
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(y_field_relative_vel, x_field_relative_vel)
             #dist_ang_msg.angle = math.atan2(self.angle_dist_y, self.angle_dist_x)
 
+
+
+        
 
             p_distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
             v_distance = math.hypot(self.x_field_relative_vel_align, self.y_field_relative_vel_align) * (self.dynamic_move_time)
