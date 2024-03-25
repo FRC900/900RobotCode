@@ -271,8 +271,8 @@ shooter_pivot_controller:
         close_loop_values:
             # Tried kI of around 12, it did help but was very slow and higher caused a bit of windup
             # note: kG derived by finding voltage needed to hold at position theta, then do voltage / cos(theta)
-            - {kP: 50.0, kI: 5.0, kD: 1.0, kV: 5.5, kS: 0.0, kG: 0.05, gravity_type: "arm_cosine"}
-            - {kP: 20.0, kI: 5.0, kD: 1.0, kV: 5.5, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            - {kP: 30.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            - {kP: 10.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
         dynamic_reconfigure: True
 
 cancoder_state_controller:

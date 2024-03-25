@@ -62,9 +62,14 @@ class DriveObjectIntakeServer(object):
         rospy.loginfo("2024_drive_object_intake: Sending intaking goal")
         
         drive_to_object_goal = DriveToObjectGoal()
-        drive_to_object_goal.tolerance = self.tolerance_
+        drive_to_object_goal.x_tolerance = self.tolerance_
+        drive_to_object_goal.y_tolerance = 900
         drive_to_object_goal.id = self.note_name_ 
-        drive_to_object_goal.distance_away = self.distance_away_
+        drive_to_object_goal.transform_to_drive = "intake"
+        drive_to_object_goal.min_x_vel = 2.0
+        drive_to_object_goal.min_y_vel = 0.0
+        drive_to_object_goal.use_y = False
+        drive_to_object_goal.fast_zone = 0.0
         
         def drive_object_feedback(drive_feedback: DriveToObjectFeedback):
             # forward up drive to object feedback

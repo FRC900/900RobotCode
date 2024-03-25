@@ -7,11 +7,11 @@
         
         <node name="x_position_pid" pkg="pid" type="controller" >
             <param name="node_name" value="x_position_pid" />
-            <param name="Kp" value="3.0" />
+            <param name="Kp" value="1.0" />
             <param name="Ki" value="0.0" />
             <param name="Kd" value="0.0" />
-            <param name="upper_limit" value="4.5" />
-            <param name="lower_limit" value="2.0" />
+            <param name="upper_limit" value="1.0" /> <!-- was 4.5 and good -->
+            <param name="lower_limit" value="-1.0" />
             <param name="windup_limit" value="10" />
             <param name="max_loop_frequency" value="250.0" />
             <param name="min_loop_frequency" value="250.0" />
@@ -22,6 +22,27 @@
             <remap from="pid_enable" to="x_position_pid/pid_enable" />
         </node>
         
+        <node name="y_position_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="y_position_pid" />
+            <param name="Kp" value="1.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="1.0" /> <!-- was 4.5 and good -->
+            <param name="lower_limit" value="-1.0" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="250.0" />
+            <param name="min_loop_frequency" value="250.0" />
+            <param name="topic_from_controller" value="y_position_pid/y_command" />
+            <param name="setpoint_topic" value="y_position_pid/y_cmd_pub" />
+            <param name="topic_from_plant" value="y_position_pid/y_state_pub" />
+            <remap from="pid_debug" to="y_position_pid/pid_debug" />
+            <remap from="pid_enable" to="y_position_pid/pid_enable" />
+        </node>
+
+
     </group>
+	<node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_intake" args="0.3 0 0 0 0 0 1 base_link intake  " />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_frontbumper" args="-0.64 0 0 0 0 1 0 base_link shooter_bumper  " />
+
 
 </launch>

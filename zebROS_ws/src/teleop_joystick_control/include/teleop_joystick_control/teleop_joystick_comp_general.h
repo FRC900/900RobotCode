@@ -56,7 +56,6 @@ struct DynamicReconfigVars
 	double imu_zero_angle{0.0};           // "Value to pass to imu/set_zero when zeroing"
 	double rotation_epsilon{0.01};		  // "Threshold Z-speed deciding if the robot is stopped"
 	double rotation_axis_scale{1.0};      // "Scale factor for rotation axis stick input"
-	double angle_to_add{0.135};
 	double angle_threshold{angles::from_degrees(1)};
 	double match_time_to_park{20}; // enable auto-parking after the 0.75 second timeout if the match time left < this value
 }; 

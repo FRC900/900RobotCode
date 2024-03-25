@@ -1,17 +1,25 @@
-x_tolerance: 0.03
-y_tolerance: 0.03
-angle_tolerance: 0.03
+trap_x_tolerance: 0.04
+trap_y_tolerance: 0.04
+trap_angle_tolerance: 0.015
+trap_min_x_vel: 0.0 # m/s
+trap_min_y_vel: 0.0 # m/s
+trap_fast_zone: 0.1 # m
 
 amp_x_tolerance: 0.2
 amp_y_tolerance: 0.05
 amp_angle_tolerance: 0.05
+amp_min_x_vel: 2.0 # m/s
+amp_min_y_vel: 2.0 # m/s
+amp_fast_zone: 0.3 # m
 
+subwoofer_x_tolerance: 0.2
+subwoofer_y_tolerance: 0.05
+subwoofer_angle_tolerance: 0.05
+subwoofer_min_x_vel: 0.5 # m/s
+subwoofer_min_y_vel: 0.0 # m/s
+subwoofer_fast_zone: 0.5 # m
 
-x_offset: 0.85
-y_offset: 0.0
-
-# CHECK THESE OFFSETS
-x_offset_amp: 0.0
-y_offset_amp: 0.0
-
-x_offset_subwoofer: 1.5
+stage_1_trap_frame: "trap_frame"
+stage_2_trap_frame: "trap_scoring_frame"
+amp_frame: "shooter_bumper"
+subwoofer_frame: "shooter_bumper"
