@@ -129,7 +129,7 @@ class Converter:
         back_tag_sub = message_filters.Subscriber(tag_to_world_back["topic"], FieldDet)
         screen_to_world_sub = message_filters.Subscriber(screen_to_world_det["topic"], FieldDet)
 
-        ts = message_filters.ApproximateTimeSynchronizer([front_tag_sub, back_tag_sub, screen_to_world_sub], 10, 0.01)
+        ts = message_filters.ApproximateTimeSynchronizer([front_tag_sub, back_tag_sub, screen_to_world_sub], 10, 0.1)
         ts.registerCallback(self.screen_to_world)
 
 

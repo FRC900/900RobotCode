@@ -6,7 +6,7 @@
         <rosparam command="load" file="$(find behaviors)/config/2024_align_to_trap.yaml"/>
 
         <node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_trap" args="2.51 0 0 0 0 0 1 base_link trap_frame" />
-        <node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_trap_scoring" args="0.23 0 0 0 0 0 1 base_link trap_scoring_frame" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_trap_scoring" args="0.34 0 0 0 0 0 1 base_link trap_scoring_frame" />
 
     </group>
 
