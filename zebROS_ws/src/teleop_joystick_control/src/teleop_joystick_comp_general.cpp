@@ -152,7 +152,7 @@ ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state
 				ROS_WARN_STREAM("Old angular z is zero, wierd");
 			}
 			ROS_INFO_STREAM("Locking to current orientation!");
-			robot_orientation_driver_.setTargetOrientation(robot_orientation_driver_.getCurrentOrientation() + multiplier * config.angle_to_add , true /* from telop */);
+			robot_orientation_driver_.setTargetOrientation(robot_orientation_driver_.getCurrentOrientation(), true /* from telop */);
 			sendSetAngle_ = true;
 		}
 		ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z" << cmd_vel.angular.z);
@@ -318,10 +318,6 @@ void TeleopInitializer::init() {
 	{
 		ROS_ERROR("Could not read rotation_epsilon in teleop_joystick_comp");
 	}
-	if(!n_params_.getParam("angle_to_add", config.angle_to_add))
-	{
-		ROS_ERROR("Could not read angle_to_add in teleop_joystick_comp");
-	}
 	if(!n_params_.getParam("match_time_to_park", config.match_time_to_park))
 	{
 		ROS_ERROR("Could not read match_time_to_park in teleop_joystick_comp");
@@ -345,7 +341,6 @@ void TeleopInitializer::init() {
 	ddr.registerVariable<double>("stick_threshold", &config.stick_threshold, "Amount stick has to be moved to trigger diag mode action", 0., 1.);
 	ddr.registerVariable<double>("imu_zero_angle", &config.imu_zero_angle, "Value to pass to imu/set_zero when zeroing", -360., 360.);
 	ddr.registerVariable<double>("rotation_epsilon", &config.rotation_epsilon, "rotation_epsilon", 0.0, 1.0);
-	ddr.registerVariable<double>("angle_to_add", &config.angle_to_add, "angle_to_add", 0.0, 10);
 	ddr.registerVariable<double>("match_time_to_park", &config.match_time_to_park, "match_time_to_park", 0.0, 60.0);
 
 	// register custom variables

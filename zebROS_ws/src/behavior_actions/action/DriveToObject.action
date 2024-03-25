@@ -1,7 +1,15 @@
 # goal
 string id
-float64 distance_away
-float64 tolerance
+#float64 distance_away
+float64 x_tolerance
+float64 y_tolerance
+string transform_to_drive 
+bool use_y
+float64 min_x_vel
+float64 min_y_vel
+# only respected when use_y is true
+float64 field_relative_angle
+float64 fast_zone # how far we need to be away from the goal to apply a x or y min vel     
 ---
 # result
 bool success

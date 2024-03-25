@@ -78,11 +78,7 @@ class DriveAndScore:
             rospy.loginfo(f"Drive and score 2024 - going trap")
             align_goal.destination = align_goal.TRAP
             self.align_client.send_goal(align_goal, done_cb=self.align_done_cb)
-            shooting_goal = behavior_actions.msg.Shooting2024Goal()
-            shooting_goal.mode = shooting_goal.TRAP
-            shooting_goal.leave_spinning = True
-            shooting_goal.setup_only = True
-            self.shooting_client.send_goal(shooting_goal)
+
             # for this case we just wait until we are done and then send shooting
 
         # for telling if we hvae 
@@ -140,10 +136,13 @@ class DriveAndScore:
 
             if goal.destination == goal.TRAP and self.align_done:
                 rospy.loginfo("2024 drive and score - trap aligned, shooting")
-                # need to shoot 
+                # need to shoot
                 shooting_goal = behavior_actions.msg.Shooting2024Goal()
                 shooting_goal.mode = shooting_goal.TRAP
+                shooting_goal.leave_spinning = False
+                shooting_goal.setup_only = False
                 self.shooting_client.send_goal(shooting_goal)
+
                 self._result.success = True
                 self._as.set_succeeded(self._result)
                 return

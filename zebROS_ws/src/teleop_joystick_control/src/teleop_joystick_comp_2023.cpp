@@ -704,12 +704,12 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 				ROS_INFO_STREAM("LEFT TRIGGER");
 				if(!joystick1_left_trigger_pressed)
 				{
-					behavior_actions::DriveToObjectGoal goal;
-					goal.id = "note";
-					goal.distance_away = 0.6;
-					goal.tolerance = 0.1; // todo make configurable
-					auto_note_pickup_ac->sendGoal(goal);
-					ROS_WARN_STREAM("Auto picking up notes");
+					// behavior_actions::DriveToObjectGoal goal;
+					// goal.id = "note";
+					// goal.distance_away = 0.6;
+					// goal.tolerance = 0.1; // todo make configurable
+					// auto_note_pickup_ac->sendGoal(goal);
+					ROS_ERROR_STREAM("NOT IMPLMENTED");
 				}
 
 				joystick1_left_trigger_pressed = true;

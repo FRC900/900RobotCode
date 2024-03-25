@@ -12,6 +12,17 @@ define normal_camera fiducial
 	color "purple"
 )
 
+define non_normal_camera fiducial
+(
+	range_min 0.0
+	range_max 7.0
+	range_max_id 7.0
+	fov 100
+	ignore_zloc 1
+	size [ 0.2 0.2 0.2 ]
+	color "green"
+)
+
 # terabee evo 3m
 define terabee_distance sensor
 (
@@ -51,7 +62,9 @@ define omnidir_robot position
   acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -720 720]
 
   # spawn sensors
-  normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )
+  # normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )
+ 
+  non_normal_camera(pose [ 0.1 -0.1 0.65 180.0 ] )
 
   single_terrabee(pose [0.4445 0.0 0.0 0.0 ] )
 

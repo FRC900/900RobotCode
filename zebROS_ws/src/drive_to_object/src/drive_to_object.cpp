@@ -16,6 +16,8 @@
 #include <norfair_ros/Detections.h>
 #include <cmath>
 #include "axis_state/axis_state.h"
+#include <geometry_msgs/TransformStamped.h>
+
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
     geometry_msgs::Point p;
@@ -89,6 +91,7 @@ protected:
   double orient_effort_{0};
 
   double x_error_{0};
+  double y_error_{0};
   double angle_error_{0};
 
   double velocity_ramp_time_{0.5}; // time to transition from current command velocity to full PID control
@@ -99,6 +102,8 @@ protected:
   ros::Publisher cmd_vel_pub_;
   ros::Subscriber x_effort_sub_;
   double x_eff_;
+  ros::Subscriber y_effort_sub_;
+  double y_eff_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
@@ -124,11 +129,18 @@ public:
     imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &DriveToObjectActionServer::imuCb, this, ros::TransportHints().tcpNoDelay());
     cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/auto_note_align/cmd_vel", 1, false);
     x_effort_sub_ = nh_.subscribe<std_msgs::Float64>("x_position_pid/x_command", 1, [&](const std_msgs::Float64ConstPtr &msg) {x_eff_ = msg->data;}, ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay());
+    y_effort_sub_ = nh_.subscribe<std_msgs::Float64>("y_position_pid/y_command", 1, [&](const std_msgs::Float64ConstPtr &msg) {y_eff_ = msg->data;}, ros::VoidConstPtr(), ros::TransportHints().tcpNoDelay());
 
     AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
     if (!addAxis(x_axis))
     {
       ROS_ERROR_STREAM("Error adding x_axis to drive_to_object.");
+      return ;
+    }
+    AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");
+    if (!addAxis(y_axis))
+    {
+      ROS_ERROR_STREAM("Error adding y_axis to drive_to_object.");
       return ;
     }
 
@@ -186,10 +198,10 @@ public:
     return true;
   }
 
-  std::optional<norfair_ros::Detection> findClosestObject(const norfair_ros::Detections &detections, const std::string &object_id, const int &tracked_object_id) {
+  std::optional<norfair_ros::Detection> findClosestObject(const norfair_ros::Detections &detections, const std::string &object_id, const int &tracked_object_id, const std::string &transform_to_drive) {
     double minDistance = std::numeric_limits<double>::max();
     ROS_INFO_STREAM("\nFinding closest object");
-    auto map_to_baselink = tf_buffer_.lookupTransform("odom", "base_link", ros::Time::now(), ros::Duration(0.1));
+    auto map_to_baselink = tf_buffer_.lookupTransform("odom", transform_to_drive, ros::Time::now(), ros::Duration(0.1));
     double map_x = map_to_baselink.transform.translation.x;
     double map_y = map_to_baselink.transform.translation.y;
     // ROS_INFO_STREAM("HERE");
@@ -262,15 +274,17 @@ public:
   void executeCB(const behavior_actions::DriveToObjectGoalConstPtr &goal)
   {
     // Probably should add a timeout 
-
     // just to make sure to go through the loop once
     int tracked_object_id = -1;
     x_error_ = 900;
+    y_error_ = 900;
     angle_error_ = 900;
     ros::Rate r = ros::Rate(60);
     ROS_INFO_STREAM("Execute callback");
     auto x_axis_it = axis_states_.find("x");
     auto &x_axis = x_axis_it->second;
+    auto y_axis_it = axis_states_.find("y");
+    auto &y_axis = y_axis_it->second;
     std::optional<norfair_ros::Detection> closestObject;
     while (true)
     {
@@ -281,9 +295,10 @@ public:
         ROS_ERROR_STREAM("drive_to_object : Preempted");
         as_.setPreempted();
         x_axis.setEnable(false);
+        y_axis.setEnable(false);
         return;
       }
-      closestObject = findClosestObject(latest_, goal->id, tracked_object_id);
+      closestObject = findClosestObject(latest_, goal->id, tracked_object_id, goal->transform_to_drive);
       if (closestObject == std::nullopt) {
         ROS_WARN_THROTTLE(0.5, "Drive to object: No object found, waiting for next frame");
       } else {
@@ -293,9 +308,13 @@ public:
       }
     }
 
+    geometry_msgs::TransformStamped requested_to_baselink = tf_buffer_.lookupTransform("base_link", goal->transform_to_drive, ros::Time::now(), ros::Duration(0.1));
+    double requested_to_baselink_angle = getYaw(requested_to_baselink.transform.rotation);
+    ROS_WARN_STREAM("Requested to baselink angle " << requested_to_baselink_angle);
 
     // shouldn't enable this until we have actually seen a note
     x_axis.setEnable(true);
+    y_axis.setEnable(goal->use_y);
 
     // we don't know this until we go once in the loop, set to large value to signal that
     double field_relative_object_angle = 900;
@@ -309,17 +328,18 @@ public:
 
     geometry_msgs::PointStamped latest_map_relative_detection;
 
-    while (!(abs(x_error_) <= goal->tolerance)) {
+    while ((abs(x_error_) > goal->x_tolerance) || (abs(y_error_ * goal->use_y) > goal->y_tolerance)) {
       ros::spinOnce(); // grab latest callback data
       if (as_.isPreemptRequested() || !ros::ok())
       {
         ROS_ERROR_STREAM("drive_to_object : Preempted");
         as_.setPreempted();
         x_axis.setEnable(false);
+        y_axis.setEnable(false);
         return;
       }
       try { 
-        closestObject = findClosestObject(latest_, goal->id, tracked_object_id);
+        closestObject = findClosestObject(latest_, goal->id, tracked_object_id, goal->transform_to_drive);
       }
       // catch everything and print it out
       catch (const std::exception &e) {
@@ -341,26 +361,46 @@ public:
       }
 
       x_axis.setEnable(true);
-      auto map_to_baselink = tf_buffer_.lookupTransform("base_link", "odom", ros::Time::now(), ros::Duration(0.1));
+      y_axis.setEnable(goal->use_y);
+      auto map_to_baselink = tf_buffer_.lookupTransform(goal->transform_to_drive, "odom", ros::Time::now(), ros::Duration(0.1));
       tf2::doTransform(latest_map_relative_detection, base_link_point, map_to_baselink);
       // ROS_WARN_STREAM("Base link pt " << base_);
 
       ROS_INFO_STREAM("Object is at x,y " << base_link_point.point.x << "," << base_link_point.point.y);
       ROS_INFO_STREAM("We are at x,y " << map_to_baselink.transform.translation.x << "," << map_to_baselink.transform.translation.y);
-      ROS_INFO_STREAM("Distance away " << goal->distance_away);
+      // ROS_INFO_STREAM("Distance away " << goal->distance_away);
       x_axis.setState(-base_link_point.point.x);
+      x_axis.setCommand(0.0);
+      x_error_ = fabs(base_link_point.point.x);
 
-      x_axis.setCommand(-goal->distance_away);
-
-      x_error_ = fabs(goal->distance_away - base_link_point.point.x);
+      y_axis.setState(-base_link_point.point.y);
+      y_axis.setCommand(0.0);
+      y_error_ = fabs(base_link_point.point.y);
+      // ROS_INFO_STREAM("Angle offset " << angle_offset << " distance away " << fabs(goal->distance_away - base_link_point.point.x));
       // checking if it is 900, we only want to set this value once and then keep it. 
-      if (x_error_ > distance_to_hold_angle_ || field_relative_object_angle > 899) {
+      if (fabs(x_error_) > distance_to_hold_angle_ || field_relative_object_angle > 899) {
         field_relative_object_angle = latest_yaw_ + atan2(base_link_point.point.y, base_link_point.point.x);
-        ROS_INFO_STREAM("SETTING ANGLE TO " << field_relative_object_angle);
+
+        ROS_INFO_STREAM("SETTING ANGLE TO " << field_relative_object_angle << " atan2" << atan2(base_link_point.point.y, base_link_point.point.x));
       }
 
       msg.data = field_relative_object_angle;
+      if (goal->use_y) {
+        msg.data = goal->field_relative_angle;
+        ROS_INFO_STREAM("Field relative angle " << goal->field_relative_angle);
+      }
       orientation_command_pub_.publish(msg);
+
+
+      double angle_multipler;
+      if (goal->use_y) {
+        angle_multipler = requested_to_baselink_angle;
+        ROS_INFO_STREAM("Angle multipler " << angle_multipler);
+      }
+      else {
+        angle_multipler = field_relative_object_angle - latest_yaw_;
+      }
+      
 
       angle_error_ = fabs(field_relative_object_angle - latest_yaw_);
       
@@ -372,8 +412,17 @@ public:
 
       geometry_msgs::Twist pid_twist;
       // t.linear.x = x_eff_ - (ros::Time::now() - latest_.header.stamp).toSec() * std::cos(orient_effort_);
-      pid_twist.linear.x = x_eff_ * cos(field_relative_object_angle - latest_yaw_);
-      pid_twist.linear.y = x_eff_ * sin(field_relative_object_angle - latest_yaw_);
+      y_eff_ *= goal->use_y;
+      pid_twist.linear.x = x_eff_ * cos(angle_multipler) - y_eff_ * sin(angle_multipler);
+      pid_twist.linear.y = x_eff_ * sin(angle_multipler) + y_eff_ * cos(angle_multipler);
+      
+      if (abs(x_error_) > goal->fast_zone) {
+        pid_twist.linear.x = copysign(std::max(fabs(goal->min_x_vel), fabs(pid_twist.linear.x)), pid_twist.linear.x);
+      } 
+      if (abs(y_error_) > goal->fast_zone) {
+        pid_twist.linear.y = copysign(std::max(fabs(goal->min_y_vel), fabs(pid_twist.linear.y)), pid_twist.linear.y);
+      }
+
       pid_twist.angular.z = orient_effort_;
 
       double timeDelta = (ros::Time::now() - start).toSec();
@@ -386,6 +435,7 @@ public:
 
       cmd_vel_pub_.publish(t);
       feedback_.x_error = x_error_;
+      feedback_.y_error = y_error_;
       feedback_.angle_error = angle_error_;
       as_.publishFeedback(feedback_);
       r.sleep();
@@ -396,6 +446,7 @@ public:
     t.angular.z = 0;
     cmd_vel_pub_.publish(t);
     x_axis.setEnable(false);
+    y_axis.setEnable(false);
     result_.success = true;
     as_.setSucceeded(result_);
   }
