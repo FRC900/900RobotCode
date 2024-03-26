@@ -139,6 +139,9 @@ class ShootingServer(object):
 
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
+        #dynamic_move_time
+        self.dynamic_move_time = rospy.get_param("dynamic_move_time")
+
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
@@ -263,7 +266,6 @@ class ShootingServer(object):
       
 
 
-
         shooter_done = False
         # def shooter_feedback_cb(feedback: Shooter2024Feedback):
         #     nonlocal shooter_done
@@ -315,10 +317,21 @@ class ShootingServer(object):
             
             r.sleep()
 
+        time_now = rospy.get_time()
+        if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
+            print("then")
+
+
         self.feedback.current_stage = self.feedback.SHOOTING
         self.server.publish_feedback(self.feedback)
         if not goal.setup_only:
             rospy.loginfo("2024_shooting_server: shooting")
+
+            time_now = rospy.get_time()
+            if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
+                print("then")
+                #im actually so lost, but if this conditional is true, then send the note up to the shooter
+
 
             preshooter_goal = Clawster2024Goal()
             preshooter_goal.mode = preshooter_goal.OUTTAKE

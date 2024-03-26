@@ -12,6 +12,7 @@ float64 distance
 bool setup_only # just spin up
 bool leave_spinning
 bool cancel_movement # will OVERRIDE other fields, cancels lower level servers and exits 
+float64 request_time
 ---
 # result
 bool success

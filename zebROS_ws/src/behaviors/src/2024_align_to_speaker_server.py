@@ -217,6 +217,7 @@ class Aligner:
             dist_ang_msg.x_vel = self.x_field_relative_vel_align
             dist_ang_msg.y_vel = self.y_field_relative_vel_align
             dist_ang_msg.offset_angle = offset_angle
+            dist_ang_msg.offset_angle_degrees = math.degrees(offset_angle)
             dist_ang_msg.destination_y = destination.point.y
             dist_ang_msg.destination_x = destination.point.x
             dist_ang_msg.degree_angle = math.degrees(dist_ang_msg.angle)

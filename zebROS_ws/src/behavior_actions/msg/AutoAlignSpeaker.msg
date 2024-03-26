@@ -2,6 +2,7 @@ float64 distance
 float64 x_vel
 float64 y_vel
 float64 offset_angle
+float64 offset_angle_degrees
 float64 destination_y
 float64 destination_x
 float64 degree_angle
