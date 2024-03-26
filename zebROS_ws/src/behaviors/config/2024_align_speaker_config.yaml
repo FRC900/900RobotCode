@@ -2,4 +2,4 @@ tolerance: 0.05
 velocity_tolerance: 0.5
 min_samples: 50 # 0.2 seconds 
 dynamic_move_time: .5
-offset_angle_radians: .2618 #this is in radians, lets start at 15 degrees, so like pi/12 up to four decimal points
+offset_angle_radians: .52 #this is in radians, lets start at 15 degrees, so like pi/12 up to four decimal points

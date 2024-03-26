@@ -71,7 +71,7 @@ class Aligner:
         ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
         ddynrec.add_variable("tolerance", "float/double variable", rospy.get_param("tolerance"), 0.0, 3.0)
         ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
-        ddynrec.add_variable("offset_angle_radians", "float/double variable", rospy.get_param("offset_angle_radians"), 0.0, 1.57)
+        ddynrec.add_variable("offset_angle_radians", "float/double variable", rospy.get_param("offset_angle_radians"), 0.0, 3.14)
         ddynrec.start(self.dyn_rec_callback)
 
     def dyn_rec_callback(self, config, level):
@@ -111,8 +111,9 @@ class Aligner:
             angle_dist_x = (self.x_field_relative_vel_imu)(self.dynamic_move_time) + destination.point.x
             angle_dist_y = (self.y_field_relative_vel_imu)(self.dynamic_move_time) + destination.point.y
             dist_ang_msg.distance =  v_distance + p_distance
-            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
+            self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
+            offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
+            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x) + offset_angle
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(angle_dist_y, angle_dist_x)
 
@@ -185,8 +186,8 @@ class Aligner:
             self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin((self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos((self.current_yaw))
 
 
-            self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
-            self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
+            #self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
+            #self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
 
              #so, take the self.x_field_relative_vel_align value and multiply that by some offset angle in radians?
@@ -197,7 +198,7 @@ class Aligner:
             #so just add given value to hte angle value?
 
             #calculate readjustmnet angle using 15 degrees as the constant offset angle
-            offset_angle = self.x_field_relative_vel_align * self.offset_angle_radians
+            offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
 
             dist_ang_msg.angle = (math.atan2(destination.point.y, destination.point.x)) + offset_angle
 
@@ -215,7 +216,10 @@ class Aligner:
             dist_ang_msg.distance =  v_distance + p_distance
             dist_ang_msg.x_vel = self.x_field_relative_vel_align
             dist_ang_msg.y_vel = self.y_field_relative_vel_align
-
+            dist_ang_msg.offset_angle = offset_angle
+            dist_ang_msg.destination_y = destination.point.y
+            dist_ang_msg.destination_x = destination.point.x
+            dist_ang_msg.degree_angle = math.degrees(dist_ang_msg.angle)
             self._feedback.aligned = False
 
             self.object_publish.publish(self.msg) 
