@@ -329,13 +329,13 @@ class ShootingServer(object):
 
             time_now = rospy.get_time()
             if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
-                print("then")
+                preshooter_goal = Clawster2024Goal()
+                preshooter_goal.mode = preshooter_goal.OUTTAKE
+                preshooter_goal.destination = preshooter_goal.PRESHOOTER
                 #im actually so lost, but if this conditional is true, then send the note up to the shooter
 
 
-            preshooter_goal = Clawster2024Goal()
-            preshooter_goal.mode = preshooter_goal.OUTTAKE
-            preshooter_goal.destination = preshooter_goal.PRESHOOTER
+        
 
             preshooter_done = False
             def preshooter_done_cb(state, result):
