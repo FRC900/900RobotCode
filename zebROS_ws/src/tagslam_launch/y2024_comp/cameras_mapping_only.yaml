@@ -5,7 +5,7 @@
 cam0:
   camera_model: pinhole
   # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
-  intrinsics: [1056.8575439453125, 1056.8575439453125, 1090.54443359375, 617.6332397460938]
+  intrinsics: [1039.87548828125, 1039.87548828125, 1129.4906005859375, 630.0714721679688]
   distortion_model: plumb_bob
   # Taken from calibration file
   #                   k1   k2   p1   p2  k3
