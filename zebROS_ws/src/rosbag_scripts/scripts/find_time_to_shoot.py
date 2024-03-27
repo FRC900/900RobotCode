@@ -4,65 +4,55 @@ import rosbag
 import csv
 import sys
 
-# Define the topic you want to read
-topic_talon = '/frcrobot_jetson/talonfxpro_states'
-shoot_request = '/shooting/shooting_server_2024/goal'
+shooting_goal_sent = None
+last_preshooter_switch = False
 
-shoot_time = 0
-velocity_time = 0
-time_delta = 0
 
-ticker_one = 0
-index = 0
-shoot_request_bool = False
-topic_talon_bool = False
-csv_file_path = 'output.csv'
 with open(csv_file_path, mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
 
     # Write header to the CSV file
-    csv_writer.writerow(['time_delta', 'shoot_time', 'velocity_time'])
+    
 
     # Iterate through the messages in the specified topic
-    for topic, msg, t in rosbag.Bag(sys.argv[1]).read_messages(['/frcrobot_jetson/talonfxpro_states', '/shooting/shooting_server_2024/goal']):
+    for topic, msg, t in rosbag.Bag(sys.argv[1]).read_messages(['/frcrobot_rio/joint_states', '/shooting/shooting_server_2024/goal']):
         
-
+        #mentioned something about me looking at the wrong place? mentioned someting about a limit swtich instead of trying to see if hte motors are actually moving etc
 
         if topic == '/shooting/shooting_server_2024/goal':
-            shoot_time = t.to_sec()
-            shoot_request_bool = True
+            shooting_goal_sent = t.to_sec()
+            print("shooting goal is requested")
+
+        elif topic == "/frcrobot_rio/joint_states":
+             print("frcrobot joint activity")
+             for i in range(len(msg.name)):
+                  if msg.name[i] == "preshooter_limit_switch":
+                        if msg.position[i] == 0 and shooting_goal_sent and last_preshooter_switch:
+                            #print("got here")
+                            print(f"{t.to_sec() - shooting_goal_sent}")
+                            csv_writer.writerow([t.to_sec() - shooting_goal_sent])
+                            shooting_goal_sent = None
+                        last_preshooter_switch = msg.position[i]
+
+                        
 
 
-        if topic == '/frcrobot_jetson/talonfxpro_states':
-            index = msg.name.index('bottom_left_shooter_joint')
-            velocity = msg.control_velocity[index]
-            if velocity > 100:
-                velocity_time = t.to_sec()
-            topic_talon_bool = True
-
-
-        if ((shoot_request_bool == True) and (topic_talon_bool == True)):
-            #Write data to the CSV file
-            if shoot_time < velocity_time:
-                time_delta = velocity_time - shoot_time
+      
 
               
 
-                #print(t.to_sec())
                 
-                csv_writer.writerow([time_delta, shoot_time, velocity_time])
-
                 
 
-                shoot_time = -1
-                velocity_time = -1
-                time_delta = -1
-                shoot_request_bool = False
-                topic_talon_bool = False
+                
+
+              
                 
        
 
 print(f"Data has been written to {csv_file_path}")
+
+
 
 
 
