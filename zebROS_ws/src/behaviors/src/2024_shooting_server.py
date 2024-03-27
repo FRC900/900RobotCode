@@ -329,7 +329,7 @@ class ShootingServer(object):
                     preshooter_goal.mode = preshooter_goal.OUTTAKE
                     preshooter_goal.destination = preshooter_goal.PRESHOOTER
                     #im actually so lost, but if this conditional is true, then send the note up to the shooter
-
+            #mentioned something about how shooter_goal.request_time would be zero by default?
 
         
 
@@ -339,7 +339,7 @@ class ShootingServer(object):
                 preshooter_done = True
                 rospy.logwarn("2024_shooting_server: PRESHOOTER CB DONE")
 
-            #self.preshooter_client.send_goal(preshooter_goal, done_cb=preshooter_done_cb)
+            self.preshooter_client.send_goal(preshooter_goal, done_cb=preshooter_done_cb)
 
             while not preshooter_done and not rospy.is_shutdown():
                 rospy.loginfo_throttle(0.5, "2024_shooting_server: waiting for preshooter")
