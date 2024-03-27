@@ -11,7 +11,8 @@ from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 # Brings in the SimpleActionClient
 import actionlib
 from std_msgs.msg import Float64
-from norfair_ros.msg import Detections, Detection
+#from norfair_ros.msg import Detections, Detection
+from field_obj.msg import Detection
 from frc_msgs.srv import RumbleCommand, RumbleCommandRequest, RumbleCommandResponse
 from frc_msgs.msg import MatchSpecificData
 from candle_controller_msgs.srv import AnimationRequest, AnimationResponse, Animation
@@ -36,7 +37,8 @@ class Rumble2024Server():
         self.intaking_current = 0.0
         self.intaking_talon_idx = None
         self.talonfxpro_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.talonfxpro_states_cb)
-        #self.norfair_sub = rospy.Subscriber('/norfair/output', Detections, self.notes_callback)
+        # self.norfair_sub = rospy.Subscriber('/norfair/output', Detections, self.notes_callback)
+        self.norfair_sub = rospy.Subscriber('/tf_object_detection_zedx_front/object_detection_world', Detection, self.notes_callback)
         self.limit_switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.limit_switch_cb)
         
         self.notes_max_distance = rospy.get_param("note_distance_away")
@@ -46,8 +48,14 @@ class Rumble2024Server():
         self.intake_limit_switch_name = rospy.get_param("intake_limit_switch_name")
         self.rumble_value = rospy.get_param("rumble_on_note")
 
+        rospy.wait_for_service('/frcrobot_jetson/candle_controller/animation', timeout=0.01)
         self.candle_srv = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/animation', Animation)
-        self.set_disable_leds = True
+        self.mode = 0
+        self.DISABLED = 1
+        self.AUTO = 2
+        self.TELEOP = 3
+        self.NOTE_SEEN = 4
+        self.last_note_seen = rospy.Time(0)
 
         '''
 rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, start: 8, count: 18, animation_type: 2, red: 255, green: 0, blue: 0, white: 0,
@@ -77,31 +85,74 @@ rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, star
             self.intaking_current = states.torque_current[self.intaking_talon_idx]
 
     # recives norfair messages and finds the closest note
-    def notes_callback(self, msg: Detections):
+    def notes_callback(self, msg: Detection):
         closest_dist = None
-        for detection in msg.detections:
-            if detection.label != "note":
+        note_counter = 0
+        for detection in msg.objects:
+            if detection.id != "note":
                 continue
-            x, y = detection.points[0].point
-            dist = math.hypot(x, y)
-            if dist < closest_dist:
+            note_counter += 1
+            dist = math.hypot(detection.location.x, detection.location.y)
+            if (closest_dist is None) or (dist < closest_dist):
                 closest_dist = dist
             #rospy.loginfo(f"Note detection at {x, y}")
         self.closest_note = closest_dist
 
-
-    def match_data_cb(self, data: MatchSpecificData):
-        if self.set_disable_leds and not data.Enabled:
-            if rospy.wait_for_service('/frcrobot_jetson/candle_controller/animation', timeout=0.001):
+        if note_counter > 0:
+            self.last_note_seen = rospy.Time.now()
+            if self.mode != self.NOTE_SEEN:
+                rospy.loginfo(f'self.mode = {self.mode}, self.NOTE_SEEN = {self.NOTE_SEEN}')
                 candle_req = AnimationRequest()
-                candle_req.animation_type = candle_req.ANIMATION_TYPE_LARSON
-                candle_req.red = 255
+                candle_req.animation_type = candle_req.ANIMATION_TYPE_TWINKLE
                 candle_req.start = 8
                 candle_req.count = 18
+                candle_req.speed = 0.75
+                candle_req.brightness = 1.0
+                candle_req.red = 100
+                candle_req.green = 100
+                candle_req.blue = 100
                 self.candle_srv.call(candle_req)
-                self.set_disable_leds = False
-        elif data.Enabled:
-            self.set_disable_leds = True
+                self.mode = self.NOTE_SEEN
+        elif (self.mode == self.NOTE_SEEN) and ((rospy.Time.now() - self.last_note_seen)> rospy.Duration(1.0)):
+            self.mode = 0
+            rospy.loginfo(f'self.mode = {self.mode}, self.NONE')
+
+
+    def match_data_cb(self, data: MatchSpecificData):
+        if (self.mode != self.NOTE_SEEN):
+            if not data.Enabled:
+                if self.mode != self.DISABLED:
+                    rospy.loginfo(f'self.mode = {self.mode}, self.DISABLED = {self.DISABLED}')
+                    candle_req = AnimationRequest()
+                    candle_req.animation_type = candle_req.ANIMATION_TYPE_LARSON
+                    candle_req.red = 255
+                    candle_req.start = 8
+                    candle_req.count = 18
+                    self.candle_srv.call(candle_req)
+                    self.mode = self.DISABLED
+            else: #enabled
+                if data.Autonomous and (self.mode != self.AUTO):
+                    rospy.loginfo(f'self.mode = {self.mode}, self.AUTO = {self.AUTO}')
+                    candle_req = AnimationRequest()
+                    candle_req.animation_type = candle_req.ANIMATION_TYPE_RAINBOW
+                    candle_req.start = 8
+                    candle_req.count = 18
+                    candle_req.brightness = 1.0
+                    candle_req.speed = 0.75
+                    self.candle_srv.call(candle_req)
+                    self.mode = self.AUTO
+                elif not data.Autonomous and (self.mode != self.TELEOP):
+                    rospy.loginfo(f'self.mode = {self.mode}, self.TELEOP = {self.TELEOP}')
+                    candle_req = AnimationRequest()
+                    candle_req.animation_type = candle_req.ANIMATION_TYPE_FIRE
+                    candle_req.start = 8
+                    candle_req.count = 18
+                    candle_req.brightness = 1.0
+                    candle_req.speed = 1.0
+                    candle_req.param4 = 0.5
+                    candle_req.param5 = 1.0
+                    self.candle_srv.call(candle_req)
+                    self.mode = self.TELEOP
 
         if data.Autonomous and data.Enabled:
             self.should_run_loop = False
@@ -125,7 +176,7 @@ rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, star
         
         current_intake_switch = data.position[data.name.index(self.intake_limit_switch_name)]
         current_preshooter_switch = data.position[data.name.index(self.preshooter_limit_switch_name)]
-        rospy.loginfo_throttle(1, f"Current intake {current_intake_switch} preshooter {current_preshooter_switch} \n previous intake {self.previous_intake_switch} shooter prev {self.previous_preshooter_switch}")
+        # rospy.loginfo_throttle(1, f"Current intake {current_intake_switch} preshooter {current_preshooter_switch} \n previous intake {self.previous_intake_switch} shooter prev {self.previous_preshooter_switch}")
         # we see note, rumble until preshooter switch
         if self.previous_intake_switch == 0 and current_intake_switch:
             rospy.loginfo("Intaking rumble")
