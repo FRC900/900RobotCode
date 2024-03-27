@@ -317,22 +317,18 @@ class ShootingServer(object):
             
             r.sleep()
 
-        time_now = rospy.get_time()
-        if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
-            print("then")
-
-
         self.feedback.current_stage = self.feedback.SHOOTING
         self.server.publish_feedback(self.feedback)
         if not goal.setup_only:
             rospy.loginfo("2024_shooting_server: shooting")
 
             time_now = rospy.get_time()
-            if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
-                preshooter_goal = Clawster2024Goal()
-                preshooter_goal.mode = preshooter_goal.OUTTAKE
-                preshooter_goal.destination = preshooter_goal.PRESHOOTER
-                #im actually so lost, but if this conditional is true, then send the note up to the shooter
+            if (shooter_goal.request_time > 0): #need to find a way to make this zero if we aren't moving while shooting
+                if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
+                    preshooter_goal = Clawster2024Goal()
+                    preshooter_goal.mode = preshooter_goal.OUTTAKE
+                    preshooter_goal.destination = preshooter_goal.PRESHOOTER
+                    #im actually so lost, but if this conditional is true, then send the note up to the shooter
 
 
         
