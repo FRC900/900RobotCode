@@ -345,12 +345,12 @@ class ShootingServer(object):
         if not goal.setup_only:
             rospy.loginfo("2024_shooting_server: shooting")
 
-            if (shooter_goal.request_time > 0): 
+            if (goal.request_time > 0): 
                 #set speed to a constant velocity this will be 1m/s
                 #so this is a std_msgs_float64
                 cmd_vel_msg_move_and_shoot = Twist()
             
-                while((rospy.Time.now()) - shooter_goal.request_time) < self.dynamic_move_time: 
+                while((rospy.Time.now()) - goal.request_time) < self.dynamic_move_time: 
                     if self.server.is_preempt_requested():
                         rospy.loginfo("2024_shooting_server: preempted preshooter")
                         # ensure shooter turned off
