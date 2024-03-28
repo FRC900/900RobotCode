@@ -351,9 +351,25 @@ class ShootingServer(object):
                 cmd_vel_msg_move_and_shoot = Twist()
             
                 while((rospy.Time.now()) - shooter_goal.request_time) < self.dynamic_move_time: 
+                    if self.server.is_preempt_requested():
+                        rospy.loginfo("2024_shooting_server: preempted preshooter")
+                        # ensure shooter turned off
+                        self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                        self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                        self.server.set_preempted()
+
+                        cmd_vel_msg_move_and_shoot.linear.x = 0
+                        cmd_vel_msg_move_and_shoot.linear.y = 0
+                        cmd_vel_msg_move_and_shoot.linear.z = 0
+                        cmd_vel_msg_move_and_shoot.angular.x = 0
+                        cmd_vel_msg_move_and_shoot.angular.y = 0
+                        cmd_vel_msg_move_and_shoot.angular.z = 0
+                        self.cmd_vel.publish(cmd_vel_msg_move_and_shoot)
+
                     cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                     cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val 
                     self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
+
 
                 preshooter_goal = Clawster2024Goal()
                 preshooter_goal.mode = preshooter_goal.OUTTAKE
