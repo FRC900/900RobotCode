@@ -123,7 +123,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->buttonXPress)
 			{
 				behavior_actions::Shooting2024Goal goal;
-				goal.mode = goal.SUBWOOFER;
+				goal.mode = goal.SLIDE;
 				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonXButton)
@@ -137,16 +137,16 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: buttonY
 			if(joystick_state->buttonYPress)
 			{
-				behavior_actions::Shooting2024Goal goal;
-				goal.mode = goal.PODIUM;
-				shooting_ac->sendGoal(goal);
+				// behavior_actions::Shooting2024Goal goal;
+				// goal.mode = goal.PODIUM;
+				// shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonYButton)
 			{
 			}
 			if(joystick_state->buttonYRelease)
 			{
-				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());	
+				// shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());	
 			}
 
 			//Joystick1: bumperLeft

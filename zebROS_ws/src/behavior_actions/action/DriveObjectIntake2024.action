@@ -2,9 +2,13 @@ uint8 SHOOTER=0
 uint8 CLAW=1
 uint8 destination
 bool intake_only
+int64 drive_timeout
+float64 min_y_pos
+float64 max_y_pos
 ---
 bool success
 ---
+bool tracking_obj
 bool DRIVING_TO_NOTE_FAILED
 float64 x_error
 float64 y_error

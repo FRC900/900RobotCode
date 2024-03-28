@@ -1,4 +1,7 @@
 distance_away: 0.3 # meters base link will be away from center of note
 drive_object_tolerance: 0.1 # how close we need to be
 note_str: "note" # just in case
-timeout: 5 # seconds 
+drive_timeout: 2 # seconds 
+intake_timeout: 0.5
+drive_back_time: 0.1 # seconds
+drive_back_speed: 2.0 # m/s

@@ -15,6 +15,8 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>image_transport</depend>
+  <depend>behavior_actions</depend>
+
   <depend>cv_bridge</depend>
   <depend>apriltag</depend>
   <depend>apriltag_ros</depend>

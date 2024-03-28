@@ -66,6 +66,7 @@ add_service_files(
   #resetBallSrv.srv
   DynamicPath.srv
   GamePiecePickup.srv
+  RelocalizePoint.srv
 )
 
 ## Generate actions in the 'action' folder

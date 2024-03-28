@@ -37,6 +37,8 @@ std::map<int, std::string> parsePBTXT(std::string filename) {
 	return pbtxtMap;
 }
 
+const std::vector<std::string> other_topics{"/apriltag_zedx_back/tag_detection_world", "/apriltag_zedx_front/tag_detection_world"};
+
 class FakeGoalDetection
 {
 	public:
@@ -52,6 +54,9 @@ class FakeGoalDetection
 		{
 			n.param("covariance", covariance_, covariance_);
 			normalDistribution_ = std::normal_distribution<double>{0, sqrt(covariance_)};
+			for (const std::string &topic : other_topics) {
+				pubs_.push_back(n.advertise<field_obj::Detection>(topic, 2));
+			}
 		}
 
 		// Translate stage base_marker_detection into our custom goal detection message
@@ -94,7 +99,7 @@ class FakeGoalDetection
 						// ROS_INFO_STREAM("Found a note!");
 						if (hypot(p.x, p.y) < 1.0) {
 							ROS_INFO_STREAM_THROTTLE(1, "Note too close! Dropping");
-							continue;
+							//continue;
 						}
  					}
 					msgOut.objects.push_back(obj);
@@ -138,6 +143,11 @@ class FakeGoalDetection
 			}
 			pub_.publish(msgOut);
 			pubd_.publish(msgOut);
+			for (size_t i = 0; i < pubs_.size(); i++) {
+				field_obj::Detection dummy;
+				dummy.header = msgIn->header;
+				pubs_[i].publish(dummy);
+			}
 		}
 
 	private:
@@ -149,6 +159,7 @@ class FakeGoalDetection
 		ros::Publisher             pub_;
 		ros::Publisher             pubd_; // d for detection
 		std::map<int, std::string> objMap_;
+		std::vector<ros::Publisher> pubs_;
 };
 
 int main(int argc, char** argv)

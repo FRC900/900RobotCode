@@ -8,8 +8,11 @@
 #include <vector>
 
 #include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <std_msgs/Bool.h>
+#include "behavior_actions/RelocalizePoint.h"
+
 
 
 namespace tf2
@@ -56,6 +59,7 @@ ros::Publisher last_relocalized_pub;
 
 tf2_ros::Buffer tf_buffer;
 geometry_msgs::TransformStamped map_odom_tf;
+geometry_msgs::TransformStamped relocalized_point_tf;
 
 ros::Time last_tf_pub = ros::Time(0);
 
@@ -204,6 +208,41 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
       }
     }
   }
+  else {
+    if ((ros::Time::now() - last_tf_pub).toSec() > (1./publish_frequency)) {
+      tfbr->sendTransform(relocalized_point_tf);
+      std_msgs::Header msg;
+      msg.stamp = relocalized_point_tf.header.stamp;
+      last_relocalized_pub.publish(msg);
+      last_tf_pub = ros::Time::now();
+      ROS_WARN_STREAM_THROTTLE(2, "Shifting odom with service ");
+    }
+  }
+}
+
+bool toggle_service_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res) {
+  ROS_WARN_STREAM("Disabling cmd_vel relocalization");
+  localize_while_stopped = req.data;
+  return true;
+}
+
+// MIGHT NOT WORK, TEST ME2
+bool relocalize_to_point_cb(behavior_actions::RelocalizePoint::Request &req, behavior_actions::RelocalizePoint::Response &/*res*/) {
+  ROS_INFO_STREAM("map_to_odom: relocalizing to a point at x,y " << req.pose.position.x << ", " << req.pose.position.y);
+  
+  relocalized_point_tf.header.stamp = ros::Time::now();
+  relocalized_point_tf.header.frame_id = map_frame_id;
+  relocalized_point_tf.child_frame_id = odom_frame_id;
+  relocalized_point_tf.transform.rotation = req.pose.orientation;
+  relocalized_point_tf.transform.translation.x = req.pose.position.x;
+  relocalized_point_tf.transform.translation.y = req.pose.position.y;
+
+  tfbr->sendTransform(relocalized_point_tf);
+  std_msgs::Header msg;
+  msg.stamp = relocalized_point_tf.header.stamp;
+  last_relocalized_pub.publish(msg);
+  last_tf_pub = ros::Time::now();
+  return true;
 }
 
 int main(int argc, char **argv) {
@@ -264,6 +303,9 @@ int main(int argc, char **argv) {
   // write a timer that gets called at 25Hz
   // write a service that takes in an empty message and publishes the tf
   ros::ServiceServer service = nh_.advertiseService("tagslam_pub_map_to_odom", service_cb);
+  ros::ServiceServer relocalize_point_srv = nh_.advertiseService("relocalize_point", relocalize_to_point_cb);
+  ros::ServiceServer toggle_relocalize = nh_.advertiseService("toggle_map_to_odom", toggle_service_cb);
+
   ros::Subscriber cmd_vel_sub = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, cmdVelCallback);
   last_relocalized_pub = nh_.advertise<std_msgs::Header>("/last_relocalize", 1, true);
   updateMapOdomTf();

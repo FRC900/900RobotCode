@@ -96,9 +96,9 @@ objdet_target ( pose [ 8.256 4.112 1.000 0.000 ] fiducial_return 1 color "orange
 objdet_target ( pose [ 8.256 5.788 1.000 0.000 ] fiducial_return 1 color "orange")
 objdet_target ( pose [ 8.256 7.465 1.000 0.000 ] fiducial_return 1 color "orange")
 # red wing
-objdet_target ( pose [ 13.631 4.112 1.000 0.000 ] fiducial_return 1 color "orange")
-objdet_target ( pose [ 13.631 5.560 1.000 0.000 ] fiducial_return 1 color "orange")
-objdet_target ( pose [ 13.631 7.008 1.000 0.000 ] fiducial_return 1 color "orange")
+# objdet_target ( pose [ 13.631 4.112 1.000 0.000 ] fiducial_return 1 color "orange")
+# objdet_target ( pose [ 13.631 5.560 1.000 0.000 ] fiducial_return 1 color "orange")
+# objdet_target ( pose [ 13.631 7.008 1.000 0.000 ] fiducial_return 1 color "orange")
 
 
 

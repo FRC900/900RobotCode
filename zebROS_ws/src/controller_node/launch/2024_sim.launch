@@ -136,6 +136,12 @@
 	<include file="$(find behaviors)/launch/2024_align_and_shoot.launch"/>
 	<include file="$(find behaviors)/launch/2024_align_to_trap.launch">
 	</include>
+	<include file="$(find behaviors)/launch/2024_intaking.launch">
+	</include>
+	<include file="$(find behaviors)/launch/2024_shooting.launch">
+	</include>
+
+	<include file="$(find behaviors)/launch/2024_drive_to_object_and_intake.launch"/>
 
 	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>
 	<!--  

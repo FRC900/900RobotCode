@@ -48,3 +48,9 @@ shot_pivot_position: 0.51 #rad
 
 #speed for shooting and moving
 shoot_and_move_speed: 1.0 #m/s
+# slide across field
+slide_top_left_speed: 500.0 #rad/s
+slide_top_right_speed: 500.0 #rad/s
+slide_bottom_left_speed: 250.0 #rad/s
+slide_bottom_right_speed: 250.0 #rad/s
+slide_pivot_position: 0.36 #rad 

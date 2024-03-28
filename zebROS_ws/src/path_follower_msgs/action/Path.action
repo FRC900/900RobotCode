@@ -8,6 +8,8 @@ int32[] waypointsIdx
 # Set to non-zero to override config defaults
 float64 final_pos_tol
 float64 final_rot_tol
+
+bool dont_go_to_start
 ---
 bool timed_out
 bool success

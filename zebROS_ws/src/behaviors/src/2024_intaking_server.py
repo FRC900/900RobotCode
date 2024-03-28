@@ -15,6 +15,8 @@ from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 import actionlib
 from std_msgs.msg import Float64
 
+SIM = False
+
 class Intaking2024Server(object):
     # create messages that are used to publish feedback/result
     feedback = Intaking2024Feedback()
@@ -31,18 +33,18 @@ class Intaking2024Server(object):
         
         self.arm_client = actionlib.SimpleActionClient('/arm/move_arm_server_2024', Arm2024Action)
         rospy.loginfo("2024_intaking_server: waiting for arm server")
-        self.arm_client.wait_for_server()
+        if not SIM: self.arm_client.wait_for_server()
         # rospy.logerr("ARM CLIENT NOT INITALIZED BECAUSE IT DOESN'T EXIST")
 
         self.shooter_pivot_client = actionlib.SimpleActionClient('/shooter/set_shooter_pivot', ShooterPivot2024Action)
         rospy.loginfo("2024_intaking_server: waiting for shooter pivot server")
-        self.shooter_pivot_client.wait_for_server()
+        if not SIM: self.shooter_pivot_client.wait_for_server()
         self.diverter_client = actionlib.SimpleActionClient('/diverter/diverter_server_2024', NoteDiverterAction)
         rospy.loginfo("2024_intaking_server: waiting for diverter server")
-        self.diverter_client.wait_for_server()
+        if not SIM: self.diverter_client.wait_for_server()
         self.clawster_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
         rospy.loginfo("2024_intaking_server: waiting for clawster server")
-        self.clawster_client.wait_for_server()
+        if not SIM: self.clawster_client.wait_for_server()
         rospy.loginfo(f"Clawster client {self.clawster_client}")
 
         self.pivot_position = 0
@@ -71,7 +73,7 @@ class Intaking2024Server(object):
         self.intaking_talon_idx = None
         self.talonfxpro_sub = rospy.Subscriber('/frcrobot_jetson/talonfxpro_states', TalonFXProState, self.talonfxpro_states_cb)
 
-        self.joint_state_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, callback=self.rio_callback)
+        self.joint_state_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, callback=self.rio_callback, tcp_nodelay=True)
         self.diverter_switch = False
         self.run_intake_backwards = None
         self.arm_done = False
@@ -81,6 +83,11 @@ class Intaking2024Server(object):
     def rio_callback(self, data):
         # check diverter_switch
         if "diverter_limit_switch" in data.name:
+            if self.feedback.note_hit_intake != data.position[data.name.index("diverter_limit_switch")]:
+                rospy.loginfo(f'Intaking, note hit (or left) diverter self.feedback.note_hit_intake {self.feedback.note_hit_intake} data.position[data.name.index("diverter_limit_switch")] {data.position[data.name.index("diverter_limit_switch")]}')
+                self.feedback.note_hit_intake = bool(data.position[data.name.index("diverter_limit_switch")])
+                self.server.publish_feedback(self.feedback)
+
             if self.diverter_switch and not data.position[data.name.index("diverter_limit_switch")]:
                 rospy.loginfo("Running backwards in 0.5 seconds!")
                 self.run_intake_backwards = rospy.Time.now() + rospy.Duration(0.5)
@@ -119,6 +126,25 @@ class Intaking2024Server(object):
         self.run_intake_backwards = None
 
         # self.feedback.have_note = False
+
+        if SIM:
+            rospy.loginfo(f"2024_intaking_server: SIMULATION MODE, goal = {goal}")
+            import time
+            time.sleep(2)
+            # say that a note hit the intake
+            self.feedback.note_hit_intake = True
+            self.server.publish_feedback(self.feedback)
+            # loop for 0.5 seconds and return if preempted
+            start = time.time()
+            while time.time() - start < 0.5:
+                if self.server.is_preempt_requested() or rospy.is_shutdown():
+                    rospy.loginfo("2024_intaking_server: preempted")
+                    self.server.set_preempted()
+                    return
+                r.sleep()
+            self.result.success = True
+            self.server.set_succeeded(self.result)
+            return
 
         if goal.destination == goal.OUTTAKE:
             intake_srv = CommandRequest()
@@ -248,7 +274,7 @@ class Intaking2024Server(object):
                 backwards_start_time = None
             if self.intaking_current > self.current_threshold:
                 rospy.logwarn(f"Intaking current = {self.intaking_current} is above {self.current_threshold}")
-                self.feedback.note_hit_intake = True
+                # self.feedback.note_hit_intake = True
                 self.server.publish_feedback(self.feedback)
             # if clawster_done:
             #     self.feedback.have_note = True
