@@ -131,7 +131,9 @@
         "charconv": "cpp",
         "format": "cpp",
         "stdfloat": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "forward_list": "cpp",
+        "ranges": "cpp"
     },
     "workbench.colorCustomizations": {
         "activityBar.background": "#1F1E5E",

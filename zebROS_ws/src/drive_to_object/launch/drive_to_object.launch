@@ -41,7 +41,7 @@
 
 
     </group>
-	<node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_intake" args="0.3 0 0 0 0 0 1 base_link intake  " />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_intake" args="0.1 0 0 0 0 0 1 base_link intake  " />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_frontbumper" args="-0.64 0 0 0 0 1 0 base_link shooter_bumper  " />
 
 

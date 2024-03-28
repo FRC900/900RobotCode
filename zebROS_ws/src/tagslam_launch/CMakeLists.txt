@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   field_obj
   geometry_msgs
   marker_msgs
+  behavior_actions
   message_generation
   nav_msgs
   sensor_msgs
@@ -113,7 +114,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    #  LIBRARIES pf_localization
-   CATKIN_DEPENDS roscpp message_runtime std_msgs geometry_msgs
+   CATKIN_DEPENDS roscpp message_runtime std_msgs geometry_msgs behavior_actions
 #  DEPENDS system_lib
 )
 

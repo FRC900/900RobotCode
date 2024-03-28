@@ -10,6 +10,9 @@ float64 min_y_vel
 # only respected when use_y is true
 float64 field_relative_angle
 float64 fast_zone # how far we need to be away from the goal to apply a x or y min vel     
+bool override_goal_angle # set this to true if we want to align in y and also rotate dynamically
+float64 min_y_pos
+float64 max_y_pos
 ---
 # result
 bool success
@@ -18,3 +21,4 @@ bool success
 float64 x_error
 float64 y_error
 float64 angle_error
+bool tracking_obj

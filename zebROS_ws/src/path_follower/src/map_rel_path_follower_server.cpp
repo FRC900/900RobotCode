@@ -216,6 +216,10 @@ class PathAction
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			
 			{
+				if (goal->dont_go_to_start) {
+					ROS_INFO_STREAM("path_follower: not going to starting waypoint");
+					break;
+				}
 				ros::spinOnce();
 				try{
 					// This gives us the transform from a point in base_link to map.

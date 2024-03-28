@@ -145,7 +145,7 @@ class AlignAndShoot:
             if self.alliance_color == MatchSpecificData.ALLIANCE_COLOR_RED:
                 if x_pos > 8.27:
                     self.past_half_field = True
-                elif self.past_half_field:
+                elif self.past_half_field and self.is_teleop_and_enabled: # DONT CANCEL SHOOTING WHEN YOU'RE PAST HALF FIELD IN AUTO
                     self.preempt()
                     self.aligning = False
                     self.past_half_field = False
@@ -154,7 +154,7 @@ class AlignAndShoot:
                 if x_pos < 8.27:
                     self.past_half_field = True
 
-                elif self.past_half_field:
+                elif self.past_half_field and self.is_teleop_and_enabled: # DONT CANCEL SHOOTING WHEN YOU'RE PAST HALF FIELD IN AUTO
                     self.preempt()
                     self.aligning = False
                     self.past_half_field = False

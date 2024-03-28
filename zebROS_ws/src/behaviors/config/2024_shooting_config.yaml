@@ -46,5 +46,9 @@ shot_bottom_left_speed: 825.0
 shot_bottom_right_speed: 825.0
 shot_pivot_position: 0.51 #rad
 
-
-
+# slide across field
+slide_top_left_speed: 500.0 #rad/s
+slide_top_right_speed: 500.0 #rad/s
+slide_bottom_left_speed: 250.0 #rad/s
+slide_bottom_right_speed: 250.0 #rad/s
+slide_pivot_position: 0.36 #rad 

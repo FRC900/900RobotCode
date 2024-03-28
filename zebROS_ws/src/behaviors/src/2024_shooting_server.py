@@ -13,6 +13,8 @@ from std_msgs.msg import Float64
 from interpolating_map import InterpolatingMap
 from geometry_msgs.msg import Twist
 
+SIM = False
+
 class ShootingServer(object):
 
     def __init__(self, name):
@@ -22,14 +24,14 @@ class ShootingServer(object):
         self.shooter_client = actionlib.SimpleActionClient('/shooter/set_shooter_speed', Shooter2024Action)
         rospy.loginfo("2024_shooting_server: waiting for shooter")
         # this will block forever if something lower level fails to come up
-        self.shooter_client.wait_for_server()
+        if not SIM: self.shooter_client.wait_for_server()
         self.pivot_client = actionlib.SimpleActionClient('/shooter/set_shooter_pivot', ShooterPivot2024Action)
         rospy.loginfo("2024_shooting_server: waiting for pivot")
-        self.pivot_client.wait_for_server()
+        if not SIM: self.pivot_client.wait_for_server()
         # The preshooter and claw are very similar (drive motor until limit switch pressed). They'll probably be the same server.
         self.preshooter_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
         rospy.loginfo("2024_shooting_server: waiting for clawster")
-        self.preshooter_client.wait_for_server()
+        if not SIM: self.preshooter_client.wait_for_server()
 
         # used for driving back after amp shot
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
@@ -93,6 +95,13 @@ class ShootingServer(object):
         ddynrec.add_variable("shot_bottom_right_speed", "float/double variable", rospy.get_param("shot_bottom_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("shot_pivot_position", "float/double variable", rospy.get_param("shot_pivot_position"), 0.45, 3.0)
 
+        #slide configs
+        ddynrec.add_variable("slide_top_left_speed", "float/double variable", rospy.get_param("slide_top_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("slide_top_right_speed", "float/double variable", rospy.get_param("slide_top_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("slide_bottom_left_speed", "float/double variable", rospy.get_param("slide_bottom_left_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("slide_bottom_right_speed", "float/double variable", rospy.get_param("slide_bottom_right_speed"), 0.0, 1000.0)
+        ddynrec.add_variable("slide_pivot_position", "float/double variable", rospy.get_param("slide_pivot_position"), 0.4, 1.5)
+
         ddynrec.start(self.dyn_rec_callback)
 
         # Subwoofer (constant speeds and angle)
@@ -132,6 +141,13 @@ class ShootingServer(object):
         self.shot_bottom_right_speed = rospy.get_param("shot_bottom_right_speed")
         self.shot_pivot_position = rospy.get_param("shot_pivot_position")
 
+        # slide on field
+        self.slide_top_left_speed = rospy.get_param("slide_top_left_speed")  
+        self.slide_top_right_speed = rospy.get_param("slide_top_right_speed")
+        self.slide_bottom_left_speed = rospy.get_param("slide_bottom_left_speed")
+        self.slide_bottom_right_speed = rospy.get_param("slide_bottom_right_speed")
+        self.slide_pivot_position = rospy.get_param("slide_pivot_position")
+
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
@@ -170,9 +186,21 @@ class ShootingServer(object):
         self.shot_bottom_left_speed = config["shot_bottom_left_speed"]
         self.shot_bottom_right_speed = config["shot_bottom_right_speed"]
         self.shot_pivot_position = config["shot_pivot_position"]
+
+        self.slide_top_left_speed = config["slide_top_left_speed"]
+        self.slide_top_right_speed = config["slide_top_right_speed"]
+        self.slide_bottom_left_speed = config["slide_bottom_left_speed"]
+        self.slide_bottom_right_speed = config["slide_bottom_right_speed"]
+        self.slide_pivot_position = config["slide_pivot_position"]
         return config
 
     def execute_cb(self, goal: Shooting2024Goal):
+        if SIM:
+            rospy.logerr("=================WAITING TO SHOOT IN SIM")
+            time.sleep(0.5)
+            self.result.success = True
+            self.server.set_succeeded(self.result)
+            return
         if goal.cancel_movement:
             rospy.logwarn("2024_shooting_server: CANCELING SPIN UP")
             shooter_goal = Shooter2024Goal()
@@ -245,6 +273,14 @@ class ShootingServer(object):
             pivot_angle = self.shot_pivot_position
             rospy.loginfo(f"2024_shooting_server: spinning up for SHOT_PASS")
 
+        elif goal.mode == goal.SLIDE:
+            shooter_goal.top_left_speed = self.slide_top_left_speed
+            shooter_goal.top_right_speed = self.slide_top_right_speed
+            shooter_goal.bottom_left_speed = self.slide_bottom_left_speed
+            shooter_goal.bottom_right_speed = self.slide_bottom_right_speed
+            pivot_angle = self.slide_pivot_position
+            rospy.loginfo(f"2024_shooting_server: spinning up for SLIDE")
+
         else:
             # Look up speed and angle to send to shooter and pivot server
             shooter_goal.top_left_speed = self.top_left_map[goal.distance]
@@ -268,7 +304,8 @@ class ShootingServer(object):
         
         shooter_goal.leave_spinning = goal.leave_spinning
         rospy.loginfo(f"2024_shooting_server: sending shooter goal {shooter_goal}")
-        self.shooter_client.send_goal(shooter_goal, done_cb=shooter_done_cb) # there was a feedback callback here too, but I believe it contributes to a race condition
+        
+        if not SIM: self.shooter_client.send_goal(shooter_goal, done_cb=shooter_done_cb) # there was a feedback callback here too, but I believe it contributes to a race condition
         # what likely happens is feedback that we're not done yet is sent, then the result that we are done is sent as well as the feedback that we are done
         # we then receive that we are done (setting shooter_done=True) slightly *before* the second to last feedback message (saying we're not done) is received
         # this leads to shooter_done being set to False. we then don't receive the final feedback message, because SimpleActionClient ignores feedback sent after
@@ -286,12 +323,12 @@ class ShootingServer(object):
         def pivot_done_cb(state, result):
             nonlocal pivot_done
             pivot_done = True
-        self.pivot_client.send_goal(pivot_goal, done_cb=pivot_done_cb)
+        if not SIM: self.pivot_client.send_goal(pivot_goal, done_cb=pivot_done_cb)
         # rospy.loginfo("Sleeping for 0.25")
         # time.sleep(0.25)
         r = rospy.Rate(60.0)
 
-        while not (shooter_done and pivot_done):
+        while not (shooter_done and (pivot_done if goal.mode != goal.SLIDE else True)):
             rospy.loginfo_throttle(0.5, f"2024_shooting_server: waiting for {'shooter' if not shooter_done else ''} and {'pivot' if not pivot_done else ''}")
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_shooting_server: preempted")
