@@ -3,6 +3,7 @@
 import rospy
 import actionlib
 import time
+import math
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
@@ -16,6 +17,7 @@ from geometry_msgs.msg import Twist
 class ShootingServer(object):
 
     def __init__(self, name):
+        
         self.action_name = name
         self.result = Shooting2024Result()
         self.feedback = Shooting2024Feedback()
@@ -33,6 +35,10 @@ class ShootingServer(object):
 
         # used for driving back after amp shot
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
+        #self.cmd_vel_pub_ = rospy.Publisher("/auto_note_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
+        self.scaled_x_val = None
+        self.scaled_y_val = None
 
         # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
         speeds_map_param = rospy.get_param("speeds_map")
@@ -98,6 +104,8 @@ class ShootingServer(object):
         ddynrec.add_variable("shot_bottom_right_speed", "float/double variable", rospy.get_param("shot_bottom_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("shot_pivot_position", "float/double variable", rospy.get_param("shot_pivot_position"), 0.45, 1.5)
 
+        #is it worth putting a dnyamic move velocity thing as a dnyamically reconfigureable?
+
         ddynrec.start(self.dyn_rec_callback)
 
         # Subwoofer (constant speeds and angle)
@@ -142,6 +150,10 @@ class ShootingServer(object):
         #dynamic_move_time
         self.dynamic_move_time = rospy.get_param("dynamic_move_time")
 
+        #speed by which we move nad shoot
+        self.shoot_and_move_speed = rospy.get_param("shoot_and_move_speed")
+
+
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
@@ -179,6 +191,17 @@ class ShootingServer(object):
         self.shot_bottom_right_speed = config["shot_bottom_right_speed"]
         self.shot_pivot_position = config["shot_pivot_position"]
         return config
+    def cmd_vel_sub_magnitude_convert_callback(self, msg: geometry_msgs.TwistStamped):
+        #just find unit vector
+        #is it even msg.linear.x?
+        #the subscriber callback takes in objects of geometry_msgs.Twiststamped
+        x_val = msg.twist.linear.x
+        y_val = msg.twist.linear.y
+        vector_magnitude = math.hypot(x_val, y_val)
+        self.scaled_x_val = x_val / vector_magnitude
+        self.scaled_y_val = y_val / vector_magnitude
+
+
 
     def execute_cb(self, goal: Shooting2024Goal):
         if goal.cancel_movement:
@@ -322,16 +345,19 @@ class ShootingServer(object):
         if not goal.setup_only:
             rospy.loginfo("2024_shooting_server: shooting")
 
-            time_now = rospy.get_time()
-            if (shooter_goal.request_time > 0): #need to find a way to make this zero if we aren't moving while shooting
-                if ((time_now - shooter_goal.request_time) > self.dynamic_move_time):
-                    preshooter_goal = Clawster2024Goal()
-                    preshooter_goal.mode = preshooter_goal.OUTTAKE
-                    preshooter_goal.destination = preshooter_goal.PRESHOOTER
-                    #im actually so lost, but if this conditional is true, then send the note up to the shooter
-            #mentioned something about how shooter_goal.request_time would be zero by default?
+            if (shooter_goal.request_time > 0): 
+                #set speed to a constant velocity this will be 1m/s
+                #so this is a std_msgs_float64
+                cmd_vel_msg_move_and_shoot = Twist()
+            
+                while((rospy.Time.now()) - shooter_goal.request_time) < self.dynamic_move_time: 
+                    cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
+                    cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val 
+                    self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
 
-        
+                preshooter_goal = Clawster2024Goal()
+                preshooter_goal.mode = preshooter_goal.OUTTAKE
+                preshooter_goal.destination = preshooter_goal.PRESHOOTER
 
             preshooter_done = False
             def preshooter_done_cb(state, result):
