@@ -3,6 +3,7 @@
 import rospy
 import actionlib
 import time
+import math
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
@@ -18,6 +19,7 @@ SIM = False
 class ShootingServer(object):
 
     def __init__(self, name):
+        
         self.action_name = name
         self.result = Shooting2024Result()
         self.feedback = Shooting2024Feedback()
@@ -35,6 +37,10 @@ class ShootingServer(object):
 
         # used for driving back after amp shot
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
+        #self.cmd_vel_pub_ = rospy.Publisher("/auto_note_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
+        self.scaled_x_val = None
+        self.scaled_y_val = None
 
         # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
         speeds_map_param = rospy.get_param("speeds_map")
@@ -53,6 +59,11 @@ class ShootingServer(object):
 
         self.angle_map = InterpolatingMap()
         self.angle_map.container = {l[0]: l[1] for l in rospy.get_param("angle_map")}
+
+
+
+      
+
 
         # Amp (constant speeds and angle)
         self.amp_top_left_speed = rospy.get_param("amp_top_left_speed")
@@ -102,6 +113,8 @@ class ShootingServer(object):
         ddynrec.add_variable("slide_bottom_right_speed", "float/double variable", rospy.get_param("slide_bottom_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("slide_pivot_position", "float/double variable", rospy.get_param("slide_pivot_position"), 0.4, 1.5)
 
+        #is it worth putting a dnyamic move velocity thing as a dnyamically reconfigureable?
+
         ddynrec.start(self.dyn_rec_callback)
 
         # Subwoofer (constant speeds and angle)
@@ -150,6 +163,13 @@ class ShootingServer(object):
 
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
+        #dynamic_move_time
+        self.dynamic_move_time = rospy.get_param("dynamic_move_time")
+
+        #speed by which we move nad shoot
+        self.shoot_and_move_speed = rospy.get_param("shoot_and_move_speed")
+
+
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
@@ -193,6 +213,17 @@ class ShootingServer(object):
         self.slide_bottom_right_speed = config["slide_bottom_right_speed"]
         self.slide_pivot_position = config["slide_pivot_position"]
         return config
+    def cmd_vel_sub_magnitude_convert_callback(self, msg: geometry_msgs.TwistStamped):
+        #just find unit vector
+        #is it even msg.linear.x?
+        #the subscriber callback takes in objects of geometry_msgs.Twiststamped
+        x_val = msg.twist.linear.x
+        y_val = msg.twist.linear.y
+        vector_magnitude = math.hypot(x_val, y_val)
+        self.scaled_x_val = x_val / vector_magnitude
+        self.scaled_y_val = y_val / vector_magnitude
+
+
 
     def execute_cb(self, goal: Shooting2024Goal):
         if SIM:
@@ -217,8 +248,8 @@ class ShootingServer(object):
             self.server.set_succeeded(self.result)
             return
         
-        self.feedback.current_stage = self.feedback.SPINNING
-        self.server.publish_feedback(self.feedback)
+        #self.feedback.current_stage = self.feedback.SPINNING
+        #self.server.publish_feedback(self.feedback)
 
         shooter_goal = Shooter2024Goal()
         pivot_angle = None # default
@@ -331,7 +362,7 @@ class ShootingServer(object):
         rospy.loginfo(f"2024_shooting_server: pivoting to angle {pivot_angle}")
 
         self.feedback.current_stage = self.feedback.PIVOTING
-        self.server.publish_feedback(self.feedback)
+        #self.server.publish_feedback(self.feedback)
 
         pivot_goal = ShooterPivot2024Goal()
         pivot_goal.pivot_position = pivot_angle
@@ -365,12 +396,27 @@ class ShootingServer(object):
         if not goal.setup_only:
             rospy.loginfo("2024_shooting_server: shooting")
 
-            if (shooter_goal.request_time > 0): 
+            if (goal.request_time > 0): 
                 #set speed to a constant velocity this will be 1m/s
                 #so this is a std_msgs_float64
                 cmd_vel_msg_move_and_shoot = Twist()
             
-                while((rospy.Time.now()) - shooter_goal.request_time) < self.dynamic_move_time: 
+                while((rospy.Time.now()) - goal.request_time) < self.dynamic_move_time: 
+                    if self.server.is_preempt_requested():
+                        rospy.loginfo("2024_shooting_server: preempted preshooter")
+                        # ensure shooter turned off
+                        self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                        self.preshooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                        self.server.set_preempted()
+
+                        cmd_vel_msg_move_and_shoot.linear.x = 0
+                        cmd_vel_msg_move_and_shoot.linear.y = 0
+                        cmd_vel_msg_move_and_shoot.linear.z = 0
+                        cmd_vel_msg_move_and_shoot.angular.x = 0
+                        cmd_vel_msg_move_and_shoot.angular.y = 0
+                        cmd_vel_msg_move_and_shoot.angular.z = 0
+                        self.cmd_vel.publish(cmd_vel_msg_move_and_shoot)
+
                     cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                     cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val 
                     self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
@@ -397,7 +443,7 @@ class ShootingServer(object):
 
                     # ensure pivot at good position
                     pivot_goal.pivot_position = 0.5
-                    self.pivot_client.send_goal(pivot_goal)
+                    #self.pivot_client.send_goal(pivot_goal)
                     # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     # stop preshooter
@@ -455,7 +501,7 @@ class ShootingServer(object):
                 self.cmd_vel_pub.publish(cmd_vel_msg)
 
             pivot_goal.pivot_position = 0.5
-            self.pivot_client.send_goal(pivot_goal)
+            #self.pivot_client.send_goal(pivot_goal)
 
             rospy.loginfo("2024_shooting_server: +5 points hopefully")
         
@@ -474,7 +520,7 @@ class ShootingServer(object):
 
         self.result.success = True
         rospy.loginfo("2024_shooting_server: succeeded")
-        self.server.set_succeeded(self.result)
+        #self.server.set_succeeded(self.result)
 
 if __name__ == '__main__':
     rospy.init_node('shooting_server_2024')
