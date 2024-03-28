@@ -14,6 +14,7 @@
 #include <boost/bind.hpp>
 
 #include "std_srvs/Empty.h"
+#include "std_srvs/SetBool.h"
 
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
@@ -39,6 +40,7 @@ bool diagnostics_mode = false;
 ros::ServiceClient ParkSrv;
 ros::ServiceClient IMUZeroSrv;
 ros::ServiceClient SwerveOdomZeroSrv;
+ros::ServiceClient toggle_relocalize_srv_;
 
 bool joystick1_left_trigger_pressed = false;
 bool joystick1_right_trigger_pressed = false;
@@ -47,6 +49,7 @@ std::unique_ptr<Driver> driver;
 
 uint8_t alliance_color{};
 bool called_park_endgame = false;
+bool last_enabled = false;
 
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
@@ -65,6 +68,14 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 			ROS_INFO("ParkSrv called");
 		}
 	}
+	if (last_enabled && !msg.Enabled) {
+		std_srvs::SetBool toggle_relocalize;
+		toggle_relocalize.request.data = true;
+		if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
+			ROS_ERROR_STREAM("FAILED TO ENABLE RELOCALIZING WITH CMD_VEL");
+		}
+	}
+	last_enabled = msg.Enabled;
 }
 
 ros::ServiceClient setCenterSrv;
@@ -358,6 +369,7 @@ void TeleopInitializer::init() {
 	IMUZeroSrv = n_.serviceClient<imu_zero_msgs::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 	setCenterSrv = n_.serviceClient<talon_swerve_drive_controller_msgs::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	SwerveOdomZeroSrv = n_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
+	toggle_relocalize_srv_ = n_.serviceClient<std_srvs::SetBool>("/toggle_map_to_odom", false, service_connection_header);
 #ifdef NEED_JOINT_STATES
 	ros::Subscriber joint_states_sub = n_.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 #endif

@@ -184,7 +184,9 @@ class AlignAndShoot:
             rospy.logerr_throttle(0.5, f"2024_align_and_shoot: {e}")
 
     def execute_cb(self, goal: AlignAndShoot2024Goal):
-        r = rospy.Rate(20)
+        self.align_to_speaker_done = False
+
+        r = rospy.Rate(60)
         align_to_speaker_goal = AlignToSpeaker2024Goal()
         shooting_goal = Shooting2024Goal()
 
@@ -201,7 +203,7 @@ class AlignAndShoot:
 
         # We want to run this loop while rospy is not shutdown, and:
         # we have not relocalized recently OR we have not aligned to speaker OR we are not done shooting
-        while not (relocalized_recently and self.align_to_speaker_done) and not self.stopped and not rospy.is_shutdown():
+        while (not relocalized_recently) or (not self.align_to_speaker_done) or (not self.stopped) and not rospy.is_shutdown():
             relocalized_recently = (rospy.Time.now() - self.last_relocalized) < rospy.Duration(self.localization_timeout)
             rospy.loginfo_throttle(0.1, f"2024_align_and_shoot: aligning waiting on {'speaker' if not self.align_to_speaker_done else ''} {'shooting' if not self.shooting_done else ''} {'stopping' if not self.stopped else ''}")
             if self.server.is_preempt_requested():

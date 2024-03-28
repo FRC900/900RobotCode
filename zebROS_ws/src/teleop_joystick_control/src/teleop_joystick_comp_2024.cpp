@@ -591,6 +591,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		driver->setJoystickOverride(false);
+		std_srvs::SetBool toggle_relocalize;
+		toggle_relocalize.request.data = true;
+		if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
+			ROS_ERROR_STREAM("FAILED TO ENABLE RELOCALIZING WITH CMD_VEL");
+		}
 	}
 	if (button_box->redRelease)
 	{

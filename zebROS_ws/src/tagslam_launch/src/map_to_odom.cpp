@@ -12,6 +12,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <std_msgs/Bool.h>
 #include "behavior_actions/RelocalizePoint.h"
+#include "field_obj/Detection.h"
 
 
 
@@ -60,6 +61,11 @@ ros::Publisher last_relocalized_pub;
 tf2_ros::Buffer tf_buffer;
 geometry_msgs::TransformStamped map_odom_tf;
 geometry_msgs::TransformStamped relocalized_point_tf;
+
+ros::Subscriber front_tags_sub;
+ros::Subscriber back_tags_sub;
+
+ros::Time last_tag_sighting = ros::Time(0);
 
 ros::Time last_tf_pub = ros::Time(0);
 
@@ -181,7 +187,9 @@ bool service_cb(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*
     tfbr->sendTransform(map_odom_tf);
     std_msgs::Header msg;
     msg.stamp = ros::Time::now();
-    last_relocalized_pub.publish(msg);
+    if ((ros::Time::now() - last_tag_sighting).toSec() < transform_timeout) {
+      last_relocalized_pub.publish(msg);
+    }
     last_tf_pub = ros::Time::now();
   }
   else {
@@ -203,7 +211,9 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
         tfbr->sendTransform(map_odom_tf);
         std_msgs::Header msg;
         msg.stamp = map_odom_tf.header.stamp;
-        last_relocalized_pub.publish(msg);
+        if ((ros::Time::now() - last_tag_sighting).toSec() < transform_timeout) {
+          last_relocalized_pub.publish(msg);
+        }
         last_tf_pub = ros::Time::now();
       }
     }
@@ -213,10 +223,18 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
       tfbr->sendTransform(relocalized_point_tf);
       std_msgs::Header msg;
       msg.stamp = relocalized_point_tf.header.stamp;
-      last_relocalized_pub.publish(msg);
+      if ((ros::Time::now() - last_tag_sighting).toSec() < transform_timeout) {
+        last_relocalized_pub.publish(msg);
+      }
       last_tf_pub = ros::Time::now();
       ROS_WARN_STREAM_THROTTLE(2, "Shifting odom with service ");
     }
+  }
+}
+
+void tagCallback(const field_obj::DetectionConstPtr &msg) {
+  if (msg->objects.size() > 0) {
+    last_tag_sighting = msg->header.stamp;
   }
 }
 
@@ -240,7 +258,9 @@ bool relocalize_to_point_cb(behavior_actions::RelocalizePoint::Request &req, beh
   tfbr->sendTransform(relocalized_point_tf);
   std_msgs::Header msg;
   msg.stamp = relocalized_point_tf.header.stamp;
-  last_relocalized_pub.publish(msg);
+  if ((ros::Time::now() - last_tag_sighting).toSec() < transform_timeout) {
+    last_relocalized_pub.publish(msg);
+  }
   last_tf_pub = ros::Time::now();
   return true;
 }
@@ -307,13 +327,17 @@ int main(int argc, char **argv) {
   ros::ServiceServer toggle_relocalize = nh_.advertiseService("toggle_map_to_odom", toggle_service_cb);
 
   ros::Subscriber cmd_vel_sub = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, cmdVelCallback);
+  front_tags_sub = nh_.subscribe("/apriltag_zedx_front/tag_detection_world", 1, tagCallback);
+  back_tags_sub = nh_.subscribe("/apriltag_zedx_back//tag_detection_world", 1, tagCallback);
   last_relocalized_pub = nh_.advertise<std_msgs::Header>("/last_relocalize", 1, true);
   updateMapOdomTf();
   if (map_odom_tf.header.frame_id == map_frame_id) {
     tfbr->sendTransform(map_odom_tf);
     std_msgs::Header msg;
     msg.stamp = ros::Time::now();
-    last_relocalized_pub.publish(msg);
+    if ((ros::Time::now() - last_tag_sighting).toSec() < transform_timeout) {
+      last_relocalized_pub.publish(msg);
+    }
     last_tf_pub = ros::Time::now();
   }
   ros::spin();

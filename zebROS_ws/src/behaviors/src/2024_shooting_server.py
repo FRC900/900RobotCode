@@ -67,40 +67,40 @@ class ShootingServer(object):
         ddynrec.add_variable("subwoofer_top_right_speed", "float/double variable", rospy.get_param("subwoofer_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("subwoofer_bottom_left_speed", "float/double variable", rospy.get_param("subwoofer_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("subwoofer_bottom_right_speed", "float/double variable", rospy.get_param("subwoofer_bottom_right_speed"), 0.0, 1000.0)
-        ddynrec.add_variable("subwoofer_pivot_position", "float/double variable", rospy.get_param("subwoofer_pivot_position"), 0.45, 3.0)
+        ddynrec.add_variable("subwoofer_pivot_position", "float/double variable", rospy.get_param("subwoofer_pivot_position"), 0.35, 3.0)
 
         ddynrec.add_variable("amp_top_left_speed", "float/double variable", rospy.get_param("amp_top_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("amp_top_right_speed", "float/double variable", rospy.get_param("amp_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("amp_bottom_left_speed", "float/double variable", rospy.get_param("amp_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("amp_bottom_right_speed", "float/double variable", rospy.get_param("amp_bottom_right_speed"), 0.0, 1000.0)
-        ddynrec.add_variable("amp_pivot_position", "float/double variable", rospy.get_param("amp_pivot_position"), 0.45, 3.0)
+        ddynrec.add_variable("amp_pivot_position", "float/double variable", rospy.get_param("amp_pivot_position"), 0.35, 3.0)
 
         ddynrec.add_variable("trap_top_left_speed", "float/double variable", rospy.get_param("trap_top_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("trap_top_right_speed", "float/double variable", rospy.get_param("trap_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("trap_bottom_left_speed", "float/double variable", rospy.get_param("trap_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("trap_bottom_right_speed", "float/double variable", rospy.get_param("trap_bottom_right_speed"), 0.0, 1000.0)
-        ddynrec.add_variable("trap_pivot_position", "float/double variable", rospy.get_param("trap_pivot_position"), 0.45, 3.0)
+        ddynrec.add_variable("trap_pivot_position", "float/double variable", rospy.get_param("trap_pivot_position"), 0.35, 3.0)
         
         #lob_pass configs
         ddynrec.add_variable("lob_top_left_speed", "float/double variable", rospy.get_param("lob_top_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("lob_top_right_speed", "float/double variable", rospy.get_param("lob_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("lob_bottom_left_speed", "float/double variable", rospy.get_param("lob_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("lob_bottom_right_speed", "float/double variable", rospy.get_param("lob_bottom_right_speed"), 0.0, 1000.0)
-        ddynrec.add_variable("lob_pivot_position", "float/double variable", rospy.get_param("lob_pivot_position"), 0.45, 3.0)
+        ddynrec.add_variable("lob_pivot_position", "float/double variable", rospy.get_param("lob_pivot_position"), 0.35, 3.0)
 
         #shot_pass configs
         ddynrec.add_variable("shot_top_left_speed", "float/double variable", rospy.get_param("shot_top_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("shot_top_right_speed", "float/double variable", rospy.get_param("shot_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("shot_bottom_left_speed", "float/double variable", rospy.get_param("shot_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("shot_bottom_right_speed", "float/double variable", rospy.get_param("shot_bottom_right_speed"), 0.0, 1000.0)
-        ddynrec.add_variable("shot_pivot_position", "float/double variable", rospy.get_param("shot_pivot_position"), 0.45, 3.0)
+        ddynrec.add_variable("shot_pivot_position", "float/double variable", rospy.get_param("shot_pivot_position"), 0.35, 3.0)
 
         #slide configs
         ddynrec.add_variable("slide_top_left_speed", "float/double variable", rospy.get_param("slide_top_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("slide_top_right_speed", "float/double variable", rospy.get_param("slide_top_right_speed"), 0.0, 1000.0)
         ddynrec.add_variable("slide_bottom_left_speed", "float/double variable", rospy.get_param("slide_bottom_left_speed"), 0.0, 1000.0)
         ddynrec.add_variable("slide_bottom_right_speed", "float/double variable", rospy.get_param("slide_bottom_right_speed"), 0.0, 1000.0)
-        ddynrec.add_variable("slide_pivot_position", "float/double variable", rospy.get_param("slide_pivot_position"), 0.4, 1.5)
+        ddynrec.add_variable("slide_pivot_position", "float/double variable", rospy.get_param("slide_pivot_position"), 0.35, 1.5)
 
         ddynrec.start(self.dyn_rec_callback)
 
