@@ -1,4 +1,6 @@
 #include <ros/console.h>
+#include <cmath>
+#include <opencv2/imgproc.hpp>
 
 #include "gpu_apriltag/gpu_apriltag_impl.h"
 
@@ -27,13 +29,13 @@ static frc971::apriltag::DistCoeffs getDistCoeffs(const sensor_msgs::CameraInfo:
   };
 }
 
-static apriltag_detector_t *makeTagDetector(apriltag_family_t *tag_family, const bool debug = false)
+static apriltag_detector_t *makeTagDetector(apriltag_family_t *tag_family, const size_t num_threads, const bool debug = false)
 {
     auto tag_detector = apriltag_detector_create();
 
     apriltag_detector_add_family_bits(tag_detector, tag_family, 1);
 
-    tag_detector->nthreads = 6;
+    tag_detector->nthreads = 2;
     tag_detector->wp = workerpool_create(tag_detector->nthreads);
     tag_detector->qtp.min_white_black_diff = 5;
     tag_detector->debug = debug;
@@ -66,12 +68,16 @@ static void setPose(GpuApriltagResult &result, const apriltag_pose_t &pose)
 
 FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info)
     : tag_family_{tag36h11_create()}
-    , tag_detector_{makeTagDetector(tag_family_)}
+    , tag_detector_{makeTagDetector(tag_family_, 2, false)}
     , intrinsics_{cv::Mat(3, 3, CV_64F, const_cast<double *>(camera_info->K.data()))}
     , distortion_camera_matrix_{getCameraMatrix(camera_info)}
     , distortion_coefficients_{getDistCoeffs(camera_info)}
     , gpu_detector_{camera_info->width, camera_info->height, tag_detector_, distortion_camera_matrix_, distortion_coefficients_}
 {
+    // Create two empty mats. One will be used to store the grayscale image, and the other will be used to store
+    // zeroes, since the apriltag detector just exracts the Y channel as the greyscale pixel value
+    image_channels_.emplace_back(cv::Mat::zeros(camera_info->height, camera_info->width, CV_8UC1));
+    image_channels_.emplace_back(cv::Mat::zeros(camera_info->height, camera_info->width, CV_8UC1));
 }
 
 FRC971GpuApriltagDetectorImpl::~FRC971GpuApriltagDetectorImpl()
@@ -81,11 +87,14 @@ FRC971GpuApriltagDetectorImpl::~FRC971GpuApriltagDetectorImpl()
 }
 
 void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &results,
-                                        std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
-                                        std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
-                                        const cv::Mat &color_image)
+                                           std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
+                                           std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
+                                           const cv::Mat &color_image)
 {
-    gpu_detector_.Detect(color_image.data);
+    // TODO : add a GPU kernel to do this conversion
+    cv::cvtColor(color_image, image_channels_[0], cv::COLOR_BGR2GRAY);
+    merge(image_channels_, fake_y_cb_cr_image_);
+    gpu_detector_.Detect(fake_y_cb_cr_image_.data);
     image_size_ = color_image.size();
 
     const zarray_t *detections = gpu_detector_.Detections();
@@ -104,7 +113,7 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
 
         zarray_get(detections, i, &gpu_detection);
 
-        bool valid = gpu_detection->decision_margin > min_decision_margin_;
+        const bool valid = gpu_detection->decision_margin > min_decision_margin_;
 
         if (valid)
         {
@@ -140,18 +149,7 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
                                                  << " hamming: " << gpu_detection->hamming
                                                  << " margin: " << gpu_detection->decision_margin);
 
-            // First create an apriltag_detection_info_t struct using your known
-            // parameters.
-            apriltag_detection_info_t info;
-            info.tagsize = tag_size_;
-
-            info.fx = intrinsics_.at<double>(0, 0);
-            info.fy = intrinsics_.at<double>(1, 1);
-            info.cx = intrinsics_.at<double>(0, 2);
-            info.cy = intrinsics_.at<double>(1, 2);
-
-            // Send original corner points in green
-            auto orig_corner_points = MakeCornerArray(gpu_detection); // Vector needed for compatability with existing code
+            auto orig_corner_points = MakeCornerArray(gpu_detection);
 
             const bool converged = UndistortDetection(gpu_detection);
 
@@ -164,6 +162,21 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
                 rejections_++;
                 continue;
             }
+            auto corner_points = MakeCornerArray(gpu_detection);
+
+            const double distortion_factor =
+                ComputeDistortionFactor(orig_corner_points, corner_points);
+#if 0
+            // First create an apriltag_detection_info_t struct using your known
+            // parameters.
+            apriltag_detection_info_t info;
+            info.tagsize = tag_size_;
+
+            info.fx = intrinsics_.at<double>(0, 0);
+            info.fy = intrinsics_.at<double>(1, 1);
+            info.cx = intrinsics_.at<double>(0, 2);
+            info.cy = intrinsics_.at<double>(1, 2);
+
 
             // We're setting this here to use the undistorted corner points in pose estimation.
             info.det = gpu_detection;
@@ -186,17 +199,11 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
             //                                     before_pose_estimation)
             //                .count()
             //         << " seconds for pose estimation";
-            ROS_DEBUG_STREAM("Pose err 1: " << std::setprecision(20) << std::fixed
+            ROS_INFO_STREAM("Pose err 1: " << std::setprecision(20) << std::fixed
                                             << pose_error_1 << " " << (pose_error_1 < 1e-6 ? "Good" : "Bad"));
-            ROS_DEBUG_STREAM("Pose err 2: " << std::setprecision(20) << std::fixed
+            ROS_INFO_STREAM("Pose err 2: " << std::setprecision(20) << std::fixed
                                             << pose_error_2 << " " << (pose_error_2 < 1e-6 ? "Good" : "Bad"));
 
-            // Send undistorted corner points in pink
-
-            auto corner_points = MakeCornerArray(gpu_detection); // Vector needed for compatability with existing code
-
-            const double distortion_factor =
-                ComputeDistortionFactor(orig_corner_points, corner_points);
 
             // We get two estimates for poses.
             // Choose the one with the lower pose estimation error
@@ -206,28 +213,38 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
             const double best_pose_error = (use_pose_1 ? pose_error_1 : pose_error_2);
             const double secondary_pose_error = (use_pose_1 ? pose_error_2 : pose_error_1);
 
-            CHECK_NE(best_pose_error, std::numeric_limits<double>::infinity())
-                << "Got no valid pose estimations, this should not be possible.";
-            const double pose_error_ratio = best_pose_error / secondary_pose_error;
+            // CHECK_NE(best_pose_error, std::numeric_limits<double>::infinity())
+            //     << "Got no valid pose estimations, this should not be possible.";
+            double pose_error_ratio = 0.;
+            if (!std::isfinite(best_pose_error))
+            {
+                pose_error_ratio = best_pose_error / secondary_pose_error;
+            }
 
             // Destroy the secondary pose if we got one
             if (secondary_pose_error != std::numeric_limits<double>::infinity())
             {
                 DestroyPose(&secondary_pose);
             }
+#endif
 
             results.emplace_back(GpuApriltagResult{});
             results.back().id_ = gpu_detection->id;
             results.back().hamming_ = gpu_detection->hamming;
-            results.back().pose_error_ = best_pose_error;
             results.back().distortion_factor_ = distortion_factor;
-            results.back().pose_error_ratio_ = pose_error_ratio;
             results.back().original_corners_ = orig_corner_points;
             results.back().undistorted_corners_ = corner_points;
             results.back().center_ = cv::Point2d{gpu_detection->c[0], gpu_detection->c[1]};
-            setPose(results.back(), best_pose);
 
-            DestroyPose(&best_pose);
+#if 0
+            results.back().pose_error_ = best_pose_error;
+            results.back().pose_error_ratio_ = pose_error_ratio;
+            if (std::isfinite(best_pose_error))
+            {
+                setPose(results.back(), best_pose);
+                DestroyPose(&best_pose);
+            }
+#endif
 
             ROS_DEBUG_STREAM("Found tag number " << gpu_detection->id
                                                  << " hamming: " << gpu_detection->hamming

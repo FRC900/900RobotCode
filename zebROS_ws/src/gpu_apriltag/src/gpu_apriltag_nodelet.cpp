@@ -22,7 +22,7 @@ public:
         auto base_nh = getNodeHandle();
 
         image_transport::ImageTransport base_it(base_nh);
-        camera_sub_ = base_it.subscribeCamera("image_rect_color", 1, &FRC971GpuApriltagNodelet::callback, this);
+        camera_sub_ = base_it.subscribeCamera("image_rect_color", 10, &FRC971GpuApriltagNodelet::callback, this);
         pub_apriltag_detections_ = nh_.advertise<apriltag_msgs::ApriltagArrayStamped>("tags", 1);
         pub_apriltag_poses_ = nh_.advertise<apriltag_msgs::ApriltagPoseStamped>("poses", 1);
         image_transport::ImageTransport it(nh_);
@@ -68,6 +68,7 @@ public:
                 msg.corners[i].y = result.undistorted_corners_[i].y;
             }
         }
+        pub_apriltag_detections_.publish(apriltag_array);
 
         if (pub_debug_image_.getNumSubscribers() > 0)
         {
