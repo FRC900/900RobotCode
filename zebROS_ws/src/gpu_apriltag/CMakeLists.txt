@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.21)
 project(gpu_apriltag)
 enable_language(CUDA)
 
@@ -137,12 +137,32 @@ include_directories(
   ${CUDA_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${FRC971}
+  ${FRC971}/third_party/apriltag
 )
 
+set_source_files_properties(${FRC971}/frc971/orin/apriltag.cc PROPERTIES LANGUAGE CUDA)
+set_source_files_properties(${FRC971}/frc971/orin/apriltag_detect.cc PROPERTIES LANGUAGE CUDA)
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/gpu_apriltag.cu
+  src/gpu_apriltag_impl.cu
   src/gpu_apriltag_nodelet.cpp
+  ${FRC971}/frc971/orin/apriltag.cc
+  ${FRC971}/frc971/orin/apriltag_detect.cc
+  ${FRC971}/third_party/apriltag/apriltag.c
+  ${FRC971}/third_party/apriltag/apriltag_pose.c
+  ${FRC971}/third_party/apriltag/apriltag_quad_thresh.c
+  ${FRC971}/third_party/apriltag/tag36h11.c
+  ${FRC971}/third_party/apriltag/common/g2d.c
+  ${FRC971}/third_party/apriltag/common/homography.c
+  ${FRC971}/third_party/apriltag/common/image_u8.c
+  ${FRC971}/third_party/apriltag/common/image_u8x3.c
+  ${FRC971}/third_party/apriltag/common/matd.c
+  ${FRC971}/third_party/apriltag/common/pnm.c
+  ${FRC971}/third_party/apriltag/common/time_util.c
+  ${FRC971}/third_party/apriltag/common/svd22.c
+  ${FRC971}/third_party/apriltag/common/workerpool.c
+  ${FRC971}/third_party/apriltag/common/zmaxheap.c
 )
 
 ## Add cmake target dependencies of the library
@@ -157,27 +177,39 @@ target_link_libraries(${PROJECT_NAME}
   ${CUDA_LIBRARIES} 
   ${LIBNVTOOLSEXT}
 )
-set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86")
+set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86;87")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gpu_apriltag_node.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+add_executable(${PROJECT_NAME}_node src/gpu_apriltag_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(${PROJECT_NAME}_node
+  ${catkin_LIBRARIES}
+)
+
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(${PROJECT_NAME}_test src/gpu_apriltag_test.cu)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(${PROJECT_NAME}_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_test
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
+set_target_properties(${PROJECT_NAME}_test PROPERTIES CUDA_ARCHITECTURES "86;87")
+set_property(TARGET ${PROJECT_NAME}_test PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 #############
 ## Install ##
