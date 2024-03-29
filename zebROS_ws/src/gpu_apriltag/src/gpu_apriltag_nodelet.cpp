@@ -26,7 +26,7 @@ public:
         pub_apriltag_detections_ = nh_.advertise<apriltag_msgs::ApriltagArrayStamped>("tags", 1);
         pub_apriltag_poses_ = nh_.advertise<apriltag_msgs::ApriltagPoseStamped>("poses", 1);
         image_transport::ImageTransport it(nh_);
-        // pub_debug_image_ = it.advertise("debug_image", 2);
+        pub_debug_image_ = it.advertise("debug_image", 1);
         // pub_stage1_grid_debug_image_ = it.advertise("stage1_grid_debug_image", 2);
         // pub_stage1_ssd_debug_image_ = it.advertise("stage1_ssd_debug_image", 2);
         // save_input_image_srv_ = base_nh.advertiseService("save_input_image", &DeeptagRosNodelet::saveInputImageCallback, this);
@@ -118,3 +118,6 @@ private:
 };
 
 } // namespace
+
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(frc971_gpu_apriltag::FRC971GpuApriltagNodelet, nodelet::Nodelet)
