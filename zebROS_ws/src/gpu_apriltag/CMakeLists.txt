@@ -27,12 +27,14 @@ find_package(catkin REQUIRED COMPONENTS
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
 
 # Use the correct version of CUDA
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 find_library(LIBNVTOOLSEXT nvToolsExt PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+find_package(glog REQUIRED)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -129,11 +131,15 @@ catkin_package(
 ## Build ##
 ###########
 
+# add_definitions(-DTHRUST_IGNORE_CUB_VERSION_CHECK)
 set (FRC971 ../../../971-Robot-Code)
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
   include
+  ../../../cccl/cub
+  ../../../cccl/thrust
+  ../../../cccl/libcudacxx/include
   ${CUDA_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${FRC971}
@@ -142,13 +148,22 @@ include_directories(
 
 set_source_files_properties(${FRC971}/frc971/orin/apriltag.cc PROPERTIES LANGUAGE CUDA)
 set_source_files_properties(${FRC971}/frc971/orin/apriltag_detect.cc PROPERTIES LANGUAGE CUDA)
+set_source_files_properties(${FRC971}/frc971/orin/cuda.cc PROPERTIES LANGUAGE CUDA)
+set_source_files_properties(${FRC971}/frc971/orin/labeling_allegretti_2019_BKE.cc PROPERTIES LANGUAGE CUDA)
+set_source_files_properties(${FRC971}/frc971/orin/line_fit_filter.cc PROPERTIES LANGUAGE CUDA)
+set_source_files_properties(${FRC971}/frc971/orin/threshold.cc PROPERTIES LANGUAGE CUDA)
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/gpu_apriltag.cu
   src/gpu_apriltag_impl.cu
   src/gpu_apriltag_nodelet.cpp
+  src/stubs.cpp
   ${FRC971}/frc971/orin/apriltag.cc
   ${FRC971}/frc971/orin/apriltag_detect.cc
+  ${FRC971}/frc971/orin/cuda.cc
+  ${FRC971}/frc971/orin/labeling_allegretti_2019_BKE.cc
+  ${FRC971}/frc971/orin/line_fit_filter.cc
+  ${FRC971}/frc971/orin/threshold.cc
   ${FRC971}/third_party/apriltag/apriltag.c
   ${FRC971}/third_party/apriltag/apriltag_pose.c
   ${FRC971}/third_party/apriltag/apriltag_quad_thresh.c
@@ -176,6 +191,7 @@ target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBS}
   ${CUDA_LIBRARIES} 
   ${LIBNVTOOLSEXT}
+  glog::glog
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86;87")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
@@ -192,6 +208,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  glog::glog
 )
 
 ## Declare a C++ executable
@@ -207,6 +224,7 @@ add_dependencies(${PROJECT_NAME}_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(${PROJECT_NAME}_test
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
+  glog::glog
 )
 set_target_properties(${PROJECT_NAME}_test PROPERTIES CUDA_ARCHITECTURES "86;87")
 set_property(TARGET ${PROJECT_NAME}_test PROPERTY CUDA_SEPARABLE_COMPILATION ON)

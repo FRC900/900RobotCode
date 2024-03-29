@@ -15,14 +15,14 @@ public:
     FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info);
     virtual ~FRC971GpuApriltagDetectorImpl();
     void Detect(std::vector<GpuApriltagResult> &results,
-                std::vector<std::array<cv::Point2f, 4>> &rejected_margin_corners,
-                std::vector<std::array<cv::Point2f, 4>> &rejected_noconverge_corners,
+                std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
+                std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
                 const cv::Mat &color_image);
 
 private:
     bool UndistortDetection(apriltag_detection_t *det) const;
-    double ComputeDistortionFactor(const std::array<cv::Point2f, 4> &orig_corners,
-                                   const std::array<cv::Point2f, 4> &corners) const;
+    double ComputeDistortionFactor(const std::array<cv::Point2d, 4> &orig_corners,
+                                   const std::array<cv::Point2d, 4> &corners) const;
 
     apriltag_family_t *tag_family_;
     apriltag_detector_t *tag_detector_;

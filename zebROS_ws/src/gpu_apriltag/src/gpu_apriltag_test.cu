@@ -1,5 +1,5 @@
 
-#include <ros/nodelet.h>
+#include <nodelet/nodelet.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
 
@@ -11,9 +11,9 @@ public:
     FRC971GpuApriltagNodelet(void) = default;
     ~FRC971GpuApriltagNodelet() override = default;
     void onInit() override;
-    void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info)
-}
+    void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info);
 };
+}
 int main(void)
 {
 
@@ -22,5 +22,6 @@ nodelet.onInit();
 sensor_msgs::ImageConstPtr image;
 sensor_msgs::CameraInfoConstPtr camera_info;
 nodelet.callback(image, camera_info);
+return 0;
 
 }

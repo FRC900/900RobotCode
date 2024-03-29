@@ -47,12 +47,12 @@ static void DestroyPose(apriltag_pose_t *pose)
     matd_destroy(pose->t);
 }
 
-static std::array<cv::Point2f, 4> MakeCornerArray(const apriltag_detection_t *det)
+static std::array<cv::Point2d, 4> MakeCornerArray(const apriltag_detection_t *det)
 {
-    std::array<cv::Point2f, 4> corner_points;
+    std::array<cv::Point2d, 4> corner_points;
     for (size_t i = 0; i < corner_points.size(); i++)
     {
-        corner_points[i] = cv::Point2f(det->p[i][0], det->p[i][1]);
+        corner_points[i] = cv::Point2d(det->p[i][0], det->p[i][1]);
     }
 
     return corner_points;
@@ -60,8 +60,8 @@ static std::array<cv::Point2f, 4> MakeCornerArray(const apriltag_detection_t *de
 
 static void setPose(GpuApriltagResult &result, const apriltag_pose_t &pose)
 {
-    result.position_ = cv::Point3f(pose.t->data[0], pose.t->data[1], pose.t->data[2]);
-    result.orientation_ = cv::Quatf(pose.R->data[0], pose.R->data[1], pose.R->data[2], pose.R->data[3]);
+    result.position_ = cv::Point3d(pose.t->data[0], pose.t->data[1], pose.t->data[2]);
+    result.orientation_ = cv::Quatd(pose.R->data[0], pose.R->data[1], pose.R->data[2], pose.R->data[3]);
 }
 
 FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info)
@@ -81,8 +81,8 @@ FRC971GpuApriltagDetectorImpl::~FRC971GpuApriltagDetectorImpl()
 }
 
 void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &results,
-                                        std::vector<std::array<cv::Point2f, 4>> &rejected_margin_corners,
-                                        std::vector<std::array<cv::Point2f, 4>> &rejected_noconverge_corners,
+                                        std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
+                                        std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
                                         const cv::Mat &color_image)
 {
     gpu_detector_.Detect(color_image.data);
@@ -217,11 +217,14 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
             }
 
             results.emplace_back(GpuApriltagResult{});
+            results.back().id_ = gpu_detection->id;
+            results.back().hamming_ = gpu_detection->hamming;
             results.back().pose_error_ = best_pose_error;
             results.back().distortion_factor_ = distortion_factor;
             results.back().pose_error_ratio_ = pose_error_ratio;
             results.back().original_corners_ = orig_corner_points;
             results.back().undistorted_corners_ = corner_points;
+            results.back().center_ = cv::Point2d{gpu_detection->c[0], gpu_detection->c[1]};
             setPose(results.back(), best_pose);
 
             DestroyPose(&best_pose);
@@ -255,8 +258,8 @@ bool FRC971GpuApriltagDetectorImpl::UndistortDetection(apriltag_detection_t *det
 }
 
 double FRC971GpuApriltagDetectorImpl::ComputeDistortionFactor(
-    const std::array<cv::Point2f, 4> &orig_corners,
-    const std::array<cv::Point2f, 4> &corners) const
+    const std::array<cv::Point2d, 4> &orig_corners,
+    const std::array<cv::Point2d, 4> &corners) const
 {
     double avg_distance = 0.0;
     for (size_t i = 0; i < corners.size(); i++)

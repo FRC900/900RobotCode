@@ -7,3 +7,6 @@
 [submodule "971-Robot-Code"]
 	path = 971-Robot-Code
 	url = https://github.com/frc971/971-Robot-Code.git
+[submodule "cccl"]
+	path = cccl
+	url = https://github.com/NVIDIA/cccl.git

@@ -6,13 +6,16 @@
 
 struct GpuApriltagResult
 {
-    cv::Point3f position_;
-    cv::Quatf orientation_;
+    cv::Point3d position_;
+    cv::Quatd orientation_;
+    int id_;
+    int hamming_;
     double pose_error_;
     double distortion_factor_;
     double pose_error_ratio_;
-    std::array<cv::Point2f, 4> original_corners_;
-    std::array<cv::Point2f, 4> undistorted_corners_;
+    cv::Point2d center_;
+    std::array<cv::Point2d, 4> original_corners_;
+    std::array<cv::Point2d, 4> undistorted_corners_;
 };
 
 #endif
