@@ -6,6 +6,7 @@ import time
 import math
 import std_msgs.msg
 import behavior_actions.msg
+import numpy
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
 from behavior_actions.msg import MoveWhileShooting2024Goal, MoveWhileShooting2024Feedback, MoveWhileShooting2024Result, MoveWhileShooting2024Action
@@ -42,7 +43,12 @@ class ShootingServer(object):
         self.angle_puller = rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, self.dist_and_ang_cb, tcp_nodelay=True ,queue_size=1)
         self.angle_cb = 0.0
         self.distance_cb = 0.0
+        self.feedback_error_value = 0.0
         #creating angle_puller to subscribe nad read twist values, this should align the robot accorindlgy
+
+        #        self.pub_cmd_vel = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+        self.sub_cmd_vel = rospy.Subscriber("/speaker_align/cmd_vel", Twist, self.correction_ang_cb, tcp_nodelay=True, queue_size=1)
+        self.current_orient_effort_cb = 0.0
 
         self.shooting_client = actionlib.SimpleActionClient('/shooting/shooting_server_2024', Shooting2024Action)
         rospy.loginfo("Waiting for shooting server")
@@ -63,10 +69,17 @@ class ShootingServer(object):
         self.shooting_done = (feedback.current_stage == feedback.SHOOTING)
         rospy.logwarn("2024 Align and shoot: Shooting done!")
 
+    def correction_ang_cb(self, msg):
+        rospy.loginfo("2024_move_while_shooting_server.py got correctoin_ang_cb")
+        #angular.z
+        self.current_orient_effort_cb = msg.angular.z
+
     def dist_and_ang_cb(self, msg):
         self.angle_cb = msg.angle
         self.distane_cb = msg.distance
-        self.angle_holder = self.angle_cb
+
+        self.angle_holder = self.angle_cb #might have to use this one?
+        self.feedback_error_value = msg.feedback_error_value
         rospy.loginfo("self.angle_twist_z has the new angle")
         
     def cmd_vel_sub_magnitude_convert_callback(self, msg: TwistStamped):
@@ -86,6 +99,7 @@ class ShootingServer(object):
                 rospy.loginfo("2024_shooting_server, convert callback")
                 self.scaled_y_val = y_val / vector_magnitude
                 rospy.loginfo("2024_shooting_server, convert callback")
+
 
     def execute_cb(self, goal: MoveWhileShooting2024Goal):
         rospy.loginfo("move while shooting server 2024: has received execute cb")
@@ -107,9 +121,10 @@ class ShootingServer(object):
         rospy.loginfo("got here send shooting client cb")
 
         align_to_speaker_goal.align_forever = True
-        align_to_speaker_goal.mode = align_to_speaker_goal.send_align_values
+        align_to_speaker_goal.mode = 0
         align_to_speaker_goal.offsetting = False
         rospy.loginfo("got here, got status for the align to speaker goal")
+        rospy.loginfo("2024 move while shooting server requesting align angle values")
         self.align_to_speaker_client.send_goal(align_to_speaker_goal, feedback_cb=self.align_to_speaker_feedback_cb)
         rospy.loginfo("align to speaker goal sent")
         #while conditoin with preempt and what not
@@ -121,9 +136,8 @@ class ShootingServer(object):
 
 
 
-        #while ((current_time - request_time) < self.dynamic_move_time):
-        self.negative = False
-        while True:
+        while ((current_time - request_time) < self.dynamic_move_time):
+        #while True:
             rospy.loginfo("move while shooting server 2024: is in execute cb while loop")
             current_time = rospy.get_time()
             #while not enough time has passed, go through this entire loop
@@ -139,22 +153,19 @@ class ShootingServer(object):
                 cmd_vel_msg_move_and_shoot.linear.y = 0
                 cmd_vel_msg_move_and_shoot.angular.z = 0
                 self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
-                break
+                return
             if goal.move_align == True:
                 #if we do intend on moving, aligning and shooting then do the following
                 rospy.loginfo("move while shooting server 2024: move_align is true, setting velocity and angular conditions")
                 rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
+                self.object_publish.publish(self.angle_holder) #main align command
+
                 cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                 cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
-                self.object_publish.publish(self.angle_holder)
-                #if self.negative == False:
-                #    cmd_vel_msg_move_and_shoot.angular.z = self.angle_cb
-                #    self.negative = True
-                #if self.negative == True:
-                #    cmd_vel_msg_move_and_shoot.angular.z = -(self.angle_cb)
-                #    self.negative = False
+                cmd_vel_msg_move_and_shoot.angular.z = self.current_orient_effort_cb #helps with microadjustments
 
-
+                if abs(self.feedback_error_value) > 0.1: 
+                    cmd_vel_msg_move_and_shoot.angular.z += 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward) #also helps with microadjustmnets
 
                 self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
 

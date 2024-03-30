@@ -46,7 +46,6 @@ class Aligner:
         self.angle_dist_x = 0
         self.angle_dist_y = 0
 
-
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
         self.object_publish = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size =1)
@@ -61,12 +60,11 @@ class Aligner:
         self.current_robot_cmd_vel = 0
         self.robot_cmd_vel = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.msg.TwistStamped, self.robot_cmd_vel_callback )    #is twist stamped the correct type of output???
         self.pub_dist_and_ang_vel = rospy.Publisher("/speaker_align/dist_and_ang", behavior_actions.msg.AutoAlignSpeaker, queue_size=1) #distance and angle
+        self.feedback_error_value
 
         self._feedback.aligned = False
         
         self.feed_forward = True
-
-
         self.move_time_reconfigured = False
 
         ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
@@ -122,7 +120,7 @@ class Aligner:
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
 
-            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x) + offset_angle
+            dist_ang_msg.angle = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(angle_dist_y, angle_dist_x)
 
@@ -140,6 +138,9 @@ class Aligner:
 
         if self.msg is not None:
             self._feedback.error = abs(angles.shortest_angular_distance(self.msg.data, self.current_yaw))
+            self.feedback_error_value = self._feedback.error
+
+            #need to publish this feedback error values
 
         #rospy.loginfo(f"errr {self._feedback.error} tolerance {self.tolerance}")
         if self._feedback.error < self.tolerance and abs(self.current_orient_effort) < self.velocity_tolerance:
@@ -197,7 +198,6 @@ class Aligner:
             self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
             self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(y_field_relative_vel, x_field_relative_vel)
             #dist_ang_msg.angle = math.atan2(self.angle_dist_y, self.angle_dist_x)
@@ -217,12 +217,10 @@ class Aligner:
             #which is the additional angle that we're going to add onto the angle that we already have on the align to angle callback?
             #so just add given value to hte angle value?
             #calculate readjustmnet angle using 15 degrees as the constant offset angle
+
             offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
             dist_ang_msg.angle = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-
-
-
-
+            #actually gets the angle that is being sent to really align to the speaker
             #removed the offset angle for now
 
 
@@ -243,6 +241,10 @@ class Aligner:
 
             dist_ang_msg.degree_angle = math.degrees(dist_ang_msg.angle)
             self._feedback.aligned = False
+            #all of these variables here are being set so that you can pull said values from the auto align speaker action
+
+
+
 
             if goal.mode == 1:
                 self.object_publish.publish(self.msg) #this line actually sends the robot to really align to the values are specified, let us test this and make sure just to be safe
@@ -252,7 +254,7 @@ class Aligner:
             cmd_vel_msg = geometry_msgs.msg.Twist()
             cmd_vel_msg.angular.x = 0
             cmd_vel_msg.angular.y = 0
-            cmd_vel_msg.angular.z = self.current_orient_effort 
+            cmd_vel_msg.angular.z = self.current_orient_effort
             if abs(self._feedback.error) > 0.1: 
                 cmd_vel_msg.angular.z += 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward)
             cmd_vel_msg.linear.x = 0

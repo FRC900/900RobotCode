@@ -10,3 +10,4 @@ float64 distance_moving
 float64 dynamic_move_while_shoot_time
 
 float64 angle
+float64 feedback_error_value
