@@ -119,6 +119,8 @@ namespace tf_object_detection
 			// Initialize published message with header info from objDetectionMsg
 			field_obj::Detection out_msg;
 			out_msg.header = objDetectionMsg->header;
+			// TODO : replace with a transform to base link?
+			// Or at least to the non-optical_frame version of the camera frame
 			// Remove _optical_frame from the camera frame ID if present
 			std::string frame_id = objDetectionMsg->header.frame_id;
 			const size_t idx = frame_id.rfind("_optical_frame");
@@ -135,32 +137,31 @@ namespace tf_object_detection
 			{
 				if (fabs(camObject.br.x - camObject.tl.x) < 1) {
 					NODELET_INFO_STREAM("less than 1 x");
-					return;
+					continue;
 				}
 
 				if (fabs(camObject.br.y - camObject.tl.y) < 1) {
 					NODELET_INFO_STREAM("less than 1 x");
-					return;
+					continue;
 				}
 				// Create an output object, copy over info from the object detection info
 				field_obj::Object worldObject;
 				worldObject.id = camObject.label;
 				worldObject.confidence = camObject.confidence;
 				// Generate a bounding rect (in camera coords) from the camera object
-				const cv::Point rectTL(camObject.tl.x, camObject.tl.y);
-				const cv::Point rectBR(camObject.br.x, camObject.br.y);
+				const cv::Point rectTL(std::floor(camObject.tl.x), std::ceil(camObject.tl.y));
+				const cv::Point rectBR(std::floor(camObject.br.x), std::ceil(camObject.br.y));
 				const cv::Rect  rect(rectTL, rectBR);
-
-				// Find the center of the detected object
-				const cv::Point2f objRectCenter = 0.5 * (rectTL + rectBR);
 
 				// Get the distance to the object by finding contours within the depth data inside the
 				// object's bounding rectangle.
 				const float objDistance = usefulDepthMat(cvDepth->image, rect, algorithm, false);
 				if (objDistance < 0 || isnan(objDistance))
 				{
+					// Find the center of the detected object
+					const cv::Point2f objRectCenter = 0.5 * (rectTL + rectBR);
 					NODELET_ERROR_STREAM_THROTTLE(0.5, "Depth of object at " << objRectCenter << " with bounding rect " << rect << " invalid : " << objDistance);
-					return;
+					continue;
 				}
 				const cv::Point3f world_coord_scaled = cc.screen_to_world(rect, worldObject.id, objDistance);
 

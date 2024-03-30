@@ -20,17 +20,9 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	ar_track_alvar \
 	apriltag_launch \
     apriltag_ros \
-	tagslam \
-	tagslam_viz \
-	tagslam_test \
-	tagslam_launch \
-	joint_trajectory_controller \
+	base_trajectory \
 	compressed_image_transport \
 	compressed_depth_image_transport \
-	theora_image_transport \
-	image_transport_plugins \
-	base_trajectory \
-	spline_util \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
@@ -52,8 +44,12 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	frcrobot_gazebo \
 	gazebo_frcrobot_control \
 	goal_detection \
-	navx_publisher \
+	gpu_apriltag \
+	image_transport_plugins \
 	gripper_action_controller \
+	image_transport_plugins \
+	joint_trajectory_controller \
+	navx_publisher \
 	pf_localization \
 	realsense2_camera \
 	realsense2_description \
@@ -74,11 +70,17 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	rosserial_xbee \
 	rqt_driver_station_sim \
 	rqt_joint_trajectory_controller \
+	spline_util \
 	stage_ros \
+	tagslam \
+	tagslam_viz \
+	tagslam_test \
+	tagslam_launch \
 	template_controller \
 	teraranger_array \
 	teraranger_array_converter \
 	tf_object_detection \
+	theora_image_transport \
 	turing_smart_screen \
 	velocity_controllers \
 	visualize_profile \

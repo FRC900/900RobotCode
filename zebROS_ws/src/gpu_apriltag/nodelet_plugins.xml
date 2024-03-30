@@ -1,0 +1,7 @@
+<library path="lib/libgpu_apriltag">
+        <class name="frc971_gpu_apriltag/FRC971GpuApriltagNodelet" type="frc971_gpu_apriltag::FRC971GpuApriltagNodelet" base_class_type="nodelet::Nodelet">
+                <description>
+                        Nodelet for detecting AprilTags using CUDA-optimized code
+                </description>
+        </class>
+</library>
