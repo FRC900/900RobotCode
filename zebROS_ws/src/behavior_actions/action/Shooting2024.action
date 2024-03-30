@@ -8,6 +8,7 @@ uint8 PODIUM=5
 uint8 LOB_PASS=6
 uint8 SHOT_PASS=7
 uint8 SLIDE=8
+uint8 START_AUTO=9
 uint8 mode
 float64 distance
 bool setup_only # just spin up

@@ -191,6 +191,13 @@ class AlignAndShoot:
         shooting_goal = Shooting2024Goal()
 
         rospy.loginfo("2024_align_and_shoot: spinning up shooter")
+        self.dont_send_shooting_goal = True
+        shooting_goal.mode = shooting_goal.SPEAKER
+        shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
+        shooting_goal.setup_only = True
+        shooting_goal.leave_spinning = True
+
+        self.shooting_client.send_goal(shooting_goal)
 
         if not self.aligning:
             align_to_speaker_goal.align_forever = goal.align_forever

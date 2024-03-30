@@ -140,7 +140,7 @@ class Aligner:
             cmd_vel_msg.angular.y = 0
             cmd_vel_msg.angular.z = self.current_orient_effort 
             if self.current_orient_effort > self.velocity_tolerance:
-                cmd_vel_msg.angular.z += 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward)
+                cmd_vel_msg.angular.z += 0.5 * numpy.sign(self.current_orient_effort) * int(self.feed_forward)
             cmd_vel_msg.linear.x = 0
             cmd_vel_msg.linear.y = 0
             cmd_vel_msg.linear.z = 0

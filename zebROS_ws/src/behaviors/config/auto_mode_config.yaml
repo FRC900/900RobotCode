@@ -58,14 +58,11 @@ auto_mode_9: ["one_to_two_blue_csv"]
 # 10: drive back
 # auto_mode_10: ["drive_2_5_m"]
 
-auto_mode_11: ["pause_two", "four_note_speaker_no_rotate_ALLIANCE_csv"]
+# score preload and first two (from source side) at centerline
+auto_mode_11: ["spin_up_shooter_3_8m", "score_preload_ALLIANCE_csv", "align_to_speaker", "shoot_dynamic", "wait_for_shooting", "source_score_to_one_ALLIANCE_csv", "wait_for_auto_intake", "score_one_ALLIANCE_csv", "relocalize", "align_to_speaker", "shoot_dynamic", "source_score_to_two_ALLIANCE_csv", "auto_intake", "wait_for_auto_intake", "score_two_ALLIANCE_csv", "align_to_speaker", "shoot_dynamic", "wait_for_shooting", "stop_intake", "spin_down_shooter"]
 
-# TODO stop localize
-auto_mode_12: ["spin_up_slide_shooter", "zoom_mid_source_ALLIANCE_csv", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "spin_down_shooter"]
-# "closest_note_path", 
-
-auto_mode_10: ["counter_auto_source"]
-
+# four from mid
+auto_mode_12: ["zoom_mid_source_ALLIANCE_csv", "spin_up_start_auto", "wait_for_auto_intake", "closest_note_path", "spin_up_slide_shooter", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "spin_down_shooter"]
 
 # preload note paths
 # (90 is a special case that does preload only)
@@ -92,8 +89,58 @@ counter_auto_source:
 rezero_odom:
   type: rezero_odom
 
+source_score_to_one_blue_csv:
+  waypoint_actions: [[1, "auto_intake_first_blue"]]
+  type: path
+  reset_odom_to_path_start: False
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+  wait_for_path: false
+
+source_score_to_one_red_csv:
+  waypoint_actions: [[1, "auto_intake_first_red"]]
+  type: path
+  reset_odom_to_path_start: False
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+  wait_for_path: false
+
+score_one_blue_csv:
+  type: path
+  reset_odom_to_path_start: True
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+  wait_for_path: true
+
+score_one_red_csv:
+  type: path
+  reset_odom_to_path_start: True
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+  wait_for_path: true
+
+score_two_blue_csv:
+  type: path
+  reset_odom_to_path_start: True
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+  wait_for_path: true
+
+score_two_red_csv:
+  type: path
+  reset_odom_to_path_start: True
+  goal:
+    points:
+      - [0.0, 0.0, 0.0]
+  wait_for_path: true
+
 zoom_mid_source_blue_csv:
-  waypoint_actions: [[1, "shoot_slide"], [2, "auto_intake_first_blue"]]
+  waypoint_actions: [[1, "shoot_start_auto"], [2, "auto_intake_first_blue"]]
   type: path
   reset_odom_to_path_start: True
   goal:
@@ -102,7 +149,7 @@ zoom_mid_source_blue_csv:
   wait_for_path: false
 
 zoom_mid_source_red_csv:
-  waypoint_actions: [[1, "shoot_slide"], [2, "auto_intake_first_red"]]
+  waypoint_actions: [[1, "shoot_start_auto"], [2, "auto_intake_first_red"]]
   type: path
   reset_odom_to_path_start: True
   goal:
@@ -238,22 +285,22 @@ auto_intake:
 
 auto_intake_first_red: # left
   type: auto_intake
-  min_y_pos: -1.0
+  min_y_pos: -0.5
   max_y_pos: 5.0
 
 auto_intake_first_blue: # right
   type: auto_intake
   min_y_pos: -5.0
-  max_y_pos: 1.0
+  max_y_pos: 0.5
 
 auto_intake_fourth_red: # right
   type: auto_intake
   min_y_pos: -5.0
-  max_y_pos: 1.0
+  max_y_pos: 0.5
 
 auto_intake_fourth_blue: # left
   type: auto_intake
-  min_y_pos: -1.0
+  min_y_pos: -0.5
   max_y_pos: 5.0
 
 wait_for_auto_intake:
@@ -268,15 +315,29 @@ spin_up_shooter:
   type: spin_up_shooter
   distance: 1.0 # meters
 
+spin_up_shooter_3_8m: 
+  type: spin_up_shooter
+  distance: 3.8 # meters
+
 spin_up_slide_shooter:
   type: spin_up_shooter
   distance: 0.0 # meters
   mode: "slide"
 
+spin_up_start_auto:
+  type: spin_up_shooter
+  distance: 0.0 # meters
+  mode: "start_auto"
+
 shoot_slide:
   type: shoot_distance
   distance: 0.0 # meters
   mode: "slide"
+
+shoot_start_auto:
+  type: shoot_distance
+  distance: 0.0 # meters
+  mode: "start_auto"
 
 spin_down_shooter:
   type: spin_down_shooter

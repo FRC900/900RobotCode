@@ -47,8 +47,15 @@ shot_bottom_right_speed: 825.0
 shot_pivot_position: 0.51 #rad
 
 # slide across field
-slide_top_left_speed: 500.0 #rad/s
-slide_top_right_speed: 500.0 #rad/s
-slide_bottom_left_speed: 250.0 #rad/s
-slide_bottom_right_speed: 250.0 #rad/s
-slide_pivot_position: 0.36 #rad 
+slide_top_left_speed: 700.0 #rad/s
+slide_top_right_speed: 400.0 #rad/s
+slide_bottom_left_speed: 350.0 #rad/s
+slide_bottom_right_speed: 150.0 #rad/s
+slide_pivot_position: 0.35 #rad 
+
+#start auto
+start_auto_top_left_speed: 500.0 #rad/s
+start_auto_top_right_speed: 500.0
+start_auto_bottom_left_speed: 400.0
+start_auto_bottom_right_speed: 400.0
+start_auto_pivot_position: 0.42 #rad

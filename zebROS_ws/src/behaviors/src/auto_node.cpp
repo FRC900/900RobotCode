@@ -947,7 +947,7 @@ class AutoNode {
 		goal.align_forever = false;
 
 		align_to_speaker_ac_.sendGoal(goal);
-		waitForActionlibServer(align_to_speaker_ac_, 1.5, "align_to_speaker");
+		waitForActionlibServer(align_to_speaker_ac_, 3.0, "align_to_speaker");
 
 		return true;
 	}
@@ -980,6 +980,10 @@ class AutoNode {
 			if (action_data["mode"] == "slide") {
 				ROS_INFO_STREAM("Auto node - Spinning up shooter for slide");
 				goal.mode = goal.SLIDE;
+			}
+			if (action_data["mode"] == "start_auto") {
+				ROS_INFO_STREAM("Auto node - shooting start auto shot");
+				goal.mode = goal.START_AUTO;
 			}
 		}
 		shooting_ac_.sendGoal(goal); // this goal will succeed almost right away, don't cancel
@@ -1017,6 +1021,10 @@ class AutoNode {
 			if (action_data["mode"] == "slide") {
 				ROS_INFO_STREAM("Auto node - shooting slide shot");
 				goal.mode = goal.SLIDE;
+			}
+			if (action_data["mode"] == "start_auto") {
+				ROS_INFO_STREAM("Auto node - shooting start auto shot");
+				goal.mode = goal.START_AUTO;
 			}
 		}
 		shooting_ac_.sendGoal(goal); 
@@ -1233,11 +1241,6 @@ class AutoNode {
 			}
 			waitForActionlibServer(auto_intake_ac_, 10, "auto intaking");
 		} else if (action_to_wait_for == "shooting") {
-			ros::Time start_time = ros::Time::now();
-			while (shooting_ac_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED && (ros::Time::now() - start_time).toSec() < 10) {
-				ros::spinOnce();
-				r_.sleep();
-			}
 			waitForActionlibServer(shooting_ac_, 10, "shooting");
 		} else {
 			ROS_ERROR_STREAM("Auto node - unknown action to wait for: " << action_to_wait_for);
@@ -1248,6 +1251,13 @@ class AutoNode {
 	}
 
 	bool relocalizefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		std_srvs::SetBool toggle_relocalize;
+		toggle_relocalize.request.data = true;
+		ROS_INFO_STREAM("auto_node: reenabling localization");
+		if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
+			ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
+			shutdownNode(ERROR, "A Map to odom service call failed");
+		}
 		// make a std_srvs::Empty request
 		std_srvs::Empty srv;
 		// call the relocalize service
@@ -1409,7 +1419,15 @@ class AutoNode {
 					shutdownNode(ERROR, "Rezeroing odom before odom/map relative path failed");
 				}
 				ros::Duration(0.05).sleep();
-			} 
+			} else {
+				ROS_INFO_STREAM("SETTING RELOCALIZE TO TRUE");
+				std_srvs::SetBool toggle_relocalize;
+				toggle_relocalize.request.data = true;
+				if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
+					ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
+					shutdownNode(ERROR, "A Map to odom service call failed");
+				}
+			}
 
 			ROS_INFO_STREAM("Auto node - sending path goal for path " << auto_step);
 			path_ac_.sendGoal(goal, NULL, NULL, [&](const path_follower_msgs::PathFeedbackConstPtr& feedback){
@@ -1437,6 +1455,13 @@ class AutoNode {
 			if (wait_for_path) {
 				
 				waitForActionlibServer(path_ac_, 100, "running path");
+				std_srvs::SetBool toggle_relocalize;
+				toggle_relocalize.request.data = true;
+				ROS_INFO_STREAM("auto_node: reenabling localization");
+				if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
+					ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
+					shutdownNode(ERROR, "A Map to odom service call failed");
+				}
 			}
 			iteration_value--;
 		}

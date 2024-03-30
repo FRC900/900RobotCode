@@ -148,6 +148,12 @@ class ShootingServer(object):
         self.slide_bottom_right_speed = rospy.get_param("slide_bottom_right_speed")
         self.slide_pivot_position = rospy.get_param("slide_pivot_position")
 
+        self.start_auto_top_left_speed = rospy.get_param("start_auto_top_left_speed")  
+        self.start_auto_top_right_speed = rospy.get_param("start_auto_top_right_speed")
+        self.start_auto_bottom_left_speed = rospy.get_param("start_auto_bottom_left_speed")
+        self.start_auto_bottom_right_speed = rospy.get_param("start_auto_bottom_right_speed")
+        self.start_auto_pivot_position = rospy.get_param("start_auto_pivot_position")
+
         self.delay_after_shooting = rospy.get_param("delay_after_shooting")
 
         self.server = actionlib.SimpleActionServer(self.action_name, Shooting2024Action, execute_cb=self.execute_cb, auto_start = False)
@@ -281,6 +287,14 @@ class ShootingServer(object):
             pivot_angle = self.slide_pivot_position
             rospy.loginfo(f"2024_shooting_server: spinning up for SLIDE")
 
+        elif goal.mode == goal.START_AUTO:
+            shooter_goal.top_left_speed = self.start_auto_top_left_speed
+            shooter_goal.top_right_speed = self.start_auto_top_right_speed
+            shooter_goal.bottom_left_speed = self.start_auto_bottom_left_speed
+            shooter_goal.bottom_right_speed = self.start_auto_bottom_right_speed
+            pivot_angle = self.start_auto_pivot_position
+            rospy.loginfo(f"2024_shooting_server: spinning up for start auto")
+
         else:
             # Look up speed and angle to send to shooter and pivot server
             shooter_goal.top_left_speed = self.top_left_map[goal.distance]
@@ -369,7 +383,7 @@ class ShootingServer(object):
                     self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
                     # ensure pivot at good position
-                    pivot_goal.pivot_position = 0.5
+                    pivot_goal.pivot_position = 0.36
                     self.pivot_client.send_goal(pivot_goal)
                     # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
@@ -427,7 +441,7 @@ class ShootingServer(object):
                 cmd_vel_msg.linear.z = 0
                 self.cmd_vel_pub.publish(cmd_vel_msg)
 
-            pivot_goal.pivot_position = 0.5
+            pivot_goal.pivot_position = 0.36
             self.pivot_client.send_goal(pivot_goal)
 
             rospy.loginfo("2024_shooting_server: +5 points hopefully")

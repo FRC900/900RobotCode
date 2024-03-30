@@ -35,6 +35,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
 
+#include <path_follower_msgs/PathAction.h>
+
 class AutoModeCalculator2024 : public AutoModeCalculator {
 public:
 	explicit AutoModeCalculator2024(ros::NodeHandle &n)
@@ -63,7 +65,7 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024A
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2024Action>> climb_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveAndScore2024Action>> drive_and_score_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::DriveAndScore2024Action>> drive_to_object_ac;
-
+std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> path_follower_ac;
 
 bool reset_climb = true;
 
@@ -580,6 +582,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	if (button_box->redPress)
 	{
 		ROS_WARN_STREAM("teleop_joystick_comp_2024: PREEMPTING all actions");
+		path_follower_ac->cancelAllGoals();
 		drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		// send shooting goal with cancel_movement=true
@@ -816,6 +819,7 @@ int main(int argc, char **argv)
 	align_to_trap_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignToTrap2024Action>>("/align_to_trap/align_to_trap_2024", true);
 	climb_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Climb2024Action>>("/climbing/climbing_server_2024", true);
 	drive_and_score_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveAndScore2024Action>>("/drive_and_score/drive_and_score_2024", true);
+	path_follower_ac = std::make_unique<actionlib::SimpleActionClient<path_follower_msgs::PathAction>>("/path_follower/path_follower_server", true);
 	// drive_to_object_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::DriveToObjectAction>>("/drive_and_score/drive_and_score_2024", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
