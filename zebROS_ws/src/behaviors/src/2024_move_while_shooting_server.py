@@ -108,7 +108,6 @@ class ShootingServer(object):
     def execute_cb(self, goal: MoveWhileShooting2024Goal):
         rospy.loginfo("move while shooting server 2024: has received execute cb")
         self.result.success = False
-        cmd_vel_msg_move_and_shoot = Twist()
         shooting_goal = Shooting2024Goal()
         align_to_speaker_goal = AlignToSpeaker2024Goal()
 
@@ -140,14 +139,16 @@ class ShootingServer(object):
 
 
 
-        while ((current_time - request_time) < self.dynamic_move_time):
-        #while True:
+        #while ((current_time - request_time) < self.dynamic_move_time):
+        while True:
             rospy.loginfo("move while shooting server 2024: is in execute cb while loop")
             current_time = rospy.get_time()
             #while not enough time has passed, go through this entire loop
 
             if self.server.is_preempt_requested():
                 #if preempted, cancel the goals that we send and make sure the stuff that we are doing is preempted
+                cmd_vel_msg_move_and_shoot = Twist()
+
                 rospy.loginfo("move while shooting server 2024: preempted")
                 #self.shooting_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self.shooting_client.cancel_goals_at_and_before_time(rospy.Time.now())
@@ -163,13 +164,18 @@ class ShootingServer(object):
                 rospy.loginfo("move while shooting server 2024: move_align is true, setting velocity and angular conditions")
                 rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
                 self.object_publish.publish(self.angle_holder) #main align command
+                cmd_vel_msg_move_and_shoot = Twist()
+
 
                 cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                 cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
-                cmd_vel_msg_move_and_shoot.angular.z = self.current_orient_effort_cb #helps with microadjustments
+                cmd_vel_msg_move_and_shoot.linear.z = 0.0
+                cmd_vel_msg_move_and_shoot.angular.z = self.current_orient_effort_cb 
+                cmd_vel_msg_move_and_shoot.angular.y = 0.0
+                cmd_vel_msg_move_and_shoot.angular.x = 0.0
 
                 if abs(self.feedback_error_value) > 0.1: 
-                    cmd_vel_msg_move_and_shoot.angular.z += 1.0 * numpy.sign(self.current_orient_effort_cb) #also helps with microadjustmnets
+                    cmd_vel_msg_move_and_shoot.angular.z += 1.0 * numpy.sign(self.current_orient_effort_cb) 
 
                 self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
 
