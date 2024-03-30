@@ -43,12 +43,6 @@ static apriltag_detector_t *makeTagDetector(apriltag_family_t *tag_family, const
     return tag_detector;
 }
 
-static void DestroyPose(apriltag_pose_t *pose)
-{
-    matd_destroy(pose->R);
-    matd_destroy(pose->t);
-}
-
 static std::array<cv::Point2d, 4> MakeCornerArray(const apriltag_detection_t *det)
 {
     std::array<cv::Point2d, 4> corner_points;
@@ -60,11 +54,20 @@ static std::array<cv::Point2d, 4> MakeCornerArray(const apriltag_detection_t *de
     return corner_points;
 }
 
+#if 0
 static void setPose(GpuApriltagResult &result, const apriltag_pose_t &pose)
 {
     result.position_ = cv::Point3d(pose.t->data[0], pose.t->data[1], pose.t->data[2]);
     result.orientation_ = cv::Quatd(pose.R->data[0], pose.R->data[1], pose.R->data[2], pose.R->data[3]);
 }
+
+static void DestroyPose(apriltag_pose_t *pose)
+{
+    matd_destroy(pose->R);
+    matd_destroy(pose->t);
+}
+
+#endif
 
 FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info)
     : tag_family_{tag36h11_create()}

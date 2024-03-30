@@ -34,7 +34,9 @@ set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 find_library(LIBNVTOOLSEXT nvToolsExt PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-find_package(glog REQUIRED)
+# find_package(glog REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(glog REQUIRED libglog)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -144,6 +146,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${FRC971}
   ${FRC971}/third_party/apriltag
+  ${glog_INCLUDE_DIRS}
 )
 
 set_source_files_properties(${FRC971}/frc971/orin/apriltag.cc PROPERTIES LANGUAGE CUDA)
@@ -191,7 +194,7 @@ target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBS}
   ${CUDA_LIBRARIES} 
   ${LIBNVTOOLSEXT}
-  glog::glog
+  ${glog_LIBRARIES}
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86;87")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
@@ -224,7 +227,6 @@ add_dependencies(${PROJECT_NAME}_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(${PROJECT_NAME}_test
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
-  glog::glog
 )
 set_target_properties(${PROJECT_NAME}_test PROPERTIES CUDA_ARCHITECTURES "86;87")
 set_property(TARGET ${PROJECT_NAME}_test PROPERTY CUDA_SEPARABLE_COMPILATION ON)

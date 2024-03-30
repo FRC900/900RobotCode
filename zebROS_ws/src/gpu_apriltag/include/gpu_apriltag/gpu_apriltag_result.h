@@ -2,12 +2,12 @@
 #define GPU_APRILTAG_RESULT_INC__
 
 #include <opencv2/core.hpp>
-#include <opencv2/core/quaternion.hpp>
+// Not available on Jetson version of opencv #include <opencv2/core/quaternion.hpp>
 
 struct GpuApriltagResult
 {
-    cv::Point3d position_;
-    cv::Quatd orientation_;
+    // cv::Point3d position_;
+    // cv::Quatd orientation_;
     int id_;
     int hamming_;
     double pose_error_;
