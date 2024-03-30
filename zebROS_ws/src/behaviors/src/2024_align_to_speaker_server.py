@@ -66,34 +66,25 @@ class Aligner:
         
         self.feed_forward = True
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
         self.move_time_reconfigured = False
 
         ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
         ddynrec.add_variable("tolerance", "float/double variable", rospy.get_param("tolerance"), 0.0, 3.0)
         ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
         ddynrec.add_variable("offset_angle_radians", "float/double variable", rospy.get_param("offset_angle_radians"), 0.0, 3.14)
-=======
         self.dynamic_move_time = rospy.get_param("dynamic_move_time")
-=======
->>>>>>> a4c5bc7a (final batch of changes to get this working, all that is left is testing and i don't know how to do that...)
+
         self.move_time_reconfigured = False
 
         ddynrec = DDynamicReconfigure("align_to_speaker_sever_dyn_rec")
         ddynrec.add_variable("tolerance", "float/double variable", rospy.get_param("tolerance"), 0.0, 3.0)
         ddynrec.add_variable("dynamic_move_time", "float/double variable", rospy.get_param("dynamic_move_time"), 0.0, 3.0)
->>>>>>> 5f77b91a (base code for making this possibly work?)
         ddynrec.start(self.dyn_rec_callback)
 
     def dyn_rec_callback(self, config, level):
         rospy.loginfo("Received reconf call: " + str(config))
         self.tolerance = config["tolerance"]
-<<<<<<< HEAD
-        self.dynamic_move_time = config["dynamic_move_time"]
-
-=======
->>>>>>> a4c5bc7a (final batch of changes to get this working, all that is left is testing and i don't know how to do that...)
         self.dynamic_move_time = config["dynamic_move_time"]
 
         self.move_time_reconfigured = True
@@ -128,14 +119,9 @@ class Aligner:
             angle_dist_x = (self.x_field_relative_vel_imu)(self.dynamic_move_time) + destination.point.x
             angle_dist_y = (self.y_field_relative_vel_imu)(self.dynamic_move_time) + destination.point.y
             dist_ang_msg.distance =  v_distance + p_distance
-<<<<<<< HEAD
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
             dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x) + offset_angle
-=======
-            msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-            dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x)
->>>>>>> a4c5bc7a (final batch of changes to get this working, all that is left is testing and i don't know how to do that...)
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(angle_dist_y, angle_dist_x)
 
@@ -204,10 +190,6 @@ class Aligner:
             self.msg = std_msgs.msg.Float64()
             dist_ang_msg = behavior_actions.msg.AutoAlignSpeaker()
 
-<<<<<<< HEAD
-            self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos((self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin((self.current_yaw))
-            self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin((self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos((self.current_yaw))
-=======
             self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
             self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
 
@@ -226,7 +208,6 @@ class Aligner:
             dist_ang_msg.distance =  v_distance + p_distance
             dist_ang_msg.x_vel = self.x_field_relative_vel_align
             dist_ang_msg.y_vel = self.y_field_relative_vel_align
->>>>>>> a4c5bc7a (final batch of changes to get this working, all that is left is testing and i don't know how to do that...)
 
 
             #self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x

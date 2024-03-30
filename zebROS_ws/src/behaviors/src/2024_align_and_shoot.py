@@ -218,7 +218,7 @@ class AlignAndShoot:
         shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
         shooting_goal.setup_only = False
         shooting_goal.leave_spinning = False
-        shooting_goal.request_time = rospy.Time.now()
+        shooting_goal.request_time = rospy.get_time()
         shooting_done = False
 
         def shooting_done_cb(state, result):

@@ -4,6 +4,7 @@ import rospy
 import actionlib
 import time
 import math
+import std_msgs.msg
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
@@ -13,8 +14,9 @@ from behavior_actions.msg import Clawster2024Goal, Clawster2024Feedback, Clawste
 from std_msgs.msg import Float64
 from interpolating_map import InterpolatingMap
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistStamped
 
-SIM = False
+SIM = True
 
 class ShootingServer(object):
 
@@ -38,10 +40,12 @@ class ShootingServer(object):
         # used for driving back after amp shot
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
         #self.cmd_vel_pub_ = rospy.Publisher("/auto_note_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
-        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
-        self.scaled_x_val = None
-        self.scaled_y_val = None
+        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
+        self.scaled_x_val = 0.0
+        self.scaled_y_val = 0.0
 
+        self.angle_puller = rospy.Subscriber("/speaker_align/cmd_vel", Twist, self.angle_twist_z_cb, tcp_nodelay=True ,queue_size=1)
+        self.angle_twist_z = 0.0
         # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
         speeds_map_param = rospy.get_param("speeds_map")
 
@@ -213,22 +217,75 @@ class ShootingServer(object):
         self.slide_bottom_right_speed = config["slide_bottom_right_speed"]
         self.slide_pivot_position = config["slide_pivot_position"]
         return config
-    def cmd_vel_sub_magnitude_convert_callback(self, msg: geometry_msgs.TwistStamped):
+
+    def angle_twist_z_cb(self, msg):
+        self.angle_twist_z = msg.angular.z
+        
+
+    def cmd_vel_sub_magnitude_convert_callback(self, msg: TwistStamped):
         #just find unit vector
         #is it even msg.linear.x?
         #the subscriber callback takes in objects of geometry_msgs.Twiststamped
         x_val = msg.twist.linear.x
         y_val = msg.twist.linear.y
-        vector_magnitude = math.hypot(x_val, y_val)
-        self.scaled_x_val = x_val / vector_magnitude
-        self.scaled_y_val = y_val / vector_magnitude
+        if (x_val == 0) or (y_val == 0):
+            self.scaled_x_val = 0
+            self.scaled_y_val = 0
+        if ((x_val > 0) or (y_val > 0)):
+            vector_magnitude = math.hypot(x_val, y_val)
+            if vector_magnitude > 0:
+                self.scaled_x_val = x_val / vector_magnitude
+                #perhaps do transform on these things for field relative? would prevent drift
+                rospy.loginfo("2024_shooting_server, convert callback")
+                self.scaled_y_val = y_val / vector_magnitude
+                rospy.loginfo("2024_shooting_server, convert callback")
+
 
 
 
     def execute_cb(self, goal: Shooting2024Goal):
         if SIM:
             rospy.logerr("=================WAITING TO SHOOT IN SIM")
-            time.sleep(0.5)
+            if (goal.request_time > 0):
+                cmd_vel_msg_move_and_shoot = Twist()
+                current_time = rospy.get_time()
+                while ((current_time - goal.request_time) < self.dynamic_move_time):
+                    current_time = rospy.get_time()
+                    if self.server.is_preempt_requested():
+                        rospy.loginfo("moving prempted")
+                        
+                        self.server.set_preempted()
+
+                        cmd_vel_msg_move_and_shoot.linear.x = 0
+                        cmd_vel_msg_move_and_shoot.linear.y = 0
+                        cmd_vel_msg_move_and_shoot.angular.z = 0
+                        self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
+                        return
+                        #self.server.set_succeeded(self.result)
+
+
+                    rospy.loginfo("should be scaled x_val")
+                    rospy.loginfo("should be scaled y_val as well")
+                    cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
+                    cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
+                    cmd_vel_msg_move_and_shoot.angular.z = self.angle_twist_z
+                    self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
+                
+                #shoot and then unlock the constraints
+
+                cmd_vel_msg_move_and_shoot.angular.z = 0
+                self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
+
+                
+
+
+
+
+
+
+
+
+
             self.result.success = True
             self.server.set_succeeded(self.result)
             return
@@ -400,8 +457,10 @@ class ShootingServer(object):
                 #set speed to a constant velocity this will be 1m/s
                 #so this is a std_msgs_float64
                 cmd_vel_msg_move_and_shoot = Twist()
-            
-                while((rospy.Time.now()) - goal.request_time) < self.dynamic_move_time: 
+                current_time = rospy.get_time()
+                while(current_time - goal.request_time) < self.dynamic_move_time: 
+                    rospy.loginfo("should be scaled x_val")
+                    rospy.loginfo("should be scaled y_val as well")
                     if self.server.is_preempt_requested():
                         rospy.loginfo("2024_shooting_server: preempted preshooter")
                         # ensure shooter turned off
