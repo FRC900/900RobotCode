@@ -7,6 +7,7 @@ import math
 import std_msgs.msg
 import behavior_actions.msg
 import numpy
+import geometry_msgs.msg
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
 from behavior_actions.msg import MoveWhileShooting2024Goal, MoveWhileShooting2024Feedback, MoveWhileShooting2024Result, MoveWhileShooting2024Action
@@ -25,13 +26,17 @@ class ShootingServer(object):
         self.feedback = MoveWhileShooting2024Feedback()
 
         self.dynamic_move_time = rospy.get_param("dynamic_move_time")
-        self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
         #self.cmd_vel_pub_ = rospy.Publisher("/auto_note_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
 
 
         self.negative = None
 
         self.object_publish = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size =1)
+
+        self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
+        self.current_orient_effort_cb = 0
+        self.cmd_vel_pub = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+
 
         self.angle_holder = std_msgs.msg.Float64()
 
@@ -49,8 +54,7 @@ class ShootingServer(object):
         #        self.pub_cmd_vel = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
         
 
-        self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
-        self.current_orient_effort_cb = 0.0
+        
 
 
 
@@ -74,8 +78,6 @@ class ShootingServer(object):
         rospy.logwarn("2024 Align and shoot: Shooting done!")
 
     def robot_orientation_effort_callback(self, msg):
-        rospy.loginfo("2024_move_while_shooting_server.py got correctoin_ang_cb")
-        #angular.z
         self.current_orient_effort_cb = msg.data
 
     def dist_and_ang_cb(self, msg):
@@ -147,7 +149,7 @@ class ShootingServer(object):
 
             if self.server.is_preempt_requested():
                 #if preempted, cancel the goals that we send and make sure the stuff that we are doing is preempted
-                cmd_vel_msg_move_and_shoot = Twist()
+                cmd_vel_msg_move_and_shoot = geometry_msgs.msg.Twist()
 
                 rospy.loginfo("move while shooting server 2024: preempted")
                 #self.shooting_client.cancel_goals_at_and_before_time(rospy.Time.now())
@@ -161,12 +163,11 @@ class ShootingServer(object):
                 return
             if goal.move_align == True:
                 #if we do intend on moving, aligning and shooting then do the following
-                rospy.loginfo("move while shooting server 2024: move_align is true, setting velocity and angular conditions")
-                rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
-                self.object_publish.publish(self.angle_holder) #main align command
-                cmd_vel_msg_move_and_shoot = Twist()
+                #rospy.loginfo("move while shooting server 2024: move_align is true, setting velocity and angular conditions")
+                #rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
+                self.object_publish.publish(self.angle_cb) #main align command
 
-
+                cmd_vel_msg_move_and_shoot = geometry_msgs.msg.Twist()
                 cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                 cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
                 cmd_vel_msg_move_and_shoot.linear.z = 0.0
