@@ -121,6 +121,7 @@ class Aligner:
             dist_ang_msg.distance =  v_distance + p_distance
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
             offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
+
             dist_ang_msg.angle = math.atan2(destination.point.y, destination.point.x) + offset_angle
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(angle_dist_y, angle_dist_x)
@@ -193,7 +194,6 @@ class Aligner:
             self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
             self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
 
-
             self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
             self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
             self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
@@ -202,38 +202,33 @@ class Aligner:
             #dist_ang_msg.angle = math.atan2(y_field_relative_vel, x_field_relative_vel)
             #dist_ang_msg.angle = math.atan2(self.angle_dist_y, self.angle_dist_x)
 
-
             p_distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
             v_distance = math.hypot(self.x_field_relative_vel_align, self.y_field_relative_vel_align) * (self.dynamic_move_time)
             dist_ang_msg.distance =  v_distance + p_distance
             dist_ang_msg.x_vel = self.x_field_relative_vel_align
             dist_ang_msg.y_vel = self.y_field_relative_vel_align
 
-
             #self.angle_dist_x = (self.x_field_relative_vel_align * self.dynamic_move_time) + destination.point.x
             #self.angle_dist_y = (self.y_field_relative_vel_align * self.dynamic_move_time) + destination.point.y
-            self.msg.data = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
-
-             #so, take the self.x_field_relative_vel_align value and multiply that by some offset angle in radians?
+            #so, take the self.x_field_relative_vel_align value and multiply that by some offset angle in radians?
             #we're probably going to be moving 1 m/s or 2 m/s so this radian value could be fairly small?
             #make it dynamic
             #so increase the angle by which we adjust by mulitplying (self.x_field_relative_vel_align) * self.offset_angle_radians
             #which is the additional angle that we're going to add onto the angle that we already have on the align to angle callback?
             #so just add given value to hte angle value?
-
             #calculate readjustmnet angle using 15 degrees as the constant offset angle
             offset_angle = self.y_field_relative_vel_align * self.offset_angle_radians
+            dist_ang_msg.angle = math.pi + self.current_yaw + math.atan2(destination.point.y, destination.point.x)
 
-            dist_ang_msg.angle = (math.atan2(destination.point.y, destination.point.x)) + offset_angle
+
+
+
+            #removed the offset angle for now
 
 
             #accounting for moving cases? 
             #dist_ang_msg.angle = math.atan2(y_field_relative_vel, x_field_relative_vel)
             #dist_ang_msg.angle = math.atan2(self.angle_dist_y, self.angle_dist_x)
-
-
-
-        
 
             p_distance = math.sqrt(destination.point.x ** 2 + destination.point.y ** 2)
             v_distance = math.hypot(self.x_field_relative_vel_align, self.y_field_relative_vel_align) * (self.dynamic_move_time)
@@ -242,13 +237,17 @@ class Aligner:
             dist_ang_msg.y_vel = self.y_field_relative_vel_align
             dist_ang_msg.offset_angle = offset_angle
             dist_ang_msg.offset_angle_degrees = math.degrees(offset_angle)
+
             dist_ang_msg.destination_y = destination.point.y
             dist_ang_msg.destination_x = destination.point.x
+
             dist_ang_msg.degree_angle = math.degrees(dist_ang_msg.angle)
             self._feedback.aligned = False
 
-            self.object_publish.publish(self.msg) 
-            self.pub_dist_and_ang_vel.publish(dist_ang_msg)
+            if goal.mode == 1:
+                self.object_publish.publish(self.msg) #this line actually sends the robot to really align to the values are specified, let us test this and make sure just to be safe
+
+            self.pub_dist_and_ang_vel.publish(dist_ang_msg) #always publishes the angle that the robot is supposed to align to, the object_publish objct line actually makes the robot align
             
             cmd_vel_msg = geometry_msgs.msg.Twist()
             cmd_vel_msg.angular.x = 0

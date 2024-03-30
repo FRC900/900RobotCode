@@ -40,12 +40,17 @@ class ShootingServer(object):
         # used for driving back after amp shot
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
         #self.cmd_vel_pub_ = rospy.Publisher("/auto_note_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+
         self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
         self.scaled_x_val = 0.0
         self.scaled_y_val = 0.0
+        #creating cmd_vel_sub, to read in the values of the velocity values whem moving in sim, then taking callback and scaling magnitude to 1 m/s
 
-        self.angle_puller = rospy.Subscriber("/speaker_align/cmd_vel", Twist, self.angle_twist_z_cb, tcp_nodelay=True ,queue_size=1)
+
+        self.angle_puller = rospy.Subscriber("/teleop/orientation_command", std_msgs.msg.Float64, self.angle_twist_z_cb, tcp_nodelay=True ,queue_size=1)
         self.angle_twist_z = 0.0
+        #creating angle_puller to subscribe nad read twist values, this should align the robot accorindlgy
+
         # speeds_map: [[distance: [top_left_speed, top_right_speed, bottom_left_speed, bottom_right_speed]], ...]
         speeds_map_param = rospy.get_param("speeds_map")
 
@@ -219,7 +224,8 @@ class ShootingServer(object):
         return config
 
     def angle_twist_z_cb(self, msg):
-        self.angle_twist_z = msg.angular.z
+        self.angle_twist_z = msg.data
+        rospy.loginfo("has the new msg data")
         
 
     def cmd_vel_sub_magnitude_convert_callback(self, msg: TwistStamped):
@@ -241,8 +247,6 @@ class ShootingServer(object):
                 rospy.loginfo("2024_shooting_server, convert callback")
 
 
-
-
     def execute_cb(self, goal: Shooting2024Goal):
         if SIM:
             rospy.logerr("=================WAITING TO SHOOT IN SIM")
@@ -258,9 +262,9 @@ class ShootingServer(object):
 
                         cmd_vel_msg_move_and_shoot.linear.x = 0
                         cmd_vel_msg_move_and_shoot.linear.y = 0
-                        cmd_vel_msg_move_and_shoot.angular.z = 0
+                        cmd_vel_msg_move_and_shoot.angular.z = 0.0
                         self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
-                        return
+                        
                         #self.server.set_succeeded(self.result)
 
 
@@ -272,19 +276,6 @@ class ShootingServer(object):
                     self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
                 
                 #shoot and then unlock the constraints
-
-                cmd_vel_msg_move_and_shoot.angular.z = 0
-                self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
-
-                
-
-
-
-
-
-
-
-
 
             self.result.success = True
             self.server.set_succeeded(self.result)
