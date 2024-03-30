@@ -1,5 +1,5 @@
-intaking_speed: 0.8 # duty cycle out
-outtaking_speed: 0.6 # duty cycle out, should be positive
+intaking_speed: 8.0 # change to voltage out by multplying by 10
+outtaking_speed: 6.0 # change to voltage out, should be positive
 intaking_timeout: 153.0
 safe_shooter_angle: 0.7 # rad
 current_threshold: 100.0

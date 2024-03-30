@@ -9,8 +9,8 @@
 		<arg name="camera_model"         value="zedx" />
 		<arg name="serial_number"	     value="43782465" />
 		<arg name="cam_pos_x"            value="0.395726" />
-		<arg name="cam_pos_y"            value="0.231140" />
-		<arg name="cam_pos_z"            value="0.232149" />
+		<arg name="cam_pos_y"            value="0.231140" /> <!-- RAISED, was 0.231140 -->
+		<arg name="cam_pos_z"            value="0.257" />
 		<arg name="cam_roll"             value="0.0" />
 		<arg name="cam_pitch"            value="0.0" />
 		<arg name="cam_yaw"              value="0.0" />

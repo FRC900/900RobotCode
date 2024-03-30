@@ -16,7 +16,9 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_practice_phoenix6.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_practice_pivot_cancoder.yaml" command="load"/>
-			
+		<rosparam file="$(find ros_control_boilerplate)/config/2024_practice_arm_cancoder.yaml" command="load"/>
+
+		
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
 		-->
@@ -49,6 +51,7 @@
 			 talonfxpro_state_controller
 			 talonfxpro_config_controller
 			 intake_talonfxpro_controller
+			 clawster_controller
 			 top_left_shooter_controller
 			 top_right_shooter_controller
 			 bottom_left_shooter_controller
@@ -58,7 +61,9 @@
 			 note_diverter_controller
 			 pigeon2_imu_state_controller
 			 cancoder_state_controller
-			 robot_code_ready_controller" />
+			 robot_code_ready_controller
+			 arm_controller
+			 arm_cancoder_controller" />
 			 
 			 <!--
 			 clawster_controller
@@ -139,6 +144,7 @@
 	<include file="$(find behaviors)/launch/2024_drive_to_object_and_intake.launch"/>
 	<include file="$(find norfair_ros)/launch/norfair_node.launch">
 	</include>
+	<include file="$(find behaviors)/launch/2024_drive_and_score.launch"/>
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	

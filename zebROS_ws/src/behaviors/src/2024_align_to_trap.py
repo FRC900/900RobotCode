@@ -21,6 +21,9 @@ import angles
 # - ideally, verify we don't run into anything
 # - PID there
 
+# rosservice call /frcrobot_jetson/arm_controller/shooter_pivot_service "angle: 0.24434"
+# rosservice call /frcrobot_rio/leafblower_controller/command "command: 1.0"
+
 class Aligner:
     # create messages that are used to publish feedback/result
     _feedback = behavior_actions.msg.AlignToTrap2024Feedback()

@@ -45,7 +45,7 @@ hardware_interface:
        - {name: button_box, type: joystick, id: 1, local: true}
          #- {name: joystick2, type: joystick, id: 2, local: true}
        - {name: rumble0, type: rumble, port: 0, local: true}
-       - {name: clawster, type: can_talon_srx, can_id: 16, local: true}
+       - {name: leafblower, type: can_talon_srx, can_id: 16, local: true}
        #- {name: joystick_rumble2, type: rumble, rumble_port: 2}
        - {name: diverter_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
        #- {name: claw_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
@@ -161,10 +161,10 @@ pdh_state_controller:
          ""  #id 24
         ]
 
-clawster_controller:
+leafblower_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: clawster
-    invert_output: True
+    joint: leafblower
+    invert_output: False
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 10
     neutral_mode: Brake

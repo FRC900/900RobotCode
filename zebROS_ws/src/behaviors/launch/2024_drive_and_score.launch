@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <group ns="drive_and_score">
-        <!-- <rosparam command="load" file="$(find behaviors)/config/2024_align_and_shoot_config.yaml"/> -->
+        <rosparam command="load" file="$(find behaviors)/config/2024_align_to_trap.yaml"/>
         <node name="drive_and_score_2024" pkg="behaviors" type="2024_drive_and_score.py" output="screen"/>
     </group>
 </launch>

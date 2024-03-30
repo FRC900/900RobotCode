@@ -70,6 +70,8 @@ hardware_interface:
        #Claw/Diverter
        # TODO - see if these need to be merged?
        - {name: note_diverter, type: talonfxpro, can_bus: CANivore, can_id: 17, local: true}
+       - {name: clawster, type: talonfxpro, can_bus: CANivore, can_id: 18, local: true}
+
     #    - {name: clawster, type: can_talon_srx, can_bus: slowbro, can_id: 16, local: true} # may need to change can_bus to slowbro
 
     #    - {name: claw_limit_switch, type: digital_input, local: false}
@@ -102,7 +104,7 @@ hardware_interface:
 # /frcrobot/talon_states
 
 intake_talonfxpro_controller:
-    type: talonfxpro_controllers/TalonFXProDutyCycleOutController
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
     joint: intake
     invert: counterclockwise_positive
     # dynamic_reconfigure: True
@@ -116,14 +118,12 @@ note_diverter_controller:
     neutral_mode: Coast
 
 clawster_controller:
-    type: talon_controllers/TalonPercentOutputController
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
     joint: clawster
-    invert_output: True
-    voltage_compensation_Enable: True
-    voltage_compensation_saturation: 10
-    neutral_mode: Brake
-    dynamic_reconfigure: False
-    enable_read_thread: False
+    invert: counterclockwise_positive
+    # dynamic_reconfigure: True
+    neutral_mode: Coast
+
 
 top_left_shooter_controller:
    type: talonfxpro_controllers/TalonFXProVelocityVoltageController
@@ -380,10 +380,10 @@ arm_controller:
     shooter_pivot_joint: [ 'arm_joint' ]
     dynamic_reconfigure: True
     # this is false
-    min_angle: 0.0
-    max_angle: 3.14
+    min_angle: -2.1
+    max_angle: 1.5
 
-    motion_magic_velocity: 0.1
+    motion_magic_velocity: 1.0
     motion_magic_acceleration: 1.0
     motion_magic_jerk: 100.0
 
@@ -395,7 +395,7 @@ arm_controller:
         motion_magic_velocity: 0.1
         motion_magic_acceleration: 1.0
         motion_magic_jerk: 100.0
-        rotor_to_sensor_ratio: 41.66
+        rotor_to_sensor_ratio: 5.0
         sensor_to_mechanism_ratio: 1
 
         softlimit_forward_enable: False
@@ -405,15 +405,14 @@ arm_controller:
         neutral_mode: Brake
         invert: clockwise_positive
         close_loop_values:
-            # Tried kI of around 12, it did help but was very slow and higher caused a bit of windup
-            - {kP: 30.0, kI: 0.0, kD: 1.0, kV: 6.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
+            - {kP: 50.0, kI: 0.0, kD: 0.0, kV: 4.0, kS: 0.0, kG: 0.0, gravity_type: "arm_cosine"}
         dynamic_reconfigure: True
 
 arm_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: arm
     dynamic_reconfigure: False
-    magnet_offset: 0
+    magnet_offset: -2.886
     enble_read_thread: False
 
 climb_controller:

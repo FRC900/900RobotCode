@@ -590,6 +590,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		align_to_speaker_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		align_to_trap_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		drive_and_score_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		driver->setJoystickOverride(false);
 		std_srvs::SetBool toggle_relocalize;
 		toggle_relocalize.request.data = true;
