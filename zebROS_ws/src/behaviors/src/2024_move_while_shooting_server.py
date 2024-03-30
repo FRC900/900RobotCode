@@ -47,8 +47,12 @@ class ShootingServer(object):
         #creating angle_puller to subscribe nad read twist values, this should align the robot accorindlgy
 
         #        self.pub_cmd_vel = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
-        self.sub_cmd_vel = rospy.Subscriber("/speaker_align/cmd_vel", Twist, self.correction_ang_cb, tcp_nodelay=True, queue_size=1)
+        
+
+        self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
         self.current_orient_effort_cb = 0.0
+
+
 
         self.shooting_client = actionlib.SimpleActionClient('/shooting/shooting_server_2024', Shooting2024Action)
         rospy.loginfo("Waiting for shooting server")
@@ -69,10 +73,10 @@ class ShootingServer(object):
         self.shooting_done = (feedback.current_stage == feedback.SHOOTING)
         rospy.logwarn("2024 Align and shoot: Shooting done!")
 
-    def correction_ang_cb(self, msg):
+    def robot_orientation_effort_callback(self, msg):
         rospy.loginfo("2024_move_while_shooting_server.py got correctoin_ang_cb")
         #angular.z
-        self.current_orient_effort_cb = msg.angular.z
+        self.current_orient_effort_cb = msg.data
 
     def dist_and_ang_cb(self, msg):
         self.angle_cb = msg.angle
@@ -165,7 +169,7 @@ class ShootingServer(object):
                 cmd_vel_msg_move_and_shoot.angular.z = self.current_orient_effort_cb #helps with microadjustments
 
                 if abs(self.feedback_error_value) > 0.1: 
-                    cmd_vel_msg_move_and_shoot.angular.z += 1.0 * numpy.sign(self.current_orient_effort) * int(self.feed_forward) #also helps with microadjustmnets
+                    cmd_vel_msg_move_and_shoot.angular.z += 1.0 * numpy.sign(self.current_orient_effort_cb) #also helps with microadjustmnets
 
                 self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
 
