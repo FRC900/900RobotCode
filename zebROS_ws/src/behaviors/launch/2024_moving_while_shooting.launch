@@ -2,6 +2,6 @@
 <launch>
 	<group ns="moving_while_shooting">
 		<rosparam command="load" file="$(find behaviors)/config/2024_moving_while_shooting_config.yaml"/>
-		<node name="move_while_shooting_server_2024" pkg="behaviors" type="2024_move_while_shooting_server.py" output="screen"/>
+		<node name="move_while_shooting_server_2024" pkg="behaviors" type="2024_moving_while_shooting_server.py" output="screen"/>
 	</group>
 </launch>

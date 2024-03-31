@@ -141,7 +141,7 @@
 	<include file="$(find behaviors)/launch/2024_shooting.launch">
 	</include>
 
-	<innlude file="$(find behaviors)/launch/2024_moving_while_shooting.launch"/>
+	<include file="$(find behaviors)/launch/2024_moving_while_shooting.launch"/>
 
 	<include file="$(find behaviors)/launch/2024_drive_to_object_and_intake.launch"/>
 

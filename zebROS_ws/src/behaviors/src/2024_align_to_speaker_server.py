@@ -247,8 +247,8 @@ class Aligner:
 
 
             if goal.mode == 0:#having this on lets the moving while shooting align actually work
-                self.object_publish.publish(self.msg) #this line actually sends the robot to really align to the values are specified, let us test this and make sure just to be safe
-
+                self.object_publish.publish(self.msg) 
+                
             elif goal.mode == 1:
                 self.object_publish.publish(self.msg)
             self.pub_dist_and_ang_vel.publish(dist_ang_msg) #always publishes the angle that the robot is supposed to align to, the object_publish objct line actually makes the robot align

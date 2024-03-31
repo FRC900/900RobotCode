@@ -8,6 +8,8 @@ import std_msgs.msg
 import behavior_actions.msg
 import numpy
 import geometry_msgs.msg
+import sensor_msgs.msg
+
 
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
 from behavior_actions.msg import MoveWhileShooting2024Goal, MoveWhileShooting2024Feedback, MoveWhileShooting2024Result, MoveWhileShooting2024Action
@@ -15,8 +17,10 @@ from behavior_actions.msg import AlignToSpeaker2024Goal, AlignToSpeaker2024Feedb
 from behavior_actions.msg import AutoAlignSpeaker
 from std_msgs.msg import Float64
 from interpolating_map import InterpolatingMap
+from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
+
 
 
 class ShootingServer(object):
@@ -37,15 +41,22 @@ class ShootingServer(object):
 
         self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
         self.current_orient_effort_cb = 0
+
+        self.object_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback, tcp_nodelay=True)
+        self.current_yaw = 0
         
-        self.cmd_vel_pub = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+        #self.cmd_vel_pub = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1, tcp_nodelay=True)
+
 
 
         self.angle_holder = std_msgs.msg.Float64()
 
-        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
+        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.msg.TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
         self.scaled_x_val = 0.0
         self.scaled_y_val = 0.0
+        self.scaled_x_transform = 0.0
+        self.scaled_y_transform = 0.0
         #creating cmd_vel_sub, to read in the values of the velocity values whem moving in sim, then taking callback and scaling magnitude to 1 m/s
 
         self.angle_puller = rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, self.dist_and_ang_cb, tcp_nodelay=True ,queue_size=1)
@@ -73,6 +84,18 @@ class ShootingServer(object):
         self.server.start()
         rospy.loginfo("2024_move_while_shooting_server: initialized")
 
+
+
+        #self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
+        #self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
+
+    def imu_callback(self, imu_msg):
+        q = imu_msg.orientation
+        euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
+        yaw = euler[2]
+        self.current_yaw = yaw
+
+
     def orientation_command_cb(self, msg):
         self.current_orient_effort_cb_real = msg.data
 
@@ -95,23 +118,37 @@ class ShootingServer(object):
         self.feedback_error_value = msg.feedback_error_value
         #rospy.loginfo("self.angle_twist_z has the new angle")
         
-    def cmd_vel_sub_magnitude_convert_callback(self, msg: TwistStamped):
+    def cmd_vel_sub_magnitude_convert_callback(self, msg: geometry_msgs.msg.TwistStamped):
         #just find unit vector
         #is it even msg.linear.x?
         #the subscriber callback takes in objects of geometry_msgs.Twiststamped
+        rospy.loginfo("2024 moving while shooting server: received cmd_vel_sub_magnitude convert callback")
+
         x_val = msg.twist.linear.x
         y_val = msg.twist.linear.y
         if (x_val == 0) or (y_val == 0):
             self.scaled_x_val = 0
             self.scaled_y_val = 0
+            rospy.loginfo("2024 moving while shooting server: x_val and y_val is zero")
         if ((x_val > 0) or (y_val > 0)):
+            rospy.loginfo("2024 moving while shooting server: x_val or y_val is greater than zero")
             vector_magnitude = math.hypot(x_val, y_val)
+            rospy.loginfo("2024 moving while shooting server: take magnitude of the x_val and y_val")
+            #self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
+            #self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
             if vector_magnitude > 0:
                 self.scaled_x_val = x_val / vector_magnitude
-                #perhaps do transform on these things for field relative? would prevent drift
-                rospy.loginfo("2024_shooting_server, convert callback")
                 self.scaled_y_val = y_val / vector_magnitude
                 rospy.loginfo("2024_shooting_server, convert callback")
+
+                #do the transform
+                
+                #perhaps do transform on these things for field relative? would prevent drift
+                self.scaled_y_val = y_val / vector_magnitude
+                #now transform, when the transformers pull up               brrrr audio bots roll out heheheheahahahhaah the transformformeer hahaha get it
+                self.scaled_x_transform = self.scaled_x_val * math.cos((-self.current_yaw)) - self.scaled_y_val * math.sin((-self.current_yaw))
+                self.scaled_y_transform = self.scaled_x_val * math.sin((-self.current_yaw)) + self.scaled_y_val * math.cos((-self.current_yaw))
+                rospy.loginfo("2024 moving while shooting server: x and y transform")
 
 
     def execute_cb(self, goal: MoveWhileShooting2024Goal):
@@ -150,7 +187,7 @@ class ShootingServer(object):
 
         #while ((current_time - request_time) < self.dynamic_move_time):
         while True:
-            rospy.loginfo("move while shooting server 2024: is in execute cb while loop")
+            #rospy.loginfo("move while shooting server 2024: is in execute cb while loop")
             current_time = rospy.get_time()
             #while not enough time has passed, go through this entire loop
 
@@ -173,6 +210,8 @@ class ShootingServer(object):
                 #rospy.loginfo("move while shooting server 2024: move_align is true, setting velocity and angular conditions")
                 #rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
                 #self.object_publish.publish(self.angle_cb) #main align command
+
+                
 
                 cmd_vel_msg_move_and_shoot = geometry_msgs.msg.Twist()
                 cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
