@@ -225,7 +225,7 @@ class ShootingServer(object):
 
     def angle_twist_z_cb(self, msg):
         self.angle_twist_z = msg.data
-        rospy.loginfo("has the new msg data")
+        #rospy.loginfo("has the new msg data")
         
 
     def cmd_vel_sub_magnitude_convert_callback(self, msg: TwistStamped):
@@ -263,7 +263,7 @@ class ShootingServer(object):
                         cmd_vel_msg_move_and_shoot.linear.x = 0
                         cmd_vel_msg_move_and_shoot.linear.y = 0
                         cmd_vel_msg_move_and_shoot.angular.z = 0.0
-                        self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
+                        #self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
                         
                         #self.server.set_succeeded(self.result)
 
@@ -273,7 +273,7 @@ class ShootingServer(object):
                     cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                     cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
                     cmd_vel_msg_move_and_shoot.angular.z = self.angle_twist_z
-                    self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
+                    #self.cmd_vel_pub.publish(cmd_vel_msg_move_and_shoot)
                 
                 #shoot and then unlock the constraints
 

@@ -31,10 +31,13 @@ class ShootingServer(object):
 
         self.negative = None
 
-        self.object_publish = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size =1)
+        #self.object_publish = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size =1)
+        self.object_subscribe = rospy.Subscriber("/teleop/orientation_command", std_msgs.msg.Float64, self.orientation_command_cb, tcp_nodelay=True, queue_size=1)
+        self.current_orient_effort_cb_real = 0.0
 
         self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback, tcp_nodelay=True)
         self.current_orient_effort_cb = 0
+        
         self.cmd_vel_pub = rospy.Publisher("/speaker_align/cmd_vel", geometry_msgs.msg.Twist, queue_size=1)
 
 
@@ -70,6 +73,10 @@ class ShootingServer(object):
         self.server.start()
         rospy.loginfo("2024_move_while_shooting_server: initialized")
 
+    def orientation_command_cb(self, msg):
+        self.current_orient_effort_cb_real = msg.data
+
+
     def align_to_speaker_feedback_cb(self, feedback: AlignToSpeaker2024Feedback):
         self.align_to_speaker_done = feedback.aligned
 
@@ -86,7 +93,7 @@ class ShootingServer(object):
 
         self.angle_holder = self.angle_cb #might have to use this one?
         self.feedback_error_value = msg.feedback_error_value
-        rospy.loginfo("self.angle_twist_z has the new angle")
+        #rospy.loginfo("self.angle_twist_z has the new angle")
         
     def cmd_vel_sub_magnitude_convert_callback(self, msg: TwistStamped):
         #just find unit vector
@@ -165,7 +172,7 @@ class ShootingServer(object):
                 #if we do intend on moving, aligning and shooting then do the following
                 #rospy.loginfo("move while shooting server 2024: move_align is true, setting velocity and angular conditions")
                 #rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
-                self.object_publish.publish(self.angle_cb) #main align command
+                #self.object_publish.publish(self.angle_cb) #main align command
 
                 cmd_vel_msg_move_and_shoot = geometry_msgs.msg.Twist()
                 cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
