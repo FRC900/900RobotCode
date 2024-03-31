@@ -27,9 +27,6 @@ public:
         pub_apriltag_poses_ = nh_.advertise<apriltag_msgs::ApriltagPoseStamped>("poses", 1);
         image_transport::ImageTransport it(nh_);
         pub_debug_image_ = it.advertise("debug_image", 1);
-        // pub_stage1_grid_debug_image_ = it.advertise("stage1_grid_debug_image", 2);
-        // pub_stage1_ssd_debug_image_ = it.advertise("stage1_ssd_debug_image", 2);
-        // save_input_image_srv_ = base_nh.advertiseService("save_input_image", &DeeptagRosNodelet::saveInputImageCallback, this);
     }
     void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info)
     {
@@ -86,7 +83,7 @@ public:
             for (const auto &result : results)
             {
                 drawCorner(debug_image_.image, result.original_corners_, cv::Scalar(0, 255, 0));
-                drawCorner(debug_image_.image, result.undistorted_corners_, cv::Scalar(255, 200, 200));
+                drawCorner(debug_image_.image, result.undistorted_corners_, cv::Scalar(255, 255, 0));
             }
             pub_debug_image_.publish(debug_image_.toImageMsg());
         }

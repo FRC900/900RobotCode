@@ -34,9 +34,6 @@ private:
     frc971::apriltag::GpuDetector gpu_detector_;
     cv::Size image_size_;
 
-    std::vector<cv::Mat> image_channels_;
-    cv::Mat fake_y_cb_cr_image_;
-
     size_t rejections_{0};
 
     double max_expected_distortion_{0.314}; // TODO - make this a config item

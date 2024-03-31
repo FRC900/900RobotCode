@@ -77,10 +77,6 @@ FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::
     , distortion_coefficients_{getDistCoeffs(camera_info)}
     , gpu_detector_{camera_info->width, camera_info->height, tag_detector_, distortion_camera_matrix_, distortion_coefficients_}
 {
-    // Create two empty mats. One will be used to store the grayscale image, and the other will be used to store
-    // zeroes, since the apriltag detector just exracts the Y channel as the greyscale pixel value
-    image_channels_.emplace_back(cv::Mat::zeros(camera_info->height, camera_info->width, CV_8UC1));
-    image_channels_.emplace_back(cv::Mat::zeros(camera_info->height, camera_info->width, CV_8UC1));
 }
 
 FRC971GpuApriltagDetectorImpl::~FRC971GpuApriltagDetectorImpl()
@@ -94,10 +90,7 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
                                            std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
                                            const cv::Mat &color_image)
 {
-    // TODO : add a GPU kernel to do this conversion
-    cv::cvtColor(color_image, image_channels_[0], cv::COLOR_BGR2GRAY);
-    merge(image_channels_, fake_y_cb_cr_image_);
-    gpu_detector_.Detect(fake_y_cb_cr_image_.data);
+    gpu_detector_.Detect(color_image.data);
     image_size_ = color_image.size();
 
     const zarray_t *detections = gpu_detector_.Detections();
