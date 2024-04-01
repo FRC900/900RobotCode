@@ -48,7 +48,7 @@
   ========== CPU Apriltag Detector
   -->
   <!-- Use depth info to generate apriltag world coords -->
-  <node pkg="nodelet" type="nodelet" name="apriltag_$(arg zed_name)" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" if="$(eval run_apriltag)" output="screen" >
+  <node pkg="nodelet" type="nodelet" name="apriltag_$(arg zed_name)" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" if="$(eval run_apriltag or run_gpu_apriltag)" output="screen" >
     <remap from="obj_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
     <remap from="/apriltag_$(arg zed_name)/object_detection_world" to="/apriltag_$(arg zed_name)/tag_detection_world"/>
     <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
@@ -60,7 +60,8 @@
   <group ns="apriltag_$(arg zed_name)" if="$(eval run_apriltag)">
     <!-- Run UMich apriltag detector on output of ZED camera code
     TBD - does gray force zed code to publish a message it
-    wouldn't otherwise?  Maybe color is better -->
+    wouldn't otherwise?  Maybe color is better, at least for the
+    ZEDs also running object detection -->
     <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
       <arg name="camera_name"            value="/$(arg zed_name)/left" />
       <arg name="image_topic"            value="/image_rect_gray" />
@@ -68,8 +69,7 @@
     </include>
 
     <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 
-        Publishes to $(ns)/tag_detection_msgs
-    -->
+        Publishes to $(ns)/tag_detection_msgs -->
     <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">
 			<remap from="tags_in" to="/apriltag_$(arg zed_name)/apriltag_detection/tags"/>
     </node>
@@ -78,26 +78,18 @@
   <!-- 
   ========== GPU Apriltag Detector
   -->
-  <!-- Use depth info to generate apriltag world coords -->
-  <node pkg="nodelet" type="nodelet" name="apriltag_$(arg zed_name)" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" output="screen" >
-    <remap from="obj_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
-    <remap from="/apriltag_$(arg zed_name)/object_detection_world" to="/apriltag_$(arg zed_name)/tag_detection_world"/>
-    <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
-    <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
-    <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
-    <param name="timeout" type="double" value="0.2" /> 
-  </node>
   <group ns="apriltag_$(arg zed_name)" if="$(eval run_gpu_apriltag)">
-    <!-- Run FRC971 GPU apriltag detector on output of ZED camera code -->
-    <node pkg="gpu_apriltag" name="gpu_apriltag_node" type="gpu_apriltag_node" output="screen">
+    <!-- Run FRC971 GPU apriltag detector on output of ZED camera code 
+         Run this under the same apriltag_detection namespace as the CPU tag detector
+         This simplifies a lot of the topic remapping, meaning if we switch
+         between CPU and GPU topic names should stay the same for the rest of the
+         code.  A potential downside is that we can't run both at the same time
+         since the node names will conflict. I don't think we'd want to do this, 
+         but keep it in mind -->
+    <node pkg="nodelet" type="nodelet" name="apriltag_detection" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" output="screen" >
       <remap from="image_rect_color" to="/$(arg zed_name)/left/image_rect_color" />
-    </node>
-
-    <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 
-        Publishes to $(ns)/tag_detection_msgs
-    -->
-    <node pkg="tf_object_detection" name="gpu_tag_depth" type="tag_depth.py" output="screen">
-			<remap from="tags_in" to="/apriltag_$(arg zed_name)/gpu_apriltag_node/tags"/>
+      <!-- Match tag topic to CPU apriltag detection topic names -->
+      <remap from="/apriltag_$(arg zed_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
     </node>
   </group>
 
@@ -125,12 +117,10 @@
     </node>
 
     <!-- Convert from AprilTag msg to object detection so it can be passed into screen to world below 
-        Publishes to $(ns)/tag_detection_msgs
-    -->
+        Publishes to $(ns)/tag_detection_msgs -->
     <node pkg="tf_object_detection" name="deeptag_tag_depth" type="tag_depth.py" output="screen">
 			<remap from="tags_in" to="/apriltag_$(arg zed_name)/deeptag_ros/tags"/>
     </node>
-
   </group>
 
   <!-- 

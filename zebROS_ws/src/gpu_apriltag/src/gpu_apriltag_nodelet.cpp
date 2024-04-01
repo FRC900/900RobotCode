@@ -7,6 +7,7 @@
 #include "gpu_apriltag/gpu_apriltag.h"
 #include "apriltag_msgs/ApriltagArrayStamped.h"
 #include "apriltag_msgs/ApriltagPoseStamped.h"
+#include "field_obj/TFDetection.h"
 
 namespace frc971_gpu_apriltag
 {
@@ -23,8 +24,11 @@ public:
 
         image_transport::ImageTransport base_it(base_nh);
         camera_sub_ = base_it.subscribeCamera("image_rect_color", 10, &FRC971GpuApriltagNodelet::callback, this);
+        // Publisher for apriltag detections
         pub_apriltag_detections_ = nh_.advertise<apriltag_msgs::ApriltagArrayStamped>("tags", 1);
-        pub_apriltag_poses_ = nh_.advertise<apriltag_msgs::ApriltagPoseStamped>("poses", 1);
+        // And a publisher to publish to a topic that screen to world can use directly
+        pub_objdetect_ = nh_.advertise<field_obj::TFDetection>("tag_detection_msg", 1);
+        // Publisher for debug image
         image_transport::ImageTransport it(nh_);
         pub_debug_image_ = it.advertise("debug_image", 1);
     }
@@ -45,9 +49,16 @@ public:
                           rejected_noconverge_corners,
                           cv_frame->image);
 
+        // Publish both an apriltag message adn a td detection message
+        // The later lets us skip using a separate node to process
+        // the results into the format needed by screen to world
         apriltag_msgs::ApriltagArrayStamped apriltag_array;
         apriltag_array.header = image->header;
         apriltag_array.header.frame_id = camera_info->header.frame_id;
+
+        field_obj::TFDetection objdetect_msg;
+        objdetect_msg.header = image->header;
+        objdetect_msg.header.frame_id = camera_info->header.frame_id;
         for (const auto &result : results)
         {
             apriltag_array.apriltags.emplace_back();
@@ -59,13 +70,32 @@ public:
             msg.center.x = result.center_.x;
             msg.center.y = result.center_.y;
             
+            double br_x = -std::numeric_limits<double>::max();
+            double br_y = -std::numeric_limits<double>::max();
+            double tl_x =  std::numeric_limits<double>::max();
+            double tl_y =  std::numeric_limits<double>::max();
             for (size_t i = 0; i < msg.corners.size(); i++)
             {
                 msg.corners[i].x = result.undistorted_corners_[i].x;
                 msg.corners[i].y = result.undistorted_corners_[i].y;
+                br_x = std::max(br_x, msg.corners[i].x);
+                br_y = std::max(br_y, msg.corners[i].y);
+                tl_x = std::min(tl_x, msg.corners[i].x);
+                tl_y = std::min(tl_y, msg.corners[i].y);
             }
+
+            objdetect_msg.objects.emplace_back();
+            auto &obj = objdetect_msg.objects.back();
+            obj.br.x = static_cast<float>(br_x);
+            obj.br.y = static_cast<float>(br_y);
+            obj.tl.x = static_cast<float>(tl_x);
+            obj.tl.y = static_cast<float>(tl_y);
+            obj.id = result.id_;
+            obj.label = std::to_string(result.id_);
+            obj.confidence = 1.0;
         }
         pub_apriltag_detections_.publish(apriltag_array);
+        pub_objdetect_.publish(objdetect_msg);
 
         if (pub_debug_image_.getNumSubscribers() > 0)
         {
@@ -104,6 +134,7 @@ private:
     image_transport::CameraSubscriber camera_sub_;
     ros::Publisher pub_apriltag_detections_;
     ros::Publisher pub_apriltag_poses_;
+    ros::Publisher pub_objdetect_;
 
     image_transport::Publisher pub_debug_image_;
     cv_bridge::CvImage debug_image_;

@@ -231,7 +231,6 @@ namespace tf_object_detection
 		ros::Subscriber camera_info_sub_;
 		// I don't know how to set default values for these class members
 		DepthCalculationAlgorithm algorithm;
-		ros::Publisher pub;
 		sensor_msgs::CameraInfo caminfo;
 		bool caminfovalid{false};
 		std::mutex cam_info_mutex_;
