@@ -58,17 +58,14 @@ static cudaError_t launchImageTile(const void *input,
 								   cudaStream_t stream)
 {
 	if (!input || !output)
+	{
 		return cudaErrorInvalidDevicePointer;
+	}
 
 	if (inputSize.x == 0 || outputSize.x == 0 || inputSize.y == 0 || outputSize.y == 0)
+	{
 		return cudaErrorInvalidValue;
-
-	// Check for invalid shift values
-	if ((outputSize.x + shift.x) > inputSize.x)
-		return cudaErrorInvalidValue;
-
-	if ((outputSize.y + shift.y) > inputSize.y)
-		return cudaErrorInvalidValue;
+	}
 
 	const float multiplier = (range.y - range.x) / 255.0f;
 
@@ -78,15 +75,25 @@ static cudaError_t launchImageTile(const void *input,
 
 	//added BGR options
 	if ((format == IMAGE_RGB8) || (format == IMAGE_BGR8))
+	{
 		gpuImageTile<uchar3, isBGR><<<gridDim, blockDim, 0, stream>>>((uchar3 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
+	}
 	else if ((format == IMAGE_RGBA8) || (format == IMAGE_BGRA8))
+	{
 		gpuImageTile<uchar4, isBGR><<<gridDim, blockDim, 0, stream>>>((uchar4 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
+	}
 	else if ((format == IMAGE_RGB32F) || (format == IMAGE_BGR32F))
+	{
 		gpuImageTile<float3, isBGR><<<gridDim, blockDim, 0, stream>>>((float3 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
+	}
 	else if ((format == IMAGE_RGBA32F) || (format == IMAGE_BGRA32F))
+	{
 		gpuImageTile<float4, isBGR><<<gridDim, blockDim, 0, stream>>>((float4 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
+	}
 	else
+	{
 		return cudaErrorInvalidValue;
+	}
 
 	return cudaGetLastError();
 }

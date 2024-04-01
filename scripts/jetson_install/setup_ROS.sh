@@ -79,6 +79,7 @@ sudo apt install -y \
 	ros-noetic-grid-map-cv \
 	ros-noetic-grid-map-ros \
 	ros-noetic-hardware-interface \
+	ros-noetic-image-transport-plugins \
 	ros-noetic-imu-filter-madgwick \
 	ros-noetic-joint-limits-interface \
 	ros-noetic-joint-state-publisher \

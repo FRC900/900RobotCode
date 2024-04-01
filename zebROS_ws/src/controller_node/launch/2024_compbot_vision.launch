@@ -4,6 +4,8 @@
 	<arg name="run_apriltag"         default="false" />
 	<arg name="run_gpu_apriltag"     default="true" />
 	<arg name="run_deeptag"          default="false" />
+	<arg name="run_deeptag_node"     default="false" />
+
 	<include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="zed_name"             value="zedx_front" />
 		<arg name="zed_config_dir"       value="zedx" />
@@ -19,6 +21,7 @@
 		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
 		<arg name="run_gpu_apriltag"     value="$(arg run_gpu_apriltag)" />
 		<arg name="run_deeptag"          value="$(arg run_deeptag)" />
+		<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
 		<arg name="run_object_detection" value="true" />
 		<arg name="startup_delay"        value="15.0" />
 	</include>
@@ -38,6 +41,7 @@
 		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
 		<arg name="run_gpu_apriltag"     value="$(arg run_gpu_apriltag)" />
 		<arg name="run_deeptag"          value="$(arg run_deeptag)" />
+		<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
 		<arg name="run_object_detection" value="false" />
 		<arg name="startup_delay"        value="0.0" />
 	</include>

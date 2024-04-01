@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="zed_name"             default="zed_objdet" />
+  <arg name="image_transport"      default="raw" />
+
+  <group ns="apriltag_$(arg zed_name)">
+		<!-- <node pkg="nodelet" type="nodelet" name="deeptag_ros" args="load deeptag_ros/DeeptagRosNodelet /$(arg nodelet_manager_name)" output="screen"> -->
+    <node pkg="deeptag_ros" name="deeptag_ros" type="deeptag_node" output="screen" >
+      <remap from="image_rect_color"    to="/$(arg zed_name)/left/image_rect_color" />
+      <remap from="camera_info"         to="/$(arg zed_name)/left/camera_info" />
+      <param name="tag_type"            value="36h11" />
+      <param name="tag_size_in_meter"   value="0.1651" />
+      <param name="use_tiled_detection" value="true" />
+      <param name="use_scaled_image"    value="false" />
+      <param name="image_transport"     value="$(arg image_transport)" />
+      <remap from="/apriltag_$(arg zed_name)/deeptag_ros/tags" to="/apriltag_$(arg zed_name)/apriltag_detection/tags"/>
+      <remap from="/apriltag_$(arg zed_name)/deeptag_ros/poses" to="/apriltag_$(arg zed_name)/apriltag_detection/poses"/>
+      <remap from="/apriltag_$(arg zed_name)/deeptag_ros/tag_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
+    </node>
+  </group>
+</launch>

@@ -214,35 +214,46 @@ void DetectionEngine<NUM_TILES, USE_SCALED_IMAGE>::blobFromGpuMats(const std::ve
                                                                    void *destBuffer,
                                                                    cudaStream_t cudaStream)
 {
+    const size_t imgSize = static_cast<size_t>(outputSize.x) * outputSize.y * 3;
     const ushort2 batchInputSize{static_cast<ushort>(batchInput[0].cols()), 
                                  static_cast<ushort>(batchInput[0].rows())};
-    if constexpr (NUM_TILES == 4)
-    {
-        m_tileOffsets[0] = ushort2{0, 0};
-        m_tileOffsets[1] = ushort2{static_cast<unsigned short>(batchInputSize.x - outputSize.x), 0};
-        m_tileOffsets[2] = ushort2{0, static_cast<unsigned short>(batchInputSize.y - outputSize.y)};
-        m_tileOffsets[3] = ushort2{static_cast<unsigned short>(batchInputSize.x - outputSize.x), static_cast<unsigned short>(batchInputSize.y - outputSize.y)};
-    }
-    if constexpr (NUM_TILES == 9)
-    {
-        const std::array<ushort, 3> xs{0, static_cast<unsigned short>(batchInputSize.x / 2 - outputSize.x / 2), static_cast<unsigned short>(batchInputSize.x - outputSize.x)};
-        const std::array<ushort, 3> ys{0, static_cast<unsigned short>(batchInputSize.y / 2 - outputSize.y / 2), static_cast<unsigned short>(batchInputSize.y - outputSize.y)};
-        size_t idx = 0;
-        for (auto &y : ys)
-        {
-            for (auto &x : xs)
-            {
-                m_tileOffsets[idx++] = ushort2{x, y};
-            }
-        }
-    }
-    // Run these in parallel.  Each tile has a separate cuda stream
-    // Create an event when each preproc is finished. Have the main stream wait
-    // on those events to trigger (meaning the previous cuda work is finished)
-    // before proceeding.
-    const size_t imgSize = static_cast<size_t>(outputSize.x) * outputSize.y * 3;
+
     if constexpr (NUM_TILES > 0)
     {
+        if ((batchInputSize.x < outputSize.x) || (batchInputSize.y < outputSize.y))
+        {
+            for (auto &tileOffset : m_tileOffsets)
+            {
+                tileOffset = ushort2{0, 0};
+            }
+        }
+        else
+        {
+            if constexpr (NUM_TILES == 4)
+            {
+                m_tileOffsets[0] = ushort2{0, 0};
+                m_tileOffsets[1] = ushort2{static_cast<unsigned short>(batchInputSize.x - outputSize.x), 0};
+                m_tileOffsets[2] = ushort2{0, static_cast<unsigned short>(batchInputSize.y - outputSize.y)};
+                m_tileOffsets[3] = ushort2{static_cast<unsigned short>(batchInputSize.x - outputSize.x), static_cast<unsigned short>(batchInputSize.y - outputSize.y)};
+            }
+            if constexpr (NUM_TILES == 9)
+            {
+                const std::array<ushort, 3> xs{0, static_cast<unsigned short>(batchInputSize.x / 2 - outputSize.x / 2), static_cast<unsigned short>(batchInputSize.x - outputSize.x)};
+                const std::array<ushort, 3> ys{0, static_cast<unsigned short>(batchInputSize.y / 2 - outputSize.y / 2), static_cast<unsigned short>(batchInputSize.y - outputSize.y)};
+                size_t idx = 0;
+                for (auto &y : ys)
+                {
+                    for (auto &x : xs)
+                    {
+                        m_tileOffsets[idx++] = ushort2{x, y};
+                    }
+                }
+            }
+        }
+        // Run these in parallel.  Each tile has a separate cuda stream
+        // Create an event when each preproc is finished. Have the main stream wait
+        // on those events to trigger (meaning the previous cuda work is finished)
+        // before proceeding.
         for (size_t tile = 0; tile < NUM_TILES; tile++)
         {
             cudaSafeCall(cudaImageTileRGB(batchInput[0].getDataPtr(),
