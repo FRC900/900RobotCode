@@ -132,24 +132,19 @@ class ShootingServer(object):
             rospy.loginfo("2024 moving while shooting server: x_val and y_val is zero")
         if ((x_val > 0) or (y_val > 0)):
             rospy.loginfo("2024 moving while shooting server: x_val or y_val is greater than zero")
-            vector_magnitude = math.hypot(x_val, y_val)
-            rospy.loginfo("2024 moving while shooting server: take magnitude of the x_val and y_val")
+            self.scaled_x_transform = x_val * math.cos((-self.current_yaw)) - y_val * math.sin((-self.current_yaw))
+            self.scaled_y_transform = x_val * math.sin((-self.current_yaw)) + y_val * math.cos((-self.current_yaw))
+            vector_magnitude = math.hypot(self.scaled_x_transform, self.scaled_y_transform)
+            rospy.loginfo("2024 moving while shooting server: take magnitude of the x_val and y_val transform")
             #self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
             #self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
+
             if vector_magnitude > 0:
-                self.scaled_x_val = x_val / vector_magnitude
-                self.scaled_y_val = y_val / vector_magnitude
+                self.scaled_x_val = self.scaled_x_transform / vector_magnitude
+                self.scaled_y_val = self.scaled_y_transform / vector_magnitude
                 rospy.loginfo("2024_shooting_server, convert callback")
 
-                #do the transform
-                
-                #perhaps do transform on these things for field relative? would prevent drift
-                self.scaled_y_val = y_val / vector_magnitude
-                #now transform, when the transformers pull up               brrrr audio bots roll out heheheheahahahhaah the transformformeer hahaha get it
-                self.scaled_x_transform = self.scaled_x_val * math.cos((-self.current_yaw)) - self.scaled_y_val * math.sin((-self.current_yaw))
-                self.scaled_y_transform = self.scaled_x_val * math.sin((-self.current_yaw)) + self.scaled_y_val * math.cos((-self.current_yaw))
-                rospy.loginfo("2024 moving while shooting server: x and y transform")
-
+               
 
     def execute_cb(self, goal: MoveWhileShooting2024Goal):
         rospy.loginfo("move while shooting server 2024: has received execute cb")
@@ -211,8 +206,7 @@ class ShootingServer(object):
                 #rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
                 #self.object_publish.publish(self.angle_cb) #main align command
 
-                
-
+            
                 cmd_vel_msg_move_and_shoot = geometry_msgs.msg.Twist()
                 cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
                 cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
