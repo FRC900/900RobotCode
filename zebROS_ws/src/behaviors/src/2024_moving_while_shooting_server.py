@@ -23,7 +23,7 @@ from geometry_msgs.msg import TwistStamped
 
 
 
-class ShootingServer(object):
+class MovingWhileShootingServer(object):
     def __init__(self, name):
         self.action_name = name
         self.result = MoveWhileShooting2024Result()
@@ -52,7 +52,7 @@ class ShootingServer(object):
 
         self.angle_holder = std_msgs.msg.Float64()
 
-        self.cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", geometry_msgs.msg.TwistStamped, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
+        self.cmd_vel_sub = rospy.Subscriber("/teleop/swerve_drive_controller/cmd_vel", geometry_msgs.msg.Twist, self.cmd_vel_sub_magnitude_convert_callback, tcp_nodelay=True, queue_size=1)
         self.scaled_x_val = 0.0
         self.scaled_y_val = 0.0
         self.scaled_x_transform = 0.0
@@ -118,14 +118,14 @@ class ShootingServer(object):
         self.feedback_error_value = msg.feedback_error_value
         #rospy.loginfo("self.angle_twist_z has the new angle")
         
-    def cmd_vel_sub_magnitude_convert_callback(self, msg: geometry_msgs.msg.TwistStamped):
+    def cmd_vel_sub_magnitude_convert_callback(self, msg: geometry_msgs.msg.Twist):
         #just find unit vector
         #is it even msg.linear.x?
         #the subscriber callback takes in objects of geometry_msgs.Twiststamped
         rospy.loginfo("2024 moving while shooting server: received cmd_vel_sub_magnitude convert callback")
 
-        x_val = msg.twist.linear.x
-        y_val = msg.twist.linear.y
+        x_val = msg.linear.x
+        y_val = msg.linear.y
         if (x_val == 0) or (y_val == 0):
             self.scaled_x_val = 0
             self.scaled_y_val = 0
@@ -185,6 +185,8 @@ class ShootingServer(object):
             #rospy.loginfo("move while shooting server 2024: is in execute cb while loop")
             current_time = rospy.get_time()
             #while not enough time has passed, go through this entire loop
+           
+
 
             if self.server.is_preempt_requested():
                 #if preempted, cancel the goals that we send and make sure the stuff that we are doing is preempted
@@ -206,10 +208,24 @@ class ShootingServer(object):
                 #rospy.loginfo(f"this is the angle we are using to align: {self.angle_cb}")
                 #self.object_publish.publish(self.angle_cb) #main align command
 
+
+                angle = math.atan2(self.scaled_y_val, self.scaled_x_val) - self.current_yaw
+
+                # Calculate the magnitude of the field-relative velocity command
+                magnitude = math.sqrt(self.scaled_x_val**2 + self.scaled_y_val**2)
+
+                # Transform the field-relative velocity command to robot-relative
+                robot_relative_x = magnitude * math.cos(angle)
+                robot_relative_y = magnitude * math.sin(angle)
+
+
+            #self.x_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.cos(-(self.current_yaw)) - self.current_robot_cmd_vel.linear.y * math.sin(-(self.current_yaw))
+            #self.y_field_relative_vel_align = self.current_robot_cmd_vel.linear.x * math.sin(-(self.current_yaw)) + self.current_robot_cmd_vel.linear.y * math.cos(-(self.current_yaw))
+
             
                 cmd_vel_msg_move_and_shoot = geometry_msgs.msg.Twist()
-                cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val
-                cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val
+                cmd_vel_msg_move_and_shoot.linear.x = self.scaled_x_val * math.cos((-self.current_yaw)) - self.scaled_y_val * math.sin((-self.current_yaw))
+                cmd_vel_msg_move_and_shoot.linear.y = self.scaled_y_val * math.sin((-self.current_yaw)) + self.scaled_y_val * math.cos((-self.current_yaw))
                 cmd_vel_msg_move_and_shoot.linear.z = 0.0
                 cmd_vel_msg_move_and_shoot.angular.z = self.current_orient_effort_cb 
                 cmd_vel_msg_move_and_shoot.angular.y = 0.0
@@ -228,5 +244,5 @@ class ShootingServer(object):
 
 if __name__ == '__main__':
     rospy.init_node('move_while_shooting_server_2024')
-    server = ShootingServer(rospy.get_name())
+    server = MovingWhileShootingServer(rospy.get_name())
     rospy.spin()
