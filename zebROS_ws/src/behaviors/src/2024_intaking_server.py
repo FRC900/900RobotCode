@@ -54,7 +54,7 @@ class Intaking2024Server(object):
         self.intake_client = rospy.ServiceProxy("/frcrobot_jetson/intake_talonfxpro_controller/command", Command)
 
         ddynrec = DDynamicReconfigure("intaking_dyn_rec")
-        ddynrec.add_variable("intaking_speed", "float/double variable", rospy.get_param("intaking_speed"), 0.0, 1.0)
+        ddynrec.add_variable("intaking_speed", "float/double variable", rospy.get_param("intaking_speed"), 0.0, 13.0)
         ddynrec.add_variable("current_threshold", "float/double variable", rospy.get_param("current_threshold"), 0.0, 200.0)
         ddynrec.start(self.dyn_rec_callback)
 

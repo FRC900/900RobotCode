@@ -113,7 +113,7 @@ intake_talonfxpro_controller:
 note_diverter_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController
     joint: note_diverter
-    invert: clockwise_positive
+    invert: counterclockwise_positive
     # dynamic_reconfigure: True
     neutral_mode: Coast
 

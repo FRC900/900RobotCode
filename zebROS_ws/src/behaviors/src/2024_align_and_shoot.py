@@ -58,6 +58,8 @@ class AlignAndShoot:
         
         self.localization_timeout = rospy.get_param("localization_timeout")
 
+        self.only_shooter_during_continuous_autoalign = rospy.get_param("only_shooter_during_continuous_autoalign")
+
         self.aligning = False
 
         self.alliance_color = MatchSpecificData.ALLIANCE_COLOR_UNKNOWN
@@ -176,6 +178,7 @@ class AlignAndShoot:
                 shooting_goal = Shooting2024Goal()
                 shooting_goal.mode = shooting_goal.SPEAKER # should use the dist and angle topic to keep adjusting speeds
                 shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
+                shooting_goal.only_shooter_setup = self.only_shooter_during_continuous_autoalign
                 shooting_goal.setup_only = True
                 shooting_goal.leave_spinning = True
                 self.shooting_client.send_goal(shooting_goal, feedback_cb=self.shooting_feedback_cb)

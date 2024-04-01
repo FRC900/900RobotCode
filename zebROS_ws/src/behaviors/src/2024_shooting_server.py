@@ -325,19 +325,22 @@ class ShootingServer(object):
         # this leads to shooter_done being set to False. we then don't receive the final feedback message, because SimpleActionClient ignores feedback sent after
         # the goal is done (source: https://github.com/ros/actionlib/blob/23acb6e7364dda9380f823e03284536574764c6a/actionlib/src/actionlib/action_client.py#L416)
 
-        rospy.loginfo(f"2024_shooting_server: pivoting to angle {pivot_angle}")
+        if not (goal.setup_only and goal.only_shooter_setup):
+            rospy.loginfo(f"2024_shooting_server: pivoting to angle {pivot_angle}")
 
-        self.feedback.current_stage = self.feedback.PIVOTING
-        self.server.publish_feedback(self.feedback)
+            self.feedback.current_stage = self.feedback.PIVOTING
+            self.server.publish_feedback(self.feedback)
 
-        pivot_goal = ShooterPivot2024Goal()
-        pivot_goal.pivot_position = pivot_angle
+            pivot_goal = ShooterPivot2024Goal()
+            pivot_goal.pivot_position = pivot_angle
 
-        pivot_done = False
-        def pivot_done_cb(state, result):
-            nonlocal pivot_done
+            pivot_done = False
+            def pivot_done_cb(state, result):
+                nonlocal pivot_done
+                pivot_done = True
+            if not SIM: self.pivot_client.send_goal(pivot_goal, done_cb=pivot_done_cb)
+        else:
             pivot_done = True
-        if not SIM: self.pivot_client.send_goal(pivot_goal, done_cb=pivot_done_cb)
         # rospy.loginfo("Sleeping for 0.25")
         # time.sleep(0.25)
         r = rospy.Rate(60.0)
