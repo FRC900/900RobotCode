@@ -43,6 +43,7 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <optional>
 #include <periodic_interval_counter/periodic_interval_counter.h>
 #include <sensor_msgs/Imu.h>
 #include <realtime_tools/realtime_buffer.h>
@@ -173,8 +174,17 @@ bool init(hardware_interface::RobotHW *hw,
 	}
 	if (!controller_nh.getParam("stopping_ff", stopping_ff_))
 	{
-		ROS_ERROR("Could not read stoping_ff in talon swerve drive controller");
+		ROS_ERROR("Could not read stopping_ff in talon swerve drive controller");
 		return false;
+	}
+	double traction_dummy;
+	if (controller_nh.getParam("traction_gain_percent", traction_dummy))
+	{
+		traction_gain_percent_ = traction_dummy;
+	} 
+	else {
+		ROS_WARN("Could not read traction_gain_percent in talon swerve drive controller");
+		traction_gain_percent_ = std::nullopt;
 	}
 
 	XmlRpc::XmlRpcValue wheel_coords;
@@ -1004,6 +1014,17 @@ bool percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBo
 	}
 }
 
+float get_limited_velocity(const ros::Time &time, size_t index) 
+{
+	double goal_vel = speeds_angles_[index][0];
+	if (!traction_gain_percent_) { return goal_vel; }
+
+	double current_vel = latency_compensation_state_->getLatencyCompensatedValue(speed_names_[index], time);
+	if (fabs(goal_vel) <= fabs(current_vel)) { return goal_vel; }
+	return fmin(goal_vel, current_vel * (1.0 + *traction_gain_percent_));
+}
+
+std::optional<double> traction_gain_percent_; // percent 0-100, amount of increase that should be allowed
 
 std::string name_; // Controller name, for debugging
 
