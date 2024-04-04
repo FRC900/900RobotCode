@@ -50,7 +50,7 @@ class DriveObjectIntakeServer(object):
         # stop drive to object
         self.drive_to_object_client.cancel_goals_at_and_before_time(rospy.Time.now())
         # stop intaking
-        self.intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
+        # self.intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
     def intaking_result(self, state, intaking_result: Intaking2024Result):
         rospy.loginfo(f"Intaking server finished with {intaking_result.success} ")

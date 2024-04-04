@@ -218,7 +218,7 @@ class ShootingServer(object):
             self.shooter_client.send_goal(shooter_goal)
             time.sleep(0.25)
             self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
-            self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
+            # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())
             self.result.success = True
             self.server.set_succeeded(self.result)
             return

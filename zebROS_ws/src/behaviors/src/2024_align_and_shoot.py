@@ -7,13 +7,11 @@ from behavior_actions.msg import AlignAndShoot2024Goal, AlignAndShoot2024Result,
 from behavior_actions.msg import AlignToSpeaker2024Goal, AlignToSpeaker2024Result, AlignToSpeaker2024Feedback, AlignToSpeaker2024Action
 from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shooting2024Result, Shooting2024Action
 from behavior_actions.msg import AutoAlignSpeaker
-import behavior_actions.msg
 import geometry_msgs.msg
 from frc_msgs.msg import MatchSpecificData
 import std_srvs.srv
 
 #from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
-from std_msgs.msg import Float64
 from std_msgs.msg import Header
 
 from sensor_msgs.msg import JointState
