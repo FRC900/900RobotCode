@@ -40,18 +40,31 @@ class Clawster2024ActionServer(object):
         self.preshooter_intake_speed = rospy.get_param('preshooter/intake_speed')
         self.preshooter_outtake_speed = rospy.get_param('preshooter/outtake_speed')
 
+        self.trap_outtake_speed = rospy.get_param('trap/outtake_speed')
+
         self.diverter_switch_name = rospy.get_param("diverter_switch_name")
         self.diverting_timeout = rospy.get_param("diverting_timeout")
 
-        self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback)
+        self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback, tcp_nodelay=True)
 
         self.last_touched_diverter = rospy.Time()
 
         rospy.loginfo(f"Claw: switch name {self.claw_switch_name} claw intake speed {self.claw_intake_speed}")
         rospy.loginfo(f"Preshooter: switch name {self.preshooter_switch_name} claw intake speed {self.preshooter_intake_speed}")
 
+        ddynrec = DDynamicReconfigure("clawster_dyn_rec")
+        ddynrec.add_variable("intake_speed", "float/double variable", self.preshooter_intake_speed, 0.0, 10.0)
+        ddynrec.add_variable("outtake_speed", "float/double variable", self.preshooter_outtake_speed, 0.0, 10.0)
+        ddynrec.start(self.dyn_rec_callback)
+
         self._as = actionlib.SimpleActionServer(self._action_name, Clawster2024Action, execute_cb=self.execute_cb, auto_start = False)
         self._as.start()
+
+    def dyn_rec_callback(self, config, level):
+        rospy.loginfo("Received reconf call: " + str(config))
+        self.preshooter_intake_speed = config["intake_speed"]
+        self.preshooter_outtake_speed = config["outtake_speed"]
+        return config
 
     def get_current_switch(self, goal: Clawster2024Goal):
         if goal.destination == goal.PRESHOOTER:
@@ -73,6 +86,8 @@ class Clawster2024ActionServer(object):
             rospy.loginfo("Clawster called with CLAW")
             intake_speed = self.preshooter_intake_speed
             outtake_speed = self.preshooter_outtake_speed
+        elif goal.destination == goal.TRAP:
+            outtake_speed = self.trap_outtake_speed
 
         rospy.loginfo(f"Clawster: limit switch set to {self.get_current_switch(goal)}")
         if goal.mode == goal.INTAKE:

@@ -38,7 +38,7 @@ private:
 
     double max_expected_distortion_{0.314}; // TODO - make this a config item
     double min_decision_margin_{50.};
-    int32_t pixel_border_{150};
+    int32_t pixel_border_{5};
     uint64_t pose_estimation_iterations_{50};
     double tag_size_ = 0.1651; // 6.5 inches
 };

@@ -2,22 +2,19 @@
 
 import actionlib
 import rospy
-import math
-import tf2_ros
-import tf2_geometry_msgs
+# import tf2_ros
+# import tf2_geometry_msgs
 import geometry_msgs.msg
 import std_msgs.msg
-import sensor_msgs.msg
-import math
+# import sensor_msgs.msg
 import time
 from behavior_actions.msg import DriveAndScore2024Action, DriveAndScore2024Goal, DriveAndScore2024Feedback, DriveAndScore2024Result 
 import behavior_actions.msg
-from tf.transformations import euler_from_quaternion # may look like tf1 but is actually tf2
-from frc_msgs.msg import MatchSpecificData
-import std_srvs.srv
-import angles
+# from frc_msgs.msg import MatchSpecificData
+# import std_srvs.srv
+# import angles
 from controllers_2024_msgs.srv import ShooterPivotSrv, ShooterPivotSrvRequest
-import numpy
+# import numpy
 import geometry_msgs.msg
 
 # While the snap to angle button is held, spin up the shooter for amp and override driver
@@ -38,6 +35,8 @@ class DriveAndScore:
         self.align_client = actionlib.SimpleActionClient('/align_to_trap/align_to_trap_2024', behavior_actions.msg.AlignToTrap2024Action)
         rospy.loginfo("2024_intaking_server: waiting for shooter pivot server")
         self.align_client.wait_for_server()
+        self.second_trap_stage = False
+        self.leaf_blower_called = False
         # shoot trap
         self.shooting_client = actionlib.SimpleActionClient('/shooting/shooting_server_2024', behavior_actions.msg.Shooting2024Action)
         
@@ -61,6 +60,9 @@ class DriveAndScore:
         rospy.loginfo("2024 drive and score, align server done")
         self.align_done = True
     
+    def trap_feedback_cb(self, feedback: behavior_actions.msg.AlignToTrap2024Feedback):
+        self.second_trap_stage = feedback.second_trap_stage
+
     def shooting_done_cb(self, status, result):
         self.shooting_done = True
     
@@ -106,6 +108,8 @@ class DriveAndScore:
         have_shot = False 
         rospy.loginfo(f"Drive and score 2024 - called with goal {goal}")
         r = rospy.Rate(60.0)
+        self.second_trap_stage = False
+        self.leaf_blower_called = False
         align_goal = behavior_actions.msg.AlignToTrap2024Goal()
 
         if goal.destination == goal.AMP:
@@ -121,11 +125,7 @@ class DriveAndScore:
         elif goal.destination == goal.TRAP:
             rospy.loginfo(f"Drive and score 2024 - going trap")
             align_goal.destination = align_goal.TRAP
-            self.align_client.send_goal(align_goal, done_cb=self.align_done_cb)
-            msg = std_msgs.msg.Float64()
-            rospy.loginfo(f"Blowing up leafblower to: {self.trap_blower_speed}")
-            msg.data = self.trap_blower_speed
-            self.leafblower_pub.publish(msg)
+            self.align_client.send_goal(align_goal, done_cb=self.align_done_cb, feedback_cb=self.trap_feedback_cb)
             pivot = ShooterPivotSrvRequest()
             pivot.angle = self.trap_blower_position
             if not self.arm_pivot_client.call(pivot):
@@ -224,6 +224,14 @@ class DriveAndScore:
                 self._result.success = True
                 self._as.set_succeeded(self._result)
                 return
+
+            # Turn on leaf blower when the first stage align is finished
+            if goal.destination == goal.TRAP and self.second_trap_stage and not self.leaf_blower_called:
+                rospy.loginfo(f"Blowing up leafblower to: {self.trap_blower_speed}")
+                msg = std_msgs.msg.Float64()
+                msg.data = self.trap_blower_speed
+                self.leafblower_pub.publish(msg)
+                self.leaf_blower_called = True
 
             self._as.publish_feedback(self._feedback)
             r.sleep()

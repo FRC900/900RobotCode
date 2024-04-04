@@ -70,6 +70,7 @@ std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> p
 bool reset_climb = true;
 
 ros::ServiceClient enable_continuous_autoalign_client;
+bool sent_first_continuous_autoalign = false;
 
 void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 {    
@@ -110,7 +111,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->buttonBPress)
 			{
 				behavior_actions::Shooting2024Goal goal;
-				goal.mode = goal.SUBWOOFER;
+				goal.mode = goal.SLIDE;
 				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonBButton)
@@ -126,7 +127,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->buttonXPress)
 			{
 				behavior_actions::Shooting2024Goal goal;
-				goal.mode = goal.SLIDE;
+				goal.mode = goal.SUBWOOFER;
 				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_state->buttonXButton)
@@ -534,8 +535,23 @@ bool aligning = false;
 
 void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 {
-	if (button_box->lockingSwitchButton)
+	if (!sent_first_continuous_autoalign)
 	{
+		std_srvs::SetBool srv;
+		if (button_box->lockingSwitchButton)
+		{
+			srv.request.data = true;
+		}
+		else
+		{
+			srv.request.data = false;
+		}
+		ROS_INFO_STREAM("teleop_joystick_comp_2024 : sending first autoalign message (data = " << static_cast<int>(srv.request.data) << ")");
+		if (enable_continuous_autoalign_client.call(srv))
+		{
+			sent_first_continuous_autoalign = true;
+			ROS_INFO_STREAM("teleop_joystick_comp_2024 : first autoalign call succeeded");
+		}
 	}
 	if (button_box->lockingSwitchPress)
 	{
@@ -600,6 +616,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		toggle_relocalize.request.data = true;
 		if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
 			ROS_ERROR_STREAM("FAILED TO ENABLE RELOCALIZING WITH CMD_VEL");
+		}
+		std_srvs::SetBool toggle_cmd_vel_limit;
+		toggle_cmd_vel_limit.request.data = false;
+		if (!toggle_cmd_vel_limit_srv_.call(toggle_cmd_vel_limit)) {
+			ROS_ERROR_STREAM("FAILED TO DISABLE CMD_VEL LIMITING");
 		}
 	}
 	if (button_box->redRelease)

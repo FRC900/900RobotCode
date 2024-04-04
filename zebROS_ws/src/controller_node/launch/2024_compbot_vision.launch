@@ -10,10 +10,10 @@
 		<arg name="zed_name"             value="zedx_front" />
 		<arg name="zed_config_dir"       value="zedx" />
 		<arg name="camera_model"         value="zedx" />
-		<arg name="serial_number"	     value="47067994" />
+		<arg name="serial_number"	     value="43782465" /> <!-- 47067994 is original comp -->
 		<arg name="cam_pos_x"            value="0.395726" />
 		<arg name="cam_pos_y"            value="0.231140" /> <!-- MIGHT NEED TO RAISE -->
-		<arg name="cam_pos_z"            value="0.232149" />
+		<arg name="cam_pos_z"            value="0.248031" />
 		<arg name="cam_roll"             value="0.0" />
 		<arg name="cam_pitch"            value="0.0" />
 		<arg name="cam_yaw"              value="0.0" />
@@ -23,6 +23,8 @@
 		<arg name="run_deeptag"          value="$(arg run_deeptag)" />
 		<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
 		<arg name="run_object_detection" value="true" />
+		<arg name="run_nodelet_manager"  value="true" />
+		<arg name="nodelet_manager_name" value="zed_nodelet" />
 		<arg name="startup_delay"        value="15.0" />
 	</include>
 
@@ -43,6 +45,8 @@
 		<arg name="run_deeptag"          value="$(arg run_deeptag)" />
 		<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
 		<arg name="run_object_detection" value="false" />
+		<arg name="run_nodelet_manager"  value="false" />
+		<arg name="nodelet_manager_name" value="zed_nodelet" />
 		<arg name="startup_delay"        value="0.0" />
 	</include>
 

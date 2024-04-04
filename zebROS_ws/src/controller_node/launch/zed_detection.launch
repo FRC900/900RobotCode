@@ -22,29 +22,30 @@
   <arg name="run_pub_video"        default="false" />
   <arg name="startup_delay"        default="0.0" />
   <!-- Name of the Nodelet Manager -->
+  <arg name="run_nodelet_manager"  default="true" />
   <arg name="nodelet_manager_name"  default="$(arg zed_name)_nodelet_manager" />
   <arg name="deeptag_image_transport" default="raw" />
 
-  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
-    <include file="$(find zed_wrapper)/launch/include/zed_camera_nodelet.launch" if="$(eval run_camera)">
-      <arg name="camera_name"          value="$(arg zed_name)" />
-      <arg name="camera_model"         value="$(arg camera_model)" />
-      <arg name="node_name"            value="$(arg zed_node_name)" />
-      <arg name="base_frame"           value="base_link" />
-      <arg name="publish_urdf"         value="true" />
-      <arg name="camera_id"            value="$(arg camera_id)" />
-      <arg name="serial_number"        value="$(arg serial_number)" />
-      <arg name="cam_pos_x"            value="$(arg cam_pos_x)" />
-      <arg name="cam_pos_y"            value="$(arg cam_pos_y)" />
-      <arg name="cam_pos_z"            value="$(arg cam_pos_z)" />
-      <arg name="cam_roll"             value="$(arg cam_roll)"  />
-      <arg name="cam_pitch"            value="$(arg cam_pitch)" />
-      <arg name="cam_yaw"              value="$(arg cam_yaw)"   />
-      <arg name="startup_delay"        value="$(arg startup_delay)" />
+  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" if="$(eval run_nodelet_manager)" />
+  <include file="$(find zed_wrapper)/launch/include/zed_camera_nodelet.launch" if="$(eval run_camera)">
+    <arg name="camera_name"          value="$(arg zed_name)" />
+    <arg name="camera_model"         value="$(arg camera_model)" />
+    <arg name="node_name"            value="$(arg zed_node_name)" />
+    <arg name="base_frame"           value="base_link" />
+    <arg name="publish_urdf"         value="true" />
+    <arg name="camera_id"            value="$(arg camera_id)" />
+    <arg name="serial_number"        value="$(arg serial_number)" />
+    <arg name="cam_pos_x"            value="$(arg cam_pos_x)" />
+    <arg name="cam_pos_y"            value="$(arg cam_pos_y)" />
+    <arg name="cam_pos_z"            value="$(arg cam_pos_z)" />
+    <arg name="cam_roll"             value="$(arg cam_roll)"  />
+    <arg name="cam_pitch"            value="$(arg cam_pitch)" />
+    <arg name="cam_yaw"              value="$(arg cam_yaw)"   />
+    <arg name="startup_delay"        value="$(arg startup_delay)" />
 
-      <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
-      <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
-      <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
+    <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
+    <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
+    <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
   </include>
   <!-- 
   ========== Screen to world for any apriltag detections

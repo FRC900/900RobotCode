@@ -5,6 +5,7 @@ uint8 mode
 
 uint8 CLAW=0
 uint8 PRESHOOTER=1
+uint8 TRAP=2
 uint8 destination
 ---
 # feedback

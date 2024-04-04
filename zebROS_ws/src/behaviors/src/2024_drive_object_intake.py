@@ -34,6 +34,7 @@ class DriveObjectIntakeServer(object):
         self.intake_timeout_ = rospy.get_param("intake_timeout")
         self.drive_back_time_ = rospy.get_param("drive_back_time")
         self.drive_back_speed_ = rospy.get_param("drive_back_speed")
+        self.max_angle_away_ = rospy.get_param("max_angle_away")
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
         self.intake_server_done = False
         self.intake_server_success = False
@@ -88,7 +89,7 @@ class DriveObjectIntakeServer(object):
         drive_to_object_goal.fast_zone = 0.0
         drive_to_object_goal.min_y_pos = goal.min_y_pos # -5 for first blue
         drive_to_object_goal.max_y_pos = goal.max_y_pos # 0.1 for first blue
-
+        drive_to_object_goal.max_angle = self.max_angle_away_
 
         drive_object_done = False
         

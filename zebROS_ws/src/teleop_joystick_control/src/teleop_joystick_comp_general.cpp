@@ -41,6 +41,7 @@ ros::ServiceClient ParkSrv;
 ros::ServiceClient IMUZeroSrv;
 ros::ServiceClient SwerveOdomZeroSrv;
 ros::ServiceClient toggle_relocalize_srv_;
+ros::ServiceClient toggle_cmd_vel_limit_srv_;
 
 bool joystick1_left_trigger_pressed = false;
 bool joystick1_right_trigger_pressed = false;
@@ -73,6 +74,11 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 		toggle_relocalize.request.data = true;
 		if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
 			ROS_ERROR_STREAM("FAILED TO ENABLE RELOCALIZING WITH CMD_VEL");
+		}
+		std_srvs::SetBool toggle_cmd_vel_limit;
+		toggle_cmd_vel_limit.request.data = false;
+		if (!toggle_cmd_vel_limit_srv_.call(toggle_cmd_vel_limit)) {
+			ROS_ERROR_STREAM("FAILED TO DISABLE CMD_VEL LIMITING");
 		}
 	}
 	last_enabled = msg.Enabled;
@@ -370,6 +376,7 @@ void TeleopInitializer::init() {
 	setCenterSrv = n_.serviceClient<talon_swerve_drive_controller_msgs::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	SwerveOdomZeroSrv = n_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
 	toggle_relocalize_srv_ = n_.serviceClient<std_srvs::SetBool>("/toggle_map_to_odom", false, service_connection_header);
+	toggle_cmd_vel_limit_srv_ = n_.serviceClient<std_srvs::SetBool>("/toggle_cmd_vel_limit", false, service_connection_header);
 #ifdef NEED_JOINT_STATES
 	ros::Subscriber joint_states_sub = n_.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 #endif

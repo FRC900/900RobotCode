@@ -67,20 +67,8 @@
 			 robot_code_ready_controller" />
 			 
 			 <!--
-			 
-				
-			 
 			 orchestra_controller
 			 orchestra_state_controller
-			 pigeon2_imu_state_controller
-			 latency_compensation_state_controller
-			 note_diverter_controller
-			 note_conveyor_controller
-			 claw_controller
-			 left_shooter_voltage_velocity_controller
-			 right_shooter_voltage_velocity_controller
-			 shooter_pivot_motionmagicvoltage_controller
-			 robot_code_ready_controller" />
 			 swerve_drive_state_controller
 			-->
 

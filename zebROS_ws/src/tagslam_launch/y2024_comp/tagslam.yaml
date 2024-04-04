@@ -372,9 +372,9 @@ bodies:
     #  #odom_topic: "/frcrobot_jetson/swerve_drive_state_controller/odom"
      odom_frame_id: base_link
      # assumed odom noise in meters(!): the larger this parameter, the less you rely on odom
-     odom_translation_noise: 0.001
+     odom_translation_noise: 0.5
      # assomed odom noise in radians(!)
-     odom_rotation_noise: 0.001
+     odom_rotation_noise: 0.10
      T_body_odom:
        position:
          x:  0

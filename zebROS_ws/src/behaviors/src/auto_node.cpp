@@ -80,6 +80,7 @@ class AutoNode {
 		ros::ServiceClient zero_odom_srv_;
 		ros::ServiceClient toggle_relocalize_srv_;
 		ros::ServiceClient relocalize_point_srv_;
+		ros::ServiceClient toggle_cmd_vel_limit_srv_;
 
 		ros::ServiceClient pause_srv_;
 		bool park_enabled = false;
@@ -176,6 +177,7 @@ class AutoNode {
 		zero_odom_srv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
 		toggle_relocalize_srv_ = nh_.serviceClient<std_srvs::SetBool>("/toggle_map_to_odom", false, service_connection_header);
 		relocalize_point_srv_ = nh_.serviceClient<behavior_actions::RelocalizePoint>("/relocalize_point", false, service_connection_header);
+		toggle_cmd_vel_limit_srv_ = nh_.serviceClient<std_srvs::SetBool>("/toggle_cmd_vel_limit", false, service_connection_header);
 		
 		pause_srv_ = nh_.serviceClient<std_srvs::SetBool>("/path_follower/pause_path", false, service_connection_header);
 
@@ -1258,6 +1260,10 @@ class AutoNode {
 			ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
 			shutdownNode(ERROR, "A Map to odom service call failed");
 		}
+		if (!toggle_cmd_vel_limit_srv_.call(toggle_relocalize)) {
+			ROS_ERROR_STREAM("FAILED TO ENABLE CMD VEL LIMIT FOR MAP TO ODOM - EXITING");
+			shutdownNode(ERROR, "A Map to odom service call failed");
+		}
 		// make a std_srvs::Empty request
 		std_srvs::Empty srv;
 		// call the relocalize service
@@ -1344,6 +1350,12 @@ class AutoNode {
 			return false;
 		}
 		path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now() - ros::Duration(0.1));
+		std_srvs::SetBool toggle_cmd_vel;
+		toggle_cmd_vel.request.data = true;
+		if (!toggle_cmd_vel_limit_srv_.call(toggle_cmd_vel)) {
+			ROS_ERROR_STREAM("FAILED TO ENABLE CMD VEL LIMIT FOR MAP TO ODOM - EXITING");
+			shutdownNode(ERROR, "A Map to odom service call failed");
+		}
 		int iteration_value = 1;
 		bool wait_for_path = true;
 		if (action_data.hasMember("goal"))

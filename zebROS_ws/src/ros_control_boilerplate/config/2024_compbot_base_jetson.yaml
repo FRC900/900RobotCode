@@ -121,8 +121,8 @@ clawster_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController
     joint: clawster
     invert: counterclockwise_positive
-    # dynamic_reconfigure: True
-    neutral_mode: Coast
+    dynamic_reconfigure: True
+    neutral_mode: Brake
 
 
 top_left_shooter_controller:

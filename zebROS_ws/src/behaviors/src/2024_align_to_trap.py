@@ -4,15 +4,12 @@ import actionlib
 import rospy
 import math
 import tf2_ros
-import geometry_msgs.msg
 import std_msgs.msg
 import sensor_msgs.msg
 import math
 import behavior_actions.msg
 from tf.transformations import euler_from_quaternion # may look like tf1 but is actually tf2
-from tf import transformations as t
 from frc_msgs.msg import MatchSpecificData
-import std_srvs.srv
 import norfair_ros.msg
 import angles
 
@@ -36,7 +33,7 @@ class Aligner:
     
     BLUE_AMP = [6]
     RED_AMP = [5]
-    AMP_YAW = [math.radians(90)]
+    AMP_YAW = [math.radians(-90)]
 
     BLUE_SUBWOOFER = [7]
     RED_SUBWOOFER = [4]
@@ -109,6 +106,10 @@ class Aligner:
         closest_tag = None
         closest_distance = float("inf")
         yaws = []
+
+        self._feedback.second_trap_stage = False
+        self._as.publish_feedback(self._feedback)
+
         if goal.destination == goal.AMP:
             rospy.loginfo("2024_align_to_trap: Aligning to amp")
             amp_tags = self.RED_AMP if self.color == MatchSpecificData.ALLIANCE_COLOR_RED else self.BLUE_AMP
@@ -226,6 +227,8 @@ class Aligner:
                 break
             if drive_to_object_done:
                 if goal.destination == goal.TRAP and not stage_2_trap:
+                    self._feedback.second_trap_stage = True
+                    self._as.publish_feedback(self._feedback)
                     rospy.loginfo("Moving to stage 2 trap aligment")
                     drive_to_object_done = False
                     stage_2_trap = True

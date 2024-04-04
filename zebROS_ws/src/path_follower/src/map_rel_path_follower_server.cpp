@@ -262,6 +262,14 @@ class PathAction
 					ROS_INFO_STREAM("path_follower: successfully aligned to initial waypoint");
 					break;
 				}
+
+				if (as_.isPreemptRequested() || !ros::ok())
+				{
+					ROS_ERROR_STREAM(action_name_ << ": preempted");
+					preempted = true;
+					x_axis.setEnable(false);
+					y_axis.setEnable(false);
+				}
 				r.sleep();
 			}
 

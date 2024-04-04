@@ -12,4 +12,11 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.10/dist-packages/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.10/dist-packages/nvidia/cusparse/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.10/dist-packages/nvidia/cusolver/lib
 
+if [ $ROS_IP == "10.9.0.9" ] ; then
+	export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
+#        echo "Resetting time on secondary Jetson"
+#        echo ubuntu | sudo -S systemctl stop ntp.service
+#        echo ubuntu | sudo -S ntpd -gqx
+#        echo ubuntu | sudo -S systemctl restart ntp.service
+fi
 exec "$@"

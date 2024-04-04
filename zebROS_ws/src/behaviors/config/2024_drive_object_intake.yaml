@@ -5,3 +5,4 @@ drive_timeout: 2 # seconds
 intake_timeout: 0.5
 drive_back_time: 0.1 # seconds
 drive_back_speed: 2.0 # m/s
+max_angle_away: 1.57 # radians. no more than 90 degrees away from object

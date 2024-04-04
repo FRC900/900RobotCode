@@ -13,6 +13,7 @@ float64 fast_zone # how far we need to be away from the goal to apply a x or y m
 bool override_goal_angle # set this to true if we want to align in y and also rotate dynamically
 float64 min_y_pos
 float64 max_y_pos
+float64 max_angle # maximum angle away from robot to drive to object. zero = no limit.
 ---
 # result
 bool success

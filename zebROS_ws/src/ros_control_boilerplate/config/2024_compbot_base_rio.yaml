@@ -167,6 +167,7 @@ leafblower_controller:
     invert_output: False
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 10
-    neutral_mode: Brake
-    dynamic_reconfigure: False
+    neutral_mode: Coast
+    open_loop_ramp: 0.5
+    dynamic_reconfigure: True
     enable_read_thread: False

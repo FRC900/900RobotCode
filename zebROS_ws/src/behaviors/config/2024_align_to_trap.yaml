@@ -1,4 +1,4 @@
-trap_x_tolerance: 0.06
+trap_x_tolerance: 0.12
 trap_y_tolerance: 0.06
 trap_angle_tolerance: 0.015
 trap_min_x_vel: 0.0 # m/s
@@ -25,5 +25,5 @@ amp_frame: "shooter_bumper"
 subwoofer_frame: "shooter_bumper"
 
 trap_blower_speed: 1.0 # percent output
-trap_blower_position: 0.22 # rad
+trap_blower_position: 0.2 # rad
 trap_blower_rest_position: -2.1 # rad

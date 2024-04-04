@@ -11,3 +11,5 @@ bool success
 float64 x_error
 float64 y_error
 float64 angular_error
+
+bool second_trap_stage

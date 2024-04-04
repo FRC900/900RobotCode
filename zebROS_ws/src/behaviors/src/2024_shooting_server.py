@@ -367,7 +367,7 @@ class ShootingServer(object):
 
             preshooter_goal = Clawster2024Goal()
             preshooter_goal.mode = preshooter_goal.OUTTAKE
-            preshooter_goal.destination = preshooter_goal.PRESHOOTER
+            preshooter_goal.destination = preshooter_goal.PRESHOOTER if goal.mode != goal.TRAP else preshooter_goal.TRAP
 
             preshooter_done = False
             def preshooter_done_cb(state, result):

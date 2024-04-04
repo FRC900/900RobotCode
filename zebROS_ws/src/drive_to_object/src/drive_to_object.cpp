@@ -198,7 +198,7 @@ public:
     return true;
   }
 
-  std::optional<norfair_ros::Detection> findClosestObject(const norfair_ros::Detections &detections, const std::string &object_id, const int &tracked_object_id, const std::string &transform_to_drive, double min_y_pos = 0, double max_y_pos = 0) {
+  std::optional<norfair_ros::Detection> findClosestObject(const norfair_ros::Detections &detections, const std::string &object_id, const int &tracked_object_id, const std::string &transform_to_drive, double min_y_pos = 0, double max_y_pos = 0, double max_angle = 0) {
     double minDistance = std::numeric_limits<double>::max();
     // ROS_INFO_STREAM("\nFinding closest object");
     auto map_to_baselink = tf_buffer_.lookupTransform("odom", transform_to_drive, ros::Time::now(), ros::Duration(0.1));
@@ -246,6 +246,13 @@ public:
             if (!(min_y_pos <= base_link_point.point.y && base_link_point.point.y <= max_y_pos)) {
               ROS_INFO_STREAM("drive_to_object: ignoring object " << obj.label << "_" << obj.id << " because its y of " << base_link_point.point.y << " is not within [" << min_y_pos << ", " << max_y_pos << "]");
               continue;
+            }
+            if (max_angle != 0) {
+              double object_angle = atan2(base_link_point.point.y, base_link_point.point.x);
+              if (fabs(object_angle) > max_angle) {
+                ROS_WARN_STREAM("Drive to object: Object angle " << object_angle << " is greater than max angle " << max_angle);
+                continue;
+              }
             }
           }
           minDistance = d;
@@ -321,7 +328,7 @@ public:
         y_axis.setEnable(false);
         return;
       }
-      closestObject = findClosestObject(latest_, goal->id, tracked_object_id, goal->transform_to_drive, goal->min_y_pos, goal->max_y_pos);
+      closestObject = findClosestObject(latest_, goal->id, tracked_object_id, goal->transform_to_drive, goal->min_y_pos, goal->max_y_pos, goal->max_angle);
       if (closestObject == std::nullopt) {
         ROS_WARN_THROTTLE(0.5, "Drive to object: No object found, waiting for next frame");
       } else {
@@ -437,7 +444,7 @@ public:
       // seems like the correct way to do it is just based on how far we've turned since the last vision update:
 
       if (goal->use_y) {
-        angle_multipler = 0;
+        angle_multipler = requested_to_baselink_angle;
       }
 
       geometry_msgs::Twist pid_twist;
