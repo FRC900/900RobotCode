@@ -15,7 +15,6 @@ from std_msgs.msg import Float64
 from field_obj.msg import Detection
 from frc_msgs.srv import RumbleCommand, RumbleCommandRequest, RumbleCommandResponse
 from frc_msgs.msg import MatchSpecificData
-from candle_controller_msgs.srv import AnimationRequest, AnimationResponse, Animation
 
 import math
 import time
@@ -48,20 +47,12 @@ class Rumble2024Server():
         self.intake_limit_switch_name = rospy.get_param("intake_limit_switch_name")
         self.rumble_value = rospy.get_param("rumble_on_note")
 
-        rospy.wait_for_service('/frcrobot_jetson/candle_controller/animation', timeout=0.01)
-        self.candle_srv = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/animation', Animation)
         self.mode = 0
         self.DISABLED = 1
         self.AUTO = 2
         self.TELEOP = 3
         self.NOTE_SEEN = 4
         self.last_note_seen = rospy.Time(0)
-
-        '''
-rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, start: 8, count: 18, animation_type: 2, red: 255, green: 0, blue: 0, white: 0,
-  direction: 0, brightness: 0.0, reversed: false, param4: 0.0, param5: 0.0}"
-        '''
-
         self.match_data_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_cb) 
         self.rumble = rospy.Timer(rospy.Duration(1.0/20.0), self.rumble_loop)
         self.closest_note = 900
@@ -102,16 +93,6 @@ rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, star
             self.last_note_seen = rospy.Time.now()
             if self.mode != self.NOTE_SEEN:
                 rospy.loginfo(f'self.mode = {self.mode}, self.NOTE_SEEN = {self.NOTE_SEEN}')
-                candle_req = AnimationRequest()
-                candle_req.animation_type = candle_req.ANIMATION_TYPE_TWINKLE
-                candle_req.start = 8
-                candle_req.count = 18
-                candle_req.speed = 0.75
-                candle_req.brightness = 1.0
-                candle_req.red = 100
-                candle_req.green = 100
-                candle_req.blue = 100
-                self.candle_srv.call(candle_req)
                 self.mode = self.NOTE_SEEN
         elif (self.mode == self.NOTE_SEEN) and ((rospy.Time.now() - self.last_note_seen)> rospy.Duration(1.0)):
             self.mode = 0
@@ -123,35 +104,13 @@ rosservice call /frcrobot_jetson/candle_controller/animation "{speed: -0.5, star
             if not data.Enabled:
                 if self.mode != self.DISABLED:
                     rospy.loginfo(f'self.mode = {self.mode}, self.DISABLED = {self.DISABLED}')
-                    candle_req = AnimationRequest()
-                    candle_req.animation_type = candle_req.ANIMATION_TYPE_LARSON
-                    candle_req.red = 255
-                    candle_req.start = 8
-                    candle_req.count = 18
-                    self.candle_srv.call(candle_req)
                     self.mode = self.DISABLED
             else: #enabled
                 if data.Autonomous and (self.mode != self.AUTO):
                     rospy.loginfo(f'self.mode = {self.mode}, self.AUTO = {self.AUTO}')
-                    candle_req = AnimationRequest()
-                    candle_req.animation_type = candle_req.ANIMATION_TYPE_RAINBOW
-                    candle_req.start = 8
-                    candle_req.count = 18
-                    candle_req.brightness = 1.0
-                    candle_req.speed = 0.75
-                    self.candle_srv.call(candle_req)
                     self.mode = self.AUTO
                 elif not data.Autonomous and (self.mode != self.TELEOP):
                     rospy.loginfo(f'self.mode = {self.mode}, self.TELEOP = {self.TELEOP}')
-                    candle_req = AnimationRequest()
-                    candle_req.animation_type = candle_req.ANIMATION_TYPE_FIRE
-                    candle_req.start = 8
-                    candle_req.count = 18
-                    candle_req.brightness = 1.0
-                    candle_req.speed = 1.0
-                    candle_req.param4 = 0.5
-                    candle_req.param5 = 1.0
-                    self.candle_srv.call(candle_req)
                     self.mode = self.TELEOP
 
         if data.Autonomous and data.Enabled:

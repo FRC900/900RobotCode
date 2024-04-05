@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="candle_node">
+        <node name="candle_node" pkg="candle_node" type="2024_candle_node.py" output="screen"/>
+    </group>
+</launch>

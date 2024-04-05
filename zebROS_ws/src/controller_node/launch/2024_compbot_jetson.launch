@@ -131,6 +131,7 @@
 	<include file="$(find behaviors)/launch/2024_align_and_shoot.launch"/>
 	
 	<include file="$(find behaviors)/launch/2024_rumble_server.launch"/> 
+	<include file="$(find candle_node)/launch/2024_candle_node.launch"/> 
 
 	<include file="$(find behaviors)/launch/2024_align_to_trap.launch">
 	</include>
