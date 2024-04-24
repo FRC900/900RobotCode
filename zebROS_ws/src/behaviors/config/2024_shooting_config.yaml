@@ -27,10 +27,11 @@ amp_drive_back_speed: 2.0 # m/s
 
 # trap 
 # current 140 120 on comp
+# 0.36 m away
 trap_top_left_speed: 142.0 # rad/s
 trap_top_right_speed: 142.0 # rad/s
-trap_bottom_left_speed: 122.0 # rad/s
-trap_bottom_right_speed: 122.0 # rad/s
+trap_bottom_left_speed: 130.0 # rad/s
+trap_bottom_right_speed: 130.0 # rad/s
 trap_pivot_position: 1.69 # rad
 
 #lob_shot pass 

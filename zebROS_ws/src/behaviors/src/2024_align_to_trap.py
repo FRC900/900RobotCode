@@ -28,8 +28,8 @@ class Aligner:
 
     RED_TAGS = [11, 12, 13]
     BLUE_TAGS = [14, 15, 16]
-    RED_TRAP_YAW = list(map(math.radians, [-60, 60, 180]))
-    BLUE_TRAP_YAW = list(map(math.radians, [-120, 0, 120]))
+    RED_TRAP_YAW = list(map(math.radians, [-120, 0, 120]))
+    BLUE_TRAP_YAW = list(map(math.radians, [-60, 60, 180]))
     
     BLUE_AMP = [6]
     RED_AMP = [5]
@@ -212,6 +212,7 @@ class Aligner:
         drive_to_object_goal.use_y = True
         drive_to_object_goal.min_x_vel = self.min_x_vel
         drive_to_object_goal.min_y_vel = self.min_y_vel
+        drive_to_object_goal.override_goal_angle = False
         drive_to_object_goal.field_relative_angle = yaw
         drive_to_object_goal.fast_zone = self.fast_zone
         self.drive_to_object_client.send_goal(drive_to_object_goal, done_cb=done_callback)

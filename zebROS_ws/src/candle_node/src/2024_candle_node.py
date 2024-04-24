@@ -10,9 +10,11 @@ from behavior_actions.msg import AutoAlignSpeaker
 from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
 from norfair_ros.msg import Detections
+from geometry_msgs.msg import Twist
 
 # We want a list of priorities for what LED stuff to do
 # 1. If we're in autonomous, we want to turn the LEDs rainbow
+# 1.5 Drive to object is running (also essentially autonmous), we want to turn the LEDs rainbow
 # 2. If we're within shooting range, we want to turn the LEDs green
 # 3. If we have a note, we want to turn the LEDs orange
 # 4. If we see a note, we want to turn the LEDs white with a "fire" animation
@@ -29,7 +31,7 @@ class State:
     
     def run(self):
         if self.condition() and not self.currently_running:
-            print(f"Entering state {self.name}")
+            rospy.loginfo(f"Entering state {self.name}")
             self.action()
             self.currently_running = True
         elif not self.condition():
@@ -38,15 +40,28 @@ class State:
     def stop(self):
         self.currently_running = False
 
+last_drive_obj_time = None
+
+def is_drive_objet():
+    global last_drive_obj_time
+    if rospy.Time.now() - last_drive_obj_time < rospy.Duration(0.2):
+        return True
+    else:
+        return False
+
+
 states = [
-    State("autonomous", lambda: is_auto, lambda: send_animation(0.5, 0, 15, 0)),
+    State("drive_to_object", is_drive_objet, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
+    State("autonomous", lambda: is_auto, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
     State("in_range", lambda: has_note and in_range, lambda: send_colour(0, 255, 0)),
     State("has_note", lambda: has_note, lambda: send_colour(255, 165, 0)),
-    State("can_see_note", lambda: can_see_note, lambda: send_animation(0.5, 0, 15, 1)),
+    State("can_see_note", lambda: can_see_note, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_TWINKLE, 100, 100, 100, 0, 0)),
     State("teleop", lambda: True, lambda: send_colour(*team_color))
 ]
 
 can_see_note = False
+
+
 def norfair_callback(msg: Detections):
     global can_see_note
     can_see_note = "note" in map(lambda d: d.label, msg.detections)
@@ -62,71 +77,73 @@ def match_data_callback(msg: MatchSpecificData):
     elif msg.allianceColor == msg.ALLIANCE_COLOR_RED:
         team_color = [255,0,0]
 
+def drive_object_callback(msg):
+    global last_drive_obj_time
+    last_drive_obj_time = rospy.Time.now()
+
 def auto_mode_callback(msg):
-   global auto_mode
-   auto_mode = msg.auto_mode
+    global auto_mode
+    auto_mode = msg.auto_mode
 
 def distance_callback(msg):
-   global in_range
-   shooting_distance = 4.5
-   if (msg.distance < shooting_distance):
-    in_range = True
-   else:
-    in_range = False
+    global in_range
+    shooting_distance = 4.5
+    if (msg.distance < shooting_distance):
+        in_range = True
+    else:
+        in_range = False
 
 def send_colour(r_col, g_col, b_col):
     colour = ColourRequest()
     # Start/counts should be edited to match the real robot
-    colour.start = 9
-    colour.count = 15
+    colour.start = 8
+    colour.count = 18
     colour.red = r_col
     colour.green = g_col
     colour.blue = b_col
     colour.white = 0
-    print(f"Sending colour to candle controller with red {r_col}, green {g_col}, blue {b_col}")
+    rospy.loginfo(f"Sending colour to candle controller with red {r_col}, green {g_col}, blue {b_col}")
     rospy.wait_for_service('/frcrobot_jetson/candle_controller/colour')
     try:
         colour_client = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/colour', Colour)
         colour_client(colour)
     except rospy.ServiceException as e:
-        print("Service call failed: %s"%e)
+        rospy.loginfo("Service call failed: %s"%e)
 
-def send_animation(speed, start, count, animation_type):
+def send_animation(speed, animation_type, red, green, blue, white, direction):
     animation = AnimationRequest()
     animation.speed = speed
-    animation.start = start
-    animation.count = count
+    animation.start = 8
+    animation.count = 18
     animation.animation_type = animation_type
-    animation.red = 0
-    animation.green = 0
-    animation.blue = 0
-    animation.white = 0
-    animation.direction = 0
+    animation.red = red
+    animation.green = green
+    animation.blue = blue
+    animation.white = white
+    animation.direction = direction
     animation.brightness = 0.75
     animation.reversed = False
     animation.param4 = 0
     animation.param5 = 0
-    print(f"Sending animation {animation_type} to candle controller with speed {speed}, start {start}, count {count} and brightness {animation.brightness}")
+    rospy.loginfo(f"Sending animation {animation_type} to candle controller with speed {speed}, red {red}, green {green}, blue {blue}, white {white}, direction {direction}")
     rospy.wait_for_service('/frcrobot_jetson/candle_controller/animation')
     try:
-        animation_client = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/colour', Animation)
+        animation_client = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/animation', Animation)
         animation_client(animation)
     except rospy.ServiceException as e:
-        print("Service call failed: %s"%e)
+        rospy.loginfo("Service call failed: %s"%e)
 
 def limit_switch_callback(data):
     global has_note
-    preshooter_limit_switch = "preshooter_limit_switch"
-    if preshooter_limit_switch in data.name:
-        preshooter_switch = data.position[data.name.index(preshooter_limit_switch)]
-        if preshooter_switch == 1:
-            has_note = True
-        else:
-            has_note = False
+    if "preshooter_limit_switch" in data.name:
+        preshooter_switch = data.position[data.name.index("preshooter_limit_switch")]
+        has_note = preshooter_switch
 
 if __name__ == '__main__':
     rospy.init_node('leds_state_machine')
     r = rospy.Rate(60) # 60 Hz
+
+    last_drive_obj_time = rospy.Time.now()
 
     is_disabled = False
     is_auto = False
@@ -141,6 +158,7 @@ if __name__ == '__main__':
     rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, distance_callback)
     rospy.Subscriber("/frcrobot_rio/joint_states", JointState, limit_switch_callback)
     rospy.Subscriber("/norfair/output", Detections, norfair_callback)
+    rospy.Subscriber("/auto_note_align/cmd_vel", Twist, drive_object_callback)
 
     while not rospy.is_shutdown():
         got_valid_state = False

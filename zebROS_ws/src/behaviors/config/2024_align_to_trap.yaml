@@ -25,5 +25,5 @@ amp_frame: "shooter_bumper"
 subwoofer_frame: "shooter_bumper"
 
 trap_blower_speed: 1.0 # percent output
-trap_blower_position: 0.2 # rad
+trap_blower_position: 0.360 # rad
 trap_blower_rest_position: -2.1 # rad

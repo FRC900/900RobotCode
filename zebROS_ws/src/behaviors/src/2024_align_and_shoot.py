@@ -146,7 +146,7 @@ class AlignAndShoot:
                 if x_pos > 8.27:
                     self.past_half_field = True
                 elif self.past_half_field and self.is_teleop_and_enabled: # DONT CANCEL SHOOTING WHEN YOU'RE PAST HALF FIELD IN AUTO
-                    self.preempt()
+                    #self.preempt()
                     self.aligning = False
                     self.past_half_field = False
             # ON BLUE
@@ -155,7 +155,7 @@ class AlignAndShoot:
                     self.past_half_field = True
 
                 elif self.past_half_field and self.is_teleop_and_enabled: # DONT CANCEL SHOOTING WHEN YOU'RE PAST HALF FIELD IN AUTO
-                    self.preempt()
+                    #self.preempt()
                     self.aligning = False
                     self.past_half_field = False
             

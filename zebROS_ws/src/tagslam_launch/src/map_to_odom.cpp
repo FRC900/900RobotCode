@@ -250,7 +250,9 @@ void cmdVelCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
   }
   else {
     if ((ros::Time::now() - last_tf_pub).toSec() > (1./publish_frequency)) {
-      tfbr->sendTransform(relocalized_point_tf);
+      if (map_odom_tf.header.frame_id == map_frame_id) {
+        tfbr->sendTransform(relocalized_point_tf);
+      }
       std_msgs::Header msg;
       msg.stamp = relocalized_point_tf.header.stamp;
       for (int i = 0; i < 10; i++) {

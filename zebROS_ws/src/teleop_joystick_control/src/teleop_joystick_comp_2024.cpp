@@ -111,6 +111,8 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->buttonBPress)
 			{
 				behavior_actions::Shooting2024Goal goal;
+				goal.leave_spinning = true; // keep spinning after 
+				goal.setup_only = true; // don't actually shoot anything
 				goal.mode = goal.SLIDE;
 				shooting_ac->sendGoal(goal);
 			}
@@ -119,7 +121,11 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			}
 			if(joystick_state->buttonBRelease)
 			{
-				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				behavior_actions::Shooting2024Goal goal;
+				goal.leave_spinning = false;  
+				goal.setup_only = false; 
+				goal.mode = goal.SLIDE;
+				shooting_ac->sendGoal(goal);
 			}
 
 			//Joystick1: buttonX (button Y on controller with replaced white buttons)
@@ -259,9 +265,11 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
-					behavior_actions::DriveObjectIntake2024Goal goal;
-					goal.destination = goal.SHOOTER;
-					drive_and_intake_ac->sendGoal(goal);
+					behavior_actions::Shooting2024Goal goal;
+					goal.leave_spinning = true; // keep spinning after 
+					goal.setup_only = true; // don't actually shoot anything
+					goal.mode = goal.SLIDE;
+					shooting_ac->sendGoal(goal);
 				}
 
 				joystick1_left_trigger_pressed = true;
@@ -270,7 +278,13 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(joystick1_left_trigger_pressed)
 				{
-					drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+					behavior_actions::Shooting2024Goal goal;
+					goal.leave_spinning = false; // keep spinning after 
+					goal.setup_only = false; // don't actually shoot anything
+					goal.mode = goal.SLIDE;
+					shooting_ac->sendGoal(goal);
+
+					//drive_and_intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_left_trigger_pressed = false;

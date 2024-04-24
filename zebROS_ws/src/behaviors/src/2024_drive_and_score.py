@@ -189,6 +189,7 @@ class DriveAndScore:
                 shooting_goal = behavior_actions.msg.Shooting2024Goal()
                 shooting_goal.mode = shooting_goal.AMP
                 shooting_goal.leave_spinning = False
+                self.shooting_done = False
                 self.shooting_client.send_goal(shooting_goal, done_cb=self.shooting_done_cb)
                 have_shot = True
 

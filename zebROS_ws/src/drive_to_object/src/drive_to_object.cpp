@@ -296,6 +296,16 @@ public:
       finalTwist.linear.y += t.linear.y;
       finalTwist.angular.z += t.angular.z;
     });
+    // check for and fix NaN (set to zero)
+    if (finalTwist.linear.x != finalTwist.linear.x) {
+      finalTwist.linear.x = 0;
+    }
+    if (finalTwist.linear.y != finalTwist.linear.y) {
+      finalTwist.linear.y = 0;
+    }
+    if (finalTwist.angular.z != finalTwist.angular.z) {
+      finalTwist.angular.z = 0;
+    }
     return finalTwist;
   }
 

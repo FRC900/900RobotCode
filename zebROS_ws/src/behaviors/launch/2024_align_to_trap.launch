@@ -6,7 +6,9 @@
         <rosparam command="load" file="$(find behaviors)/config/2024_align_to_trap.yaml"/>
 
         <node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_trap" args="2.51 -0.08 0 0 0 0 1 base_link trap_frame" />
-        <node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_trap_scoring" args="0.35 -0.08 0 0 0 0 1 base_link trap_scoring_frame" />
+        <node name="dyanmic_trap_tf" pkg="behaviors" type="2024_dynamic_trap_tf.py" output="screen"/>
+        <!-- ADD BACK FOR REAL MATCHES -->
+        <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="baselink_to_trap_scoring" args="0.38 -0.08 0 0 0 0 1 base_link trap_scoring_frame" /> -->
 
     </group>
 
