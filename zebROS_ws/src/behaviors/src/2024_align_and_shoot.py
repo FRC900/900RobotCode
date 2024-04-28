@@ -35,7 +35,6 @@ class AlignAndShoot:
         # self.shooting_client.wait_for_server()
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
-        self.past_half_field = False
         self.dist_sub = rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, self.distance_and_angle_callback, tcp_nodelay=True, queue_size=1) #use this to find the distance that we are from the spaerk thing
         self.dist_value = 1.5
 
@@ -51,8 +50,6 @@ class AlignAndShoot:
         self.enable_continuous_autoalign = False
 
         self.dont_send_shooting_goal = False
-
-        self.half_field_timer = rospy.Timer(rospy.Duration(1.0 / rospy.get_param("continuous_align_hz")), self.half_field_timer_cb)
         
         self.localization_timeout = rospy.get_param("localization_timeout")
 
@@ -74,7 +71,6 @@ class AlignAndShoot:
         self.shooting_done = False
         self.server.start()
         rospy.loginfo("2024_align_and_shoot: starting timer")
-        self.half_field_timer.start()
         rospy.loginfo("2024_align_and_shoot: server started")
 
     def cmd_vel_cb(self, msg: TwistStamped):
@@ -126,64 +122,6 @@ class AlignAndShoot:
         self.shooting_client.send_goal(shooting_goal)
         self.aligning = False
 
-    def half_field_timer_cb(self, event):
-        # rospy.loginfo("Half field timer called")
-        # If we are behind half field:
-        # - If it's the first time: call align to speaker (continous)
-        # - Call shooting server with leave_spinning=True and setup_only=True with the correct distance
-        # If we were behind half field and now are not:
-        # - Stop aligning to speaker
-        # - Stop shooting
-        # If we were not in safe mode but now are:
-        # - Stop aligning to speaker
-        # - Stop shooting
-        try:
-            trans: geometry_msgs.msg.TransformStamped = self.tfBuffer.lookup_transform("map", "base_link", rospy.Time())
-            
-            x_pos = trans.transform.translation.x
-
-            if self.alliance_color == MatchSpecificData.ALLIANCE_COLOR_RED:
-                if x_pos > 8.27:
-                    self.past_half_field = True
-                elif self.past_half_field and self.is_teleop_and_enabled: # DONT CANCEL SHOOTING WHEN YOU'RE PAST HALF FIELD IN AUTO
-                    #self.preempt()
-                    self.aligning = False
-                    self.past_half_field = False
-            # ON BLUE
-            else:
-                if x_pos < 8.27:
-                    self.past_half_field = True
-
-                elif self.past_half_field and self.is_teleop_and_enabled: # DONT CANCEL SHOOTING WHEN YOU'RE PAST HALF FIELD IN AUTO
-                    #self.preempt()
-                    self.aligning = False
-                    self.past_half_field = False
-            
-            rospy.loginfo_throttle(0.5, f"checks: {self.enable_continuous_autoalign} and {self.is_teleop_and_enabled} and {self.preshooter_switch} and {self.past_half_field} and not {self.aligning} and not {self.dont_send_shooting_goal}")
-
-            if self.enable_continuous_autoalign and self.is_teleop_and_enabled and self.preshooter_switch and self.past_half_field and not self.aligning:
-                rospy.loginfo_throttle(1.0, "2024 align and shoot: Auto aligning")
-                # self.align_to_speaker_client 
-                align_to_speaker_goal = AlignToSpeaker2024Goal()
-                align_to_speaker_goal.align_forever = True
-                align_to_speaker_goal.offsetting = False
-                # self.align_to_speaker_client.cancel_goals_at_and_before_time(rospy.Time.now())
-                self.align_to_speaker_client.send_goal(align_to_speaker_goal, feedback_cb=self.align_to_speaker_feedback_cb)
-                self.aligning = True
-    
-            if self.enable_continuous_autoalign and self.is_teleop_and_enabled and self.preshooter_switch and self.past_half_field and not self.dont_send_shooting_goal:
-                rospy.loginfo_throttle(1.0, "2024 align and shoot: Spinning up")
-                shooting_goal = Shooting2024Goal()
-                shooting_goal.mode = shooting_goal.SPEAKER # should use the dist and angle topic to keep adjusting speeds
-                shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
-                shooting_goal.only_shooter_setup = self.only_shooter_during_continuous_autoalign
-                shooting_goal.setup_only = True
-                shooting_goal.leave_spinning = True
-                self.shooting_client.send_goal(shooting_goal, feedback_cb=self.shooting_feedback_cb)
-        except Exception as e:
-            # probably TransformException if localization isn't up yet
-            rospy.logerr_throttle(0.5, f"2024_align_and_shoot: {e}")
-
     def execute_cb(self, goal: AlignAndShoot2024Goal):
         self.align_to_speaker_done = False
 
@@ -208,12 +146,12 @@ class AlignAndShoot:
             self.align_to_speaker_client.send_goal(align_to_speaker_goal, feedback_cb=self.align_to_speaker_feedback_cb)
             rospy.loginfo("2024_align_and_shoot: align goal sent")
 
-        relocalized_recently = (rospy.Time.now() - self.last_relocalized) < rospy.Duration(self.localization_timeout)
+        relocalized_recently = True
 
         # We want to run this loop while rospy is not shutdown, and:
         # we have not relocalized recently OR we have not aligned to speaker OR we are not done shooting
-        while (not relocalized_recently) or (not self.align_to_speaker_done) or (not self.stopped) and not rospy.is_shutdown():
-            relocalized_recently = (rospy.Time.now() - self.last_relocalized) < rospy.Duration(self.localization_timeout)
+        while (not self.align_to_speaker_done) or (not self.stopped) and not rospy.is_shutdown():
+            #relocalized_recently = (rospy.Time.now() - self.last_relocalized) < rospy.Duration(self.localization_timeout)
             rospy.loginfo_throttle(0.1, f"2024_align_and_shoot: aligning waiting on {'speaker' if not self.align_to_speaker_done else ''} {'localization' if not relocalized_recently else ''} {'stopping' if not self.stopped else ''}")
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_align_and_shoot: preempted")
