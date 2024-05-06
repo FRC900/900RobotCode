@@ -3,6 +3,11 @@
 
 #include "ros_control_boilerplate/talonfxpro_device.h"
 
+namespace ctre::phoenix6::hardware::core
+{
+    class CoreCANcoder;
+}
+
 namespace gazebo::physics
 {
     class Joint;
@@ -20,7 +25,7 @@ public:
                         double read_hz);
     SimTalonFXProDevice(const SimTalonFXProDevice &) = delete;
     SimTalonFXProDevice(SimTalonFXProDevice &&other) noexcept = delete;
-    virtual ~SimTalonFXProDevice() = default;
+    virtual ~SimTalonFXProDevice();
 
     SimTalonFXProDevice &operator=(const SimTalonFXProDevice &) = delete;
     SimTalonFXProDevice &operator=(SimTalonFXProDevice &&) noexcept = delete;
@@ -35,6 +40,7 @@ public:
 private:
     boost::shared_ptr<gazebo::physics::Joint> gazebo_joint_;
     int counter = 0;
+    std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder_;
 };
 
 #endif
