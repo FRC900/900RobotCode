@@ -146,7 +146,7 @@ bool CTREV5MotorControllers<SIM>::setcurrent(ros_control_boilerplate::set_curren
 }
 
 template <bool SIM>
-void CTREV5MotorControllers<SIM>::simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer)
+void CTREV5MotorControllers<SIM>::simPreRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer)
 {
     if constexpr (SIM)
     {

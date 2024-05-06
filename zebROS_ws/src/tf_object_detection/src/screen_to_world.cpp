@@ -22,7 +22,7 @@ namespace tf_object_detection
 	class ScreenToWorld : public nodelet::Nodelet {
 	public:
 		ScreenToWorld() = default;
-		virtual ~ScreenToWorld() = default;
+		~ScreenToWorld() override = default;
 	private:
 		void onInit() override {
 			NODELET_INFO("********** Starting nodelet '%s' **********", getName().c_str());

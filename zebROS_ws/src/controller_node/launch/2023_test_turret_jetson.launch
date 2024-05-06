@@ -6,8 +6,6 @@
 	<arg unless="$(arg debug)" name="launch_prefix" value="" />
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
 	<arg name="hw_or_sim" default="sim" />
 
 	<group ns="frcrobot_jetson">

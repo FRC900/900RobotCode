@@ -6,8 +6,6 @@
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args " />
 
 	<arg name="hw_or_sim" default="hw" />
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
 	<arg name="record" default="false" />
 	<arg name="primary_imu" default="PIGEON2" />
 
@@ -89,6 +87,7 @@
 	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2023" />
+		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 	</include>
 
 	<group ns="cmd_vel_mux">
@@ -148,7 +147,7 @@
 	
 	<include file="$(find controller_node)/launch/record_2023_compbot.launch" if="$(arg record)" />
 
-	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
+	<!-- <include file="$(find pf_localization)/launch/pf_localization.launch"/> -->
 	
 	<include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="run_camera" value="false" if="$(eval hw_or_sim == 'sim')"/>

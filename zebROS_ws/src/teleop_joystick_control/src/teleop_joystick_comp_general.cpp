@@ -172,7 +172,7 @@ ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state
 			robot_orientation_driver_.setTargetOrientation(robot_orientation_driver_.getCurrentOrientation(), true /* from telop */);
 			sendSetAngle_ = true;
 		}
-		ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z" << cmd_vel.angular.z);
+		ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z " << cmd_vel.angular.z);
 
 		if (cmd_vel.angular.z == 0.0 || robot_orientation_driver_.isJoystickOverridden())
 		{
@@ -192,13 +192,13 @@ ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state
 			{
 				ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
 			}
-			ROS_INFO("BrakeSrv called");
+			ROS_INFO("BrakeSrv called from teleop");
 
 			JoystickRobotVel_.publish(cmd_vel);
 			sendRobotZero_ = true;
 		}
 		// 0.002 is slightly more than the 0.001 we set for coast mode
-		else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (fabs(cmd_vel.angular.z) >= 0.002))
+		else if((fabs(cmd_vel.linear.x) != 0.0) || (fabs(cmd_vel.linear.y) != 0.0) || (fabs(cmd_vel.angular.z) >= 0.002))
 		{
 			if (alliance_color == frc_msgs::MatchSpecificData::ALLIANCE_COLOR_RED) {
 				// because map-relative forward (which we now use) is from blue -> red, we need to invert cmd_vel for red driving.

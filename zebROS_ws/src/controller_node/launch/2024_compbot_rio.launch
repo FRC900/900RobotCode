@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
 
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="launch_prefix" default="" />
 
@@ -17,9 +15,7 @@
 		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
 			output="screen" launch-prefix="$(arg launch_prefix)">
 			<remap from="js0" to="joystick_states1"/>
-			<remap from="js1" to="button_box_states" if="$(arg button_box)"/>
-			<remap from="js1" to="joystick_states2" unless="$(arg button_box)"/>
-			<remap from="js2" to="joystick_states2" if="$(arg button_box)"/>
+			<remap from="js1" to="button_box_states" />
 		</node>
 
 		<!-- Load controller manager -->

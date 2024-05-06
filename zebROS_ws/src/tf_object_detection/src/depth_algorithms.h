@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 
 #include <random> // for Forgy method of initializing k-means for depth detection
@@ -9,11 +8,4 @@
 // CONTOURS_NON_ADAPTIVE = contours, but using thresholding based on the median instead of adaptive thresholding
 enum DepthCalculationAlgorithm { K_MEANS, CONTOURS, CONTOURS_NON_ADAPTIVE, TWO_D_ONLY };
 
-constexpr float depth_epsilon = 0.01; // If depth values are greater than this value (in meters) away from each other, they are treated as unique. See `kMeansDepthMat`.
-constexpr float percent_from_bottom_contours = 0; // The contours algorithm finds the biggest contour in the image and returns the lowest value, excluding this percent of low values (outliers).
-																									// For example, if this is 0, the contours algorithm will return the lowest value in the largest contour.
-																									// If this is 0.01, the algorithm will throw out the lowest 1% of data and then return the lowest value.
-float findMedianOfMat(cv::Mat mat);
-float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool debug = false, bool adaptive = true);
-float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debug = false, size_t maximumK = 3, float tolerance = 1e-3);
 float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, DepthCalculationAlgorithm algorithm = CONTOURS, bool debug = false, int k = 3, float tolerance = 1e-3);

@@ -64,7 +64,7 @@ define omnidir_robot position
   # spawn sensors
   normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )
  
-  # non_normal_camera(pose [ 0.1 -0.1 0.65 180.0 ] )
+  non_normal_camera(pose [ -0.1 -0.1 0.65 180.0 ] )
 
   single_terrabee(pose [0.4445 0.0 0.0 0.0 ] )
 

@@ -6,14 +6,14 @@
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args " />
 
 	<arg name="hw_or_sim" default="hw" />
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
 	<arg name="record" default="false" />
 	<arg name="primary_imu" default="PIGEON2" />
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_phoenix6.yaml" command="load"/>
+		<!-- For sim, stage simulation is responsible for odometry -->
+		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_pivot_cancoder.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_arm_cancoder.yaml" command="load"/>
@@ -93,7 +93,7 @@
 	</group>
 
 	<group ns="swerve_imu_ukf">
-		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
+		<node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu 100" />
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_pigeon2" args="0 0 0 0 0.0096 0 base_link pigeon2_frame" />
 		<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="tagslam_odom_to_base_link" args="0 0 0 0 0 0 frc_robot base_link" /> -->
 
@@ -102,6 +102,7 @@
 
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2024" />
+		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 	</include>
 
 	<group ns="cmd_vel_mux">
@@ -137,7 +138,6 @@
 	</include>
 	<include file="$(find behaviors)/launch/2024_climb.launch"/>
 
-	<!-- <node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/> -->
 	<include file="$(find behaviors)/launch/2024_intaking.launch"/>
 
 	<!-- Consider adding 2024 launch file for recording -->
@@ -150,7 +150,7 @@
 	<include file="$(find behaviors)/launch/2024_drive_and_score.launch"/>
 
 
-	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
+	<!-- <include file="$(find pf_localization)/launch/pf_localization.launch"/> -->
 	
 	<!--
 		# Shooter ZED: Y Distance is 0, X distance is -0.299731, Z distance is 0.200852

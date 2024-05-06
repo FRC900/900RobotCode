@@ -43,6 +43,7 @@
 
 <!-- <include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2022" />
+		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 	</include> -->
 
 </launch>

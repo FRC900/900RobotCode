@@ -82,8 +82,8 @@ class Converter:
             try:
                 transform = self.tfBuffer.lookup_transform("odom", field_dets.header.frame_id, field_dets.header.stamp, rospy.Duration(0.02)) # this shouldn't break anything IRL but needed for sim
             except:
-                rospy.logerr("failed transform in converter")
-                return
+                rospy.logerr(f"failed to lookup transform from odom to {field_dets.header.frame_id} in converter")
+                continue
 
             for detection in field_dets.objects:
                 #rospy.loginfo(f"Detection {detection}")

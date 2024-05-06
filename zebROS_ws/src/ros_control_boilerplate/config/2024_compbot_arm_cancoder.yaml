@@ -1,7 +1,7 @@
 arm_cancoder_controller:
     type:      cancoder_controller/CANCoderController
     joint_name: arm_cancoder
-    sensor_direction: counterclockwise_positive
+    sensor_direction: CounterClockwise_Positive
     dynamic_reconfigure: True
     magnet_offset: 0.1850 # FIND ME
     enable_read_thread: True

@@ -51,7 +51,7 @@
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_right_camera_frame_to_zed_objdetect_temp_right_link" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 zed_objdetect_right_camera_frame zed_objdetect_temp_right_link 100" />
   <node pkg="pf_localization" name="log_detections" type="log_detections.py" output="screen"/>
 
-  <include file="$(find controller_node)/launch/pf_localization.launch">
+  <include file="$(find pf_localization)/launch/pf_localization.launch">
     <arg name="vis" value="True"/>
     <arg name="pf_camera_topic" value="/tf_object_detection/combined_detection_world" />
   </include>

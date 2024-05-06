@@ -37,7 +37,9 @@
    using MONOTOIC system time
 */
 
-#pragma once
+#ifndef GENERIC_HW_CONTROL_LOOP_INC__
+#define GENERIC_HW_CONTROL_LOOP_INC__
+
 #include <chrono>
 #include <memory>
 
@@ -83,7 +85,7 @@ class GenericHWControlLoop
 		ros::NodeHandle nh_;
 
 		// Name of this class
-		const std::string name_ = "generic_hw_control_loop";
+		const std::string name_{"generic_hw_control_loop"};
 
 		// Settings
 		ros::Duration desired_update_period_;
@@ -107,6 +109,10 @@ class GenericHWControlLoop
 		std::chrono::time_point<std::chrono::steady_clock> last_time_write_;
 
 		Tracer tracer_;
+
+		bool use_sim_time_{false};
 };  // end class
 
 }  // namespace
+
+#endif

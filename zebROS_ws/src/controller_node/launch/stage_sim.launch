@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!--
+  Add-ons needed to the regular robot launch to run stage simulation 
+  Ideally this can just be appended to anything which needs to run
+  stage, but generalizing from N==1 is hard
+ -->
+<launch>
+	<arg name="world_file" default="2024_crescendo.world" />
+	<arg name="sim_joystick" default="true" />
+	<arg name="sim_button_box" default="true"/>
+	<arg name="joy1_device" default="/dev/input/js0" />
+	<arg name="button_box_device" default="/dev/input/js1" />
+
+    <!--  ************** Stage Simulator ***************  -->
+	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/$(arg world_file)" output="screen">
+        <remap from="base_scan" to="scan"/>
+        <remap from="odom" to="/frcrobot_jetson/swerve_drive_controller/odom"/>
+        <remap from="cmd_vel" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
+    </node>
+
+    <!-- Create an imu message with noise from stage's ground truth, publish into sim interface imu input -->
+    <node pkg="fake_sensors" type="fake_imu_node" name="fake_imu" />
+
+    <!-- Load ROS nodes & remaps needed to read from gamepads attached to laptop -->
+    <include file="$(find controller_node)/launch/joysticks_sim.launch">
+        <arg name="sim_joystick" value="$(arg sim_joystick)"/>
+        <arg name="sim_button_box" value="$(arg sim_button_box)"/>
+		<arg name="joy1_device" value="$(arg joy1_device)" />
+		<arg name="button_box_device" value="$(arg button_box_device)" />
+    </include>
+
+    <!-- Convert from stage base_marker_detection to tag_detection_world and object_detetction_world
+         messages for both front and rear cameras. -->
+    <node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect_front" output="screen" >
+        <!-- rosparam won't load this yaml because there are numeric-only keys (TypeError: can only concatenate str (not "int") to str)
+            so fake_goal_detect just loads the file and parses it using a regex :| -->
+        <!-- <rosparam command="load" file="$(find tf_object_detection)/src/FRC2024.yaml" ns="yolo_yaml" /> -->
+        <remap from="tag_detection_world" to="/apriltag_zedx_front/tag_detection_world" />
+        <remap from="object_detection_world" to="/tf_object_detection_zedx_front/object_detection_world" />
+        <remap from="base_marker_detection" to="base_marker_detection_0" />
+    </node>
+    <node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect_back" output="screen" >
+        <param name="publish_detections" value="false" />
+        <remap from="tag_detection_world" to="/apriltag_zedx_back/tag_detection_world" />
+        <remap from="base_marker_detection" to="base_marker_detection_1" />
+    </node>
+
+    <!-- Publish tag_detection_world from stage /base_marker_detections	 
+            as apriltag_msgs/ApriltagArrayStamped and ApritagPoseStamped
+            We only need these if trying to use tagslam in sim. If not,
+            the code will just use the _world topics from the fake_goal_detect_node -->
+    <!-- <include file="$(find fake_sensors)/launch/apriltag_sim.launch"/> -->
+    <node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" />
+
+    <!-- Not sure what this does -->
+    <!-- <node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/> -->
+
+    <!--  Think this is only used by pf_localization -->
+    <node pkg="tf" type="static_transform_publisher" name="blue0_to_red0" args="16.458 8.228 0 3.1415926 0 0 blue0 red0 10" />
+    <!-- Stage uses base_footprint, we use base_link -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link" />
+    <!-- Stage odom is based at map origin, so create an identity transform here so map and odom are part of the same tree -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_maptoodom" args="0 0 0 0 0 0 map odom" />
+</launch>

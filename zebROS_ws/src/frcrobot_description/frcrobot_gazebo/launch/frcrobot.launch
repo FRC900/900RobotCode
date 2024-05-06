@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
+	<arg name="sim_joystick" default="true" />
+	<arg name="sim_button_box" default="true"/>
   <!-- Add a few params which tells gazebo which sim interfaces to load
 	   and, in each of the namespaces of those interfaces, their types
 	-->
@@ -67,7 +69,8 @@
 
   <!-- 
   <include file="$(find controller_node)/launch/joysticks_sim.launch">
-    <arg name="joy_or_key" value="joy"/>
+    <arg name="sim_joystick" value="$(arg sim_joystick)"/>
+    <arg name="sim_button_box" value="$(arg sim_button_box)"/>
   </include>
   
   <group ns="teleop">

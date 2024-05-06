@@ -36,7 +36,7 @@ public:
     void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
     void write(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
     void simInit(ros::NodeHandle &nh) override;
-    void simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
+    void simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
     void appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const;
 

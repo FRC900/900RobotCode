@@ -1,13 +1,32 @@
 <?xml version="1.0"?>
+<!--
+Node to launch various configs of joystick support for simulation
+The main difference is between having a real joystick plugged into a laptop
+versus bringing up the sim joystick gui to control the robot
+In both cases, the sim gui will still be used for a simulated button box.
+
+-->
 <launch>
 
-	<arg name="joy_or_key" default="joy"/>
-	<arg name="button_box" default="true"/>
+	<arg name="sim_joystick" default="true"/>
+	<arg name="sim_button_box" default="true"/>
+	<arg name="joy1_device" default="/dev/input/js0" />
+	<arg name="button_box_device" default="/dev/input/js1" />
 
-	<group ns="button_box_joy" if="$(arg button_box)">
+	<!-- Launch a ros joy node to read a button box plugged into the laptop
+		 This is almost never used, perhaps only for testing the button box
+		 itself without a robot being available
+		 If a sim joystick is used, expect the button box on the default 
+		 /dev/input/js0
+		 If a real joystick is also used, expect the button box to be bumped
+		 up to /dev/input/js1
+		 The output is always mapped to /frcrobot_rio/js1_in
+	-->
+	<group ns="button_box_joy" unless="$(arg sim_button_box)">
 
 		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
-			<param name="dev" value="/dev/input/js1" unless="$(eval arg('joy_or_key')=='key')"/>
+			<param name="dev" value="$(arg button_box_device)" unless="$(arg sim_joystick)"/>
+			<param name="dev" value="$(arg joy1_device)" if="$(arg sim_joystick)"/>
 			<param name="autorepeat_rate" type="double" value="100"/>
 			<param name="coalesce_interval" type="double" value="0.01"/>
 			<param name="deadzone" type="double" value="0.0"/>
@@ -16,9 +35,14 @@
 
 	</group>
 
-	<group ns="joy1" unless="$(eval arg('joy_or_key')=='key')">
+	<!-- Launch a ros joy node to read a real joystick plugged into the laptop
+		 This is expected to be found on /dev/input/js0
+		 The output is always mapped to /frcrobot_rio/js0_in
+	-->
+	<group ns="joy1" unless="$(arg sim_joystick)">
 
 		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+			<param name="dev" value="$(arg joy1_device)" />
 			<param name="autorepeat_rate" type="double" value="100"/>
 			<param name="coalesce_interval" type="double" value="0.01"/>
 			<param name="deadzone" type="double" value="0.0"/>
@@ -32,27 +56,14 @@
 
 	</group>
 
-	<group ns="joy2" if="$(eval arg('joy_or_key')=='two_joy')">
+	<!-- Launch the joystick simulation gui to control the robot -->
+	<group ns="joystick_simulation" if="$(eval arg('sim_joystick') or arg('sim_button_box'))">
 
-		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
-			<param name="dev" value="/dev/input/js1" unless="$(arg button_box)"/>
-			<param name="dev" value="/dev/input/js2" if="$(arg button_box)"/>
-			<param name="autorepeat_rate" type="double" value="100"/>
-			<param name="coalesce_interval" type="double" value="0.01"/>
-			<param name="deadzone" type="double" value="0.0"/>
-		</node>
-
-		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
-			<remap from="joy_in" to="joy" />
-			<remap from="joy_out" to="/frcrobot_rio/js2_in"/>
-			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
+		<node name="joystick_simulation_node" pkg="joystick_simulation_node" type="joystick_simulation_node" output="screen">
+			<param name="show_xbox" value="$(arg sim_joystick)"/>
+			<param name="show_button_box" value="$(arg sim_button_box)"/>
 		</node>
 
 	</group>
 
-	<group ns="keyboard" if="$(eval arg('joy_or_key')=='key')">
-		<node name="keyboard_node" pkg="teleop_joystick_control" type="teleop_joints_keyboard" output="screen" launch-prefix="terminator -x $(env HOME)/2023RobotCode/zebROS_ws/ROSStandard.sh ">
-			<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/js0_in"/>
-		</node>
-	</group>
 </launch>

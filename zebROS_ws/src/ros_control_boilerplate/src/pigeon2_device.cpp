@@ -121,17 +121,8 @@ void Pigeon2Device::simInit(ros::NodeHandle nh, size_t joint_index)
 
 void Pigeon2Device::imuOdomCallback(const nav_msgs::OdometryConstPtr &msg)
 {
-	double roll;
-	double pitch;
-	double yaw;
-	const geometry_msgs::Quaternion &q = msg->pose.pose.orientation;
-	tf2::Quaternion tf_q(
-		q.x,
-		q.y,
-		q.z,
-		q.w);
-	tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
-	sim_yaw_.store(yaw);
+    std::scoped_lock l(sim_odom_mutex_);
+    sim_odom_ = *msg;
 }
 
 void Pigeon2Device::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
@@ -238,7 +229,30 @@ void Pigeon2Device::simRead(const ros::Time &/*time*/, const ros::Duration &/*pe
 {
     if (local_hardware_)
     {
-        pigeon2_->GetSimState().SetRawYaw(units::radian_t{sim_yaw_});
+        {
+            std::scoped_lock(sim_odom_mutex_);
+            const geometry_msgs::Quaternion &q = sim_odom_.pose.pose.orientation;
+            tf2::Quaternion tf_q(q.x, q.y, q.z, q.w);
+            double roll;
+            double pitch;
+            double yaw;
+            tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
+            pigeon2_->GetSimState().SetRoll(units::radian_t{roll});
+            pigeon2_->GetSimState().SetPitch(units::radian_t{pitch});
+            pigeon2_->GetSimState().SetRawYaw(units::radian_t{yaw});
+            // This is run after read(), so we overwite whatever ctre's internal state is with
+            // the most recent sim orientation data
+            imu_orientation_[3] = q.w;
+            imu_orientation_[0] = q.x;
+            imu_orientation_[1] = q.y;
+            imu_orientation_[2] = q.z;
+
+            imu_angular_velocity_[0] = sim_odom_.twist.twist.angular.x;
+            imu_angular_velocity_[1] = sim_odom_.twist.twist.angular.y;
+            imu_angular_velocity_[2] = sim_odom_.twist.twist.angular.z;
+
+            // No idea what to do for linear acceleration - we could try to get a delta of linear velocity?
+        }
     }
 }
 

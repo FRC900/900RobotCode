@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <launch>
+	<arg name="hw_or_sim"            default="hw" />
 	<arg name="run_camera"           default="true" />
 	<arg name="run_apriltag"         default="false" />
 	<arg name="run_gpu_apriltag"     default="true" />
 	<arg name="run_deeptag"          default="false" />
 	<arg name="run_deeptag_node"     default="false" />
 
-	<include file="$(find controller_node)/launch/zed_detection.launch">
+	<include file="$(find controller_node)/launch/zed_detection.launch" unless="$(eval hw_or_sim=='sim')">
 		<arg name="zed_name"             value="zedx_front" />
 		<arg name="zed_config_dir"       value="zedx" />
 		<arg name="camera_model"         value="zedx" />
@@ -28,7 +29,7 @@
 		<arg name="startup_delay"        value="15.0" />
 	</include>
 
-	<include file="$(find controller_node)/launch/zed_detection.launch">
+	<include file="$(find controller_node)/launch/zed_detection.launch" unless="$(eval hw_or_sim=='sim')">
 		<arg name="zed_name"             value="zedx_back" />
 		<arg name="zed_config_dir"       value="zedx" />
 		<arg name="camera_model"         value="zedx" />
@@ -50,5 +51,5 @@
 		<arg name="startup_delay"        value="0.0" />
 	</include>
 
-	<include file="$(find tagslam_launch)/launch/2024_compbot_tagslam.launch"/>
+	<include file="$(find tagslam_launch)/launch/2024_compbot_tagslam.launch" unless="$(eval hw_or_sim=='sim')"/>
 </launch>

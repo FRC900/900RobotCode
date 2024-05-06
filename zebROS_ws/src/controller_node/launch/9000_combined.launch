@@ -7,16 +7,16 @@
 	<arg name="launch_prefix" default="" />
 
 	<arg name="hw_or_sim" default="hw" />
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
+	<arg name="sim_joystick" default="true" />
+	<arg name="sim_button_box" default="true"/>
 	<arg name="record" default="false"/>
 
     <!-- Jetson Nodes -->
     <include file="$(find controller_node)/launch/9000_jetson.launch" pass_all_args="true"/>
 
 	<include file="$(find controller_node)/launch/joysticks_sim.launch" if="$(eval arg('hw_or_sim')=='sim')">
-		<arg name="joy_or_key" value="$(arg joy_or_key)" />
-		<arg name="button_box" value="$(arg button_box)" />
+		<arg name="sim_joystick" value="$(arg sim_joystick)" />
+		<arg name="sim_button_box" value="$(arg sim_button_box)" />
 	</include>
 
     <!-- RIO Nodes -->
@@ -28,8 +28,6 @@
 	</group>
 
     <include file="$(find controller_node)/launch/9000_rio.launch" pass_all_args="true"/>
-
-
 
     <!-- If you want to include a second Jetson, create a new launch file for it and uncomment these lines: -->
     <!-- Jetson 2 Nodes -->

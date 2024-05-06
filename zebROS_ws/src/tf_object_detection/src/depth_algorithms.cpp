@@ -1,7 +1,13 @@
 #include "depth_algorithms.h"
 
+constexpr float depth_epsilon = 0.01f; // If depth values are greater than this value (in meters) away from each other, they are treated as unique. See `kMeansDepthMat`.
+constexpr float percent_from_bottom_contours = 0.f; // The contours algorithm finds the biggest contour in the image and returns the lowest value, excluding this percent of low values (outliers).
+												   // For example, if this is 0, the contours algorithm will return the lowest value in the largest contour.
+												   // If this is 0.01, the algorithm will throw out the lowest 1% of data and then return the lowest value.
+static float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool debug = false, bool adaptive = true);
+static float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debug = false, size_t maximumK = 3, float tolerance = 1e-3);
 // Find the median of a continuous cv::Mat
-float findMedianOfMat(cv::Mat mat) {
+static float findMedianOfMat(cv::Mat mat) {
 	float median = 0;
 	if (mat.isContinuous()) {
 		// copy matrix data to a vector
@@ -29,7 +35,7 @@ float findMedianOfMat(cv::Mat mat) {
 
 // Get the most useful depth value in the cv::Mat depth contained within
 // the supplied bounding rectangle, using contour finding
-float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool debug, bool adaptive) {
+static float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool debug, bool adaptive) {
 	if (bound_rect.size().area() == 0) { // if the ROI is zero, return -1 (no depth)
 		if (debug) {
 			ROS_ERROR_STREAM("screen_to_world: ROI is zero ============================");
@@ -160,7 +166,7 @@ float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool d
 
 // Get the most useful depth value in the cv::Mat depth contained within
 // the supplied bounding rectangle, using k-means
-float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debug, size_t maximumK, float tolerance)
+static float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debug, size_t maximumK, float tolerance)
 {
 	if (bound_rect.size().area() == 0) { // if the ROI is zero, return -1 (no depth)
 		return -1;
@@ -291,4 +297,6 @@ float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, DepthCalc
 		case TWO_D_ONLY:
 			return 1.;
 	}
+	ROS_WARN_STREAM("Invalid depth calculation algorithm");
+	return -1;
 }

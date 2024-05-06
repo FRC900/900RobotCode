@@ -1,11 +1,11 @@
 mappings:
   axes:
-    - -axes[0]
-    - -axes[1]
+    - axes[0]
+    - axes[1]
     - (axes[2] - 1.0) * -0.5
     - (axes[5] - 1.0) * -0.5
     - -axes[3]
-    - -axes[4]
+    - axes[4]
     - axes[6]
     - axes[7]
     #- max(axes[10], 0.0) * -1.0

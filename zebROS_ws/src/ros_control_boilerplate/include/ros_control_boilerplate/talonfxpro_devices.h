@@ -37,7 +37,7 @@ public:
 
     void simInit(ros::NodeHandle &nh) override;
     // simRead hooks up to CTRE simulation code and updates motor state each control cycle
-    void simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer) override;
+    void simPreRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer) override;
 
     bool gazeboSimInit(const ros::NodeHandle &/*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model) override;
 

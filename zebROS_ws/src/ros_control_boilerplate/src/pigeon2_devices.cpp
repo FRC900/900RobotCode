@@ -115,12 +115,12 @@ void Pigeon2Devices::simInit(ros::NodeHandle &nh)
     }
 }
 
-void Pigeon2Devices::simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+void Pigeon2Devices::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("Update sim Pigeon2 yaw");
     for (const auto &d : devices_)
     {
-        d->read(time, period);
+        d->simRead(time, period);
     }
 }
 

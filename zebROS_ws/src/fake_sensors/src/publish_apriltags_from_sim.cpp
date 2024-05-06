@@ -1,13 +1,16 @@
 // This node republishes fiducial markers corresponding to apriltags as the same
 // transforms that the apriltag detector sends
-// (we aren't using a camera in sim so we can't publish an AprilTagDetectionArray)
-// ... why can't we again?
+// It also converts stage MarkerDetections into ApriltagArray/Pose Stamped messaages
+// The center and corners are reprojected from 3d back to 2d using a camera model
+//  - TODO grab the camera model info from tagslam camera configs
+//  - TODO handle multiple sim cameras
+#include <string>
 #include <ros/ros.h>
 #include <marker_msgs/MarkerDetection.h>
 
 #include <geometry_msgs/TransformStamped.h>
 
-#include <tf2/LinearMath/Quaternion.h>
+// #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
 // Array Stamped is same as pose stamped but also has 3d poses of the tags
 // going to publish both because tagslam expected the one without poses, but other code will likley want with poses 
@@ -18,6 +21,7 @@
 
 #include <field_obj/Detection.h>
 #include <std_msgs/Header.h>
+#include <image_geometry/pinhole_camera_model.h>
 
 // topic: tag_detections
 /*
@@ -42,47 +46,67 @@ geometry_msgs/Point[4] corners # Corners of this apriltag
 
 */
 
-field_obj::Object apriltagDetectionObject(uint32_t id, double x, double y, double z) {
+field_obj::Object apriltagDetectionObject(uint32_t id, const geometry_msgs::Point &p) {
 	field_obj::Object obj;
-	obj.location.x = x;
-	obj.location.y = y;
-	obj.location.z = z;
-	obj.angle = atan2(y, x);
+	obj.location.x = p.x;
+	obj.location.y = p.y;
+	obj.location.z = p.z;
+	obj.angle = atan2(p.y, p.x);
 	obj.id = std::to_string(id);
 	obj.confidence = 1.0;
 	return obj;
 }
 
-std::pair<apriltag_msgs::Apriltag, geometry_msgs::Pose> createAprilTag(uint32_t id, double x, double y, double z, const std_msgs::Header &header) {
+std::pair<apriltag_msgs::Apriltag, geometry_msgs::Pose> createAprilTag(uint32_t id, const geometry_msgs::Point &p, const geometry_msgs::Quaternion &orientation, const image_geometry::PinholeCameraModel &camera_model, const double tag_size) {
 	apriltag_msgs::Apriltag tag_msg;
-	tag_msg.id = {id};
+	tag_msg.id = id;
 	tag_msg.family = "sim";
+	tag_msg.bits = 11;
+	cv::Point2d screen_coord;
+	screen_coord = camera_model.project3dToPixel(cv::Point3d(p.x, p.y, p.z));
+	tag_msg.center.x = screen_coord.x;
+	tag_msg.center.y = screen_coord.y;
+
+	// This assumes we are always seeing the tag straight-on rather than at an
+	// angle.  Not sure if stage provides correct angle information to do a
+	// more accurate projection back to camera pixel coords.
+	screen_coord = camera_model.project3dToPixel(cv::Point3d(p.x, p.y - tag_size/2, p.z - tag_size/2));
+	tag_msg.corners[0].x = screen_coord.x;	
+	tag_msg.corners[0].y = screen_coord.y;
+
+	screen_coord = camera_model.project3dToPixel(cv::Point3d(p.x, p.y + tag_size/2, p.z - tag_size/2));
+	tag_msg.corners[1].x = screen_coord.x;	
+	tag_msg.corners[1].y = screen_coord.y;
+
+	screen_coord = camera_model.project3dToPixel(cv::Point3d(p.x, p.y - tag_size/2, p.z + tag_size/2));
+	tag_msg.corners[2].x = screen_coord.x;	
+	tag_msg.corners[2].y = screen_coord.y;
+
+	screen_coord = camera_model.project3dToPixel(cv::Point3d(p.x, p.y + tag_size/2, p.z + tag_size/2));
+	tag_msg.corners[3].x = screen_coord.x;	
+	tag_msg.corners[3].y = screen_coord.y;
+
 	// doesn't really make sense to publish corners in sim
 	// would be cool for testing tagslam but without camera calibration isn't useful	
 	geometry_msgs::Pose pose_msg;
-	pose_msg.position.x = x;
-	pose_msg.position.y = y;
-	pose_msg.position.z = z;
-	tf2::Quaternion q;
-	q.setRPY(0, 0, 0);
-	pose_msg.orientation.x = q.x();
-	pose_msg.orientation.y = q.y();
-	pose_msg.orientation.z = q.z();
-	pose_msg.orientation.w = q.w();
-	//tag_msg.pose.header = header;
+	pose_msg.position.x = p.x;
+	pose_msg.position.y = p.y;
+	pose_msg.position.z = p.z;
+	pose_msg.orientation = orientation;
+
 	return std::make_pair(tag_msg, pose_msg);
 }
 
-#include <string>
 
 
 class SimAprilTagPub
 {
 	public:
-		SimAprilTagPub(ros::NodeHandle &n)
-			: sub_(n.subscribe("/base_marker_detection", 2, &SimAprilTagPub::msgCallback, this)),
-			  pub_(n.advertise<apriltag_msgs::ApriltagPoseStamped>("/tag_detections", 1000)),
-			  tfPub_(n.advertise<field_obj::Detection>("/tf_object_detection/tag_detection_world", 1000))
+		explicit SimAprilTagPub(ros::NodeHandle &n)
+			: sub_(n.subscribe("/base_marker_detection", 2, &SimAprilTagPub::msgCallback, this))
+            , tag_pub_(n.advertise<apriltag_msgs::ApriltagArrayStamped>("/tags", 2))
+			, pose_pub_(n.advertise<apriltag_msgs::ApriltagPoseStamped>("/poses", 2))
+			// , tfPub_(n.advertise<field_obj::Detection>("/tf_object_detection/tag_detection_world", 2))
 
 		{
 			ROS_INFO_STREAM("stripes and horns, Zebracorns!");
@@ -109,53 +133,50 @@ class SimAprilTagPub
 
 				transformStamped.header.stamp = msgIn->header.stamp;
 				transformStamped.header.frame_id = msgIn->header.frame_id;
-				transformStamped.child_frame_id = "36h11" + std::to_string(msgIn->markers[i].ids[0]-100);
+				transformStamped.child_frame_id = "36h11" + std::to_string(msgIn->markers[i].ids[0] - 100);
 
 				transformStamped.transform.translation.x = p.x;
 				transformStamped.transform.translation.y = p.y;
 				transformStamped.transform.translation.z = p.z;
 
-				// Can't detect rotation yet, so publish 0 instead
-				tf2::Quaternion q;
-				q.setRPY(0, 0, 0);
-
-				transformStamped.transform.rotation.x = q.x();
-				transformStamped.transform.rotation.y = q.y();
-				transformStamped.transform.rotation.z = q.z();
-				transformStamped.transform.rotation.w = q.w();
+				transformStamped.transform.rotation = msgIn->markers[i].pose.orientation;
 
 				br_.sendTransform(transformStamped);
 
-				auto[apriltag, pose] = createAprilTag(msgIn->markers[i].ids[0]-100, p.x, p.y, p.z, msgIn->header);
+				auto [apriltag, pose] = createAprilTag(msgIn->markers[i].ids[0] - 100, p, msgIn->markers[i].pose.orientation, camera_model_, tag_size_);
 				detections.push_back(apriltag);
 				poses.push_back(pose);
 
-				objects.push_back(apriltagDetectionObject(msgIn->markers[i].ids[0]-100, p.x, p.y, p.z));
-
+				objects.push_back(apriltagDetectionObject(msgIn->markers[i].ids[0] - 100, p));
 			}
 
-			apriltag_msgs::ApriltagPoseStamped apriltag_msg;
-			apriltag_msg.apriltags = detections;
-			apriltag_msg.posearray.poses = poses;
+			apriltag_msgs::ApriltagArrayStamped tags_msg;
+			tags_msg.header = msgIn->header;
+			tags_msg.apriltags = detections;
+
+			apriltag_msgs::ApriltagPoseStamped poses_msg;
+			poses_msg.header = msgIn->header;
+			poses_msg.apriltags = detections;
+			poses_msg.posearray.poses = poses;
 			// should maybe also set header for posearray, not sure 
-			apriltag_msg.header = msgIn->header;
-			
 
 			field_obj::Detection detMsg;
 			detMsg.header = msgIn->header;
 			detMsg.objects = objects;
 
-			pub_.publish(apriltag_msg);
-			tfPub_.publish(detMsg);
-			// pub_.publish(msgOut);
-			// pubd_.publish(msgOut);
+			tag_pub_.publish(tags_msg);
+			pose_pub_.publish(poses_msg);
+			// tfPub_.publish(detMsg);
 		}
 
 	private:
 		ros::Subscriber               sub_;
-		ros::Publisher                pub_;
-		ros::Publisher                tfPub_;
+        ros::Publisher                tag_pub_;
+		ros::Publisher                pose_pub_;
+		// ros::Publisher                tfPub_;
 		tf2_ros::TransformBroadcaster br_;
+		image_geometry::PinholeCameraModel camera_model_;
+		double tag_size_{0.1651}; // 6.5 inches
 };
 
 int main(int argc, char** argv)

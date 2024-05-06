@@ -20,10 +20,10 @@
 			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/box_test.yaml" output="screen">
 			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/slalom_path.yaml" output="screen">
 			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/bounce_path.yaml" output="screen">
-				-->
 			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/barrel_path.yaml" output="screen">
 				<param name="frame_id" value="/map"/>
 			</node>
+            -->
 
 			<rosparam file="$(find base_trajectory)/config/$(arg year)_robot_base_trajectory.yaml" command="load"/>
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >

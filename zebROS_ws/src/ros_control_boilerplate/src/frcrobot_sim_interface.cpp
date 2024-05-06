@@ -92,13 +92,18 @@ void FRCRobotSimInterface::read(const ros::Time &time, const ros::Duration &peri
 
 	for (const auto &d : devices_)
 	{
-		d->simRead(time, period, *read_tracer_);
+		d->simPreRead(time, period, *read_tracer_);
 	}
 
 	read_tracer_->start_unique("HAL_SimPeriodicAfter");
 	HAL_SimPeriodicAfter();
 
 	FRCRobotInterface::read(time, period);
+	for (const auto &d : devices_)
+	{
+		d->simPostRead(time, period, *read_tracer_);
+	}
+
 }
 
 template <class T>

@@ -7,8 +7,6 @@
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args " />
 
 	<arg name="hw_or_sim" default="hw" />
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
 	<arg name="record" default="false" />
 	<arg name="primary_imu" default="PIGEON2" />
 
@@ -77,6 +75,7 @@
 	<!-- TODO split teleop into driving and buttons so we can reuse driving? -->
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2023" />
+		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 	</include>
 
 	<include file="$(find controller_node)/launch/hold_position.launch"/>

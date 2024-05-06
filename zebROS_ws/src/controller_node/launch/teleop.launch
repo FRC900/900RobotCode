@@ -2,9 +2,11 @@
 <launch>
 
   <arg name="year" default="2022" />
+  <arg name="hw_or_sim" default="hw" />
   <group ns="teleop">
 	<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp_$(arg year).yaml" command="load"/>
     <node name="teleop_joystick_comp_$(arg year)" pkg="teleop_joystick_control" type="teleop_joystick_comp_$(arg year)" output="screen"/>
+    <param name="teleop_params/rotation_epsilon" value="0.04" if="$(eval hw_or_sim=='sim')" />
 
     <group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
       <node name="orient_strafing_pid" pkg="pid" type="velocity_controller" >

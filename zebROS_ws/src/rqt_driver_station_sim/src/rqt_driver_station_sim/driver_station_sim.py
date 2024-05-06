@@ -13,7 +13,7 @@ from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 
-from behavior_actions.msg import AutoMode, AutoState
+from behavior_actions.msg import AutoState
 from frc_msgs.msg import MatchSpecificData
 from talon_state_msgs.msg import TalonState
 from talon_state_msgs.msg import TalonFXProState
@@ -255,8 +255,8 @@ class DriverStationSim(Plugin):
         self._widget.talon_state_vertical_layout = QtWidgets.QVBoxLayout(self._widget.talon_state_layout_widget)
         self._widget.talon_state_vertical_layout.setObjectName("talon_state_vertical_layout")
         # Name, mode, motor output percent, setpoint
-        talon_states_sub = rospy.Subscriber("/frcrobot_jetson/talon_states", TalonState, self._talon_state_callback)
-        talonfxpro_states_sub = rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, self._talonfxpro_state_callback)
+        self._talon_states_sub = rospy.Subscriber("/frcrobot_jetson/talon_states", TalonState, self._talon_state_callback)
+        self._talonfxpro_states_sub = rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, self._talonfxpro_state_callback)
         self._widget.talon_state_widgets = []
         for i in range(len(talons)):
             self._widget.talon_state_widgets.append(QLabel("Talon" + " "*540))
@@ -266,8 +266,6 @@ class DriverStationSim(Plugin):
             self._widget.talon_state_widgets.append(QLabel("TalonFXPro" + " "*540))
             self._widget.talon_state_vertical_layout.addWidget(self._widget.talon_state_widgets[-1])
 
-        match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=2)
-        auto_mode_pub = rospy.Publisher("/auto/auto_mode", AutoMode, queue_size=1)
 
         self.auto_state_signal.connect(self.auto_state_slot)
         self.auto_state_sub = rospy.Subscriber("/auto/auto_state", AutoState, self._auto_state_callback)
@@ -279,7 +277,7 @@ class DriverStationSim(Plugin):
         def pub_data(self):
             r = rospy.Rate(20)
 
-            modes =  [0, 0, 0, 0]
+            match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=2)
             match_msg = MatchSpecificData()
             start_time = rospy.get_time()
             enable_last = False
@@ -352,19 +350,12 @@ class DriverStationSim(Plugin):
 
                 match_pub.publish(match_msg)
 
-                # Publish integer auto mode to auto_mode node
-                auto_mode_msg = AutoMode()
-                auto_mode_msg.header.stamp = rospy.Time.now()
-                auto_mode_msg.auto_mode = int(self._widget.auto_mode_text.text())
-                auto_mode_pub.publish(auto_mode_msg)
-
                 r.sleep()
 
             match_pub.unregister()
-            auto_mode_pub.unregister()
 
-        load_thread = threading.Thread(target=pub_data, args=(self,))
-        load_thread.start()
+        self._load_thread = threading.Thread(target=pub_data, args=(self,))
+        self._load_thread.start()
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
@@ -373,11 +364,10 @@ class DriverStationSim(Plugin):
     def shutdown_plugin(self):
         # TODO unregister all publishers here
         self.stop_pub = True
+        self._load_thread.join(5)
 
         if self.auto_state_sub is not None:
             self.auto_state_sub.unregister()
-
-        pass
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:

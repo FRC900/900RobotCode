@@ -6,19 +6,18 @@
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args " />
 
 	<arg name="hw_or_sim" default="hw" />
-	<arg name="joy_or_key" default="joy" />
-	<arg name="button_box" default="true"/>
 	<arg name="record" default="false" />
 	<arg name="primary_imu" default="PIGEON2" />
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_practice_phoenix6.yaml" command="load"/>
+		<!-- For sim, stage simulation is responsible for odometry -->
+		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_practice_pivot_cancoder.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_practice_arm_cancoder.yaml" command="load"/>
 
-		
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
 		-->
@@ -103,6 +102,7 @@
 
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2024" />
+		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 	</include>
 
 	<group ns="cmd_vel_mux">
@@ -147,7 +147,7 @@
 	</include>
 	<include file="$(find behaviors)/launch/2024_drive_and_score.launch"/>
 
-	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
+	<!-- <include file="$(find pf_localization)/launch/pf_localization.launch"/> -->
 	
 	<!--
 		# Shooter ZED: Y Distance is 0, X distance is -0.299731, Z distance is 0.200852

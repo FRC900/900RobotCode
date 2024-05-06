@@ -48,7 +48,8 @@ public:
 
     // Read and write functions which add additional sim features
     virtual void simInit(ros::NodeHandle &/*nh*/) {}
-    virtual void simRead(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
+    virtual void simPreRead(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
+    virtual void simPostRead(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
     virtual void simWrite(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
 
     // Read and write functions which add additional sim features
