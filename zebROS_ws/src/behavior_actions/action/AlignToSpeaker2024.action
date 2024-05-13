@@ -1,7 +1,11 @@
 # goal
 bool align_forever # if true, don't exit once we're aligned (just exit when preempted)
-
 bool offsetting
+
+uint8 send_align_values=0
+uint8 actually_align=1
+
+uint8 mode
 
 ---
 # result

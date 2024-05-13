@@ -8,13 +8,15 @@ uint8 PODIUM=5
 uint8 LOB_PASS=6
 uint8 SHOT_PASS=7
 uint8 SLIDE=8
-uint8 START_AUTO=9
 uint8 mode
 float64 distance
+
+float64 distance_moving
+float64 dynamic_move_while_shoot_time
 bool setup_only # just spin up
-bool only_shooter_setup # if setup_only and only_shooter_setup, just spins up shooter (doesn't call pivot)
 bool leave_spinning
 bool cancel_movement # will OVERRIDE other fields, cancels lower level servers and exits 
+float64 request_time
 ---
 # result
 bool success

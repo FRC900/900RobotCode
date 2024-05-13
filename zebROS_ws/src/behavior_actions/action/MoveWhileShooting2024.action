@@ -1,0 +1,8 @@
+# goal
+bool move_align # if true, don't exit once we're aligned (just exit when preempted)
+
+---
+# result
+bool success
+---
+# feedback
