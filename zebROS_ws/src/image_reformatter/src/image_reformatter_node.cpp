@@ -10,10 +10,12 @@ int main(int argc, char** argv) {
     for (int i = 0; i < argc; i++) {
         nargv.emplace_back(argv[i]);
     }
-    nodelet.load(ros::this_node::getName(), "frc971_gpu_apriltag/FRC971GpuApriltagNodelet",
+    nodelet.load(ros::this_node::getName(), "image_reformatter/ImageReformatterNodelet",
                  remap, nargv);
 
     ros::spin();
 
     return 0;
 }
+
+

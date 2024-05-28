@@ -3,6 +3,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <image_transport/image_transport.h>
+#include <glog/logging.h>
 
 #include "gpu_apriltag/gpu_apriltag.h"
 #include "apriltag_msgs/ApriltagArrayStamped.h"
@@ -19,11 +20,15 @@ public:
 
     void onInit() override
     {
+        // Initialize Google's logging library.
+        // TODO : hook it up to print using ROS_INFO calls somehow?
+        // FLAGS_v = 6; // TODO : make this a param?
+        google::InitGoogleLogging(getName().c_str());
         nh_ = getMTPrivateNodeHandle();
         auto base_nh = getNodeHandle();
 
         image_transport::ImageTransport base_it(base_nh);
-        camera_sub_ = base_it.subscribeCamera("image_rect_color", 10, &FRC971GpuApriltagNodelet::callback, this);
+        camera_sub_ = base_it.subscribeCamera("image_rect_color", 1, &FRC971GpuApriltagNodelet::callback, this);
         // Publisher for apriltag detections
         pub_apriltag_detections_ = nh_.advertise<apriltag_msgs::ApriltagArrayStamped>("tags", 1);
         // And a publisher to publish to a topic that screen to world can use directly
@@ -32,14 +37,27 @@ public:
         image_transport::ImageTransport it(nh_);
         pub_debug_image_ = it.advertise("debug_image", 1);
     }
+
     void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info)
     {
+        auto cv_frame = cv_bridge::toCvShare(image);
+
         if (!detector_)
         {
-            detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector>(camera_info);
+            if (cv_frame->encoding == sensor_msgs::image_encodings::MONO8)
+            {
+                detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::Mono8>>(camera_info);
+            }
+            else if (cv_frame->encoding == sensor_msgs::image_encodings::BGR8)
+            {
+                detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGR8>>(camera_info);
+            }
+            else
+            {
+                ROS_ERROR_STREAM_THROTTLE(1.0, "Unsupported image encoding " << cv_frame->encoding);
+                return;
+            }
         }
-
-        cv_bridge::CvImageConstPtr cv_frame = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8);
 
         std::vector<GpuApriltagResult> results;
         std::vector<std::array<cv::Point2d, 4>> rejected_margin_corners;
@@ -49,7 +67,7 @@ public:
                           rejected_noconverge_corners,
                           cv_frame->image);
 
-        // Publish both an apriltag message adn a td detection message
+        // Publish both an apriltag message and a td detection message
         // The later lets us skip using a separate node to process
         // the results into the format needed by screen to world
         apriltag_msgs::ApriltagArrayStamped apriltag_array;
@@ -76,12 +94,12 @@ public:
             double tl_y =  std::numeric_limits<double>::max();
             for (size_t i = 0; i < msg.corners.size(); i++)
             {
-                msg.corners[i].x = result.undistorted_corners_[i].x;
-                msg.corners[i].y = result.undistorted_corners_[i].y;
-                br_x = std::max(br_x, msg.corners[i].x);
-                br_y = std::max(br_y, msg.corners[i].y);
-                tl_x = std::min(tl_x, msg.corners[i].x);
-                tl_y = std::min(tl_y, msg.corners[i].y);
+                msg.corners[i].x = result.original_corners_[i].x;
+                msg.corners[i].y = result.original_corners_[i].y;
+                br_x = std::max(br_x, result.undistorted_corners_[i].x);
+                br_y = std::max(br_y, result.undistorted_corners_[i].y);
+                tl_x = std::min(tl_x, result.undistorted_corners_[i].x);
+                tl_y = std::min(tl_y, result.undistorted_corners_[i].y);
             }
 
             objdetect_msg.objects.emplace_back();
@@ -102,6 +120,12 @@ public:
             debug_image_.header = cv_frame->header;
             debug_image_.encoding = sensor_msgs::image_encodings::BGR8;
             debug_image_.image = cv_frame->image.clone();
+            // If the image is greyscale, convert the debug
+            // image to color so we can draw on it with colored boxes
+            if (debug_image_.image.channels() == 1)
+            {
+                cv::cvtColor(debug_image_.image, debug_image_.image, cv::COLOR_GRAY2BGR);
+            }
             for (const auto &corner : rejected_margin_corners)
             {
                 drawCorner(debug_image_.image, corner, cv::Scalar(255, 0, 0));
@@ -129,8 +153,6 @@ private:
     }
     ros::NodeHandle nh_;
     ros::NodeHandle base_nh_;
-    std::unique_ptr<image_transport::ImageTransport> base_it_;
-    std::unique_ptr<image_transport::ImageTransport> it_;
     image_transport::CameraSubscriber camera_sub_;
     ros::Publisher pub_apriltag_detections_;
     ros::Publisher pub_apriltag_poses_;
@@ -139,7 +161,7 @@ private:
     image_transport::Publisher pub_debug_image_;
     cv_bridge::CvImage debug_image_;
 
-    std::unique_ptr<frc971_gpu_apriltag::FRC971GpuApriltagDetector> detector_;
+    std::unique_ptr<frc971_gpu_apriltag::FRC971GpuApriltagDetectorBase> detector_;
 
     ddynamic_reconfigure::DDynamicReconfigure ddr_;
     ros::ServiceServer save_input_image_srv_;

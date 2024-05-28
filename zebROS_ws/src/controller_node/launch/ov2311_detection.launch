@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="camera_name"          default="ov2311" />
+  <!--
+    TODO : need transforms for camera -> base link
+  <arg name="cam_pos_x"            default="0.0" />
+  <arg name="cam_pos_y"            default="0.0" />
+  <arg name="cam_pos_z"            default="0.0" />
+  <arg name="cam_roll"             default="0.0" />
+  <arg name="cam_pitch"            default="0.0" />
+  <arg name="cam_yaw"              default="0.0" />
+   -->
+  <arg name="run_camera"           default="true" />
+  <arg name="static_image"         default="false" />
+  <arg name="run_gpu_apriltag"     default="true" />
+  <arg name="run_calibrator"       default="false" />
+
+  <!-- Name of the Nodelet Manager -->
+  <arg name="run_nodelet_manager"  default="true" />
+  <arg name="nodelet_manager_name"  default="$(arg camera_name)_nodelet_manager" />
+
+	<arg name="profile" default="false" />
+	<arg unless="$(arg profile)" name="launch_prefix" value="" />
+	<arg     if="$(arg profile)" name="launch_prefix" value="nsys profile -t cuda,nvtx -s cpu -f true " />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" if="$(eval run_nodelet_manager)" />
+
+  <!-- 
+  ========== cv_camera node, run as a nodelet
+  -->
+  <node pkg="nodelet" type="nodelet" name="$(arg camera_name)" args="load cv_camera/CvCameraNodelet /$(arg nodelet_manager_name)" if="$(eval run_camera)" output="screen" >
+    <param name="device_path"             value="/dev/video0" />
+    <!-- <param name="image_width"             value="1600" />
+    <param name="image_height"            value="1300" /> -->
+    <param name="rate"                    value="60" />
+    <param name="frame_id"                value="$(arg camera_name)" />
+    <param name="camera_name"             value="$(arg camera_name)" />
+    <param name="cv_cap_prop_convert_rgb" value="0" />
+    <!-- <param name="cv_cap_prop_fourcc" value="BA81" /> -->
+  </node>
+
+  <!-- 
+  ========== image reformatter - corrects the image encoding and shape published by cv_camera
+  -->
+  <node pkg="nodelet" type="nodelet" name="$(arg camera_name)_reformatter" args="load image_reformatter/ImageReformatterNodelet /$(arg nodelet_manager_name)" if="$(eval run_camera)" output="screen" >
+    <remap from="/image_raw" to="/$(arg camera_name)/image_raw"/>
+    <!-- <remap from="/image_reformatted" to="/$(arg camera_name)_reformatted/image_reformatted"/> -->
+    <param name="output_encoding"  value="mono8" />
+    <param name="output_height"  value="1300" />
+  </node>
+
+  <node pkg="camera_calibration" name="camera_calibration" type="camera_calibration" args="image:=/$(arg camera_name)_reformatter/image_reformatted camera:=/$(arg camera_name)_reformatter -p acircles -s 8x27 -q=0.1" if="$(eval run_calibrator)" output="screen" />
+
+
+  <!-- 
+  ========== GPU Apriltag Detector
+  -->
+  <node pkg="nodelet" type="nodelet" name="apriltag_detection_$(arg camera_name)" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" launch-prefix="$(arg profile)" output="screen" >
+    <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
+    <!-- Match tag topic to CPU apriltag detection topic names -->
+    <remap from="/apriltag_$(arg camera_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg camera_name)/tag_detection_msg"/>
+  </node>
+  <!--
+    To collect profile info from the Jetson :
+  sudo nsys profile -t cuda,nvtx -s cpu -f true 2023RobotCode/zebROS_ws/ROSJetsonMaster.sh rosrun gpu_apriltag gpu_apriltag_node image_rect_color:=/ov2311_reformatter/image_reformatted /apriltag_ov2311/apriltag_detection/tag_detection_msg:=/apriltag_ov2311/tag_detection_msg __name:=apriltag_detection_ov2311
+  -->
+  <group ns="$(arg camera_name)_reformatter" if="$(eval static_image)">
+    <node pkg="tf_object_detection" type="simple_static_img_pub.py" name="static_img_pub" output="screen" >
+      <param name="test_image_path" value="$(find tf_object_detection)/src/raw_0.png" />
+      <param name="camera_name" value="$(arg camera_name)" />
+      <remap from="image_raw" to="image_reformatted" />
+    </node>
+  </group>
+
+</launch>

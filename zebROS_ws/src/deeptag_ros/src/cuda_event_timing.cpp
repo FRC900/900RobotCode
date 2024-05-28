@@ -29,44 +29,42 @@ void Timing::start(cudaStream_t cudaStream)
             std::cerr << "Error : duplicate start event " << m_name << " seen." << std::endl;
         }
     }
+    m_cudaStream = cudaStream;
     cudaSafeCall(cudaEventRecord(m_startEvent, cudaStream));
     nvtxRangePushA(m_name.c_str());
-    
 
     m_startEventSeen = true;
 }
-void Timing::end(cudaStream_t cudaStream)
+
+void Timing::end(void)
 {
     if (m_endEventSeen)
     {
         std::cerr << "Error : duplicate end event " << m_name << " seen." << std::endl;
     }
-    cudaSafeCall(cudaEventRecord(m_endEvent, cudaStream));
+    cudaSafeCall(cudaEventRecord(m_endEvent, m_cudaStream));
     nvtxRangePop();
 
     m_endEventSeen = true;
 }
+
 void Timing::endFrame(void)
 {
-    if (!m_startEventSeen)
+    if (m_startEventSeen && m_endEventSeen)
     {
-        return;
-    }
-    if (!m_endEventSeen)
-    {
-        return;
-    }
-    cudaSafeCall(cudaEventSynchronize(m_startEvent));
-    cudaSafeCall(cudaEventSynchronize(m_endEvent));
-    m_startEventSeen = false;
-    m_endEventSeen = false;
-    float elapsedTime;
-    cudaSafeCall(cudaEventElapsedTime(&elapsedTime, m_startEvent, m_endEvent));
-    if (++m_count > 0)
-    {
-        m_elapsedSeconds += elapsedTime;
+        // cudaSafeCall(cudaEventSynchronize(m_startEvent)); Shouldn't need this one - if end has been seen, the corresponding start event has also occurred
+        cudaSafeCall(cudaEventSynchronize(m_endEvent));
+        m_startEventSeen = false;
+        m_endEventSeen = false;
+        if (++m_count > 0)
+        {
+            float elapsedTime;
+            cudaSafeCall(cudaEventElapsedTime(&elapsedTime, m_startEvent, m_endEvent));
+            m_elapsedSeconds += elapsedTime;
+        }
     }
 }
+
 std::ostream &operator<<(std::ostream &stream, const Timing &timing)
 {
     if (timing.m_count <= 0)
@@ -79,7 +77,6 @@ std::ostream &operator<<(std::ostream &stream, const Timing &timing)
     }
     return stream;
 }
-
 
 Timings::Timings() = default;
 
@@ -94,10 +91,15 @@ void Timings::start(const std::string &name, cudaStream_t cudaStream)
     if (m_enabled)
     {
         const auto &[it, placed] = m_timings.try_emplace(name, name);
+        if (placed)
+        {
+            m_keys_in_insert_order_.push_back(name);
+        }
         it->second.start(cudaStream);
     }
 }
-void Timings::end(const std::string &name, cudaStream_t cudaStream)
+
+void Timings::end(const std::string &name)
 {
     if (m_enabled)
     {
@@ -107,7 +109,7 @@ void Timings::end(const std::string &name, cudaStream_t cudaStream)
             std::cerr << " Error - end called before start for " << name << std::endl;
             return;
         }
-        it->second.end(cudaStream);
+        it->second.end();
     }
 }
 
@@ -133,9 +135,21 @@ void Timings::setEnabled(const bool enabled)
 
 std::ostream &operator<<(std::ostream &stream, const Timings &timings)
 {
-    for (const auto &[name, timing] : timings.m_timings)
+    for (const auto &name : timings.m_keys_in_insert_order_)
     {
-        stream << timing << std::endl;
+        stream << timings.m_timings.at(name) << std::endl;
     }
     return stream;
+}
+
+ScopedEventTiming::ScopedEventTiming(Timings &timings, const std::string &name, cudaStream_t cudaStream)
+    : m_timings{timings}
+    , m_name{name}
+{
+    m_timings.start(m_name, cudaStream);
+}
+
+ScopedEventTiming::~ScopedEventTiming()
+{
+    m_timings.end(m_name);
 }

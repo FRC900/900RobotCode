@@ -7,6 +7,7 @@ adi_pico_driver
 apriltag
 apriltag_ros
 ar_track_alvar
+camera_info_manager_py
 control_toolbox
 cpu_monitor
 ddynamic_reconfigure

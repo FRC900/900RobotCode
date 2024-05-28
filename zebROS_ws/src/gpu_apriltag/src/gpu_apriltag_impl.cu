@@ -69,7 +69,8 @@ static void DestroyPose(apriltag_pose_t *pose)
 
 #endif
 
-FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info)
+template <frc971::apriltag::InputFormat INPUT_FORMAT>
+FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>::FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info)
     : tag_family_{tag36h11_create()}
     , tag_detector_{makeTagDetector(tag_family_, 2, false)}
     , intrinsics_{cv::Mat(3, 3, CV_64F, const_cast<double *>(camera_info->K.data()))}
@@ -79,13 +80,15 @@ FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::
 {
 }
 
-FRC971GpuApriltagDetectorImpl::~FRC971GpuApriltagDetectorImpl()
+template <frc971::apriltag::InputFormat INPUT_FORMAT>
+FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>::~FRC971GpuApriltagDetectorImpl()
 {
     apriltag_detector_destroy(tag_detector_);
     free(tag_family_);
 }
 
-void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &results,
+template <frc971::apriltag::InputFormat INPUT_FORMAT>
+void FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>::Detect(std::vector<GpuApriltagResult> &results,
                                            std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
                                            std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
                                            const cv::Mat &color_image)
@@ -253,7 +256,8 @@ void FRC971GpuApriltagDetectorImpl::Detect(std::vector<GpuApriltagResult> &resul
     }
 }
 
-bool FRC971GpuApriltagDetectorImpl::UndistortDetection(apriltag_detection_t *det) const
+template <frc971::apriltag::InputFormat INPUT_FORMAT>
+bool FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>::UndistortDetection(apriltag_detection_t *det) const
 {
     // Copy the undistorted points into det
     bool converged = true;
@@ -262,15 +266,16 @@ bool FRC971GpuApriltagDetectorImpl::UndistortDetection(apriltag_detection_t *det
         double u = det->p[i][0];
         double v = det->p[i][1];
 
-        converged &= frc971::apriltag::GpuDetector::UnDistort(&u, &v, &distortion_camera_matrix_,
-                                                              &distortion_coefficients_);
+        converged &= frc971::apriltag::UnDistort(&u, &v, &distortion_camera_matrix_,
+                                                 &distortion_coefficients_);
         det->p[i][0] = u;
         det->p[i][1] = v;
     }
     return converged;
 }
 
-double FRC971GpuApriltagDetectorImpl::ComputeDistortionFactor(
+template <frc971::apriltag::InputFormat INPUT_FORMAT>
+double FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>::ComputeDistortionFactor(
     const std::array<cv::Point2d, 4> &orig_corners,
     const std::array<cv::Point2d, 4> &corners) const
 {
@@ -288,5 +293,8 @@ double FRC971GpuApriltagDetectorImpl::ComputeDistortionFactor(
         cv::norm(cv::Point2d(image_size_.width, image_size_.height));
     return std::min(distortion_factor / max_expected_distortion_, 1.0);
 }
+
+template class FRC971GpuApriltagDetectorImpl<frc971::apriltag::InputFormat::Mono8>;
+template class FRC971GpuApriltagDetectorImpl<frc971::apriltag::InputFormat::BGR8>;
 
 } // namespace

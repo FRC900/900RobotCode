@@ -8,6 +8,7 @@
 #include "third_party/apriltag/apriltag.h"
 namespace frc971_gpu_apriltag
 {
+template <frc971::apriltag::InputFormat INPUT_FORMAT>
 class FRC971GpuApriltagDetectorImpl
 {
 public:
@@ -31,7 +32,7 @@ private:
     frc971::apriltag::CameraMatrix distortion_camera_matrix_;
     frc971::apriltag::DistCoeffs distortion_coefficients_;
 
-    frc971::apriltag::GpuDetector gpu_detector_;
+    frc971::apriltag::GpuDetector<INPUT_FORMAT> gpu_detector_;
     cv::Size image_size_;
 
     size_t rejections_{0};

@@ -489,7 +489,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
         }
         m_contextInputDims.push_back(inputDims);
     }
-    m_timings->end("Set_dynamic_tensors", m_inferenceCudaStream);
+    m_timings->end("Set_dynamic_tensors");
     // Update output shapes from newly supplied inputs
     m_timings->start("Infer_shapes", m_inferenceCudaStream);
     if (const int rc = m_context->inferShapes(0, nullptr))
@@ -498,7 +498,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
         std::cout << "Context inferShapes failed, rc = " << rc << std::endl;
         return false;
     }
-    m_timings->end("Infer_shapes", m_inferenceCudaStream);
+    m_timings->end("Infer_shapes");
 
     // Ensure all dynamic bindings have been defined.
     if (!m_context->allInputDimensionsSpecified()) {
@@ -510,7 +510,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
     if (!allocateInputOutputTensors(buffersResized)) {
         throw std::runtime_error("Error, allocateInputOutputTensors");
     }
-    m_timings->end("Allocate_input_tensors", m_inferenceCudaStream);
+    m_timings->end("Allocate_input_tensors");
 
     m_timings->start("Blob_from_gpu_image", m_inferenceCudaStream);
     // Preprocess inputs directly into buffers allocated for them
@@ -522,7 +522,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
         // Copy over the input data and perform the preprocessing, put the result in m_buffer[i]
         blobFromGpuImageWrappers(inputs[i], i);
     }
-    m_timings->end("Blob_from_gpu_image", m_inferenceCudaStream);
+    m_timings->end("Blob_from_gpu_image");
     if (batchSize != m_lastBatchSize)
     {
         m_needNewCudaGraph = true;
@@ -543,7 +543,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
         cudaSafeCall(cudaStreamSynchronize(m_inferenceCudaStream));
         m_needNewCudaGraph = false;
     }
-    m_timings->end("new_cuda_graph", m_inferenceCudaStream);
+    m_timings->end("new_cuda_graph");
 
     m_timings->start("inference", m_inferenceCudaStream);
     if (m_useCudaGraph)
@@ -558,7 +558,7 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
             return false;
         }
     }
-    m_timings->end("inference", m_inferenceCudaStream);
+    m_timings->end("inference");
 
 #if 0
     m_timings->start("feature_vectors_to_CPU", m_inferenceCudaStream);
@@ -579,12 +579,12 @@ bool Engine<CALIBRATOR>::runInference(const std::vector<std::vector<GpuImageWrap
         }
         featureVectors.emplace_back(std::move(batchOutputs));
     }
-    m_timings->end("feature_vectors_to_CPU", m_inferenceCudaStream);
+    m_timings->end("feature_vectors_to_CPU");
 
     // Synchronize the cuda stream
     m_timings->start("final_sync", m_inferenceCudaStream);
     cudaSafeCall(cudaStreamSynchronize(m_inferenceCudaStream));
-    m_timings->end("final_sync", m_inferenceCudaStream);
+    m_timings->end("final_sync");
 #endif
     return true;
 }

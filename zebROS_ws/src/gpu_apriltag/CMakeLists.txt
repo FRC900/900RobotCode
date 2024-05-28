@@ -165,6 +165,8 @@ add_library(${PROJECT_NAME}
   ${FRC971}/frc971/orin/apriltag.cc
   ${FRC971}/frc971/orin/apriltag_detect.cc
   ${FRC971}/frc971/orin/cuda.cc
+  ${FRC971}/frc971/orin/cuda_event_timing.cc
+  ${FRC971}/frc971/orin/cuda_utils.cc
   ${FRC971}/frc971/orin/labeling_allegretti_2019_BKE.cc
   ${FRC971}/frc971/orin/line_fit_filter.cc
   ${FRC971}/frc971/orin/threshold.cc
@@ -197,7 +199,15 @@ target_link_libraries(${PROJECT_NAME}
   ${LIBNVTOOLSEXT}
   ${glog_LIBRARIES}
 )
-set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86;87")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  # Xavier and Orin ... Xavier can probably be disabled before too long
+  # ... unless perf is good enough to use it for a camera platform?
+  set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "72;87")
+else()
+  # RTX 30xx. Use 89 for RTX40xx cards if needed
+  set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86")
+endif()
+
 set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 ## Declare a C++ executable
@@ -269,11 +279,10 @@ endif()
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+  nodelet_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

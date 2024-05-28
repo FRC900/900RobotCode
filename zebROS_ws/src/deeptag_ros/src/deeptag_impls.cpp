@@ -54,7 +54,7 @@ DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::DeepTagImpl(const De
 template <size_t NUM_TILES, bool USE_SCALED_IMAGE, size_t MARKER_GRID_SIZE>
 std::vector<DeepTagResult> DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_SIZE>::runInference(const cv::Mat &cpuImg)
 {
-    getTimings().start("e2e", m_sTagDetector.getCudaStream());
+    ScopedEventTiming e2eTiming(getTimings(), "e2e", m_sTagDetector.getCudaStream());
     const auto tagDetectInfo = m_sTagDetector.detectTags(cpuImg);
 
     std::vector<std::array<cv::Point2d, 4>> rois{};
@@ -98,7 +98,7 @@ std::vector<DeepTagResult> DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_
             }
         }
     }
-    getTimings().end("pose", m_sTagDetector.getCudaStream());
+    getTimings().end("pose");
 
     getTimings().start("nms", m_sTagDetector.getCudaStream());
     std::vector<cv::RotatedRect> boundingBoxes;
@@ -119,9 +119,8 @@ std::vector<DeepTagResult> DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_
     {
         nmsResults.push_back(results[keepIndex]);
     }
-    getTimings().end("nms", m_sTagDetector.getCudaStream());
+    getTimings().end("nms");
 
-    getTimings().end("e2e", m_sTagDetector.getCudaStream());
     return nmsResults;
 }
 

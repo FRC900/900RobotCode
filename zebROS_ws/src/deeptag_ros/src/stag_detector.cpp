@@ -96,11 +96,10 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::initEngine(const std::string &mo
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
 ushort2 STagDetector<NUM_TILES, USE_SCALED_IMAGE>::generateInputs(const cv::Mat &cpuImg)
 {
-    m_timing.start("gpuImage_upload", m_detectEngine->getCudaStream());
+    ScopedEventTiming timing(m_timing, "gpuImage_upload", m_detectEngine->getCudaStream());
     // Upload the image GPU memory
     m_detectInputs[0][0].upload(cpuImg, m_detectEngine->getCudaStream());
     const ushort2 imgSize{static_cast<ushort>(cpuImg.cols), static_cast<ushort>(cpuImg.rows)};
-    m_timing.end("gpuImage_upload", m_detectEngine->getCudaStream());
 
     return imgSize;
 }
@@ -125,7 +124,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::generatePriors(const ushort2 &im
     {
         m_regenCudaGraph = true;
     }
-    m_timing.end("gridprior_generate", m_detectEngine->getCudaStream());
+    m_timing.end("gridprior_generate");
 
     m_timing.start("ssdprior_generate", m_ssdCudaStream);
     if (m_ssdGridPrior.generate(modelInputDims,
@@ -135,7 +134,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::generatePriors(const ushort2 &im
     {
         m_regenCudaGraph = true;
     }
-    m_timing.end("ssdprior_generate", m_ssdCudaStream);
+    m_timing.end("ssdprior_generate");
 }
 
 // Softmax converts confidence values from arbitrary numbers to scores from 0-1
@@ -152,14 +151,14 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runSoftmax()
     // so multiply index by 1 and add len, to read {idx, idx+len}
     const auto stage1GridCount = m_gridPrior.getOutput().size();
     m_gridSoftmax.computeSoftmax(m_detectEngine->getBufferByName("grid_confidences_pred"), 1, stage1GridCount, stage1GridCount, m_detectEngine->getCudaStream());
-    m_timing.end("grid_softmax", m_detectEngine->getCudaStream());
+    m_timing.end("grid_softmax");
 
     cudaSafeCall(cudaStreamWaitEvent(m_ssdCudaStream, m_engineDoneCudaEvent));
     m_timing.start("ssd_softmax", m_ssdCudaStream);
     // This tensor has x & y confidences back to back. So set mult to 2x and add to 1 to read {2idx+0 and 2idx+1}
     const auto stage1SSDGridCount = m_ssdGridPrior.getOutput().size();
     m_ssdSoftmax.computeSoftmax(m_detectEngine->getBufferByName("ssd_confidences_pred"), 2, 1, stage1SSDGridCount, m_ssdCudaStream);
-    m_timing.end("ssd_softmax", m_ssdCudaStream);
+    m_timing.end("ssd_softmax");
 
 #ifdef DEBUG
     dumpOutputToCSV("grid_confidences_pred", m_detectEngine->getBufferByName("grid_confidences_pred"), stage1GridCount, 2, 1, stage1GridCount);
@@ -188,7 +187,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runConfidenceFilter(const ushort
                                     m_cornerMinCenterScore, // min_center_score
                                     m_detectEngine->getCudaStream(),
                                     m_regenCudaGraph);
-    m_timing.end("grid_keypoint", m_detectEngine->getCudaStream());
+    m_timing.end("grid_keypoint");
 
     m_timing.start("ssd_keypoint", m_ssdCudaStream);
     m_ssdConfidenceFilter.detect({m_ssdSoftmax.getOutput().data(),
@@ -200,7 +199,7 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runConfidenceFilter(const ushort
                                  m_ssdMinCenterScore, // min_center_score
                                  m_ssdCudaStream,
                                  m_regenCudaGraph);
-    m_timing.end("ssd_keypoint", m_ssdCudaStream);
+    m_timing.end("ssd_keypoint");
 }
 
 // Next, group objects which are close enough in position into a single
@@ -215,12 +214,12 @@ void STagDetector<NUM_TILES, USE_SCALED_IMAGE>::runGroupers(const ushort2 &imgSi
     m_timing.start("grid_group", m_detectEngine->getCudaStream());
     // printf("m_cornerConfidenceFilter.getOutput().size() = %ld\n", m_cornerConfidenceFilter.getOutput().size());
     m_gridGrouper.compute(m_cornerConfidenceFilter.getOutput(), m_gridGrouperSigma * imageScale, 0.9f, m_detectEngine->getCudaStream());
-    m_timing.end("grid_group", m_detectEngine->getCudaStream());
+    m_timing.end("grid_group");
 
     // printf("m_ssdConfidenceFilter.getOutput().size() = %ld\n", m_ssdConfidenceFilter.getOutput().size());
     m_timing.start("ssd_group", m_ssdCudaStream);
     m_ssdGrouper.compute(m_ssdConfidenceFilter.getOutput(), m_ssdGrouperSigma * imageScale, 0.9f, m_ssdCudaStream);
-    m_timing.end("ssd_group", m_ssdCudaStream);
+    m_timing.end("ssd_group");
 }
 
 template<size_t NUM_TILES, bool USE_SCALED_IMAGE>
@@ -248,7 +247,7 @@ std::vector<TagDetectInfo> STagDetector<NUM_TILES, USE_SCALED_IMAGE>::detectTags
         m_saveInputImage = false;
     }
     // Record an event that triggers once inference is complete
-    m_timing.end("detect_inference", m_detectEngine->getCudaStream());
+    m_timing.end("detect_inference");
     cudaSafeCall(cudaEventRecord(m_engineDoneCudaEvent, m_detectEngine->getCudaStream()));
 
     // For batch size > 1, we're breaking the input image into model-input sized
@@ -275,12 +274,12 @@ std::vector<TagDetectInfo> STagDetector<NUM_TILES, USE_SCALED_IMAGE>::detectTags
     // Copy final results from device back to host
     m_timing.start("grid_finalGetOutput", m_detectEngine->getCudaStream());
     const tcb::span<const Stage1GridGroup<NUM_TILES + NUM_SCALED_IMAGES>> hstage1GridGroup = m_gridGrouper.getOutput();
-    m_timing.end("grid_finalGetOutput", m_detectEngine->getCudaStream());
+    m_timing.end("grid_finalGetOutput");
 
     m_timing.start("ssd_finalGetOutput", m_ssdCudaStream);
     const tcb::span<const Stage1SSDGroup> hstage1SSDGroup = m_ssdGrouper.getOutput();
     cudaSafeCall(cudaEventRecord(m_ssdDoneCudaEvent, m_ssdCudaStream));
-    m_timing.end("ssd_finalGetOutput", m_ssdCudaStream);
+    m_timing.end("ssd_finalGetOutput");
 
     // Merge the streams back into one - have grid wait on sdd stream to finish
     // before running the last bit of stage 1 ROI detection
@@ -288,7 +287,7 @@ std::vector<TagDetectInfo> STagDetector<NUM_TILES, USE_SCALED_IMAGE>::detectTags
     // to insure data is available on the host
     m_timing.start("ssd_final_streamwaitevent", m_ssdCudaStream);
     cudaSafeCall(cudaStreamWaitEvent(m_detectEngine->getCudaStream(), m_ssdDoneCudaEvent));
-    m_timing.end("ssd_final_streamwaitevent", m_ssdCudaStream);
+    m_timing.end("ssd_final_streamwaitevent");
 
     m_timing.start("centerAndCornersToTags", m_detectEngine->getCudaStream());
     std::vector<TagDetectInfo> tagDetectInfo;
@@ -297,7 +296,7 @@ std::vector<TagDetectInfo> STagDetector<NUM_TILES, USE_SCALED_IMAGE>::detectTags
                            centerToCornerLinks,
                            hstage1GridGroup,
                            hstage1SSDGroup);
-    m_timing.end("centerAndCornersToTags", m_detectEngine->getCudaStream());
+    m_timing.end("centerAndCornersToTags");
 
 #ifdef DEBUG
     std::cout << "===================================================\n";

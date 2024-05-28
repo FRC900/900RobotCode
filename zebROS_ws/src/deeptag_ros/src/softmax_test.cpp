@@ -32673,7 +32673,7 @@ int main(void)
     {
         timings.start("computeSoftmax", cudaStream);
         softmax.computeSoftmax(dInput, 1, inputSize / 2, inputSize / 2, cudaStream);
-        timings.end("computeSoftmax", cudaStream);
+        timings.end("computeSoftmax");
     }
 
     cudaSafeCall(cudaMemcpyAsync(hOutput, softmax.getOutput().data(), sizeof(input) / 2, cudaMemcpyDeviceToHost, cudaStream));
