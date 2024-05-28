@@ -11,5 +11,6 @@ int main (int argc, char **argv) {
     }
 	std::string nodelet_name = ros::this_node::getName();
 	nodelet.load(nodelet_name, "tf_object_detection/ScreenToWorld", remap, nargv);
+	ros::spin();
 	return 0;
 }

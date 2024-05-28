@@ -40,13 +40,13 @@ general:
 #video:
 
 depth:
-    depth_mode:                 'QUALITY'                   # 'NONE', 'PERFORMANCE', 'QUALITY', 'ULTRA', 'NEURAL'
+    depth_mode:                 'PERFORMANCE'                   # 'NONE', 'PERFORMANCE', 'QUALITY', 'ULTRA', 'NEURAL'
     depth_stabilization:        1                               # [0-100] - 0: Disabled
     openni_depth_mode:          false                           # 'false': 32bit float meter units, 'true': 16bit uchar millimeter units
 
 pos_tracking:
     pos_tracking_enabled:       false                           # True to enable positional tracking from start
-    pos_tracking_mode:          'STANDARD'                      # Matches the ZED SDK setting: 'QUALITY', 'STANDARD' -> Use 'QUALITY' with 'ULTRA' depth mode for improved outdoors performance
+    pos_tracking_mode:          'GEN_2'                          # Matches the ZED SDK setting: 'GEN_1', 'GEN_2'
     set_gravity_as_origin:      true                            # If 'true' align the positional tracking world to imu gravity measurement. Keep the yaw from the user initial pose.
     imu_fusion:                 true                            # enable/disable IMU fusion. When set to false, only the optical odometry will be used.
     publish_tf:                 false                           # publish `odom -> base_link` TF
@@ -84,11 +84,11 @@ object_detection:
     max_range:                          15.                             # Maximum detection range
     allow_reduced_precision_inference:  true                            # Allow inference to run at a lower precision to improve runtime and memory usage
     prediction_timeout:                 0.5                             #  During this time [sec], the object will have OK state even if it is not detected. Set this parameter to 0 to disable SDK predictions            
-    object_tracking_enabled:            false                            # Enable/disable the tracking of the detected objects
-    mc_people:                          false                            # Enable/disable the detection of persons for 'MULTI_CLASS_BOX_X' models
-    mc_vehicle:                         false                            # Enable/disable the detection of vehicles for 'MULTI_CLASS_BOX_X' models
-    mc_bag:                             false                            # Enable/disable the detection of bags for 'MULTI_CLASS_BOX_X' models
-    mc_animal:                          false                            # Enable/disable the detection of animals for 'MULTI_CLASS_BOX_X' models
-    mc_electronics:                     false                            # Enable/disable the detection of electronic devices for 'MULTI_CLASS_BOX_X' models
-    mc_fruit_vegetable:                 false                            # Enable/disable the detection of fruits and vegetables for 'MULTI_CLASS_BOX_X' models
-    mc_sport:                           false                            # Enable/disable the detection of sport-related objects for 'MULTI_CLASS_BOX_X' models
+    object_tracking_enabled:            false                           # Enable/disable the tracking of the detected objects
+    mc_people:                          false                           # Enable/disable the detection of persons for 'MULTI_CLASS_BOX_X' models
+    mc_vehicle:                         false                           # Enable/disable the detection of vehicles for 'MULTI_CLASS_BOX_X' models
+    mc_bag:                             false                           # Enable/disable the detection of bags for 'MULTI_CLASS_BOX_X' models
+    mc_animal:                          false                           # Enable/disable the detection of animals for 'MULTI_CLASS_BOX_X' models
+    mc_electronics:                     false                           # Enable/disable the detection of electronic devices for 'MULTI_CLASS_BOX_X' models
+    mc_fruit_vegetable:                 false                           # Enable/disable the detection of fruits and vegetables for 'MULTI_CLASS_BOX_X' models
+    mc_sport:                           false                           # Enable/disable the detection of sport-related objects for 'MULTI_CLASS_BOX_X' models

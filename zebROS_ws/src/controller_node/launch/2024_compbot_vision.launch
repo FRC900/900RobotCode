@@ -6,28 +6,29 @@
 	<arg name="run_gpu_apriltag"     default="true" />
 	<arg name="run_deeptag"          default="false" />
 	<arg name="run_deeptag_node"     default="false" />
+	<arg name="run_front_zed"        default="false" />
 
-	<include file="$(find controller_node)/launch/zed_detection.launch" unless="$(eval hw_or_sim=='sim')">
-		<arg name="zed_name"             value="zedx_front" />
-		<arg name="zed_config_dir"       value="zedx" />
-		<arg name="camera_model"         value="zedx" />
-		<arg name="serial_number"	     value="43782465" /> <!-- 47067994 is original comp -->
-		<arg name="cam_pos_x"            value="0.395726" />
-		<arg name="cam_pos_y"            value="0.231140" /> <!-- MIGHT NEED TO RAISE -->
-		<arg name="cam_pos_z"            value="0.248031" />
-		<arg name="cam_roll"             value="0.0" />
-		<arg name="cam_pitch"            value="0.0" />
-		<arg name="cam_yaw"              value="0.0" />
-		<arg name="run_camera"           value="$(arg run_camera)" />
-		<arg name="run_apriltag"         value="$(arg run_apriltag)" />
-		<arg name="run_gpu_apriltag"     value="$(arg run_gpu_apriltag)" />
-		<arg name="run_deeptag"          value="$(arg run_deeptag)" />
-		<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
-		<arg name="run_object_detection" value="true" />
-		<arg name="run_nodelet_manager"  value="true" />
-		<arg name="nodelet_manager_name" value="zed_nodelet" />
-		<arg name="startup_delay"        value="15.0" />
-	</include>
+	<group if="$(eval run_front_zed)" >
+		<include file="$(find controller_node)/launch/zed_detection.launch" unless="$(eval hw_or_sim=='sim')">
+			<arg name="zed_name"             value="zedx_front" />
+			<arg name="zed_config_dir"       value="zedx" />
+			<arg name="camera_model"         value="zedx" />
+			<arg name="serial_number"	     value="43782465" /> <!-- 47067994 is original comp -->
+			<arg name="cam_pos_x"            value="0.395726" />
+			<arg name="cam_pos_y"            value="0.231140" /> <!-- MIGHT NEED TO RAISE -->
+			<arg name="cam_pos_z"            value="0.248031" />
+			<arg name="cam_roll"             value="0.0" />
+			<arg name="cam_pitch"            value="0.0" />
+			<arg name="cam_yaw"              value="0.0" />
+			<arg name="run_camera"           value="$(arg run_camera)" />
+			<arg name="run_apriltag"         value="$(arg run_apriltag)" />
+			<arg name="run_gpu_apriltag"     value="$(arg run_gpu_apriltag)" />
+			<arg name="run_deeptag"          value="$(arg run_deeptag)" />
+			<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
+			<arg name="run_object_detection" value="true" />  <!-- set to true to detect game pieces -->
+			<arg name="startup_delay"        value="15.0" />
+		</include>
+	</group>
 
 	<include file="$(find controller_node)/launch/zed_detection.launch" unless="$(eval hw_or_sim=='sim')">
 		<arg name="zed_name"             value="zedx_back" />
@@ -46,8 +47,6 @@
 		<arg name="run_deeptag"          value="$(arg run_deeptag)" />
 		<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
 		<arg name="run_object_detection" value="false" />
-		<arg name="run_nodelet_manager"  value="false" />
-		<arg name="nodelet_manager_name" value="zed_nodelet" />
 		<arg name="startup_delay"        value="0.0" />
 	</include>
 

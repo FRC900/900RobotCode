@@ -21,13 +21,9 @@
   <arg name="run_object_detection" default="true" />
   <arg name="run_pub_video"        default="false" />
   <arg name="startup_delay"        default="0.0" />
-  <!-- Name of the Nodelet Manager -->
-  <arg name="run_nodelet_manager"  default="true" />
-  <arg name="nodelet_manager_name"  default="$(arg zed_name)_nodelet_manager" />
   <arg name="deeptag_image_transport" default="raw" />
 
-  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" if="$(eval run_nodelet_manager)" />
-  <include file="$(find zed_wrapper)/launch/include/zed_camera_nodelet.launch" if="$(eval run_camera)">
+  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval run_camera)">
     <arg name="camera_name"          value="$(arg zed_name)" />
     <arg name="camera_model"         value="$(arg camera_model)" />
     <arg name="node_name"            value="$(arg zed_node_name)" />
@@ -45,21 +41,24 @@
 
     <arg name="common_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/common.yaml" />
     <arg name="camera_params_file"   value="$(find controller_node)/config/$(arg zed_config_dir)/$(arg camera_model).yaml" />
-    <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
   </include>
   <!-- 
   ========== Screen to world for any apriltag detections
   -->
   <!-- Use depth info to generate apriltag world coords.  Use common
        topic names published by all detectors so that this node works for all of them -->
-  <node pkg="nodelet" type="nodelet" name="apriltag_$(arg zed_name)" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)" if="$(eval run_apriltag or run_gpu_apriltag or run_deeptag)" output="screen" >
-    <remap from="obj_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
-    <remap from="/apriltag_$(arg zed_name)/object_detection_world" to="/apriltag_$(arg zed_name)/tag_detection_world"/>
-    <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
-    <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
-    <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
-    <param name="timeout"         type="double" value="0.2" /> 
-  </node>
+  <!--
+  <group ns="apriltag_$(arg zed_name)" if="$(eval run_apriltag or run_gpu_apriltag or run_deeptag)">
+    <node pkg="tf_object_detection" type="tf_object_screen_to_world" name="apriltag_$(arg zed_name)" if="$(eval run_apriltag or run_gpu_apriltag or run_deeptag)" output="screen" >
+      <remap from="obj_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
+      <remap from="/apriltag_$(arg zed_name)/object_detection_world" to="/apriltag_$(arg zed_name)/tag_detection_world"/>
+      <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+      <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+      <param name="timeout"         type="double" value="0.2" /> 
+    </node> 
+  </group
+  -->
 
   <!-- 
   ========== CPU Apriltag Detector
@@ -68,9 +67,10 @@
     <!-- Run UMich apriltag detector on output of ZED camera code
     TBD - does gray force zed code to publish a message it
     wouldn't otherwise?  Maybe color is better, at least for the
-    ZEDs also running object detection -->
+    ZEDs also running object detection
+    Answer : it does -->
     <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
-      <arg name="camera_name" value="/$(arg zed_name)/left" />
+      <arg name="camera_name" value="/$(arg zed_name)/left_gray" />
       <arg name="image_topic" value="/image_rect_gray" />
       <arg name="tag_type"    value="36h11" />
     </include>
@@ -93,7 +93,7 @@
          code.  A potential downside is that we can't run both at the same time
          since the node names will conflict. I don't think we'd want to do this, 
          but keep it in mind -->
-    <node pkg="nodelet" type="nodelet" name="apriltag_detection" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" output="screen" >
+    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="apriltag_detection" if="$(eval run_gpu_apriltag)" output="screen" >
       <remap from="image_rect_color" to="/$(arg zed_name)/left/image_rect_color" />
       <!-- Match tag topic to CPU apriltag detection topic names -->
       <remap from="/apriltag_$(arg zed_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
@@ -114,14 +114,14 @@
   ========== YOLOv8 Object Detection
   -->
   <!-- Use depth info to generate apriltag world coords -->
-  <node pkg="nodelet" type="nodelet" name="tf_object_detection_$(arg zed_name)" args="load tf_object_detection/ScreenToWorld /$(arg nodelet_manager_name)"  if="$(eval run_object_detection)" output="screen" >
-    <remap from="obj_detection_msg" to="/tf_object_detection_$(arg zed_name)/obj_detection_msg"/>
-    <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
-    <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
-    <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
-  </node>
 
 	<group ns="tf_object_detection_$(arg zed_name)" if="$(eval run_object_detection)">
+    <node pkg="tf_object_detection" type="tf_object_screen_to_world" name="tf_object_detection_$(arg zed_name)" output="screen" >
+      <remap from="obj_detection_msg" to="/tf_object_detection_$(arg zed_name)/obj_detection_msg"/>
+      <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+      <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+    </node>
 		<node pkg="tf_object_detection" name="tf_object_detection" type="fastYOLO.py" output="screen">
 			<param name="image_topic" type="string" value="/$(arg zed_name)/left/image_rect_color" />
 			<param name="min_confidence" type="double" value="0.05" />
