@@ -52,6 +52,10 @@ public:
             {
                 detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGR8>>(camera_info);
             }
+            else if (cv_frame->encoding == sensor_msgs::image_encodings::BGRA8)
+            {
+                detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGRA8>>(camera_info);
+            }
             else
             {
                 ROS_ERROR_STREAM_THROTTLE(1.0, "Unsupported image encoding " << cv_frame->encoding);

@@ -45,8 +45,8 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	gazebo_frcrobot_control \
 	goal_detection \
 	gpu_apriltag \
-	image_transport_plugins \
 	gripper_action_controller \
+	image_reformatter \
 	image_transport_plugins \
 	joint_trajectory_controller \
 	navx_publisher \
@@ -70,6 +70,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	rosserial_xbee \
 	rqt_driver_station_sim \
 	rqt_joint_trajectory_controller \
+	spinnaker_camera_driver \
 	spline_util \
 	stage_ros \
 	tagslam \

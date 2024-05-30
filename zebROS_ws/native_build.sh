@@ -80,6 +80,7 @@ catkin config --skiplist \
 	rosserial_vex_v5 \
 	rosserial_windows \
 	rosserial_xbee \
+	spinnaker_camera_driver \
 	teraranger_array \
 	teraranger_array_converter \
 	turing_smart_screen \
