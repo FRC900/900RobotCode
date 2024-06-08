@@ -70,8 +70,7 @@ auto_mode_5: ["zoom_mid_source_ALLIANCE_csv", "spin_up_start_auto", "wait_for_au
 auto_mode_12: ["zoom_mid_source_ALLIANCE_csv", "spin_up_start_auto", "wait_for_auto_intake", "closest_note_path", "spin_up_slide_shooter", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "closest_note_path", "wait_for_auto_intake", "spin_down_shooter"]
 
 # preload note paths
-# (90 is a special case that does preload only)
-auto_mode_90: ["zoom_mid_source_blue_csv", "zoom_mid_source_red_csv", "one_to_two_red_csv", "two_to_one_red_csv", "two_to_three_red_csv", "three_to_two_red_csv", "three_to_four_red_csv", "four_to_three_red_csv", "four_to_five_red_csv", "five_to_four_red_csv", "one_to_two_blue_csv", "two_to_one_blue_csv", "two_to_three_blue_csv", "three_to_two_blue_csv", "three_to_four_blue_csv", "four_to_three_blue_csv", "four_to_five_blue_csv", "five_to_four_blue_csv"]
+preload_paths: ["zoom_mid_source_blue_csv", "zoom_mid_source_red_csv", "one_to_two_red_csv", "two_to_one_red_csv", "two_to_three_red_csv", "three_to_two_red_csv", "three_to_four_red_csv", "four_to_three_red_csv", "four_to_five_red_csv", "five_to_four_red_csv", "one_to_two_blue_csv", "two_to_one_blue_csv", "two_to_three_blue_csv", "three_to_two_blue_csv", "three_to_four_blue_csv", "four_to_three_blue_csv", "four_to_five_blue_csv", "five_to_four_blue_csv"]
 
 #auto_mode_4_blue: ["map_rel_four_note_grid_right1_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_blue_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_blue_csv"]
 #auto_mode_4_red: ["map_rel_four_note_grid_right1_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right2_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right3_red_csv", "pause_quarter", "relocalize", "map_rel_four_note_grid_right4_red_csv"]
