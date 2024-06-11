@@ -11,23 +11,10 @@
   <exec_depend>message_runtime</exec_depend>
   
   <depend>roscpp</depend>
-  <depend>nodelet</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>image_transport</depend>
-  <depend>behavior_actions</depend>
 
-  <depend>cv_bridge</depend>
-  <depend>apriltag</depend>
-  <depend>apriltag_ros</depend>
-  <depend>apriltag_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>rosgraph_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>flex_sync</depend>
-  <depend>eigen</depend>
   <depend>rosbag</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
 </package>

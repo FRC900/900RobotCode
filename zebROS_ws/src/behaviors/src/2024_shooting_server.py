@@ -9,7 +9,7 @@ from behavior_actions.msg import Shooting2024Goal, Shooting2024Feedback, Shootin
 from behavior_actions.msg import Shooter2024Goal, Shooter2024Feedback, Shooter2024Result, Shooter2024Action
 from behavior_actions.msg import ShooterPivot2024Goal, ShooterPivot2024Feedback, ShooterPivot2024Result, ShooterPivot2024Action
 from behavior_actions.msg import Clawster2024Goal, Clawster2024Feedback, Clawster2024Result, Clawster2024Action
-from std_msgs.msg import Float64
+# from std_msgs.msg import Float64
 from interpolating_map import InterpolatingMap
 from geometry_msgs.msg import Twist
 
@@ -455,6 +455,14 @@ class ShootingServer(object):
 
             # ensure shooter turned off
             self.shooter_client.cancel_goals_at_and_before_time(rospy.Time.now())
+            rospy.sleep(rospy.Duration(0.05))
+            shooter_goal = Shooter2024Goal()
+            shooter_goal.top_left_speed = 0.0
+            shooter_goal.top_right_speed = 0.0
+            shooter_goal.bottom_left_speed = 0.0
+            shooter_goal.bottom_right_speed = 0.0
+            shooter_goal.leave_spinning = False
+            self.shooter_client.send_goal(shooter_goal)
 
             # ensure pivot stopped
             # self.pivot_client.cancel_goals_at_and_before_time(rospy.Time.now())

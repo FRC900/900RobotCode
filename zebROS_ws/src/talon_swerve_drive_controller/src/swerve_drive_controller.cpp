@@ -779,9 +779,9 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 
 			const double inv_delta_t = 1.0 / period.toSec();
 			odom_pub_.msg_.twist.twist.linear.x =
-				odom_rigid_transf_.translation().x() * inv_delta_t;
-			odom_pub_.msg_.twist.twist.linear.y =
 				odom_rigid_transf_.translation().y() * inv_delta_t;
+			odom_pub_.msg_.twist.twist.linear.y =
+				-odom_rigid_transf_.translation().x() * inv_delta_t;
 			odom_pub_.msg_.twist.twist.angular.z =
 				atan2(odom_rigid_transf_(1, 0), odom_rigid_transf_(0, 0)) * inv_delta_t;
 

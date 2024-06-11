@@ -3,7 +3,7 @@
 import actionlib
 import rospy
 import math
-import tf2_ros
+# import tf2_ros
 import std_msgs.msg
 import sensor_msgs.msg
 import math
@@ -79,9 +79,9 @@ class Aligner:
         self.visible_objects = []
         
         self.current_yaw = 0
-        self.current_orient_effort = 0
-        self.tfBuffer = tf2_ros.Buffer()
-        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+        # self.current_orient_effort = 0
+        # self.tfBuffer = tf2_ros.Buffer()
+        # self.listener = tf2_ros.TransformListener(self.tfBuffer)
         self.orientation_command_pub = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size=1)
         self.object_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback)
 
@@ -104,7 +104,7 @@ class Aligner:
         rate = rospy.Rate(50.0)
         stage_2_trap = False
         closest_tag = None
-        closest_distance = float("inf")
+        # closest_distance = float("inf")
         yaws = []
 
         self._feedback.second_trap_stage = False

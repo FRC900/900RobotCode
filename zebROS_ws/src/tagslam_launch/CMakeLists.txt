@@ -7,21 +7,13 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  angles
   rospy
   roscpp
-  field_obj
   geometry_msgs
-  marker_msgs
-  behavior_actions
-  message_generation
   nav_msgs
   sensor_msgs
-  std_msgs
-  std_srvs
   tf2
   tf2_ros
-  frc_msgs
 )
 
 
@@ -114,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    #  LIBRARIES pf_localization
-   CATKIN_DEPENDS roscpp message_runtime std_msgs geometry_msgs behavior_actions
+   CATKIN_DEPENDS roscpp geometry_msgs
 #  DEPENDS system_lib
 )
 

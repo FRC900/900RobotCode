@@ -2,7 +2,6 @@
 bool leave_spinning
 
 bool align_forever
-bool offsetting
 ---
 #result
 bool success

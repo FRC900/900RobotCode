@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 import actionlib
-import std_msgs.msg
+# import std_msgs.msg
 
 from talon_state_msgs.msg import TalonFXProState
 from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse

@@ -1,8 +1,5 @@
 # goal
 bool align_forever # if true, don't exit once we're aligned (just exit when preempted)
-
-bool offsetting
-
 ---
 # result
 bool success
