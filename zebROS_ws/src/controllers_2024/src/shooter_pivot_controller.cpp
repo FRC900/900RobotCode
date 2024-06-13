@@ -5,6 +5,7 @@
 #include "controllers_2024_msgs/ShooterPivotSrv.h"
 #include "controllers_2024/interpolating_map.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
+#include "std_msgs/Float64.h"
 
 namespace shooter_pivot_controller_2024
 {
@@ -228,6 +229,8 @@ class ShooterPivotController_2024 : public controller_interface::Controller<hard
 
             shooter_pivot_service_ = controller_nh.advertiseService("shooter_pivot_service", &ShooterPivotController_2024::cmdService, this);
 
+            shooter_pivot_sub_ = controller_nh.subscribe("command", 1, &ShooterPivotController_2024::cmdCallback, this);
+
             return true;
         }
 
@@ -290,6 +293,7 @@ class ShooterPivotController_2024 : public controller_interface::Controller<hard
 
         std::atomic<double> position_command_; //this is the buffer for percent output commands to be published
         ros::ServiceServer shooter_pivot_service_; //service for receiving commands
+        ros::Subscriber shooter_pivot_sub_;
 
         wpi::interpolating_map<double, double> angle_to_feed_forward_;
 
@@ -341,6 +345,30 @@ class ShooterPivotController_2024 : public controller_interface::Controller<hard
                 return false;
             }
             return true;
+        }
+
+        void cmdCallback(const std_msgs::Float64 &msg) {
+            if (msg.data > max_angle_)
+            {
+                ROS_ERROR_STREAM("ShooterPivot controller: requested angle too high : " << msg.data << ".");
+                return;
+            }
+            if (msg.data < min_angle_)
+            {
+                ROS_ERROR_STREAM("ShooterPivot controller: requested angle too low : " << msg.data << ".");
+                return;
+            }
+
+            if (this->isRunning())
+            {
+                // adjust talon mode, arb feed forward, and PID slot appropriately
+                position_command_ = msg.data;
+            }
+            else
+            {
+                ROS_ERROR_STREAM("Can't accept new commands. ShooterPivotController_2024 is not running.");
+                return;
+            }
         }
 
 }; //class

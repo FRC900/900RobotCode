@@ -139,6 +139,7 @@ class AlignAndShoot:
         shooting_goal.setup_only = True
         shooting_goal.only_shooter_setup = True
         shooting_goal.leave_spinning = True
+        shooting_goal.continuously_pivot = True
 
         self.shooting_client.send_goal(shooting_goal)
 
@@ -162,20 +163,19 @@ class AlignAndShoot:
                 return
             r.sleep()
 
-        time.sleep(0.25)
-
         # Once stopped, send shooting setup goal
         shooting_goal.mode = shooting_goal.SPEAKER
         shooting_goal.distance = self.dist_value #sets the dist value for goal ditsance with resepct ot hte calblack
         shooting_goal.setup_only = True
         shooting_goal.only_shooter_setup = False
         shooting_goal.leave_spinning = True
+        shooting_goal.continuously_pivot = True
 
         self.shooting_client.send_goal(shooting_goal)
 
-        while (not self.align_to_speaker_done) or (not self.stopped) and not rospy.is_shutdown():
+        while (not self.align_to_speaker_done) or (not self.stopped) or (self.dist_value > 4.5) and not rospy.is_shutdown():
             #relocalized_recently = (rospy.Time.now() - self.last_relocalized) < rospy.Duration(self.localization_timeout)
-            rospy.loginfo_throttle(0.1, f"2024_align_and_shoot: aligning waiting on {'speaker' if not self.align_to_speaker_done else ''} {'localization' if not relocalized_recently else ''} {'stopping' if not self.stopped else ''}")
+            rospy.loginfo_throttle(0.1, f"2024_align_and_shoot: aligning waiting on {'speaker' if not self.align_to_speaker_done else ''} {'distance <= 4.5' if not (self.dist_value > 4.5) else ''} {'stopping' if not self.stopped else ''}")
             if self.server.is_preempt_requested():
                 rospy.loginfo("2024_align_and_shoot: preempted")
                 self.align_to_speaker_client.cancel_goals_at_and_before_time(rospy.Time.now())
@@ -183,6 +183,8 @@ class AlignAndShoot:
                 self.server.set_preempted()
                 return
             r.sleep()
+
+        time.sleep(0.2)
 
         rospy.loginfo("2024_align_and_shoot: done aligning, about to shoot")
         # rospy.loginfo(f"2024_align_and_shoot: distance before is {self.dist_value}")

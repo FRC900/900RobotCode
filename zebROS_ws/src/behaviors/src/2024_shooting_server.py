@@ -12,6 +12,8 @@ from behavior_actions.msg import Clawster2024Goal, Clawster2024Feedback, Clawste
 # from std_msgs.msg import Float64
 from interpolating_map import InterpolatingMap
 from geometry_msgs.msg import Twist
+from behavior_actions.msg import AutoAlignSpeaker
+from std_msgs.msg import Float64
 
 SIM = False
 
@@ -26,12 +28,17 @@ class ShootingServer(object):
         # this will block forever if something lower level fails to come up
         if not SIM: self.shooter_client.wait_for_server()
         self.pivot_client = actionlib.SimpleActionClient('/shooter/set_shooter_pivot', ShooterPivot2024Action)
+        self.pivot_pub = rospy.Publisher('/frcrobot_jetson/shooter_pivot_controller/command', Float64, queue_size=1, tcp_nodelay=True)
         rospy.loginfo("2024_shooting_server: waiting for pivot")
         if not SIM: self.pivot_client.wait_for_server()
         # The preshooter and claw are very similar (drive motor until limit switch pressed). They'll probably be the same server.
         self.preshooter_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
         rospy.loginfo("2024_shooting_server: waiting for clawster")
         if not SIM: self.preshooter_client.wait_for_server()
+
+        # Subscribe to /speaker_align/dist_and_ang
+        self.dist_sub = rospy.Subscriber("/speaker_align/dist_and_ang", AutoAlignSpeaker, self.distance_and_angle_callback, tcp_nodelay=True, queue_size=1) #use this to find the distance that we are from the spaerk thing
+        self.dist_value = 0
 
         # used for driving back after amp shot
         self.cmd_vel_pub = rospy.Publisher("/auto_note_align/cmd_vel", Twist, queue_size=1, tcp_nodelay=True)
@@ -160,6 +167,9 @@ class ShootingServer(object):
         self.server.start()
 
         rospy.loginfo("2024_shooting_server: initialized")
+
+    def distance_and_angle_callback(self, data):
+        self.dist_value = data.distance
 
     def dyn_rec_callback(self, config, level):
         rospy.loginfo("Received reconf call: " + str(config))
@@ -341,9 +351,21 @@ class ShootingServer(object):
             if not SIM: self.pivot_client.send_goal(pivot_goal, done_cb=pivot_done_cb)
         else:
             pivot_done = True
+
+        r = rospy.Rate(60.0)
+
+        if goal.setup_only and goal.continuously_pivot and goal.mode == goal.SPEAKER:
+            rospy.loginfo("2024_shooting_server: continuously pivoting until preempted")
+            while not rospy.is_shutdown() and not self.server.is_preempt_requested():
+                pivot_angle = self.angle_map[self.dist_value]
+                self.pivot_pub.publish(Float64(data=pivot_angle))
+                r.sleep()
+            rospy.loginfo("2024_shooting_server: preempted")
+            self.server.set_preempted()
+            return
+
         # rospy.loginfo("Sleeping for 0.25")
         # time.sleep(0.25)
-        r = rospy.Rate(60.0)
 
         while not (shooter_done and (pivot_done if goal.mode != goal.SLIDE else True)):
             rospy.loginfo_throttle(0.5, f"2024_shooting_server: waiting for {'shooter' if not shooter_done else ''} and {'pivot' if not pivot_done else ''}")
