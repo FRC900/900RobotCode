@@ -253,6 +253,9 @@ shooter_pivot_controller:
     motion_magic_acceleration: 5.0
     motion_magic_jerk: 100.0
 
+    ki: 0.1
+    izone: 0.05
+
     shooter_pivot_motionmagic_joint:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: shooter_pivot_motionmagic_joint

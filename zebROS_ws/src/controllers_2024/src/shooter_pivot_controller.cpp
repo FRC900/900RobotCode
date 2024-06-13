@@ -1,20 +1,17 @@
 #include <ros/ros.h>
-#include <controller_interface/multi_interface_controller.h>
-#include <talon_controllers/talon_controller_interface.h> // "
+#include <controller_interface/controller.h>
 #include <talon_controllers/talonfxpro_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2024_msgs/ShooterPivotSrv.h"
 #include "controllers_2024/interpolating_map.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
-#include <std_srvs/Empty.h>
 
 namespace shooter_pivot_controller_2024
 {
 template<typename T>
 static bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
 {
-    T val;
-    if (n.getParam(name, val))
+    if (T val; n.getParam(name, val))
     {
         scalar = val;
         return true;
@@ -39,16 +36,14 @@ static double readFloatParam(const XmlRpc::XmlRpcValue &param)
     throw std::runtime_error("2024_shooter_pivot_controller - readFloatParam : A non-double value was read for param");
 }
 
-class ShooterPivotController_2024 : public controller_interface::MultiInterfaceController <hardware_interface::talonfxpro::TalonFXProCommandInterface>
+class ShooterPivotController_2024 : public controller_interface::Controller<hardware_interface::talonfxpro::TalonFXProCommandInterface>
 {
     public:
-        bool init(hardware_interface::RobotHW *hw,
+        bool init(hardware_interface::talonfxpro::TalonFXProCommandInterface *hw,
                   ros::NodeHandle & /*root_nh*/,
                   ros::NodeHandle &controller_nh) override
         {
-
             // create the interface used to initialize the talon joint
-            auto * const command_iface = hw->get<hardware_interface::talonfxpro::TalonFXProCommandInterface>();
             if (!readIntoScalar(controller_nh, "max_angle", max_angle_))
             {
                 ROS_WARN("Could not find max_angle");
@@ -79,6 +74,18 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 return false;
             }
 
+            if (!readIntoScalar(controller_nh, "ki", ki_))
+            {
+                ROS_ERROR("Could not find ki_");
+                return false;
+            }
+
+            if (!readIntoScalar(controller_nh, "izone", izone_))
+            {
+                ROS_ERROR("Could not find izone_");
+                return false;
+            }
+
             XmlRpc::XmlRpcValue feed_forward_map_xml_;
             if (!controller_nh.getParam("feed_forward_map", feed_forward_map_xml_))
             {
@@ -86,7 +93,7 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 return false;
             }
 
-            for (size_t i = 0; i < (unsigned)feed_forward_map_xml_.size(); i++)
+            for (int i = 0; i < feed_forward_map_xml_.size(); i++)
             {
                 auto s = feed_forward_map_xml_[i];
                 angle_to_feed_forward_.insert(readFloatParam(s[0]), readFloatParam(s[1]));
@@ -124,7 +131,7 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
             }
 
             // initialize the shooter_pivot joint
-            if (!shooter_pivot_joint_.initWithNode(command_iface, nullptr, controller_nh, shooter_pivot_params))
+            if (!shooter_pivot_joint_.initWithNode(hw, nullptr, controller_nh, shooter_pivot_params))
             {
                 ROS_ERROR("Cannot initialize shooter_pivot joint!");
                 return false;
@@ -140,8 +147,8 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                     "max_angle",
                     [this]()
                     { return max_angle_.load(); },
-                    [this](double b)
-                    { max_angle_.store(b); },
+                    [this](const double d)
+                    { max_angle_.store(d); },
                     "Max angle",
                     0.0, 6.28);
 
@@ -149,16 +156,16 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                     "min_angle",
                     [this]()
                     { return min_angle_.load(); },
-                    [this](double b)
-                    { min_angle_.store(b); },
+                    [this](const double d)
+                    { min_angle_.store(d); },
                     "Min angle", 0.0, 3.14);
 
                 ddr_->registerVariable<double>(
                     "motion_magic_velocity",
                     [this]()
                     { return motion_magic_velocity_.load(); },
-                    [this](double b)
-                    { motion_magic_velocity_.store(b); },
+                    [this](const double d)
+                    { motion_magic_velocity_.store(d); },
                     "Motion Magic Velocity",
                     0.0, 20.0);
 
@@ -166,8 +173,8 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                     "motion_magic_acceleration",
                     [this]()
                     { return motion_magic_acceleration_.load(); },
-                    [this](double b)
-                    { motion_magic_acceleration_.store(b); },
+                    [this](const double d)
+                    { motion_magic_acceleration_.store(d); },
                     "Motion Magic Acceleration",
                     0.0, 200.0);
 
@@ -175,10 +182,46 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                     "motion_magic_jerk",
                     [this]()
                     { return motion_magic_jerk_.load(); },
-                    [this](int b)
-                    { motion_magic_jerk_.store(b); },
+                    [this](const double d)
+                    { motion_magic_jerk_.store(d); },
                     "Motion Magic Jerk",
-                    0, 500);
+                    0, 5000.0);
+
+                ddr_->registerVariable<double>(
+                    "kI",
+                    [this]()
+                    { return ki_.load(); },
+                    [this](const double d)
+                    { ki_.store(d); },
+                    "kI",
+                    0, 5.);
+
+                ddr_->registerVariable<double>(
+                    "IZone",
+                    [this]()
+                    { return izone_.load(); },
+                    [this](const double d)
+                    { izone_.store(d); },
+                    "IZone",
+                    0, 6.28);
+
+                // ddr_->registerVariable<double>(
+                //     "IZoneMin",
+                //     [this]()
+                //     { return izone_min_.load(); },
+                //     [this](const double d)
+                //     { izone_min_.store(d); },
+                //     "IZoneMin",
+                //     0, 6.28);
+
+                // ddr_->registerVariable<double>(
+                //     "Stopped FF Multiplier",
+                //     [this]()
+                //     { return stopped_ff_multiplier_.load(); },
+                //     [this](const double d)
+                //     { stopped_ff_multiplier_.store(d); },
+                //     "Stopped FF Multiplier",
+                //     0, 1);
 
                 ddr_->publishServicesTopics();
             }
@@ -190,7 +233,8 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
 
         void starting(const ros::Time &time) override
         {
-            position_command_ = 0.0; // 0 is when we are fully retracted
+            position_command_ = min_angle_.load(); // Default to all the way down
+            iaccum_ = 0.0;
         }
 
         void update(const ros::Time &time, const ros::Duration & /*duration*/) override
@@ -206,28 +250,23 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 {
                     position_command_ = shooter_pivot_joint_.getPosition();
                 }
+                iaccum_ = 0.0;
             }
             else
             {
                 time_at_disable_ = ros::Time::MAX;
+                const double error = position_command_ - shooter_pivot_joint_.getPosition();
+                const double abs_error = fabs(error);
+                if (abs_error <= 0.005) {
+                    iaccum_ = 0.0;
+                } else if (abs_error <= izone_) { // Accumulate error if we're
+                    iaccum_ += error;      // near the setpoint
+                } else {
+                    iaccum_ = 0.0;
+                }
             }
             shooter_pivot_joint_.setControlPosition(position_command_);
 
-            /*
-            
-            void setDemand1Type(const hardware_interface::DemandType demand_type) const;
-            void setDemand1Value(const double demand_value);
-            void setCommand(const double command);
-            void setMotionCruiseVelocity(const double motion_cruise_velocity);
-            void setMotionAcceleration(const double motion_acceleration);
-            void setMotionSCurveStrength(const double motion_magic_jerk);
-            void setPIDFSlot(const int slot);
-            void setSelectedSensorPosition(const double sensor_position);
-            void setNeutralMode(const hardware_interface::NeutralMode neutral_mode);
-
-            */
-
-            // if we're not zeroing, add an arbitrary feed forward to hold the shooter_pivot up
             shooter_pivot_joint_.setMotionMagicAcceleration(motion_magic_acceleration_);
             shooter_pivot_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_);
             shooter_pivot_joint_.setMotionMagicJerk(motion_magic_jerk_);
@@ -241,16 +280,12 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
                 shooter_pivot_joint_.setControlSlot(0);
             }
 
-            shooter_pivot_joint_.setControlFeedforward(angle_to_feed_forward_[shooter_pivot_joint_.getPosition()]);
-        }
-
-        void stopping(const ros::Time & /*time*/) override
-        {
+            // add an arbitrary feed forward to hold the shooter_pivot up against gravity
+            // Also add in the integral term
+            shooter_pivot_joint_.setControlFeedforward(angle_to_feed_forward_[shooter_pivot_joint_.getPosition()] + ki_ * iaccum_);
         }
 
     private:
-        ros::Time last_time_down_;
-
         talonfxpro_controllers::TalonFXProControllerInterface shooter_pivot_joint_;
 
         std::atomic<double> position_command_; //this is the buffer for percent output commands to be published
@@ -267,14 +302,21 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
 
         std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
-        ros::Time time_at_disable_;
+        ros::Time time_at_disable_{};
 
         bool switch_control_slot_ = false;
         double slot_switchover_lower_;
         double slot_switchover_upper_;
 
+        double iaccum_{0};
+        std::atomic<double> izone_;
+        std::atomic<double> izone_min_{0.01};
+        std::atomic<double> ki_;
+
+        std::atomic<double> stopped_ff_multiplier_{0.75};
+
         bool cmdService(controllers_2024_msgs::ShooterPivotSrv::Request &req,
-                        controllers_2024_msgs::ShooterPivotSrv::Response &response)
+                        controllers_2024_msgs::ShooterPivotSrv::Response &/*response*/)
         {
             if (req.angle > max_angle_)
             {
