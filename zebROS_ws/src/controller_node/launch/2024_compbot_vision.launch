@@ -26,7 +26,7 @@
 			<arg name="run_deeptag"          value="$(arg run_deeptag)" />
 			<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
 			<arg name="run_object_detection" value="false" />  <!-- set to true to detect game pieces -->
-			<arg name="startup_delay"        value="15.0" />
+			<arg name="startup_delay"        value="2.0" />
 		</include>
 	</group>
 

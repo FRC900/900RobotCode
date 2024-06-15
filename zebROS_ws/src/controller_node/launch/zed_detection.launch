@@ -48,16 +48,14 @@
   <!-- Use depth info to generate apriltag world coords.  Use common
        topic names published by all detectors so that this node works for all of them -->
   <!--
-  <group ns="apriltag_$(arg zed_name)" if="$(eval run_apriltag or run_gpu_apriltag or run_deeptag)">
-    <node pkg="tf_object_detection" type="tf_object_screen_to_world" name="apriltag_$(arg zed_name)" if="$(eval run_apriltag or run_gpu_apriltag or run_deeptag)" output="screen" >
-      <remap from="obj_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
-      <remap from="/apriltag_$(arg zed_name)/object_detection_world" to="/apriltag_$(arg zed_name)/tag_detection_world"/>
-      <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
-      <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
-      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
-      <param name="timeout"         type="double" value="0.2" /> 
-    </node> 
-  </group
+  <node pkg="tf_object_detection" type="tf_object_screen_to_world" name="apriltag_$(arg zed_name)" if="$(eval run_apriltag or run_gpu_apriltag or run_deeptag)" output="screen" >
+    <remap from="obj_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
+    <remap from="/apriltag_$(arg zed_name)/object_detection_world" to="/apriltag_$(arg zed_name)/tag_detection_world"/>
+    <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+    <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+    <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+    <param name="timeout"         type="double" value="0.2" /> 
+  </node> 
   -->
 
   <!-- 
@@ -113,20 +111,20 @@
   <!-- 
   ========== YOLOv8 Object Detection
   -->
-  <!-- Use depth info to generate apriltag world coords -->
-
+  <!-- Actual object detection script - publishes 2d screen coords -->
 	<group ns="tf_object_detection_$(arg zed_name)" if="$(eval run_object_detection)">
-    <node pkg="tf_object_detection" type="tf_object_screen_to_world" name="tf_object_detection_$(arg zed_name)" output="screen" >
-      <remap from="obj_detection_msg" to="/tf_object_detection_$(arg zed_name)/obj_detection_msg"/>
-      <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
-      <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
-      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
-    </node>
 		<node pkg="tf_object_detection" name="tf_object_detection" type="fastYOLO.py" output="screen">
 			<param name="image_topic" type="string" value="/$(arg zed_name)/left/image_rect_color" />
 			<param name="min_confidence" type="double" value="0.05" />
 		</node>
 	</group>
+  <!-- Use depth info to generate object world coords -->
+  <node pkg="tf_object_detection" type="tf_object_screen_to_world" name="tf_object_detection_$(arg zed_name)" output="screen" if="$(eval run_object_detection)">
+    <remap from="obj_detection_msg" to="/tf_object_detection_$(arg zed_name)/obj_detection_msg"/>
+    <remap from="/zed_objdetect/left/camera_info" to="/$(arg zed_name)/left/camera_info"/>
+    <remap from="/zed_objdetect/depth/depth_registered" to="/$(arg zed_name)/depth/depth_registered"/>
+    <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+  </node>
 
   <!-- 
   ========== Video Publisher

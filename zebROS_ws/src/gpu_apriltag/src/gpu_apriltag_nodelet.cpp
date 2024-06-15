@@ -124,11 +124,15 @@ public:
             debug_image_.header = cv_frame->header;
             debug_image_.encoding = sensor_msgs::image_encodings::BGR8;
             debug_image_.image = cv_frame->image.clone();
-            // If the image is greyscale, convert the debug
-            // image to color so we can draw on it with colored boxes
-            if (debug_image_.image.channels() == 1)
+            // If the image is not already BGR8, convert it to BGR8 for visualization
+            // with pretty(?) colors
+            if (cv_frame->encoding == sensor_msgs::image_encodings::MONO8)
             {
                 cv::cvtColor(debug_image_.image, debug_image_.image, cv::COLOR_GRAY2BGR);
+            }
+            else if (cv_frame->encoding == sensor_msgs::image_encodings::BGRA8)
+            {
+                cv::cvtColor(debug_image_.image, debug_image_.image, cv::COLOR_BGRA2BGR);
             }
             for (const auto &corner : rejected_margin_corners)
             {

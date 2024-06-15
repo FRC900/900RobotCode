@@ -6,7 +6,7 @@
 	<arg name="run_deeptag"          default="false" />
 	<arg name="run_deeptag_node"     default="false" />
 	<arg name="run_gpu_apriltag"     default="true" />
-	<arg name="run_front_zed"        default="false" />
+	<arg name="run_front_zed"        default="true" />
 
 	<group if="$(eval run_front_zed)" >
 		<include file="$(find controller_node)/launch/zed_detection.launch" unless="$(eval hw_or_sim=='sim')">
@@ -25,8 +25,8 @@
 			<arg name="run_gpu_apriltag"     value="$(arg run_gpu_apriltag)" />
 			<arg name="run_deeptag"          value="$(arg run_deeptag)" />
 			<arg name="run_deeptag_node"     value="$(arg run_deeptag_node)" />
-			<arg name="run_object_detection" value="true" />
-			<arg name="startup_delay"        value="15.0" />
+			<arg name="run_object_detection" value="false" />
+			<arg name="startup_delay"        value="2.0" />
 		</include>
 	</group>
 
