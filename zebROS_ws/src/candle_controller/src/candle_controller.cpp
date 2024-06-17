@@ -114,8 +114,6 @@ public:
         return true;
     }
 
-    void starting(const ros::Time&) override {}
-
     void update(const ros::Time&, const ros::Duration&) override {
         const double brightness = *(brightness_buffer.readFromRT());
         // Brightness isn't exclusive to colours/animations, so it gets special treatment
@@ -136,8 +134,6 @@ public:
         }
         command_buffer.clear();
     }
-
-    void stopping(const ros::Time&) override {}
 
 private:
     CANdleCommandHandle candle_handle;
@@ -162,7 +158,7 @@ private:
 
     bool colourCallback(candle_controller_msgs::Colour::Request& req, candle_controller_msgs::Colour::Response&) {
         if (this->isRunning()) { 
-            LEDGroup leds = LEDGroup(req.start, req.count, Colour(req.red, req.green, req.blue, req.white));
+            LEDGroup leds{req.start, req.count, Colour(req.red, req.green, req.blue, req.white)};
             std::lock_guard lock(cmd_buf_mutex);
             command_buffer.emplace_back(leds);
 
@@ -176,10 +172,9 @@ private:
     bool animationCallback(candle_controller_msgs::Animation::Request& req, candle_controller_msgs::Animation::Response&) {
         if (this->isRunning()) {
             Animation animation;
-            AnimationType animation_type = convertAnimationType(req.animation_type);
-            AnimationClass animation_class = getAnimationClass(animation_type);
 
-            switch (animation_class) {
+            switch (AnimationType animation_type = convertAnimationType(req.animation_type);
+             getAnimationClass(animation_type)) {
                 // Base Standard animation
                 case AnimationClass::BaseStandard: {
                     animation = Animation(
@@ -211,7 +206,7 @@ private:
                 break;
             }
 
-            ROS_INFO_STREAM("Setting CANdle animation to animation with ID " << (int) animation.class_type);
+            ROS_INFO_STREAM("Setting CANdle animation to animation with ID " << (int) animation.class_type_);
             
             std::lock_guard lock(cmd_buf_mutex);
             command_buffer.emplace_back(animation);

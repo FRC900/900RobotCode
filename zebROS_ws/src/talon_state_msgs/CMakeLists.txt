@@ -48,6 +48,10 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   CANCoderState.msg
+  CANdleAnimation.msg 
+  CANdleLedState.msg
+  CANdleState.msg
+  CANdleStateArray.msg
   CANifierState.msg
   InstrumentList.msg
   LatencyCompensationGroup.msg

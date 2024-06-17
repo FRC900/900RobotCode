@@ -27,14 +27,15 @@ catkin_package(
 
 include_directories(${catkin_INCLUDE_DIRS})
 add_library(${PROJECT_NAME}
-	src/cancoder_state_controller.cpp
-   	src/canifier_state_controller.cpp
-   	src/latency_compensation_state_controller.cpp
-   	src/talon_config_controller.cpp
-   	src/talon_state_controller.cpp
-   	src/talonfxpro_config_controller.cpp
-   	src/talonfxpro_state_controller.cpp
-   	src/orchestra_state_controller.cpp
+  src/cancoder_state_controller.cpp
+  src/candle_state_controller.cpp
+  src/canifier_state_controller.cpp
+  src/latency_compensation_state_controller.cpp
+  src/talon_config_controller.cpp
+  src/talon_state_controller.cpp
+  src/talonfxpro_config_controller.cpp
+  src/talonfxpro_state_controller.cpp
+  src/orchestra_state_controller.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

@@ -1,0 +1,11 @@
+float64        speed
+int16          start
+int16          count
+string         type
+CANdleLedState color
+string         direction
+float64        brightness
+bool           reversed
+float64        param4
+float64        param5
+bool           valid

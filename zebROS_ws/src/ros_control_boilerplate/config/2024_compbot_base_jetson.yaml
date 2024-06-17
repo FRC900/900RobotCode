@@ -348,6 +348,10 @@ candle_controller:
     type: candle_controller/CANdleController
     name: candle1
 
+candle_state_controller:
+    type: candle_state_controller/CANdleStateController
+    publish_rate: 20
+
 latency_compensation_state_controller:
   type: latency_compensation_state_controller/LatencyCompensationStateController
   publish_rate: 250

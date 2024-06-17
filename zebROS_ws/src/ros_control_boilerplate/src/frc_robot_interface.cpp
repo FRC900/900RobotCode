@@ -163,7 +163,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<AS726xDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANBusStatusDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<CANCoderDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<CANdleDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<CANdleDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalInputDevices>(root_nh));

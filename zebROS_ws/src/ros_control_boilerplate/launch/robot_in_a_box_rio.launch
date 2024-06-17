@@ -2,8 +2,7 @@
 <launch>
 	<!-- GDB functionality -->
 	<arg name="debug" default="false" />
-	<arg unless="$(arg debug)" name="launch_prefix" value="" />
-	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+	<arg name="launch_prefix" value="" />
 	<arg name="button_box" default="true" />
 
 	<arg name="hw_or_sim" default="hw" />

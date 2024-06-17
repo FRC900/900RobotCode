@@ -1,29 +1,29 @@
-#pragma once
+#ifndef CANDLE_COMMAND_INTERFACE_INC__
+#define CANDLE_COMMAND_INTERFACE_INC__
 
 #include "ctre_interfaces/candle_state_interface.h"
 #include "state_handle/command_handle.h"
-#include <vector>
 #include <optional>
+#include <vector>
 
-namespace hardware_interface {
-namespace candle {
+namespace hardware_interface::candle {
 
 struct LEDGroup {
     // Start LED
-    int start;
+    int start_;
     // Number of LEDs this group covers
-    int count;
+    int count_;
     // Colour to set the LEDs to
-    Colour colour;
+    Colour colour_;
 
     // Constructor
-    LEDGroup(int start, int count, Colour colour) :
-        start{start},
-        count{count},
-        colour{colour}
+    LEDGroup(int start, int count, const Colour &colour) :
+        start_{start},
+        count_{count},
+        colour_{colour}
     {}
     // Blank constructor for arrays and vectors
-    LEDGroup() {}
+    LEDGroup() = default;
 };
 
 class CANdleHWCommand {
@@ -31,33 +31,41 @@ class CANdleHWCommand {
         // Constructor
         CANdleHWCommand();
 
+        CANdleHWCommand(const CANdleHWCommand& other) = delete;
+        CANdleHWCommand(CANdleHWCommand&& other) noexcept = delete;
+        CANdleHWCommand& operator=(const CANdleHWCommand& other) = delete;
+        CANdleHWCommand& operator=(CANdleHWCommand&& other) noexcept = delete;
+        virtual ~CANdleHWCommand() = default;
+
         // Set colour of LEDs
         void setLEDGroup(const LEDGroup& leds);
         bool ledGroupsChanged(std::vector<LEDGroup>& groups);
         void drainLEDGroups();
 
         // Set brightness of LEDs
-        void setBrightness(double brightness);
-        double getBrightness();
+        void setBrightness(const double brightness);
+        double getBrightness() const;
         bool brightnessChanged(double& brightness);
         void resetBrightnessChanged();
 
         // If the status LED should be shown when running
-        void setStatusLEDWhenActive(bool show);
-        bool getStatusLEDWhenActive();
+        void setStatusLEDWhenActive(const bool show);
+        bool getStatusLEDWhenActive() const;
         bool statusLEDWhenActiveChanged(bool& show);
         void resetStatusLEDWhenActiveChanged();
 
         // If the CANdle is enabled
-        void setEnabled(bool enabled);
-        bool getEnabled();
+        void setEnabled(const bool enabled);
+        bool getEnabled() const;
         bool enabledChanged(bool& enabled);
         void resetEnabledChanged();
 
         // The CANdle's animation
-        void setAnimation(Animation animation);
+        void setAnimation(const Animation &animation);
         bool animationsChanged(std::vector<Animation>& animation);
         void drainAnimations();
+
+        void clearCurrentAnimation(const Animation &animation);
 
         // Stop CANdle animations
         void stopAnimations();
@@ -65,27 +73,33 @@ class CANdleHWCommand {
 
     private:
         // LEDs to be written
-        std::vector<std::optional<Colour>> leds;
-        bool leds_changed;
+        std::vector<std::optional<Colour>> leds_;
+        bool leds_changed_{true};
         // Brightness of LEDs
-        double brightness;
-        bool brightness_changed;
+        double brightness_{1.0};
+        bool brightness_changed_{true};
         // Status LED when active
-        bool show_status_led_when_active;
-        bool status_led_changed;
-        // If the CANdle is enabled
-        bool enabled;
-        bool enabled_changed;
+        bool show_status_led_when_active_{true};
+        bool status_led_changed_{true};
+        // If the 5v CANdle output is enabled
+        bool enabled_{true};
+        bool enabled_changed_{true};
         // Animations to be written
-        std::vector<Animation> animations;
-        bool animation_changed;
+        std::vector<Animation> animations_;
+        bool animation_changed_{false};
+
+        // Animations already written - used to prevent duplicate
+        // writes of already-programmed animations
+        std::vector<Animation> current_animations_;
+
         // If we should reset all the animations
-        bool stop_animations;
+        bool stop_animations_{true};
 };
 
 
-typedef CommandHandle<CANdleHWCommand, CANdleHWState, CANdleStateHandle> CANdleCommandHandle;
+using CANdleCommandHandle = CommandHandle<CANdleHWCommand, CANdleHWState, CANdleStateHandle>;
 class CANdleCommandInterface : public HardwareResourceManager<CANdleCommandHandle, ClaimResources> {};
 
-} // namespace candle
-} // namespace hardware_interface
+} // namespace hardware_interface::candle
+
+#endif

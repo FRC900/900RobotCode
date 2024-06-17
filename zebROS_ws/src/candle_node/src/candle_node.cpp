@@ -318,6 +318,7 @@ int main(int argc, char **argv) {
                 animation_req.request.speed = 0.5;
                 animation_req.request.start = 0;
                 animation_req.request.count = MAX_LED;
+                animation_req.request.param5 = 2.0; // Number of LEDs lit
                 if (animation_client.call(animation_req)) {
                     ROS_INFO_STREAM("Updated LEDs rainbow");
                     ctx.updated = false;

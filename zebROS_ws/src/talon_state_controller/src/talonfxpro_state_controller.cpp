@@ -379,38 +379,68 @@ public:
 					case hardware_interface::talonfxpro::DifferentialControlMode::DisabledOutput:
 						m.differential_control_mode[i] = "Disabled";
 						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::NeutralOut:
+						m.differential_control_mode[i] = "NeutralOut";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::StaticBrake:
+						m.differential_control_mode[i] = "StaticBrake";
+						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::DutyCycleOut:
 						m.differential_control_mode[i] = "DutyCycleOut";
-						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::TorqueCurrentFOC:
-						m.differential_control_mode[i] = "TorqueCurrentFOC";
-						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::VoltageOut:
-						m.differential_control_mode[i] = "VoltageOut";
 						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::PositionDutyCycle:
 						m.differential_control_mode[i] = "PositionDutyCycle";
 						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::PositionVoltage:
-						m.differential_control_mode[i] = "PositionVoltage";
-						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::PositionTorqueCurrentFOC:
-						m.differential_control_mode[i] = "PositionTorqueCurrentFOC";
-						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityDutyCycle:
 						m.differential_control_mode[i] = "VelocityDutyCycle";
-						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityVoltage:
-						m.differential_control_mode[i] = "VelocityVoltage";
-						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityTorqueCurrentFOC:
-						m.differential_control_mode[i] = "VelocityTorqueCurrentFOC";
 						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::MotionMagicDutyCycle:
 						m.differential_control_mode[i] = "MotionMagicDutyCycle";
 						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::DutyCycleFOC:
+						m.differential_control_mode[i] = "DutyCycleFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::PositionDutyCycleFOC:
+						m.differential_control_mode[i] = "PositionDutyCycleFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityDutyCycleFOC:
+						m.differential_control_mode[i] = "VelocityDutyCycleFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::MotionMagicDutyCycleFOC:
+						m.differential_control_mode[i] = "MotionMagicDutyCycleFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::VoltageOut:
+						m.differential_control_mode[i] = "VoltageOut";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::PositionVoltage:
+						m.differential_control_mode[i] = "PositionVoltage";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityVoltage:
+						m.differential_control_mode[i] = "VelocityVoltage";
+						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::MotionMagicVoltage:
 						m.differential_control_mode[i] = "MotionMagicVoltage";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::VoltageFOC:
+						m.differential_control_mode[i] = "VoltageFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::PositionVoltageFOC:
+						m.differential_control_mode[i] = "PositionVoltageFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityVoltageFOC:
+						m.differential_control_mode[i] = "VelocityVoltageFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::MotionMagicVoltageFOC:
+						m.differential_control_mode[i] = "MotionMagicVoltageFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::TorqueCurrentFOC:
+						m.differential_control_mode[i] = "TorqueCurrentFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::PositionTorqueCurrentFOC:
+						m.differential_control_mode[i] = "PositionTorqueCurrentFOC";
+						break;
+					case hardware_interface::talonfxpro::DifferentialControlMode::VelocityTorqueCurrentFOC:
+						m.differential_control_mode[i] = "VelocityTorqueCurrentFOC";
 						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::MotionMagicTorqueCurrentFOC:
 						m.differential_control_mode[i] = "MotionMagicTorqueCurrentFOC";
@@ -418,14 +448,11 @@ public:
 					case hardware_interface::talonfxpro::DifferentialControlMode::Follower:
 						m.differential_control_mode[i] = "Follower";
 						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::NeutralOut:
-						m.differential_control_mode[i] = "NeutralOut";
+					case hardware_interface::talonfxpro::DifferentialControlMode::Reserved:
+						m.differential_control_mode[i] = "Reserved";
 						break;
 					case hardware_interface::talonfxpro::DifferentialControlMode::CoastOut:
 						m.differential_control_mode[i] = "CoastOut";
-						break;
-					case hardware_interface::talonfxpro::DifferentialControlMode::StaticBrake:
-						m.differential_control_mode[i] = "StaticBrake";
 						break;
 					default:
 						m.differential_control_mode[i] = "Unknown";
@@ -438,7 +465,6 @@ public:
 
 					m.device_enable[i] = ts->getDeviceEnable();
 
-					m.bridge_output_value[i] = ""; // todo
 					switch(ts->getBridgeOutput())
 					{
 					case hardware_interface::talonfxpro::BridgeOutput::Coast:

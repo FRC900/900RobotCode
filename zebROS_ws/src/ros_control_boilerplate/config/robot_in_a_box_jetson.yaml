@@ -143,3 +143,7 @@ clawster_controller:
     neutral_mode: Brake
     dynamic_reconfigure: False
     enable_read_thread: False
+
+candle_state_controller:
+    type: candle_state_controller/CANdleStateController
+    publish_rate: 20

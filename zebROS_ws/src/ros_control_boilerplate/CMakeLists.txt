@@ -109,8 +109,6 @@ add_library(frc_robot_interface STATIC
     src/analog_input_device.cpp
 	src/analog_input_devices.cpp
 	src/AS726x.cpp
-	src/candle_device.cpp
-	src/candle_devices.cpp
 	src/cancoder_device.cpp
 	src/cancoder_devices.cpp
 	src/canifier_device.cpp
@@ -172,6 +170,7 @@ add_dependencies(frc_robot_interface
 set (FRCROBOT_HW_MAIN_SRCS 
 	src/frc_robot_interface_hw.cpp
 	src/as726x_hw_device.cpp
+	src/candle_hw_device.cpp
 	src/ctre_v5_motor_controller_hw_device.cpp
 	src/error_queue.cpp
 	src/frcrobot_hw_main.cpp
@@ -456,6 +455,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		src/frcrobot_sim_main.cpp
 		src/frc_robot_interface_sim.cpp
 		src/as726x_sim_device.cpp
+		src/candle_sim_device.cpp
 		src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp

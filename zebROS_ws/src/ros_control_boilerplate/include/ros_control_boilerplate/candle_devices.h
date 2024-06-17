@@ -3,7 +3,9 @@
 
 #include "ros_control_boilerplate/devices.h"
 
+template <bool SIM> 
 class CANdleDevice;
+
 namespace hardware_interface::candle
 {
     class CANdleStateInterface;
@@ -11,6 +13,7 @@ namespace hardware_interface::candle
     class RemoteCANdleStateInterface;
 }
 
+template <bool SIM>
 class CANdleDevices : public Devices
 {
 public:
@@ -26,7 +29,7 @@ public:
     void write(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
 private:
-    std::vector<std::unique_ptr<CANdleDevice>> devices_;
+    std::vector<std::unique_ptr<CANdleDevice<SIM>>> devices_;
     std::unique_ptr<hardware_interface::candle::CANdleStateInterface> state_interface_;
     std::unique_ptr<hardware_interface::candle::CANdleCommandInterface> command_interface_;
     std::unique_ptr<hardware_interface::candle::RemoteCANdleStateInterface> remote_state_interface_;

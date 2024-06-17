@@ -63,6 +63,7 @@
 			 climb_controller
 			 pigeon2_imu_state_controller
 			 candle_controller
+			 candle_state_controller
 			 cancoder_state_controller
 			 robot_code_ready_controller" />
 			 

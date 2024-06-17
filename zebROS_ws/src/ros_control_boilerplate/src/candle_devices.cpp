@@ -4,7 +4,8 @@
 #include "ros_control_boilerplate/candle_device.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 
-CANdleDevices::CANdleDevices(ros::NodeHandle &root_nh)
+template <bool SIM>
+CANdleDevices<SIM>::CANdleDevices(ros::NodeHandle &root_nh)
     : state_interface_{std::make_unique<hardware_interface::candle::CANdleStateInterface>()}
     , command_interface_{std::make_unique<hardware_interface::candle::CANdleCommandInterface>()}
     , remote_state_interface_{std::make_unique<hardware_interface::candle::RemoteCANdleStateInterface>()}
@@ -49,14 +50,16 @@ CANdleDevices::CANdleDevices(ros::NodeHandle &root_nh)
 				throw std::runtime_error("A CANdle can_bus was specified with local_hardware == false for joint " + joint_name);
             }
 
-            devices_.emplace_back(std::make_unique<CANdleDevice>(root_nh.getNamespace(), i, joint_name, can_id, can_bus, local_update, local_hardware));
+            devices_.emplace_back(std::make_unique<CANdleDevice<SIM>>(root_nh.getNamespace(), i, joint_name, can_id, can_bus, local_update, local_hardware));
         }
     }
 }
 
-CANdleDevices::~CANdleDevices() = default;
+template <bool SIM>
+CANdleDevices<SIM>::~CANdleDevices() = default;
 
-hardware_interface::InterfaceManager *CANdleDevices::registerInterface()
+template <bool SIM>
+hardware_interface::InterfaceManager *CANdleDevices<SIM>::registerInterface()
 {
     for (const auto &d : devices_)
     {
@@ -68,7 +71,8 @@ hardware_interface::InterfaceManager *CANdleDevices::registerInterface()
     return &interface_manager_;
 }
 
-void CANdleDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void CANdleDevices<SIM>::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("candle");
     for (const auto &d : devices_)

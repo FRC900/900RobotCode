@@ -19,6 +19,7 @@ namespace hardware_interface::candle
 }
 #include "ros_control_boilerplate/ctre_v5_device.h"
 
+template <bool SIMFLAG>
 class CANdleDevice : public CTREV5Device
 {
 public:
@@ -41,6 +42,7 @@ public:
     void write(const ros::Time &/*time*/, const ros::Duration &/*period*/);
 
 private:
+    void clearLEDs(size_t start, size_t count);
     const bool local_hardware_;
     const bool local_update_;
 
