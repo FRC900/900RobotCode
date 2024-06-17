@@ -42,13 +42,11 @@ int main(void)
 	Eigen::Vector2d linearV;
 	double rotation;
 
-	constexpr double angle = M_PI / 2.0;
-
 
 	linearV[0] = 1;
 	linearV[1] = 0;
 	rotation = 0;
-	auto speedsAngles = swerveC.motorOutputs(linearV, rotation, angle, positions, true);
+	auto speedsAngles = swerveC.motorOutputs(linearV, rotation, positions, true);
 	print(positions, speedsAngles);
 	positions[0] = speedsAngles[0][1] - 0.01;
 	positions[1] = speedsAngles[1][1] + 0.01;
@@ -56,7 +54,7 @@ int main(void)
 	positions[3] = speedsAngles[3][1] + 0.01;
 	linearV[0] = 0;
 	linearV[1] = 1;
-	speedsAngles = swerveC.motorOutputs(linearV, rotation, angle, positions, true);
+	speedsAngles = swerveC.motorOutputs(linearV, rotation, positions, true);
 	print(positions, speedsAngles);
 #if 0
 	auto angles = swerveC.parkingAngles(positions);

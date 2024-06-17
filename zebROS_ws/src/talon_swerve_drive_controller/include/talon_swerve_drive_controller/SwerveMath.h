@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INC_SWERVE_MATH_H_
+#define INC_SWERVE_MATH_H_
+
 #include <array>
 #include <Eigen/Dense>
 
@@ -6,15 +8,21 @@ template <size_t WHEELCOUNT>
 class swerveDriveMath
 {
 	public:
-		explicit swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
 		swerveDriveMath() = default;
+		swerveDriveMath(const swerveDriveMath &) = delete;
+		swerveDriveMath(swerveDriveMath &&) noexcept = delete;
+		swerveDriveMath &operator=(const swerveDriveMath &) = delete;
+		swerveDriveMath &operator=(swerveDriveMath &&) noexcept = delete;
+		virtual ~swerveDriveMath() = default;
+
+		explicit swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
+
+		//Wheel multipliers would need to be rerun if wheels somehow get moved around
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const;
 
-		//for non field centric set angle to pi/2
-		std::array<Eigen::Vector2d, WHEELCOUNT> wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const;
+		std::array<Eigen::Vector2d, WHEELCOUNT> wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &linearVelocity, const double angularVelocity, const bool norm) const;
 
-		double getParkingAngle(size_t wheel) const;
-		//Wheel multipliers would need to be rerun if wheels somehow get moved around
+		double getParkingAngle(const size_t wheel) const;
 
 	private:
 		//only must be run once to determine the angles of the wheels in parking config
@@ -26,3 +34,5 @@ class swerveDriveMath
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinate_;
 		std::array<double, WHEELCOUNT> parkingAngle_;
 };
+
+#endif

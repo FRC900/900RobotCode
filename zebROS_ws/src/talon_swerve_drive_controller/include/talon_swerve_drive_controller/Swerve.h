@@ -8,10 +8,8 @@
 #include "SwerveMath.h"
 
 // Create an ordering function for Vectors to use them in a map
-namespace std
-{
 template<>
-struct less<Eigen::Vector2d>
+struct std::less<Eigen::Vector2d>
 {
 	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b) const
 	{
@@ -20,11 +18,11 @@ struct less<Eigen::Vector2d>
 		{
 			if (a[i] < b[i]) return true;
 			if (a[i] > b[i]) return false;
+			// Fallthrough if equal
 		}
 		return false;
 	}
 };
-}
 
 //meters, radians, newtons, kg
 //Gets should be rotations/encoder unit
@@ -63,6 +61,13 @@ template <size_t WHEELCOUNT>
 class swerve
 {
 	public:
+		swerve() = delete;
+		swerve(const swerve &) = delete;
+		swerve(swerve &&) noexcept = delete;
+		swerve &operator=(const swerve &) = delete;
+		swerve &operator=(swerve &&) noexcept = delete;
+		virtual ~swerve() = default;
+
 		swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
@@ -71,9 +76,8 @@ class swerve
 		//for non field centric drive set angle = pi/2
 		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d velocityVector,
 														     double rotation,
-														     double angle,
 														     const std::array<double, WHEELCOUNT> &positionsNew,
-														     bool norm,
+														     const bool norm,
 														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0},
 															 const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;

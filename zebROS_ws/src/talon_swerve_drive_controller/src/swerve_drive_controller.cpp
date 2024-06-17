@@ -537,7 +537,7 @@ void update(const ros::Time &time, const ros::Duration &period) override
 
 	// Compute wheels velocities:
 	//Parse curr_cmd to get velocity vector and rotation (z axis)
-	speeds_angles_ = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2.0, steer_angles, true, *(center_of_rotation_.readFromRT()), use_cos_scaling_);
+	speeds_angles_ = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, steer_angles, true, *(center_of_rotation_.readFromRT()), use_cos_scaling_);
 
 	// Set wheel steering angles, as long as dont_set_angle_mode is false
 	for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)

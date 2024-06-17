@@ -39,23 +39,18 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelMultip
 //In radians, 0 is horizontal, increases counterclockwise
 //For non field centric set angle to pi/2
 template<size_t WHEELCOUNT>
-std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const
+std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &linearVelocity, double angularVelocity, const bool norm) const
 {
-	//Rotate the target velocity by the robots angle to make it field centric
-	const Eigen::Rotation2Dd r(M_PI / 2 - angle);
-	const Eigen::Vector2d rotatedVelocity = r.toRotationMatrix() * velocityVector;
-
-	//Should this instead be a function in 900Math of the form: rotate(vector, angle) rather than 2 lines of eigen stuff?
 	std::array<double, WHEELCOUNT> speeds;
 	std::array<double, WHEELCOUNT> angles;
-	//Sum cartisian velocity for each wheel and then convert to polar coordinates
 
+	//Sum cartisian velocity for each wheel and then convert to polar coordinates
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		//Only the rotation of the robot differently effects each wheel
-		const double x = wheelMultipliersXY[i][0] * rotation + rotatedVelocity[0];
-		const double y = wheelMultipliersXY[i][1] * rotation - rotatedVelocity[1];
-		//ROS_INFO_STREAM("rot: " << rotation << " wheel_multipliers_x: " << wheelMultipliersXY[i][0]<< " wheel_multipliers_y " << wheelMultipliersXY[i][1]);
+		const double x = wheelMultipliersXY[i][0] * angularVelocity + linearVelocity[0];
+		const double y = wheelMultipliersXY[i][1] * angularVelocity - linearVelocity[1];
+		//ROS_INFO_STREAM("rot: " << angularVelocity << " wheel_multipliers_x: " << wheelMultipliersXY[i][0]<< " wheel_multipliers_y " << wheelMultipliersXY[i][1]);
 		angles[i] = atan2(x, y);
 		speeds[i] = hypot(x, y);
         //ROS_INFO_STREAM("angles at " << i << " = " << angles[i] << " speeds at " << i << " = " << speeds[i]);
@@ -88,7 +83,7 @@ std::array<double, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::parkingAngles(void) 
 }
 
 template<size_t WHEELCOUNT>
-double swerveDriveMath<WHEELCOUNT>::getParkingAngle(size_t wheel) const
+double swerveDriveMath<WHEELCOUNT>::getParkingAngle(const size_t wheel) const
 {
 	return parkingAngle_[wheel];
 }
