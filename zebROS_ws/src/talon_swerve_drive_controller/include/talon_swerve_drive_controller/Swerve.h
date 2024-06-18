@@ -13,7 +13,7 @@ struct std::less<Eigen::Vector2d>
 {
 	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b) const
 	{
-		assert(a.size()==b.size());
+		assert(a.size() == b.size());
 		for(int i = 0; i < a.size(); ++i)
 		{
 			if (a[i] < b[i]) return true;
@@ -85,14 +85,9 @@ class swerve
 		double getWheelAngle(double pos) const;
 	private:
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
-		swerveDriveMath<WHEELCOUNT> swerveMath_; //this should be public
-		//should we get them together instead?
-		//the angle it passes out isn't normalized
-		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
+		swerveDriveMath<WHEELCOUNT> swerveMath_;
 
-		//Second piece of data is here just for physics/modeling
-		//std::array<double, WHEELCOUNT> savedEncoderVals_;
-		//int8_t wheelAngleInvert_;
+		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
 
 		struct multiplierSet
 		{

@@ -3,25 +3,25 @@
 
 #include <ros/console.h>
 
-struct WheelDirection {
-    WheelDirection(const double angle, const double speed_multiplier) : angle(angle), speed_multiplier(speed_multiplier) {}
+struct WheelDirection
+{
+	WheelDirection(const double angle, const double speed_multiplier)
+		: angle(angle)
+		, speed_multiplier(speed_multiplier)
+	{
+	}
     double angle;
     double speed_multiplier;
 };
-static WheelDirection leastDistantAngleWithinHalfPi(const double currentAngle, const double targetAngle)
+
+// returns the closest angle to the current angle = to x*.5*M_PI + target angle where x is any integer
+// used for turning wheels to the target angle
+static WheelDirection optimizeWheelDirection(const double currentAngle, const double targetAngle)
 {
-	//returns the closest angle to the current angle = to x*.5*M_PI + target angle where x is any integer
-	//used for turning wheels to the target angle
-	// const double normalizedDiff = angles::normalize_angle(targetAngle) - angles::normalize_angle(currentAngle);
-
-	// const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - copysign(2. * M_PI, normalizedDiff));
-
-	ROS_INFO_STREAM("currentAngle: " << currentAngle << " targetAngle: " << targetAngle);
 	const double withinPi = angles::shortest_angular_distance(currentAngle, targetAngle);
-	ROS_INFO_STREAM("withinPi: " << withinPi);
 
 	// If within +/- 90 degress, turn to that angle and move in the requested direction
-	if (fabs(withinPi) < (M_PI / 2.))
+	if (fabs(withinPi) <= M_PI_2)
 	{
 		return WheelDirection(withinPi + currentAngle, 1.0);
 	}
@@ -35,7 +35,11 @@ swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelC
 						   const swerveVar::ratios &ratio,
 						   const swerveVar::encoderUnits &units,
 						   const swerveVar::driveModel &drive)
-	: wheelCoordinates_(wheelCoordinates), swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates_)), ratio_(ratio), units_(units), drive_(drive)
+	: wheelCoordinates_(wheelCoordinates)
+	, swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates_))
+	, ratio_(ratio)
+	, units_(units)
+	, drive_(drive)
 {
 }
 
@@ -71,7 +75,7 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 	{
 		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		const double currpos = getWheelAngle(positionsNew[i]);
-		const auto wheel_direction = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1]);
+		const auto wheel_direction = optimizeWheelDirection(currpos, speedsAndAngles[i][1]);
 
 
 		//ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " wheel_direction : " << wheel_direction.angle << " " << wheel_direction.speed_multiplier");
@@ -83,7 +87,7 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 		const double cosScaling = useCosScaling ? cos(currpos - wheel_direction.angle) : 1.0;
 
 		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * wheel_direction.speed_multiplier * cosScaling;
-		speedsAndAngles[i][1] = wheel_direction.angle * units_.steeringSet - M_PI;
+		speedsAndAngles[i][1] = wheel_direction.angle * units_.steeringSet;
 		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " steeringSet: " << units_.steeringSet);
 	}
 	return speedsAndAngles;
@@ -96,9 +100,9 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		const double currpos = getWheelAngle(positionsNew[i]);
-		const auto wheel_direction = leastDistantAngleWithinHalfPi(currpos, swerveMath_.getParkingAngle(i));
+		const auto wheel_direction = optimizeWheelDirection(currpos, swerveMath_.getParkingAngle(i));
 
-		retAngles[i] = wheel_direction.angle * units_.steeringSet - M_PI;
+		retAngles[i] = wheel_direction.angle * units_.steeringSet;
 		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << " target: " << nearestanglep);
 		//ROS_INFO_STREAM("park[i]: " << swerveMath_.getParkingAngle(i) << " " << retAngles[i]);
 	}
@@ -110,7 +114,7 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 template<size_t WHEELCOUNT>
 double swerve<WHEELCOUNT>::getWheelAngle(double pos) const
 {
-	return (pos - M_PI) * units_.steeringGet;
+	return pos * units_.steeringGet;
 }
 
 template<size_t WHEELCOUNT>

@@ -686,8 +686,8 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 
 	const Eigen::Matrix2d h = wheel_pos_ * new_wheel_pos;
 	const Eigen::JacobiSVD<Eigen::Matrix2d> svd(h, Eigen::ComputeFullU | Eigen::ComputeFullV);
-	Eigen::Matrix2d old_rot = svd.matrixV() * svd.matrixU().transpose();
-	if (old_rot.determinant() < 0) {
+	if (Eigen::Matrix2d old_rot = svd.matrixV() * svd.matrixU().transpose();
+		old_rot.determinant() < 0) {
 		old_rot.col(1) *= -1;
 	}
 
@@ -718,7 +718,6 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 
 	//ROS_INFO_STREAM("odom_x: " << odom_x << " odom_y: " << odom_y << " odom_yaw: " << odom_yaw);
 	// Publish the odometry.
-	//TODO CHECK THIS PUB
 
 	geometry_msgs::Quaternion orientation;
 	bool orientation_comped = false;
@@ -736,10 +735,9 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 			geometry_msgs::TransformStamped &odom_tf_trans =
 				odom_tf_pub_.msg_.transforms[0];
 			odom_tf_trans.header.stamp = time;
-			odom_tf_trans.transform.translation.x = odom_y;	 // TODO terrible hacky
-			odom_tf_trans.transform.translation.y = -odom_x; // TODO terrible hacky
+			odom_tf_trans.transform.translation.x = odom_x;
+			odom_tf_trans.transform.translation.y = odom_y;
 			odom_tf_trans.transform.rotation = orientation;
-			// ROS_INFO_STREAM(odom_x);
 			odom_tf_pub_.unlockAndPublish();
 		}
 		else
@@ -748,7 +746,7 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 		}
 	}
 
-	// odom
+	// odom msg
 	if (odom_pub_interval_counter_ &&
 		odom_pub_interval_counter_->update(period))
 	{
@@ -760,8 +758,8 @@ void compOdometry(const ros::Time &time, const ros::Duration &period, const std:
 			}
 
 			odom_pub_.msg_.header.stamp = time;
-			odom_pub_.msg_.pose.pose.position.x = odom_y;  // TODO terrible hacky
-			odom_pub_.msg_.pose.pose.position.y = -odom_x; // TODO terrible hacky
+			odom_pub_.msg_.pose.pose.position.x = odom_x;
+			odom_pub_.msg_.pose.pose.position.y = odom_y;
 			odom_pub_.msg_.pose.pose.orientation = orientation;
 
 			const double inv_delta_t = 1.0 / period.toSec();
