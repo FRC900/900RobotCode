@@ -15,7 +15,7 @@ class swerveDriveMath
 		swerveDriveMath &operator=(swerveDriveMath &&) noexcept = delete;
 		virtual ~swerveDriveMath() = default;
 
-		explicit swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
+		explicit swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates);
 
 		//Wheel multipliers would need to be rerun if wheels somehow get moved around
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const;
@@ -24,6 +24,7 @@ class swerveDriveMath
 
 		double getParkingAngle(const size_t wheel) const;
 
+		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
 	private:
 		//only must be run once to determine the angles of the wheels in parking config
 		std::array<double, WHEELCOUNT> parkingAngles(void) const;
@@ -31,7 +32,7 @@ class swerveDriveMath
 		void normalize(std::array<double, WHEELCOUNT> &input, const bool force_norm = false) const;
 
 		//All variables here which don't need to be accessed externally
-		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinate_;
+		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
 		std::array<double, WHEELCOUNT> parkingAngle_;
 };
 

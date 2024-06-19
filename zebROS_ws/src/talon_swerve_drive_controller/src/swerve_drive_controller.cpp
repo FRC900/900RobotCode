@@ -39,29 +39,23 @@
 #include <ros/ros.h>
 
 #include <angles/angles.h>
-#include <controller_interface/controller.h>
 #include <controller_interface/multi_interface_controller.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <nav_msgs/Odometry.h>
-#include <periodic_interval_counter/periodic_interval_counter.h>
-#include <sensor_msgs/Imu.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
 #include <tf/tfMessage.h>
 #include <tf/transform_datatypes.h>
-#include <tf2_ros/transform_broadcaster.h>
 
-#include <talon_controllers/talon_controller_interface.h>
-#include <talon_controllers/talonfxpro_controller_interface.h>
 #include <ctre_interfaces/latency_compensation_state_interface.h>
+#include <periodic_interval_counter/periodic_interval_counter.h>
+#include <talon_controllers/talonfxpro_controller_interface.h>
 
 #include "talon_swerve_drive_controller_msgs/SetXY.h"
 #include <talon_swerve_drive_controller/Swerve.h>
 #include "talon_swerve_drive_controller/get_wheel_names.h"
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace talon_swerve_drive_controller
 {
@@ -423,7 +417,6 @@ void starting(const ros::Time &time) override
 		odom_pub_interval_counter_ = std::make_unique<PeriodicIntervalCounter>(odom_pub_freq_);
 		odom_tf_pub_interval_counter_ = std::make_unique<PeriodicIntervalCounter>(odom_pub_freq_);
 	}
-	//odometry_.init(time);
 }
 
 void stopping(const ros::Time &time) override
@@ -607,7 +600,7 @@ void update(const ros::Time &time, const ros::Duration &period) override
 
 private:
 
-double angle_midpoint(double start_angle, double end_angle) const
+static double angle_midpoint(double start_angle, double end_angle)
 {
 	//ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " start_angle = " << start_angle << " end_angle = " << end_angle);
 	const double deltaAngle = end_angle - start_angle;
@@ -1114,6 +1107,6 @@ std::array<std::string, WHEELCOUNT> steering_names_;
 
 } // namespace talon_swerve_drive_controller
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 template class talon_swerve_drive_controller::TalonSwerveDriveController<4>;
 PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController<4>, controller_interface::ControllerBase)

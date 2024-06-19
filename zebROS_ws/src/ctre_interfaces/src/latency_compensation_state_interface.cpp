@@ -93,6 +93,40 @@ void CTRELatencyCompensationState::getEntry(const std::string &name, ros::Time &
     slope = entry->second->getSlope();
 }
 
+void CTRELatencyCompensationState::getTimestamp(const std::string &name, ros::Time &timestamp) const
+{
+    const auto entry = entries_.find(name);
+    if (entry == entries_.end())
+    {
+        ROS_WARN_STREAM("getEntry() can't find latency group entry name " << name);
+        return;
+    }
+    timestamp = entry->second->getTimestamp();
+}
+
+void CTRELatencyCompensationState::getValue(const std::string &name, double &value) const
+{
+    const auto entry = entries_.find(name);
+    if (entry == entries_.end())
+    {
+        ROS_WARN_STREAM("getEntry() can't find latency group entry name " << name);
+        return;
+    }
+    value = entry->second->getValue();
+}
+
+void CTRELatencyCompensationState::getSlope(const std::string &name, double &slope) const
+{
+    const auto entry = entries_.find(name);
+    if (entry == entries_.end())
+    {
+        ROS_WARN_STREAM("getEntry() can't find latency group entry name " << name);
+        return;
+    }
+    slope = entry->second->getSlope();
+}
+
+
 double CTRELatencyCompensationState::getLatencyCompensatedValue(const std::string &name, const ros::Time &timestamp) const
 {
     auto entry = entries_.find(name);

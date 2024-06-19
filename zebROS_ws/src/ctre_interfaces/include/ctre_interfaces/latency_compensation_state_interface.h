@@ -25,6 +25,9 @@ public:
     void addEntry(const std::string &name);
     void setEntry(const std::string &name, const ros::Time &timestamp, const double value, const double slope);
     void getEntry(const std::string &name, ros::Time &timestamp, double &value, double &slope) const;
+    void getTimestamp(const std::string &name, ros::Time &timestamp) const;
+    void getValue(const std::string &name, double &value) const;
+    void getSlope(const std::string &name, double &slope) const;
 
     std::vector<std::string> getEntryNames(void) const;
 

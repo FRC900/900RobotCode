@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INC_SWERVE_H__
+#define INC_SWERVE_H__
 
 #include <array>
 #include <cmath>
@@ -73,9 +74,8 @@ class swerve
 			   const swerveVar::encoderUnits &units,
 			   const swerveVar::driveModel &drive);
 
-		//for non field centric drive set angle = pi/2
-		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d velocityVector,
-														     double rotation,
+		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d linearVelocity,
+														     double angularVelocity,
 														     const std::array<double, WHEELCOUNT> &positionsNew,
 														     const bool norm,
 														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0},
@@ -84,10 +84,7 @@ class swerve
 
 		double getWheelAngle(double pos) const;
 	private:
-		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
 		swerveDriveMath<WHEELCOUNT> swerveMath_;
-
-		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
 
 		struct multiplierSet
 		{
@@ -99,3 +96,5 @@ class swerve
 		swerveVar::encoderUnits units_;
 		swerveVar::driveModel drive_;
 };
+
+#endif

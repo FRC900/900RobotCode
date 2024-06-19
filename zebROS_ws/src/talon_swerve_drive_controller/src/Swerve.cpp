@@ -35,8 +35,7 @@ swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelC
 						   const swerveVar::ratios &ratio,
 						   const swerveVar::encoderUnits &units,
 						   const swerveVar::driveModel &drive)
-	: wheelCoordinates_(wheelCoordinates)
-	, swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates_))
+	: swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates))
 	, ratio_(ratio)
 	, units_(units)
 	, drive_(drive)
@@ -44,40 +43,38 @@ swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelC
 }
 
 template <size_t WHEELCOUNT>
-std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::Vector2d velocityVector,
-																		 double rotation,
+std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::Vector2d linearVelocity,
+																		 double angularVelocity,
 																		 const std::array<double, WHEELCOUNT> &positionsNew,
 																		 const bool norm,
 																		 const Eigen::Vector2d &centerOfRotation,
 																		 const bool useCosScaling)
 {
 	// See if the current centerOfRotation coords have been used before
-	// If not, calculate the multiplers and matRotRate for them
 	// If so, just reuse previously saved values
+	// If not, calculate the multiplers and matRotRate for them
 	auto mult_it = multiplierSets_.find(centerOfRotation);
 	if (mult_it == multiplierSets_.end())
 	{
 		multiplierSet newSet;
 		newSet.multipliers_ = swerveMath_.wheelMultipliersXY(centerOfRotation);
-		newSet.maxRotRate_ = drive_.maxSpeed / furthestWheel(centerOfRotation);
-		multiplierSets_[centerOfRotation] = newSet;
-		mult_it = multiplierSets_.find(centerOfRotation);
-		//ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
+		newSet.maxRotRate_ = drive_.maxSpeed / swerveMath_.furthestWheel(centerOfRotation);
+		mult_it = multiplierSets_.try_emplace(centerOfRotation, newSet).first;
+		ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
 	}
 
-	velocityVector /= drive_.maxSpeed;
-	rotation       /= mult_it->second.maxRotRate_;
+	linearVelocity  /= drive_.maxSpeed;
+	angularVelocity /= mult_it->second.maxRotRate_;
 
 	//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
-	//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
-	auto speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, norm);
+	//ROS_INFO_STREAM("vel: " << linearVelocity[0] << " " << linearVelocity[1] << " rot: " << angularVelocity);
+	auto speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, linearVelocity, angularVelocity, norm);
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		const double currpos = getWheelAngle(positionsNew[i]);
 		const auto wheel_direction = optimizeWheelDirection(currpos, speedsAndAngles[i][1]);
 
-
+		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		//ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " wheel_direction : " << wheel_direction.angle << " " << wheel_direction.speed_multiplier");
 		// Slow down wheels the further they are from their target
 		// angle. This will help to prevent wheels which are in the process
@@ -109,23 +106,12 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 	return retAngles;
 }
 
-// Apply encoder offset and steering ratio to calculate desired
+// Apply steering ratio to calculate desired
 // measured wheel angle from a wheel angle setpoint
 template<size_t WHEELCOUNT>
 double swerve<WHEELCOUNT>::getWheelAngle(double pos) const
 {
 	return pos * units_.steeringGet;
-}
-
-template<size_t WHEELCOUNT>
-double swerve<WHEELCOUNT>::furthestWheel(const Eigen::Vector2d &centerOfRotation) const
-{
-	double maxD = 0;
-	for (size_t i = 0; i < WHEELCOUNT; i++)
-	{
-		maxD = std::max(maxD, hypot(wheelCoordinates_[i][0] - centerOfRotation[0], wheelCoordinates_[i][1] - centerOfRotation[1]));
-	}
-	return maxD;
 }
 
 template class swerve<4>;

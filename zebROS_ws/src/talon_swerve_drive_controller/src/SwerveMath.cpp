@@ -1,11 +1,13 @@
+#include <algorithm>
 #include <array>
+#include <numeric>
 #include <cmath>
 #include <talon_swerve_drive_controller/SwerveMath.h>
 //#include <ros/console.h> // for debugging ROS_*_STREAM functions when needed
 
 template<size_t WHEELCOUNT>
-swerveDriveMath<WHEELCOUNT>::swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
-	: wheelCoordinate_(wheelCoordinate)
+swerveDriveMath<WHEELCOUNT>::swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates)
+	: wheelCoordinates_(wheelCoordinates)
 	, parkingAngle_(parkingAngles()) // Has to be run after wheelCoordinates are set
 {
 }
@@ -17,25 +19,22 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelMultip
 	std::array<double, WHEELCOUNT> wheelMultipliers;
 	for (size_t i = 0; i < WHEELCOUNT; i++) //increment for each wheel
 	{
-		const double x = wheelCoordinate_[i][0] - rotationCenter[0];
-		const double y = wheelCoordinate_[i][1] - rotationCenter[1];
-		wheelMultipliers[i] = hypot(x, y);
+		wheelMultipliers[i] = hypot(wheelCoordinates_[i][0] - rotationCenter[0],
+									wheelCoordinates_[i][1] - rotationCenter[1]);
 	}
 	normalize(wheelMultipliers, true);
 	std::array<Eigen::Vector2d, WHEELCOUNT> multipliersXY;
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		const double wheelAngle = atan2(wheelCoordinate_[i][1], wheelCoordinate_[i][0]);
+		const double wheelAngle = atan2(wheelCoordinates_[i][1], wheelCoordinates_[i][0]) + M_PI_2;
 		multipliersXY[i][0] = wheelMultipliers[i] * cos(wheelAngle);
 		multipliersXY[i][1] = wheelMultipliers[i] * sin(wheelAngle);
 	}
 	return multipliersXY;
 }
 
-//Below function calculates wheel speeds and angles for some target rotation and translation velocity
-//Rotation is positive counter clockwise
-//Angle is the angle of the gyro for field centric driving
-//In radians, 0 is horizontal, increases counterclockwise
+//Below function calculates wheel speeds and angles for some target linear and angular velocity
+//Angular velocity is positive counter clockwise
 template<size_t WHEELCOUNT>
 std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &linearVelocity, double angularVelocity, const bool norm) const
 {
@@ -48,7 +47,7 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelSpeeds
 		//Only the rotation of the robot differently effects each wheel
 		const double x = wheelMultipliersXY[i][0] * angularVelocity + linearVelocity[0];
 		const double y = wheelMultipliersXY[i][1] * angularVelocity + linearVelocity[1];
-		//ROS_INFO_STREAM("rot: " << angularVelocity << " wheel_multipliers_x: " << wheelMultipliersXY[i][0]<< " wheel_multipliers_y " << wheelMultipliersXY[i][1]);
+		//ROS_INFO_STREAM("angularVelocity: " << angularVelocity << " wheel_multipliers_x: " << wheelMultipliersXY[i][0] << " wheel_multipliers_y: " << wheelMultipliersXY[i][1]);
 		speeds[i] = hypot(x, y);
 		angles[i] = atan2(y, x);
         //ROS_INFO_STREAM("angles at " << i << " = " << angles[i] << " speeds at " << i << " = " << speeds[i]);
@@ -72,11 +71,11 @@ std::array<double, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::parkingAngles(void) 
 {
 	//only must be run once to determine the angles of the wheels in parking config
 	std::array<double, WHEELCOUNT> angles;
-	//ROS_WARN_STREAM("######## " << __PRETTY_FUNCTION__ << " wheelCoordinate_.size() = " << wheelCoordinate_.size());
-	for (size_t i = 0; i < wheelCoordinate_.size(); i++)
-	{
-		angles[i] = atan2(wheelCoordinate_[i][1], wheelCoordinate_[i][0]);
-	}
+	std::transform(wheelCoordinates_.cbegin(), wheelCoordinates_.cend(), angles.begin(),
+				   [](const Eigen::Vector2d &wheelCoordinate)
+				   {
+					   return atan2(wheelCoordinate[1], wheelCoordinate[0]);
+				   });
 	return angles;
 }
 
@@ -89,10 +88,8 @@ double swerveDriveMath<WHEELCOUNT>::getParkingAngle(const size_t wheel) const
 template<size_t WHEELCOUNT>
 void swerveDriveMath<WHEELCOUNT>::normalize(std::array<double, WHEELCOUNT> &input, const bool force_norm) const
 {
-	//Note that this function only works on arrays of size WHEELCOUNT
-	const double maxi = fabs(*std::max_element(input.begin(), input.end()));
-	const double mini = fabs(*std::min_element(input.begin(), input.end()));
-	const double absoluteMax = std::max(maxi, mini);
+	const auto [minv, maxv] = std::minmax_element(input.cbegin(), input.cend());
+	const double absoluteMax = std::max(fabs(*minv), fabs(*maxv));
 	if ((absoluteMax > 1.0) || force_norm)
 	{
 		for (auto &i : input)
@@ -100,6 +97,16 @@ void swerveDriveMath<WHEELCOUNT>::normalize(std::array<double, WHEELCOUNT> &inpu
 			i /= absoluteMax;
 		}
 	}
+}
+
+template<size_t WHEELCOUNT>
+double swerveDriveMath<WHEELCOUNT>::furthestWheel(const Eigen::Vector2d &centerOfRotation) const
+{
+	return std::accumulate(wheelCoordinates_.cbegin(), wheelCoordinates_.cend(), 0.0,
+						   [centerOfRotation](const double maxD, const Eigen::Vector2d &wheelCoordinate)
+						   {
+							   return std::max(maxD, hypot(wheelCoordinate[0] - centerOfRotation[0], wheelCoordinate[1] - centerOfRotation[1]));
+						   });
 }
 
 template class swerveDriveMath<4>;
