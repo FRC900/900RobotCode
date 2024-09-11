@@ -1,4 +1,4 @@
-+<library path="lib/libfrcrobot_gazebosim">
+<library path="lib/libfrcrobot_gazebosim">
 	<class
 		name="frcrobot_control/FRCRobotGazeboSimInterface"
 		type="frcrobot_control::FRCRobotGazeboSimInterface"

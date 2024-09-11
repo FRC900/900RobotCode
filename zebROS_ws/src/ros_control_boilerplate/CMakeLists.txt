@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   urdf
   gazebo_frcrobot_control
   gazebo_dev
+  gazebo_ros_control
   pluginlib
 )
 ign_import_target(UUID)
@@ -113,6 +114,9 @@ add_library(frc_robot_interface STATIC
 	src/cancoder_devices.cpp
 	src/canifier_device.cpp
 	src/canifier_devices.cpp
+	src/candle_device.cpp
+	src/candle_devices.cpp
+	src/candle_sim_device.cpp
 	src/can_bus_status_device.cpp
 	src/can_bus_status_devices.cpp
     src/ctre_v5_device.cpp
