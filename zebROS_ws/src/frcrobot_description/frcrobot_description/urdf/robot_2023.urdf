@@ -99,37 +99,20 @@
 
 <!-- WHY THE HECK IS THIS OF ALL THINGS HOW YOU SET FRICTION COEFFICIENTS -->
 <gazebo reference="br_drive_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
+<mu1>100.0</mu1>
+<mu2>100.0</mu2>
 </gazebo>
 <gazebo reference="bl_drive_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
+<mu1>100.0</mu1>
+<mu2>100.0</mu2>
 </gazebo>
 <gazebo reference="fr_drive_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
+<mu1>100.0</mu1>
+<mu2>100.0</mu2>
 </gazebo>
 <gazebo reference="fl_drive_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
-</gazebo>
-
-<gazebo reference="br_angle_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
-</gazebo>
-<gazebo reference="bl_angle_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
-</gazebo>
-<gazebo reference="fr_angle_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
-</gazebo>
-<gazebo reference="fl_angle_link">
-<mu1 value="1.1">1.1</mu1>
-<mu2 value="1.1">1.1</mu2>
+<mu1>100.0</mu1>
+<mu2>100.0</mu2>
 </gazebo>
 
 <joint name="br_drive" type="continuous">
