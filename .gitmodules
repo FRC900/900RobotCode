@@ -3,10 +3,10 @@
 	url = https://github.com/wpilibsuite/allwpilib.git
 [submodule "zebROS_ws/src/joystick_simulation_node"]
 	path = zebROS_ws/src/joystick_simulation_node
-	url = git@github.com:FRC900/joystick_simulation_node.git
+	url = https://github.com/FRC900/joystick_simulation_node.git
 [submodule "971-Robot-Code"]
 	path = 971-Robot-Code
-	url = git@github.com:FRC900/971-Robot-Code.git
+	url = https://github.com/FRC900/971-Robot-Code.git
 [submodule "cccl"]
 	path = cccl
 	url = https://github.com/NVIDIA/cccl.git
