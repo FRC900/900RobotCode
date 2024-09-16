@@ -114,9 +114,6 @@ add_library(frc_robot_interface STATIC
 	src/cancoder_devices.cpp
 	src/canifier_device.cpp
 	src/canifier_devices.cpp
-	src/candle_device.cpp
-	src/candle_devices.cpp
-	src/candle_sim_device.cpp
 	src/can_bus_status_device.cpp
 	src/can_bus_status_devices.cpp
     src/ctre_v5_device.cpp
@@ -517,6 +514,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		src/frcrobot_gazebosim_interface.cpp
 		src/frc_robot_interface_sim.cpp
 		src/as726x_sim_device.cpp
+		src/candle_sim_device.cpp
 		src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
