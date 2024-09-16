@@ -2,14 +2,14 @@
     "ros.distro": "noetic",
     "python.autoComplete.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages",
-        "/home/ubuntu/2023RobotCode/zebROS_ws/devel/lib/python3.8/site-packages",
+        "/home/ubuntu/900RobotCode/zebROS_ws/devel/lib/python3.8/site-packages",
     ],
     "cmake.configureOnOpen": false,
     "python.analysis.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages",
-        "/home/ubuntu/2023RobotCode/zebROS_ws/devel/lib/python3.8/site-packages",
+        "/home/ubuntu/900RobotCode/zebROS_ws/devel/lib/python3.8/site-packages",
     ],
-    "sonarlint.pathToCompileCommands": "/home/ubuntu/2023RobotCode/zebROS_ws/build/compile_commands.json",
+    "sonarlint.pathToCompileCommands": "/home/ubuntu/900RobotCode/zebROS_ws/build/compile_commands.json",
     "files.associations": {
         "*.ipp": "cpp",
         "any": "cpp",
