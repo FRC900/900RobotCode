@@ -1,9 +1,9 @@
 swerve_drive_controller:
-    steering_joint_bl:
+    bl_angle:
         offset: 1.57
-    steering_joint_br:
+    br_angle:
         offset: 1.57
-    steering_joint_fl:
+    fl_angle:
         offset: 1.57
-    steering_joint_fr:
+    fr_angle:
         offset: 1.57
