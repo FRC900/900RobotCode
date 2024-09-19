@@ -95,7 +95,7 @@ void TalonFXProDevices<SIM>::simInit(ros::NodeHandle &nh)
 }
 
 template <bool SIM>
-void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     if constexpr (SIM)
     {

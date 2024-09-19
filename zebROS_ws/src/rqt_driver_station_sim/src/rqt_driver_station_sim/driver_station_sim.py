@@ -88,13 +88,13 @@ class DriverStationSim(Plugin):
     def _talon_state_callback(self, msg):
         # name + ": " + percent_output + "%, set to " + setpoint
         for i in range(len(msg.name)):
-            self._widget.talon_state_widgets[i].setText(str(msg.name[i])+" (in "+str(msg.talon_mode[i])+" mode): "+str(round(float(msg.motor_output_percent[i]), 4))+"%, position: "+str(round(float(msg.position[i]), 4))+", speed: "+str(round(float(msg.speed[i]), 4)) +", setpoint: "+str(round(float(msg.set_point[i]), 4)))
+            self._widget.talon_state_widgets[i].setText(str(msg.name[i])+" (in "+str(msg.talon_mode[i])+" mode): "+str(round(float(msg.motor_output_percent[i] * 100.0), 2))+"%, position: "+str(round(float(msg.position[i]), 4))+", speed: "+str(round(float(msg.speed[i]), 4)) +", setpoint: "+str(round(float(msg.set_point[i]), 4)))
             # self._widget.talon_state_widgets[i].adjustSize()
 
     def _talonfxpro_state_callback(self, msg):
         # name + ": " + percent_output + "%, set to " + setpoint
         for i in range(len(msg.name)):
-            self._widget.talon_state_widgets[i + self.num_talons].setText(str(msg.name[i])+" (in "+str(msg.control_mode[i])+" mode): "+str(round(float(msg.duty_cycle[i]), 4))+"%, position: "+str(round(float(msg.position[i]), 4))+", speed: "+str(round(float(msg.velocity[i]), 4))+", control_output: "+str(round(float(msg.control_output[i]), 4)))
+            self._widget.talon_state_widgets[i + self.num_talons].setText(str(msg.name[i])+" (in "+str(msg.control_mode[i])+" mode): "+str(round(float(msg.duty_cycle[i] * 100.0), 2))+"%, position: "+str(round(float(msg.position[i]), 4))+", speed: "+str(round(float(msg.velocity[i]), 4))+", control_output: "+str(round(float(msg.control_output[i]), 4)))
             # self._widget.talon_state_widgets[i].adjustSize()
 
     def auto_state_slot(self, state):

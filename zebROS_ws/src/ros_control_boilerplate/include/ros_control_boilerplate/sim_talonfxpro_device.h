@@ -38,6 +38,7 @@ public:
 
     bool gazeboInit(boost::shared_ptr<gazebo::physics::Model> parent_model);
 private:
+    std::string joint_name_;
     boost::shared_ptr<gazebo::physics::Joint> gazebo_joint_;
     // int counter_{0};
     std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder_;
