@@ -30,12 +30,12 @@
   -->
   <node pkg="nodelet" type="nodelet" name="$(arg camera_name)" args="load cv_camera/CvCameraNodelet /$(arg nodelet_manager_name)" if="$(eval run_camera)" output="screen" >
     <param name="device_path"             value="/dev/video0" />
-    <!-- <param name="image_width"             value="1600" />
-    <param name="image_height"            value="1300" /> -->
     <param name="rate"                    value="60" />
     <param name="frame_id"                value="$(arg camera_name)" />
     <param name="camera_name"             value="$(arg camera_name)" />
     <param name="cv_cap_prop_convert_rgb" value="0" />
+    <!-- <param name="image_width"             value="1600" /> -->
+    <!-- <param name="image_height"            value="1300" /> -->
     <!-- <param name="cv_cap_prop_fourcc" value="BA81" /> -->
   </node>
 
@@ -55,7 +55,7 @@
   <!-- 
   ========== GPU Apriltag Detector
   -->
-  <node pkg="nodelet" type="nodelet" name="apriltag_detection_$(arg camera_name)" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" launch-prefix="$(arg profile)" output="screen" >
+  <node pkg="nodelet" type="nodelet" name="apriltag_detection_$(arg camera_name)" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" launch-prefix="$(arg launch_prefix)" output="screen" >
     <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
     <!-- Match tag topic to CPU apriltag detection topic names -->
     <remap from="/apriltag_$(arg camera_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg camera_name)/tag_detection_msg"/>

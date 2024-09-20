@@ -227,7 +227,7 @@ void FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>::Detect(std::vector<GpuApriltag
             }
 #endif
 
-            results.emplace_back();
+            results.emplace_back(GpuApriltagResult{});
             results.back().id_ = gpu_detection->id;
             results.back().hamming_ = gpu_detection->hamming;
             results.back().distortion_factor_ = distortion_factor;
