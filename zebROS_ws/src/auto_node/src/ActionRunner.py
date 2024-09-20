@@ -3,6 +3,7 @@
 from action import Action
 from subsystem import Subsystem
 from series_action import SeriesAction
+from parallel_action import ParallelAction
 from wait_action import WaitAction
 from typing import List
 import rospy
@@ -63,13 +64,18 @@ class ActionRunner:
 if __name__ == "__main__":
     rospy.init_node("action_runner")
     runner = ActionRunner()
-    to_run = SeriesAction([WaitAction(2), WaitAction(3)])
+    to_run = SeriesAction([
+                ParallelAction([ 
+                    SeriesAction([WaitAction(1), WaitAction(1)]),
+                    SeriesAction([WaitAction(3), WaitAction(3)])
+                                ])
+                            ])
     runner.start_action(to_run)
     print("Here")
     r = rospy.Rate(100)
-    try:
-        while True:
+    while True:
+        try:
             runner.loop(disabled=False)
             r.sleep()
-    except KeyboardInterrupt:
-        exit(0)
+        except KeyboardInterrupt:
+            exit(0)
