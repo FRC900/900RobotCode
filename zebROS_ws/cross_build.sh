@@ -5,7 +5,10 @@ cd ~/2023RobotCode/zebROS_ws/
 if [ -z $ROS_ROOT ]; then
 	#PATH=$PATH:$HOME/wpilib/2024/roborio/bin
 	source ~/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/setup.bash
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/dist-packages
 	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/site-packages
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/site-packages
 elif [[ ! $ROS_ROOT = "$HOME/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/share/ros" ]]; then
 	echo -e "\e[1m\e[31mROS is not configured for a cross build (maybe set up for a native build instead?)\e[0m"
 	echo -e "\e[1m\e[31mRun ./cross_build.sh in a new terminal window\e[0m"
@@ -31,6 +34,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	controllers_2022 \
 	controllers_2022_msgs \
 	cuda_apriltag_ros \
+	cv_camera \
 	deeptag_ros \
 	demo_tf_node \
 	diff_drive_controller \
