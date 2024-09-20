@@ -1,12 +1,6 @@
-import rclpy
-import rclpy.qos
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+import rospy
 
-from actions_node.default_actions.drive_trajectory_action import DriveTrajectoryAction
-from ck_utilities_py_node.node_handle import NodeHandle
-from ck_ros2_base_msgs_node.msg import AutonomousInfoArray, AutonomousInfo
-from ck_ros2_base_msgs_node.srv import GetAutonomousInfo, ResetPoseWithConfirmation
-from threading import Event
+from drive_trajectory_action import DriveTrajectoryAction
 
 class DriveTrajectoryActionIterator():
     def __init__(self, autonomous_name : str, expected_trajectory_count : int) -> None:

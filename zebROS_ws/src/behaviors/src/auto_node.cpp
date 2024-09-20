@@ -78,9 +78,6 @@ class AutoNode {
 		ros::ServiceClient tagslam_relocalize_srv_;
 		
 		ros::ServiceClient zero_odom_srv_;
-		ros::ServiceClient toggle_relocalize_srv_;
-		ros::ServiceClient relocalize_point_srv_;
-		ros::ServiceClient toggle_cmd_vel_limit_srv_;
 
 		ros::ServiceClient pause_srv_;
 		bool park_enabled = false;
@@ -175,10 +172,7 @@ class AutoNode {
 		park_srv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
 		tagslam_relocalize_srv_ = nh_.serviceClient<std_srvs::Empty>("/tagslam_pub_map_to_odom", false, service_connection_header);
 		zero_odom_srv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
-		toggle_relocalize_srv_ = nh_.serviceClient<std_srvs::SetBool>("/toggle_map_to_odom", false, service_connection_header);
-		relocalize_point_srv_ = nh_.serviceClient<behavior_actions::RelocalizePoint>("/relocalize_point", false, service_connection_header);
-		toggle_cmd_vel_limit_srv_ = nh_.serviceClient<std_srvs::SetBool>("/toggle_cmd_vel_limit", false, service_connection_header);
-		
+
 		pause_srv_ = nh_.serviceClient<std_srvs::SetBool>("/path_follower/pause_path", false, service_connection_header);
 
 		imu_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &AutoNode::imuCallback, this);
@@ -1256,14 +1250,7 @@ class AutoNode {
 		std_srvs::SetBool toggle_relocalize;
 		toggle_relocalize.request.data = true;
 		ROS_INFO_STREAM("auto_node: reenabling localization");
-		if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
-			ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
-			shutdownNode(ERROR, "A Map to odom service call failed");
-		}
-		if (!toggle_cmd_vel_limit_srv_.call(toggle_relocalize)) {
-			ROS_ERROR_STREAM("FAILED TO ENABLE CMD VEL LIMIT FOR MAP TO ODOM - EXITING");
-			shutdownNode(ERROR, "A Map to odom service call failed");
-		}
+
 		// make a std_srvs::Empty request
 		std_srvs::Empty srv;
 		// call the relocalize service
@@ -1350,12 +1337,7 @@ class AutoNode {
 			return false;
 		}
 		path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now() - ros::Duration(0.1));
-		std_srvs::SetBool toggle_cmd_vel;
-		toggle_cmd_vel.request.data = true;
-		if (!toggle_cmd_vel_limit_srv_.call(toggle_cmd_vel)) {
-			ROS_ERROR_STREAM("FAILED TO ENABLE CMD VEL LIMIT FOR MAP TO ODOM - EXITING");
-			shutdownNode(ERROR, "A Map to odom service call failed");
-		}
+
 		int iteration_value = 1;
 		bool wait_for_path = true;
 		if (action_data.hasMember("goal"))
@@ -1403,43 +1385,12 @@ class AutoNode {
 			goal.velocity_path = premade_velocity_paths_[auto_step];
 			goal.velocity_waypoints = premade_velocity_waypoints_[auto_step];
 			goal.waypointsIdx = waypointsIdxs_[auto_step];
-			goal.dont_go_to_start = reset_odom_to_path_start;
+			goal.dont_go_to_start = reset_odom_to_path_start; // now not respected, auto node rewrite should fix this
 
 			last_waypoint = -1;
-			if (reset_odom_to_path_start) {
-				geometry_msgs::PoseStamped first_pose = goal.position_path.poses[0];
-				ROS_WARN_STREAM("FORCING RELOCALZE TO THE START OF THE PATH======= AT POINT X,Y " << first_pose.pose.position.x << ", " << first_pose.pose.position.y);
-				behavior_actions::RelocalizePoint inital_point;
-				inital_point.request.pose.orientation = latest_imu_.orientation;
-				inital_point.request.pose.position.x = first_pose.pose.position.x;
-				inital_point.request.pose.position.y = first_pose.pose.position.y;
-				if (!relocalize_point_srv_.call(inital_point)) {
-					ROS_ERROR_STREAM("FAILED TO CALL RELOCALIZE POINT - EXITING");
-					shutdownNode(ERROR, "Map to odom service call failed");
-				}
-				ROS_INFO_STREAM("SETTING RELOCALIZE TO FALSE");
-				std_srvs::SetBool toggle_relocalize;
-				toggle_relocalize.request.data = false;
-				if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
-					ROS_ERROR_STREAM("FAILED TO DISABLE RELOCALIZING WITH CMD_VEL - EXITING");
-					shutdownNode(ERROR, "A Map to odom service call failed");
-				}
-				ROS_INFO_STREAM("REZEROING ODOMETRY SO PATH WORKS AS EXPECTED");
-				std_srvs::Empty odom_reset; 
-				if (!zero_odom_srv_.call(odom_reset)) {
-					ROS_ERROR_STREAM("FAILED TO REZERO ODOM");
-					shutdownNode(ERROR, "Rezeroing odom before odom/map relative path failed");
-				}
-				ros::Duration(0.05).sleep();
-			} else {
-				ROS_INFO_STREAM("SETTING RELOCALIZE TO TRUE");
-				std_srvs::SetBool toggle_relocalize;
-				toggle_relocalize.request.data = true;
-				if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
-					ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
-					shutdownNode(ERROR, "A Map to odom service call failed");
-				}
-			}
+
+			ROS_INFO_STREAM("SETTING RELOCALIZE TO TRUE");
+			
 
 			ROS_INFO_STREAM("Auto node - sending path goal for path " << auto_step);
 			path_ac_.sendGoal(goal, NULL, NULL, [&](const path_follower_msgs::PathFeedbackConstPtr& feedback){
@@ -1467,13 +1418,6 @@ class AutoNode {
 			if (wait_for_path) {
 				
 				waitForActionlibServer(path_ac_, 100, "running path");
-				std_srvs::SetBool toggle_relocalize;
-				toggle_relocalize.request.data = true;
-				ROS_INFO_STREAM("auto_node: reenabling localization");
-				if (!toggle_relocalize_srv_.call(toggle_relocalize)) {
-					ROS_ERROR_STREAM("FAILED TO REENABLE RELOCALIZING WITH CMD_VEL - EXITING");
-					shutdownNode(ERROR, "A Map to odom service call failed");
-				}
 			}
 			iteration_value--;
 		}

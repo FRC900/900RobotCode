@@ -98,8 +98,6 @@ extern ros::ServiceClient ParkSrv;
 extern ros::ServiceClient IMUZeroSrv;
 extern ros::ServiceClient SwerveOdomZeroSrv;
 extern ros::ServiceClient setCenterSrv;	
-extern ros::ServiceClient toggle_relocalize_srv_;
-extern ros::ServiceClient toggle_cmd_vel_limit_srv_;
 extern ros::Publisher auto_mode_select_pub;
 extern bool joystick1_left_trigger_pressed;
 extern bool joystick1_right_trigger_pressed;

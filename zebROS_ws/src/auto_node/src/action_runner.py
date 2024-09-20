@@ -21,7 +21,7 @@ class ActionRunner:
     def reset_action_list(self):
         self.__active_action_list:List[Action] = []
 
-
+    # does not actually do anything if affected systems overlap
     def start_action(self, new_action:Action):
         try:
             #TODO test timing and maybe come up with a more efficient solution

@@ -8,6 +8,13 @@ class Alliance(Enum):
     BLUE = 1
     UNKNOWN = -1
 
+class RobotMode(Enum):
+    DISABLED = 0
+    TELEOP = 1
+    AUTONOMOUS = 2
+    TEST = 3
+
+# @TODO don't crash when we haven't recived a message 
 class RobotStatusHelper:
     def __init__(self):
         self.__match_data_msg: MatchSpecificData = None
@@ -21,6 +28,15 @@ class RobotStatusHelper:
 
     def get_alliance(self) -> Alliance:
         return Alliance(self.__match_data_msg)
+
+    def get_mode(self) -> RobotMode:
+        if self.disabled(): return RobotMode.DISABLED
+        elif self.is_autonomous(): return RobotMode.AUTONOMOUS
+        elif self.is_teleop(): return RobotMode.TELEOP
+        elif self.is_test(): return RobotMode.TEST
+        else: 
+            rospy.logerr("FRC Match Data Helper - Unknown state")
+            return RobotMode.DISABLED # if we don't know whats happening safest to say we are disabled 
 
     def get_match_time(self) -> float:
         return self.__match_data_msg.matchTimeRemaining
@@ -39,3 +55,6 @@ class RobotStatusHelper:
     
     def is_teleop(self) -> bool:
         return self.__match_data_msg.OperatorControl
+
+    def is_test(self) -> bool:
+        return self.__match_data_msg.Test
