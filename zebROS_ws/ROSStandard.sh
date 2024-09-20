@@ -19,4 +19,5 @@ if [ $ROS_IP == "10.9.0.9" ] ; then
 #        echo ubuntu | sudo -S ntpd -gqx
 #        echo ubuntu | sudo -S systemctl restart ntp.service
 fi
+#export PYTHONPATH=$PYTHONPATH:/home/ubuntu/2023RobotCode/zebROS_ws/src/frc_utils/src/
 exec "$@"

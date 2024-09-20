@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 from action import Action
 from subsystem import Subsystem
 from series_action import SeriesAction

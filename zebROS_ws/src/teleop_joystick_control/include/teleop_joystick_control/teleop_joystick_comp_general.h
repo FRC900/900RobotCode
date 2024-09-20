@@ -28,6 +28,7 @@ public:
 private:
 	virtual uint8_t calculateAutoMode() = 0;
 	void publisher_callback(const ros::TimerEvent&) {
+		// should be latched instead?
 		behavior_actions::AutoMode msg;
 		msg.header.stamp = ros::Time::now();
 		msg.auto_mode = calculateAutoMode();
