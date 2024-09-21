@@ -55,10 +55,11 @@ public:
 
     int getCANID(void) const;
 
+    std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> state_;
+
 protected:
     const std::string can_bus_;
 
-    std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> state_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWCommand> command_;
     std::unique_ptr<ctre::phoenix6::configs::TalonFXConfiguration> config_;
     std::unique_ptr<std::mutex> read_state_mutex_;

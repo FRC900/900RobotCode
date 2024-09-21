@@ -35,7 +35,7 @@ public:
     SimTalonFXProDevice &operator=(SimTalonFXProDevice &&) noexcept = delete;
 
     // Read and write functions which add additional sim features
-    void simRead(const ros::Time& time, const ros::Duration& period);
+    void simRead(const ros::Time& time, const ros::Duration& period, const units::voltage::volt_t battery_voltage);
 
     bool setSimLimitSwitches(const bool forward_limit, const bool reverse_limit);
     bool setSimCurrent(const double stator_current, const double supply_current);

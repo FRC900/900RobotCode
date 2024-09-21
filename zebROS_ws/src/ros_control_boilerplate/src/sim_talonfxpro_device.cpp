@@ -45,7 +45,7 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
 
 SimTalonFXProDevice::~SimTalonFXProDevice() = default;
 
-void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period)
+void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period, const units::voltage::volt_t battery_voltage)
 {
     using hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
     using hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
@@ -122,11 +122,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         sim_state.SetRotorVelocity(velocity);
 
         // TODO battery voltage simulation
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
+        sim_state.SetSupplyVoltage(battery_voltage);
 
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
+        state_->setDutyCycle(sim_state.GetMotorVoltage() / battery_voltage);
         state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
         state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
         state_->setRotorPosition(position.value());
@@ -187,11 +187,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         }
 
         // TODO battery voltage simulation
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
+        sim_state.SetSupplyVoltage(battery_voltage);
         
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
+        state_->setDutyCycle(sim_state.GetMotorVoltage() / battery_voltage);
         state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
         state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
         break;
@@ -233,24 +233,27 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         else
         {
             // Motion magic, controls both position and velocity
-            units::radian_t position{state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
-            units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
-            units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
+            units::radian_t position{invert * state_->getClosedLoopReference() / state_->getSensorToMechanismRatio()};
+            units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2.0) * cancoder_invert};
+            units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() / state_->getSensorToMechanismRatio()};
             
             // Set rotor position and velocity
-            sim_state.SetRawRotorPosition(position);
-            if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
+            sim_state.AddRotorPosition(invert * velocity * units::second_t{period.toSec()});
+            if (cancoder_) {
+                cancoder_->GetSimState().SetVelocity(cancoder_invert * velocity);
+                cancoder_->GetSimState().AddPosition(cancoder_invert * velocity * units::second_t{period.toSec()});
+            }
             sim_state.SetRotorVelocity(velocity);
 
             state_->setRotorPosition(position.value());
         }
 
         // TODO battery voltage simulation
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
+        sim_state.SetSupplyVoltage(battery_voltage);
 
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
+        state_->setDutyCycle(sim_state.GetMotorVoltage() / battery_voltage);
         state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
         state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
         break;
@@ -276,11 +279,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         sim_state.SetRotorVelocity(target_velocity);
 
         // TODO battery voltage simulation
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
+        sim_state.SetSupplyVoltage(battery_voltage);
 
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
+        state_->setDutyCycle(sim_state.GetMotorVoltage() / battery_voltage);
         state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
         state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
         state_->setRotorPosition(target_position.value()); // unrealistic but idk how to make it better right now?
