@@ -19,6 +19,7 @@ class RobotStatusHelper:
     def __init__(self):
         self.__match_data_msg: MatchSpecificData = None
         rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.__update, tcp_nodelay=True)
+        rospy.sleep(rospy.Duration(1)) # wait for some match data
 
     def __update(self, msg: MatchSpecificData):
         self.__match_data_msg = msg

@@ -1,6 +1,6 @@
 from auto_base import AutoBase
 from series_action import SeriesAction
-
+from wait_action import WaitAction
 
 
 class Test4Note(AutoBase):
@@ -10,7 +10,6 @@ class Test4Note(AutoBase):
 
     def get_action(self) -> SeriesAction:
         return SeriesAction([
-            # ShootSubwoofer
-            
-
+            WaitAction(2),
+            WaitAction(2)
         ])

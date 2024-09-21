@@ -8,8 +8,9 @@ class AutoBase(ABC):
     """
     Base class for all autonomous definitions.
     """
-    def __init__(self, display_name : str) -> None:
+    def __init__(self, display_name : str, expected_trajectory_count: int) -> None:
         self.display_name: str = display_name
+        self.expected_trajectory_count: int = expected_trajectory_count
 
     @abstractmethod
     def get_action(self) -> SeriesAction:
