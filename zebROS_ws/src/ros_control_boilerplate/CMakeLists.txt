@@ -35,6 +35,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_dev
   gazebo_ros_control
   pluginlib
+  simulator_interface
 )
 ign_import_target(UUID)
 pkg_check_modules(TBB tbb)
@@ -97,6 +98,7 @@ catkin_package(
 	std_msgs
 	ctre_interfaces
 	trajectory_msgs
+	simulator_interface
   LIBRARIES
 )
 

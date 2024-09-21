@@ -60,7 +60,7 @@ hardware_interface:
        #- {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
 
        #shooter
-       - {name: top_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+       - {name: top_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, simulator: top_left_shooter_simulator, local: true}
        - {name: top_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
        - {name: bottom_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
        - {name: bottom_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
@@ -102,6 +102,13 @@ hardware_interface:
 # /frcrobot/joint1_talon_controller/command
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
+
+# https://first.wpi.edu/wpilib/allwpilib/docs/release/java/edu/wpi/first/wpilibj/simulation/FlywheelSim.html
+top_left_shooter_simulator:
+    joints: [top_left_shooter_joint]
+    type: general_simulators/FlywheelSimulator
+    gearing: 1.0 # already accounted for by sensor to mechanism ratio
+    moment_of_inertia: 0.01 # kg m^2
 
 intake_talonfxpro_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController

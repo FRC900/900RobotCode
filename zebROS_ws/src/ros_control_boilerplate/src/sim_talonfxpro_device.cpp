@@ -10,18 +10,48 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
                                          const std::string &joint_name,
                                          const int can_id,
                                          const std::string &can_bus,
-                                         double read_hz)
-    : TalonFXProDevice(name_space, joint_index, joint_name, can_id, can_bus, read_hz)
+                                         double read_hz,
+                                         const std::string &simulator,
+                                         const XmlRpc::XmlRpcValue &simulator_info)
+    : TalonFXProDevice(name_space, joint_index, joint_name, can_id, can_bus, read_hz, simulator, simulator_info)
 {
+    // Consider: http://wiki.ros.org/pluginlib for simulation interfaces
+    // e.g. a FlywheelSimulator plugin that loads stuff from configs, etc
+    // Basically like a controller except it's called in this function and controls simulated state
     this->joint_name_ = joint_name;
+
+    this->simulator_name_ = simulator;
+
+    if (simulator != "") {
+        // Load simulator from XMLRPC values retrieved by _devices.cpp
+        // Example YAML:
+        /*
+        top_left_shooter_simulator:
+            joints: [top_left_shooter_joint]
+            type: general_simulators/FlywheelSimulator
+            gear_ratio: 1.0 # already accounted for by sensor to mechanism ratio
+            inertia: 0.1 # kg m^2
+        */
+        loader_ = std::make_unique<pluginlib::ClassLoader<simulator_base::Simulator>>("simulator_interface", "simulator_base::Simulator");
+        // Load the simulator
+        try {
+            simulator_ = loader_->createInstance(simulator_info["type"]);
+            simulator_->init(simulator_info);
+        } catch (const pluginlib::PluginlibException &ex) {
+            ROS_ERROR_STREAM("Failed to load simulator " << simulator << " for joint " << joint_name << ": " << ex.what());
+        }
+    }
 }
 
 SimTalonFXProDevice::~SimTalonFXProDevice() = default;
 
-void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration &period)
+void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period)
 {
+    using hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
+    using hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
+    using hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder;
     // https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/cpp/MotionMagic/src/main/cpp/sim/TalonFXSimProfile.cpp is the right way to do this
-    if (state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder || state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder || state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder)
+    if (state_->getFeedbackSensorSource() == FusedCANcoder || state_->getFeedbackSensorSource() == RemoteCANcoder || state_->getFeedbackSensorSource() == SyncCANcoder)
     {
         if (!cancoder_ || cancoder_->GetDeviceID() != state_->getFeedbackRemoteSensorID())
         {
@@ -113,23 +143,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
     case hardware_interface::talonfxpro::TalonMode::VelocityVoltage:
     case hardware_interface::talonfxpro::TalonMode::VelocityTorqueCurrentFOC:
     {
-        // Calculate velocity setpoint and position delta, applying invert and sensor : mechanism ratio
-        units::angular_velocity::radians_per_second_t velocity_setpoint{invert * state_->getControlVelocity() * state_->getSensorToMechanismRatio()};
-        units::radian_t delta_position{velocity_setpoint * units::second_t{period.toSec()}};
-
-        // Velocity control mode, add position delta and set velocity
-        sim_state.SetRotorVelocity(velocity_setpoint);
-        sim_state.AddRotorPosition(delta_position); // VERY IMPORTANT SO CTRE SIM KNOWS MOTORS MOVE
-
-        // TODO battery voltage simulation
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
-        
-        // Update our motor state
-        state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
-        state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
-        state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
-        
         // Gazebo crap
         if (gazebo_joint_)
         {
@@ -152,37 +165,41 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
 
             // gazebo_joint_->SetPosition(0, state_->getRotorPosition());
             gazebo_joint_->SetForce(0, torque);
+            sim_state.SetRotorVelocity(units::angular_velocity::radians_per_second_t{gazebo_joint_->GetVelocity(0)});
+            sim_state.AddRotorPosition(units::radian_t{gazebo_joint_->GetVelocity(0) * period.toSec()});
             // gazebo_joint_->SetVelocity(0, state_->getControlVelocity());
             ROS_ERROR_STREAM_THROTTLE_NAMED(1, std::to_string(state_->getCANID()), "IN VELOCITY MODE " << torque << " " << sim_state.GetMotorVoltage().value() << " " << state_->getControlVelocity() << " " << state_->getSensorToMechanismRatio());
         }
-        // -3, -169, 1
-        // -3, 169, 1 
+        else if (simulator_)
+        {
+            // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists, about to call update()");
+            simulator_->update(joint_name_, time, period, sim_state);
+        }
+        else
+        {
+            // Calculate velocity setpoint and position delta, applying invert and sensor : mechanism ratio
+            units::angular_velocity::radians_per_second_t velocity_setpoint{invert * state_->getControlVelocity() * state_->getSensorToMechanismRatio()};
+            units::radian_t delta_position{velocity_setpoint * units::second_t{period.toSec()}};
+
+            // Velocity control mode, add position delta and set velocity
+            sim_state.SetRotorVelocity(velocity_setpoint);
+            sim_state.AddRotorPosition(delta_position); // VERY IMPORTANT SO CTRE SIM KNOWS MOTORS MOVE
+        }
+
+        // TODO battery voltage simulation
+        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
+        
+        // Update our motor state
+        state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
+        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
+        state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
+        state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
         break;
     }
     case hardware_interface::talonfxpro::TalonMode::MotionMagicDutyCycle:
     case hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage: 
     case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
     {
-        // Motion magic, controls both position and velocity
-        units::radian_t position{state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
-        units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
-        units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
-        
-        // Set rotor position and velocity
-        sim_state.SetRawRotorPosition(position);
-        if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
-        sim_state.SetRotorVelocity(velocity);
-
-        // TODO battery voltage simulation
-        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
-
-        // Update our motor state
-        state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
-        state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
-        state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
-        state_->setRotorPosition(position.value());
-
         // Gazebo crap
         if (gazebo_joint_)
         {
@@ -204,15 +221,41 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
 
             // (Nm / A) * (V - (rad/s/V * rad/s)) / (ohms) = Nm
 
-            gazebo_joint_->SetPosition(0, state_->getRotorPosition());
+            // gazebo_joint_->SetPosition(0, state_->getRotorPosition());
             gazebo_joint_->SetForce(0, torque);
+            // Velocity control mode, add position delta and set velocity
+            sim_state.SetRotorVelocity(units::angular_velocity::radians_per_second_t{gazebo_joint_->GetVelocity(0)});
+            if (cancoder_) { cancoder_->GetSimState().SetRawPosition(units::radian_t{state_->getRotorPosition() * cancoder_invert - cancoder_offset - M_PI / 2}); }
+            sim_state.AddRotorPosition(units::radian_t{gazebo_joint_->GetVelocity(0) * period.toSec()});
             // gazebo_joint_->SetVelocity(0, state_->getControlVelocity());
             ROS_ERROR_STREAM_THROTTLE_NAMED(1, std::to_string(state_->getCANID()), "IN MOTION MAGIC MODE " << torque << " " << sim_state.GetMotorVoltage().value() << " " << state_->getControlVelocity() << " " << state_->getSensorToMechanismRatio());
         }
+        else
+        {
+            // Motion magic, controls both position and velocity
+            units::radian_t position{state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
+            units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
+            units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
+            
+            // Set rotor position and velocity
+            sim_state.SetRawRotorPosition(position);
+            if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
+            sim_state.SetRotorVelocity(velocity);
+
+            state_->setRotorPosition(position.value());
+        }
+
+        // TODO battery voltage simulation
+        sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
+
+        // Update our motor state
+        state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
+        state_->setDutyCycle(sim_state.GetMotorVoltage().value() / 12.5);
+        state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
+        state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
         break;
     }
     case hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC:
-    // TODO : test the modes below when/if we actually use them
     case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityDutyCycle:
     case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityVoltage:
     case hardware_interface::talonfxpro::TalonMode::MotionMagicVelocityTorqueCurrentFOC:

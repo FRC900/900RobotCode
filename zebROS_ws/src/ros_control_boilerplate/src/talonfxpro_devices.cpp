@@ -37,8 +37,19 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
             readIntRequired(joint_params, "can_id", can_id, joint_name);
             std::string can_bus;
             readStringRequired(joint_params, "can_bus", can_bus, joint_name);
+            std::string simulator;
+            readStringOptional(joint_params, "simulator", simulator, joint_name);
 
-            devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_));
+            XmlRpc::XmlRpcValue simulator_info;
+
+            if (simulator != "") {
+                if (!root_nh.getParam(simulator, simulator_info))
+                {
+                    ROS_ERROR_STREAM("A simulator '" << simulator << "' was specified, but no details were found.");
+                }
+            }
+
+            devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_, simulator, simulator_info));
         }
     }
 }

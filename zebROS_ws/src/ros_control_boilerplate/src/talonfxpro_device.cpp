@@ -9,7 +9,9 @@ TalonFXProDevice::TalonFXProDevice(const std::string &name_space,
                                    const std::string &joint_name,
                                    const int can_id,
                                    const std::string &can_bus,
-                                   double read_hz)
+                                   double read_hz,
+                                   const std::string &/*simulator*/,
+                                   const XmlRpc::XmlRpcValue &/*simulator_info*/)
 : CTREV6Device("TalonFXPro", joint_name, can_id)
 , can_bus_{can_bus}
 , state_{std::make_unique<hardware_interface::talonfxpro::TalonFXProHWState>(can_id)}

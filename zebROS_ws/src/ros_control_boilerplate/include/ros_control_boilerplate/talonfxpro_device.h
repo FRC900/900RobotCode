@@ -38,7 +38,9 @@ public:
                      const std::string &joint_name,
                      const int can_id,
                      const std::string &can_bus,
-                     double read_hz);
+                     double read_hz,
+                     const std::string &simulator,
+                     const XmlRpc::XmlRpcValue &simulator_info);
     TalonFXProDevice(const TalonFXProDevice &) = delete;
     TalonFXProDevice(TalonFXProDevice &&other) noexcept = delete;
     ~TalonFXProDevice() override;

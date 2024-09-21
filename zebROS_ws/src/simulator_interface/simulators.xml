@@ -1,0 +1,10 @@
+<library path="lib/libgeneral_simulators">
+	<class
+		name="general_simulators/FlywheelSimulator"
+		type="general_simulators::FlywheelSimulator"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Flywheel simulator, using WPILib's flywheel sim
+		</description>
+	</class>
+</library>
