@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(auto_node)
+project(auto_node_msgs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   behavior_actions
   geometry_msgs
   path_follower_msgs
-  auto_node_msgs
+  message_generation
   rospy
   std_msgs
   tf2_ros
@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -60,11 +60,11 @@ catkin_python_setup()
 #   Message2.msg
 # )
 
-#add_message_files(
-#  FILES
-#  PathGoal.msg
-#  PathGoalArray.msg
-#)
+add_message_files(
+  FILES
+  PathGoal.msg
+  PathGoalArray.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -85,7 +85,7 @@ catkin_python_setup()
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
-#generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs path_follower_msgs)
+generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs path_follower_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -218,10 +218,3 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-# Add a custom command to run the Python script
-add_custom_target(run_my_script ALL
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_choreo_autos.py
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Running choreo script"
-)

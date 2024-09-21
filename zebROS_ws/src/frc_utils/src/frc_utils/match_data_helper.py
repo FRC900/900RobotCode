@@ -28,7 +28,7 @@ class RobotStatusHelper:
         return self.__match_data_msg
 
     def get_alliance(self) -> Alliance:
-        return Alliance(self.__match_data_msg)
+        return Alliance(self.__match_data_msg.allianceColor)
 
     def get_mode(self) -> RobotMode:
         if self.disabled(): return RobotMode.DISABLED

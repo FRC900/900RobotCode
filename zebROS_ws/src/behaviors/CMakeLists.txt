@@ -49,9 +49,15 @@ include_directories(
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
-
-################################################
-## Declare ROS messages, services and actions ##
+find_package(catkin REQUIRED COMPONENTS
+  actionlib
+  actionlib_msgs
+  message_generation
+  roscpp
+  nav_msgs
+  geometry_msgs
+  
+) and actions ##
 ################################################
 
 ## To declare and build messages, services or actions from within this

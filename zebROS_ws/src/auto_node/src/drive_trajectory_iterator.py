@@ -10,10 +10,7 @@ class DriveTrajectoryActionIterator():
     
         self.__expected_trajectory_count = expected_trajectory_count
 
-        self.get_auto_info_client = NodeHandle.node_handle.create_client(srv_type=GetAutonomousInfo, srv_name='/get_autonomous_info', qos_profile=rclpy.qos.qos_profile_services_default)
-        while not self.get_auto_info_client.wait_for_service(timeout_sec=1.0):
-            NodeHandle.node_handle.get_logger().info('Get Auto Info Service not available, waiting again...')
-
+        rospy.Subscriber("/auto/", tcp_nodelay=True)
         try:
             if self.get_auto_info_client is not None:
                 auto_info_req = GetAutonomousInfo.Request()
@@ -31,7 +28,9 @@ class DriveTrajectoryActionIterator():
 
         except Exception as e:
             NodeHandle.node_handle.get_logger().error(f"Service call failed {e}")
-        
+    
+    def 
+
     def get_next_trajectory_action(self) -> DriveTrajectoryAction:
         curr_iterator = self.__trajectory_index_iterator
         self.__trajectory_index_iterator = self.__trajectory_index_iterator + 1
