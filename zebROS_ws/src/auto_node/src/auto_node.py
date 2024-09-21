@@ -12,6 +12,7 @@ from behavior_actions.msg import AutoMode
 
 import autos
 from autos import AutonomousNames
+from path_loader import PathLoader
 from frc_utils.match_data_helper import RobotStatusHelper, Alliance, RobotMode
 
 # number to str of auto name
@@ -29,7 +30,7 @@ class AutoNode():
         self.__selected_auto : AutoBase = None
         self.__prev_selected_auto : AutoBase = None
         self.__selected_auto_action : Action = None
-
+        self.__path_loader : PathLoader = PathLoader()
         #self.__path_pub = rospy.Publisher("/auto/selected_path")
         self.__robot_status = RobotStatusHelper() 
         self.AUTO_NAME_TO_AUTOBASE = autos.init_auto_selection_map()
@@ -57,6 +58,7 @@ class AutoNode():
         if self.__selected_auto is None:                 
             rospy.logerr("No auto selected!")
         
+        # need to stress test this a ton and make sure there are no edge cases 
         if robot_mode == RobotMode.AUTONOMOUS:
             # Start the action on the transition from Disabled to Auto.
             if self.__prev_robot_mode == RobotMode.DISABLED:
@@ -94,6 +96,7 @@ class AutoNode():
     def set_auto_id(self, msg : AutoMode) -> None:
         try:
             self.__selected_auto = self.AUTO_NAME_TO_AUTOBASE[IDS_TO_AUTO_NAME[msg.auto_mode]] 
+            self.__path_loader.set_auto_name(IDS_TO_AUTO_NAME[msg.auto_mode]) # will load the path for the selected auto
             rospy.loginfo_throttle(10, f"Recived auto mode of - {msg.auto_mode} mapped to {IDS_TO_AUTO_NAME[msg.auto_mode]}")
         except Exception as e:
             rospy.logerr(f"Unable to look up auto with id {msg.auto_mode}\n error of {e}")
