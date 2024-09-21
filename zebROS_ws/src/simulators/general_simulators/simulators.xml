@@ -1,0 +1,42 @@
+<library path="lib/libgeneral_simulators">
+	<class
+		name="general_simulators/DefaultSimulator"
+		type="general_simulators::DefaultSimulator"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Default simulator, gets to setpoint immediately
+		</description>
+	</class>
+	<class
+		name="general_simulators/FlywheelSimulator"
+		type="general_simulators::FlywheelSimulator"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Flywheel simulator, using WPILib's flywheel sim
+		</description>
+	</class>
+	<class
+		name="general_simulators/SingleJointedArmSimulator"
+		type="general_simulators::SingleJointedArmSimulator"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Single jointed arm simulator, using WPILib's single jointed arm sim
+		</description>
+	</class>
+	<class
+		name="general_simulators/SwerveSimulator4"
+		type="general_simulators::SwerveSimulator<4>"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Swerve simulator, copied from 971 and 22377's swerve dynamics
+		</description>
+	</class>
+	<class
+		name="general_simulators/SwerveSimulator1"
+		type="general_simulators::SwerveSimulator<1>"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Swerve simulator, copied from 971 and 22377's swerve dynamics
+		</description>
+	</class>
+</library>

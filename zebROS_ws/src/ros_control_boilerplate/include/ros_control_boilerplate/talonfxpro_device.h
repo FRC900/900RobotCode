@@ -7,6 +7,7 @@
 
 #include "ros/node_handle.h"
 #include "ros_control_boilerplate/ctre_v6_device.h"
+#include "simulator_interface/simulator_base.h"
 
 namespace ctre::phoenix6
 {

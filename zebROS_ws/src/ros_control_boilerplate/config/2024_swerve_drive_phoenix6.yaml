@@ -65,7 +65,7 @@ swerve_drive_controller:
         #neutral_deadband: 0.01
         stator_current_limit: 60
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     fr_drive:
         joint: fr_drive
         close_loop_values:
@@ -82,7 +82,7 @@ swerve_drive_controller:
         #neutral_deadband: 0.01
         stator_current_limit: 60
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     bl_drive:
         joint: bl_drive
         close_loop_values:
@@ -100,7 +100,7 @@ swerve_drive_controller:
         #neutral_deadband: 0.01
         stator_current_limit: 60
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     br_drive:
         joint: br_drive
         close_loop_values:
@@ -118,7 +118,7 @@ swerve_drive_controller:
         #neutral_deadband: 0.01
         stator_current_limit: 60
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     fl_angle:
         joint: fl_angle
         feedback_sensor_source: FusedCANcoder
@@ -136,7 +136,7 @@ swerve_drive_controller:
         invert: clockwise_positive
         stator_current_limit: 40
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     fr_angle:
         joint: fr_angle
         feedback_sensor_source: FusedCANcoder
@@ -154,7 +154,7 @@ swerve_drive_controller:
         invert: clockwise_positive
         stator_current_limit: 40
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     br_angle:
         joint: br_angle
         feedback_sensor_source: FusedCANcoder
@@ -172,7 +172,7 @@ swerve_drive_controller:
         invert: clockwise_positive
         stator_current_limit: 40
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
     bl_angle:
         joint: bl_angle
         feedback_sensor_source: FusedCANcoder
@@ -190,7 +190,7 @@ swerve_drive_controller:
         invert: clockwise_positive
         stator_current_limit: 40
         stator_current_limit_enable: True
-        enable_read_thread: False
+        enable_read_thread: True
 
 # Stand-alone controller used to tune PID constants
 swerve_angle_phoenix6_controller:

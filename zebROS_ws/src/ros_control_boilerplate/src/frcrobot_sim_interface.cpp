@@ -44,6 +44,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include "ros_control_boilerplate/devices.h"
 #include "ros_control_boilerplate/frcrobot_sim_interface.h"
 #include "ros_control_boilerplate/match_data_devices.h"
+#include "ros_control_boilerplate/simulator_devices.h"
 
 namespace ros_control_boilerplate
 {
@@ -67,11 +68,19 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		return false;
 	}
 
+	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices = get_ctrev6_devices();
+	devices_.emplace_back(std::make_unique<SimulatorDevices>(root_nh, ctrev6_devices));
+
 	for (const auto &d : devices_)
 	{
 		d->simInit(root_nh);
 	}
-	hal::init::InitializeDriverStationData();
+
+	auto i = devices_.back()->registerInterface();
+	if (i)
+		registerInterfaceManager(i);
+
+	hal::init::InitializeHAL();
 
 	ROS_INFO_STREAM_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready on " << root_nh.getNamespace());
 	return true;

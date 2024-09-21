@@ -5,6 +5,7 @@
 #include "ros_control_boilerplate/devices.h"
 #include "ros_control_boilerplate/set_limit_switch.h"
 #include "ros_control_boilerplate/set_current.h"
+#include "frc/simulation/BatterySim.h"
 
 class SimTalonFXProDevice;
 class TalonFXProDevice;
