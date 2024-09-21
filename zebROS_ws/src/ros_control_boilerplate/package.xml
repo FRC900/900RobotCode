@@ -35,7 +35,7 @@
   <depend>urdf</depend>
   <depend>gazebo_frcrobot_control</depend>
   <depend>pluginlib</depend>
-
+  <depend>simulator_interface</depend>
   <export>
     <gazebo_ros_control plugin="${prefix}/frcrobot_gazebosim_plugins.xml"/>
   </export>
