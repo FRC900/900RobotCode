@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>simulator_interface</name>
+  <name>general_simulators</name>
   <version>0.0.0</version>
-  <description>The simulator_interface package</description>
+  <description>The general_simulators package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/simulator_interface</url> -->
+  <!-- <url type="website">http://wiki.ros.org/general_simulators</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -67,10 +67,12 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>talon_state_msgs</exec_depend>
+  <depend>simulator_interface</depend>
+  <depend>ros_control_boilerplate</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- <simulator_interface plugin="${prefix}/simulators.xml" /> -->
+    <simulator_interface plugin="${prefix}/simulators.xml" />
   </export>
 </package>

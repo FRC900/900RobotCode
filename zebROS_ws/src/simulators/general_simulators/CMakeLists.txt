@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(simulator_interface)
+project(general_simulators)
 
 unset(CMAKE_CXX_STANDARD CACHE)
 set(CMAKE_CXX_STANDARD 20)
-include ("../cmake_modules/CMakeOpt.cmake")
-
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+include ("../../cmake_modules/CMakeOpt.cmake")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -17,8 +14,11 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   roscpp
   rospy
+  simulator_interface
   talon_state_msgs
 )
+
+# Can't depend on ros_control_boilerplate because that depends on eigen_conversions which breaks wpilib math
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -110,9 +110,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
-#  LIBRARIES general_simulators
-#  CATKIN_DEPENDS actionlib ctre_interfaces pluginlib ros_control_boilerplate roscpp rospy talon_state_msgs
+  INCLUDE_DIRS include
+  LIBRARIES general_simulators
+#  CATKIN_DEPENDS actionlib ctre_interfaces pluginlib roscpp rospy simulator_interface talon_state_msgs
 #  DEPENDS system_lib
 )
 
@@ -122,58 +122,70 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+set (ALLWPILIB ../../../../allwpilib)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2024/roborio/arm-frc2024-linux-gnueabi)
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
+	${WPI_SYSROOT}/include
+	${WPI_SYSROOT}/include/navx
 )
 
-# set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/shared)
-# set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/x86-64/shared)
+set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/shared)
+set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/x86-64/shared)
 
-# # Used to find HALInitializer from wpilib internal repo
-# include_directories(${ALLWPILIB}/hal/src/main/native/athena)
-# include_directories(${ALLWPILIB}/hal/src/main/native/include)
+# Used to find HALInitializer from wpilib internal repo
+include_directories(${ALLWPILIB}/hal/src/main/native/athena)
+include_directories(${ALLWPILIB}/hal/src/main/native/include)
 
-# # Used to find main frc/*.h, frc2/*.h, hal/*.h and wpi/*.h
-# include_directories(${ALLWPILIB}/wpilibc/src/main/native/include)
-# include_directories(${ALLWPILIB}/wpimath/src/main/native/include)
-# include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
-# include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/gcem/include)
-# include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/include)
-# include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/include)
-# include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/include)
+# Used to find main frc/*.h, frc2/*.h, hal/*.h and wpi/*.h
+include_directories(${ALLWPILIB}/wpilibc/src/main/native/include)
+include_directories(${ALLWPILIB}/wpimath/src/main/native/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
+include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/gcem/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/include)
 
-# include_directories(${WPI_SYSROOT}/include/wpilib)
+include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/devel/include)
+include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/src/ros_control_boilerplate/include)
 
-# add_library(wpilib_simulation_utils STATIC
-#   ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/struct/DCMotorStruct.cpp
-#   ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/FlywheelSim.cpp
-#   ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/LinearSystemId.cpp
-# )
+include_directories(${WPI_SYSROOT}/include/wpilib)
 
-# add_dependencies(wpilib_simulation_utils
-#   ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#   ${catkin_EXPORTED_TARGETS}
-# )
+add_library(wpilib_simulation_utils STATIC
+  ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/struct/DCMotorStruct.cpp
+  ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/FlywheelSim.cpp
+  ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/LinearSystemId.cpp
+)
 
-# ## Declare a C++ library
-# add_library(general_simulators
-#   src/general_simulators.cpp
-# )
+add_dependencies(wpilib_simulation_utils
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 
-# target_link_libraries(general_simulators
-#   ${catkin_LIBRARIES}
-#   wpilib_simulation_utils
-#   ${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
-#   ${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
-#   ${CTRE_LIB_DIR}/libCTRE_PhoenixTools_Sim.so
-#   ${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
-#   ${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
-#   ${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
-#   ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
-#   ${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
-#   ${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
-#   ${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
+## Declare a C++ library
+add_library(general_simulators
+  src/general_simulators.cpp
+)
+
+target_link_libraries(general_simulators
+  wpilib_simulation_utils
+  ${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
+  ${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
+  ${CTRE_LIB_DIR}/libCTRE_PhoenixTools_Sim.so
+  ${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
+  ${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
+  ${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
+  ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
+  ${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
+  ${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
+  ${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
+  ${catkin_LIBRARIES}
+)
+
+## Declare a C++ library
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/general_simulators.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -184,7 +196,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/simulator_interface_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/general_simulators_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -223,11 +235,11 @@ include_directories(
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS general_simulators
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
+install(TARGETS general_simulators
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
@@ -247,7 +259,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_simulator_interface.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_general_simulators.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

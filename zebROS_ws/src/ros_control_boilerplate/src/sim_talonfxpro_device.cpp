@@ -121,8 +121,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         units::radians_per_second_t velocity{invert * state_->getControlVelocity() * state_->getSensorToMechanismRatio()};
         sim_state.SetRotorVelocity(velocity);
 
-        // TODO battery voltage simulation
         sim_state.SetSupplyVoltage(battery_voltage);
+        if (cancoder_) { cancoder_->GetSimState().SetSupplyVoltage(battery_voltage); }
 
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
@@ -186,8 +186,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             sim_state.AddRotorPosition(delta_position); // VERY IMPORTANT SO CTRE SIM KNOWS MOTORS MOVE
         }
 
-        // TODO battery voltage simulation
         sim_state.SetSupplyVoltage(battery_voltage);
+        if (cancoder_) { cancoder_->GetSimState().SetSupplyVoltage(battery_voltage); }
         
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
@@ -248,8 +248,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             state_->setRotorPosition(position.value());
         }
 
-        // TODO battery voltage simulation
         sim_state.SetSupplyVoltage(battery_voltage);
+        if (cancoder_) { cancoder_->GetSimState().SetSupplyVoltage(battery_voltage); }
 
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
@@ -278,8 +278,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_target_position); }
         sim_state.SetRotorVelocity(target_velocity);
 
-        // TODO battery voltage simulation
         sim_state.SetSupplyVoltage(battery_voltage);
+        if (cancoder_) { cancoder_->GetSimState().SetSupplyVoltage(battery_voltage); }
 
         // Update our motor state
         state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
