@@ -1,7 +1,7 @@
 import rospy
-
 from drive_trajectory_action import DriveTrajectoryAction
 
+# notably NOT an action, just gets the right DriveTrajectoryAction to run 
 class DriveTrajectoryActionIterator():
     def __init__(self, autonomous_name : str, expected_trajectory_count : int) -> None:
         self.__trajectory_count = 0

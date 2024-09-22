@@ -18,6 +18,9 @@ class AutoBase(ABC):
         Abstract method for getting the autonomous action.
         """
         pass
+    
+    def get_display_name(self) -> str:
+        return self.display_name
 
     def get_unique_name(self) -> str:
         """

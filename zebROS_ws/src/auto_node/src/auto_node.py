@@ -56,7 +56,7 @@ class AutoNode():
 
         # only way this happens is if we havent set a valid auto, otherwise it will just be the last valid selected
         if self.__selected_auto is None:                 
-            rospy.logerr("No auto selected!")
+            rospy.logerr_throttle(1, "No auto selected!")
         
         # need to stress test this a ton and make sure there are no edge cases 
         if robot_mode == RobotMode.AUTONOMOUS:

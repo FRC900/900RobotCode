@@ -1,7 +1,7 @@
 from auto_base import AutoBase
 from series_action import SeriesAction
 from wait_action import WaitAction
-
+from drive_trajectory_action import DriveTrajectoryAction # REPLACE WITH ITERATOR WHEN FINISHED
 
 class Test4Note(AutoBase):
     def __init__(self) -> None:
@@ -11,5 +11,7 @@ class Test4Note(AutoBase):
     def get_action(self) -> SeriesAction:
         return SeriesAction([
             WaitAction(2),
-            WaitAction(2)
+            DriveTrajectoryAction(self.get_display_name(), 0),
+            DriveTrajectoryAction(self.get_display_name(), 1),
+            DriveTrajectoryAction(self.get_display_name(), 2)
         ])

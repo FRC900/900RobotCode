@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="auto">
+		<node name="auto_node" pkg="auto_node" type="auto_node.py" output="screen"/>
+	</group>
+</launch>

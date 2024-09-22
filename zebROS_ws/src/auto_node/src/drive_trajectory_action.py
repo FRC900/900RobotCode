@@ -1,44 +1,63 @@
+import rospy
 from action import Action
+import actionlib.simple_action_client
 from frc_utils.match_data_helper import RobotStatusHelper
-\
+
 from typing import List
-from path_follower_msgs.msg import PathAction, PathActionFeedback
+from path_follower_msgs.msg import PathAction, PathFeedback, PathResult
+from auto_node_msgs.msg import PathGoalArray, PathGoal # have the path to be sent to the path follower
+import actionlib
+from subsystem import Subsystem
 
 class DriveTrajectoryAction(Action):
     """An action that drives a trajectory and waits for completion before ending"""
     #TODO: Make these possibly class variables
     def __init__(self, autonomous_name : str, trajectory_index : int):
-        self.__traj_status_subscriber = BufferedROSMsgHandlerPy(TrajectoryStatus)
-        self.__traj_status_subscriber.register_for_updates("/TrajectoryStatus")
+
+        self.__path_follower_client = actionlib.SimpleActionClient("/path_follower/path_follower_server", PathAction)
+        self.__current_path: PathGoalArray = None
         self.__autonomous_name = autonomous_name
         self.__trajectory_index = trajectory_index
+        self.__latest_feedback: PathFeedback = None
+        self.__path_sub = rospy.Subscriber("/auto/current_auto_path", PathGoalArray, self.path_sub, tcp_nodelay=True)
+        self.__done = False
 
-        self.start_traj_client = NodeHandle.node_handle.create_client(srv_type=StartTrajectory, srv_name='/start_trajectory', qos_profile=rclpy.qos.qos_profile_services_default, callback_group=rclpy.callback_groups.MutuallyExclusiveCallbackGroup())
-        while not self.start_traj_client.wait_for_service(timeout_sec=1.0):
-            NodeHandle.node_handle.get_logger().info('Start Traj Service not available, waiting again...')
+    def path_sub(self, path_array: PathGoalArray):
+        rospy.loginfo(f"Current path updated to path for {path_array.auto_name}")
+        if self.__current_path is not None:
+            rospy.logwarn("DriveTrajectoryAction - path updated when path was already set? Alliance color change?")
+
+        self.__current_path = path_array
+
+    def feedback_cb(self, msg: PathFeedback):
+        # currently dont use feedback but might later
+        self.__latest_feedback = msg
+
+    def done_cb(self, status: PathFeedback, result: PathResult):
+        self.__done = True
 
     def start(self):
-        start_traj_msg = StartTrajectory.Request()
-        start_traj_msg.autonomous_name = self.__autonomous_name
-        start_traj_msg.trajectory_index = self.__trajectory_index
-
-        if (self.start_traj_client is not None):
-            auto_run_response_future = self.start_traj_client.call_async(start_traj_msg)
-            # if not auto_run_response.accepted:
-            #     NodeHandle.node_handle.get_logger().error(f"Failed to start trajectory {self.__autonomous_name}: {self.__trajectory_index}")
+        rospy.loginfo(f"Running path step {self.__trajectory_index} for auto {self.__autonomous_name}")
+        path_follower_goal: PathGoal = PathGoal()
+        # get the path segment to run and use it to fill in the path follower goal
+        path_segment: PathGoal = self.__current_path.path_segments[self.__trajectory_index]
+        
+        path_follower_goal.position_path = path_segment.position_path
+        path_follower_goal.position_waypoints = path_segment.position_waypoints
+        path_follower_goal.velocity_path = path_segment.velocity_path
+        path_follower_goal.velocity_waypoints = path_segment.velocity_waypoints
+        path_follower_goal.waypointsIdx = path_segment.waypointsIdx
+        self.__path_follower_client.send_goal(path_follower_goal, done_cb=self.done_cb, feedback_cb=self.feedback_cb)
+        rospy.loginfo("Sent path follower goal!")
 
     def update(self):
-        #TODO: Possibly add retransmit logic on service call failure
         pass
 
     def done(self):
         pass
 
     def isFinished(self) -> bool:
-        traj_status : TrajectoryStatus = self.__traj_status_subscriber.get()
-        if traj_status is not None:
-            return traj_status.is_completed and traj_status.trajectory_index == self.__trajectory_index
-        return False
+        return self.__done
 
     def affectedSystems(self) -> List[Subsystem]:
         return [ Subsystem.DRIVEBASE ]

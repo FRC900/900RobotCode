@@ -23,14 +23,14 @@ class PathLoader:
 
         self.auto_name: str = None
         self.__first_point_pub = rospy.Publisher('/first_point', PoseStamped, queue_size=10)
-        self.__latched_path_pub = rospy.Publisher("/auto/current_auto_path", PathGoalArray, tcp_nodelay=True, latch=True)
+        self.__latched_path_pub = rospy.Publisher("/auto/current_auto_path", PathGoalArray, tcp_nodelay=True, latch=True, queue_size=1)
         self.old_alliance: Alliance = Alliance.UNKNOWN
         self.old_auto_name: str = ""
         self.timer = rospy.Timer(rospy.Duration(1), self.__load_path)
 
     # sets the auto that paths will be loaded for. Respects changes in alliance color. 
     def set_auto_name(self, auto_name: str):
-        rospy.loginfo(f"Set path loader auto string to {auto_name}")
+        rospy.loginfo_once(f"Set path loader auto string to {auto_name}")
         self.auto_name = auto_name
 
     def __load_path(self, _):
@@ -38,6 +38,9 @@ class PathLoader:
         alliance : Alliance = self.__robot_status.get_alliance()
         if alliance == Alliance.UNKNOWN:
             rospy.logwarn("Alliance is unknown in the path loader!")
+            return
+        if self.auto_name is None:
+            rospy.logwarn_throttle(2, "Auto name is none is the path loader!")
             return
 
         # nothing has changed so can leave early
@@ -117,6 +120,7 @@ class PathLoader:
         path_to_append.position_waypoints = Path() # still don't quite know what these waypoints are for and I might have made them
         path_to_append.velocity_path = vel_path_msg
         path_to_append.velocity_waypoints = Path()
+        path_to_append.waypointsIdx = waypoints_idx
 
         path_array.auto_name = self.auto_name
         path_array.path_segments.append(path_to_append)
