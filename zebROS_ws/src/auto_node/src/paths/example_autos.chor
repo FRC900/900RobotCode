@@ -581,45 +581,8 @@
             "defaultControlIntervalCount": 40,
             "usesDefaultFieldObstacles": true,
             "circleObstacles": [],
-            "eventMarkers": [
-                {
-                    "name": "first_note",
-                    "target": 1,
-                    "targetTimestamp": 0.8375411393950297,
-                    "offset": 0,
-                    "command": {
-                        "type": "named",
-                        "data": {
-                            "name": ""
-                        }
-                    }
-                },
-                {
-                    "name": "second_note",
-                    "target": 3,
-                    "targetTimestamp": 1.688413282164216,
-                    "offset": 0,
-                    "command": {
-                        "type": "named",
-                        "data": {
-                            "name": ""
-                        }
-                    }
-                },
-                {
-                    "name": "third_note",
-                    "target": 5,
-                    "targetTimestamp": 2.9152940831432184,
-                    "offset": 0,
-                    "command": {
-                        "type": "named",
-                        "data": {
-                            "name": ""
-                        }
-                    }
-                }
-            ],
-            "isTrajectoryStale": true
+            "eventMarkers": [],
+            "isTrajectoryStale": false
         }
     },
     "splitTrajectoriesAtStopPoints": true,
