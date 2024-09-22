@@ -110,16 +110,35 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     case hardware_interface::talonfxpro::TalonMode::PositionVoltage:
     case hardware_interface::talonfxpro::TalonMode::PositionTorqueCurrentFOC:
     {
-        // Position control mode, add position delta and set velocity
-        units::radian_t cancoder_position{state_->getControlPosition() * cancoder_invert - cancoder_offset};
-        units::radian_t position{invert * state_->getControlPosition() * state_->getSensorToMechanismRatio()};
+        // Gazebo crap
+        if (gazebo_joint_)
+        {
+            gazebo_joint_->SetPosition(0, state_->getRotorPosition());
+        }
+        else if (simulator_)
+        {
+            simulator_->update(joint_name_, time, period, sim_state);
+            cancoder_->GetSimState().SetRawPosition(units::radian_t{units::radian_t{talonfxpro_->GetRotorPosition().GetValue()}.value() * cancoder_invert - cancoder_offset});
+            cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value() * cancoder_invert});
+        }
+        else
+        {
+            // Instantly get to desired position and velocity
 
-        if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
-        sim_state.SetRawRotorPosition(position);
+            // Position control mode, add position delta and set velocity
+            units::radian_t cancoder_position{state_->getControlPosition() * cancoder_invert - cancoder_offset};
+            units::radian_t position{invert * state_->getControlPosition() * state_->getSensorToMechanismRatio()};
 
-        // We'll also have a velocity setpoint, so set that here
-        units::radians_per_second_t velocity{invert * state_->getControlVelocity() * state_->getSensorToMechanismRatio()};
-        sim_state.SetRotorVelocity(velocity);
+            if (cancoder_) {
+                cancoder_->GetSimState().SetRawPosition(cancoder_position);
+                // cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{sim_state.GetRotorVelocity()}.value() * cancoder_invert});
+            }
+            sim_state.SetRawRotorPosition(position);
+
+            // We'll also have a velocity setpoint, so set that here
+            units::radians_per_second_t velocity{invert * state_->getControlVelocity() * state_->getSensorToMechanismRatio()};
+            sim_state.SetRotorVelocity(velocity);
+        }
 
         sim_state.SetSupplyVoltage(battery_voltage);
         if (cancoder_) { cancoder_->GetSimState().SetSupplyVoltage(battery_voltage); }
@@ -129,13 +148,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         state_->setDutyCycle(sim_state.GetMotorVoltage() / battery_voltage);
         state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
         state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
-        state_->setRotorPosition(position.value());
-
-        // Gazebo crap
-        if (gazebo_joint_)
-        {
-            gazebo_joint_->SetPosition(0, state_->getRotorPosition());
-        }
+        state_->setRotorPosition(units::radian_t{talonfxpro_->GetRotorPosition().GetValue()}.value());
+        
         // ROS_ERROR_STREAM("IN POSITION MODE");
         break;
     }
@@ -230,22 +244,33 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             // gazebo_joint_->SetVelocity(0, state_->getControlVelocity());
             ROS_ERROR_STREAM_THROTTLE_NAMED(1, std::to_string(state_->getCANID()), "IN MOTION MAGIC MODE " << torque << " " << sim_state.GetMotorVoltage().value() << " " << state_->getControlVelocity() << " " << state_->getSensorToMechanismRatio());
         }
+        else if (simulator_)
+        {
+            // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists for joint " << joint_name_ << ", about to call update()");
+            simulator_->update(joint_name_, time, period, sim_state);
+            if (cancoder_) {
+                double rotor_velocity_rad_per_sec = units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value();
+                cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{rotor_velocity_rad_per_sec * cancoder_invert});
+                cancoder_->GetSimState().AddPosition(units::radians_per_second_t{rotor_velocity_rad_per_sec * cancoder_invert} * units::second_t{period.toSec()});
+            }
+        }
         else
         {
             // Motion magic, controls both position and velocity
-            units::radian_t position{invert * state_->getClosedLoopReference() / state_->getSensorToMechanismRatio()};
-            units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2.0) * cancoder_invert};
-            units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() / state_->getSensorToMechanismRatio()};
+            units::radian_t position{invert * state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
+            units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset) * cancoder_invert}; // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
+            units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
             
             // Set rotor position and velocity
-            sim_state.AddRotorPosition(invert * velocity * units::second_t{period.toSec()});
             if (cancoder_) {
-                cancoder_->GetSimState().SetVelocity(cancoder_invert * velocity);
-                cancoder_->GetSimState().AddPosition(cancoder_invert * velocity * units::second_t{period.toSec()});
+                cancoder_->GetSimState().SetVelocity(cancoder_invert * units::angular_velocity::radians_per_second_t{state_->getClosedLoopReferenceSlope()}); // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
+                // cancoder_->GetSimState().SetRawPosition(cancoder_position);
+                cancoder_->GetSimState().AddPosition(cancoder_invert * units::angular_velocity::radians_per_second_t{state_->getClosedLoopReferenceSlope()} * units::second_t{period.toSec()}); // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
+            } else {
+                sim_state.AddRotorPosition(invert * velocity * units::second_t{period.toSec()});
+                sim_state.SetRotorVelocity(velocity);
+                state_->setRotorPosition(position.value());
             }
-            sim_state.SetRotorVelocity(velocity);
-
-            state_->setRotorPosition(position.value());
         }
 
         sim_state.SetSupplyVoltage(battery_voltage);

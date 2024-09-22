@@ -7,4 +7,12 @@
 			Flywheel simulator, using WPILib's flywheel sim
 		</description>
 	</class>
+	<class
+		name="general_simulators/SingleJointedArmSimulator"
+		type="general_simulators::SingleJointedArmSimulator"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Single jointed arm simulator, using WPILib's single jointed arm sim
+		</description>
+	</class>
 </library>

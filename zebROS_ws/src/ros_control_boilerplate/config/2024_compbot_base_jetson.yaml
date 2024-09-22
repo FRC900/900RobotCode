@@ -64,7 +64,7 @@ hardware_interface:
        - {name: top_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
        - {name: bottom_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
        - {name: bottom_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
-       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 55, local: true}
+       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 55, simulator: shooter_pivot_simulator, local: true}
        - {name: shooter_pivot_cancoder, type: cancoder, can_bus: CANivore, can_id: 55, local: true}
 
        #Claw/Diverter
@@ -107,8 +107,20 @@ hardware_interface:
 top_left_shooter_simulator:
     joints: [top_left_shooter_joint]
     type: general_simulators/FlywheelSimulator
-    gearing: 1.0 # already accounted for by sensor to mechanism ratio
+    gearing: 1.0
     moment_of_inertia: 0.01 # kg m^2
+
+shooter_pivot_simulator:
+    joints: [shooter_pivot_motionmagic_joint]
+    type: general_simulators/SingleJointedArmSimulator
+    gearing: 35.56
+    # From Onshape: length = 0.21 m (to CoM), mass = 7.7 kg
+    moment_of_inertia: 0.11319 # kg m^2, for an arm this is 1/3 * m * l^2
+    arm_length: 0.5 # meters
+    min_angle: 0.357
+    max_angle: 2.3
+    simulate_gravity: true
+    starting_angle: 0.357
 
 intake_talonfxpro_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController
