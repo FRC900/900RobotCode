@@ -13,7 +13,7 @@ namespace simulator_base
       virtual void init(const XmlRpc::XmlRpcValue &simulator_info) {
 
       };
-      virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, ctre::phoenix6::sim::TalonFXSimState &state) {
+      virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> &state) {
         
       };
       virtual ~Simulator(){}

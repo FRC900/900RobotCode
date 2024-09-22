@@ -117,7 +117,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         }
         else if (simulator_)
         {
-            simulator_->update(joint_name_, time, period, sim_state);
+            simulator_->update(joint_name_, time, period, talonfxpro_, state_);
             cancoder_->GetSimState().SetRawPosition(units::radian_t{units::radian_t{talonfxpro_->GetRotorPosition().GetValue()}.value() * cancoder_invert - cancoder_offset});
             cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value() * cancoder_invert});
         }
@@ -187,7 +187,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         else if (simulator_)
         {
             // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists, about to call update()");
-            simulator_->update(joint_name_, time, period, sim_state);
+            simulator_->update(joint_name_, time, period, talonfxpro_, state_);
         }
         else
         {
@@ -247,7 +247,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         else if (simulator_)
         {
             // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists for joint " << joint_name_ << ", about to call update()");
-            simulator_->update(joint_name_, time, period, sim_state);
+            simulator_->update(joint_name_, time, period, talonfxpro_, state_);
             if (cancoder_) {
                 double rotor_velocity_rad_per_sec = units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value();
                 cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{rotor_velocity_rad_per_sec * cancoder_invert});

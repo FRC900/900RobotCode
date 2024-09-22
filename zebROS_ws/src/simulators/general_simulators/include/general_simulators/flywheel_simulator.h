@@ -6,7 +6,7 @@
 #include "wpimath/MathShared.h"
 
 extern "C" {
-  
+
 }
 
 // #define DEBUG
@@ -51,10 +51,10 @@ namespace general_simulators
         // ROS_INFO_STREAM("Created flywheel sim");
       }
 
-      void update(const std::string &name, const ros::Time &time, const ros::Duration &period, ctre::phoenix6::sim::TalonFXSimState &state) override {
+      void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> &state) override {
         // ROS_INFO_STREAM("About to get motor voltage");
         // Get the motor voltage from the state
-        units::voltage::volt_t motor_voltage = state.GetMotorVoltage();
+        units::voltage::volt_t motor_voltage = talonfxpro->GetSimState().GetMotorVoltage();
 
         // ROS_INFO_STREAM("WPILib updates, object is " << flywheel_sim_ << " , motor voltage is " << motor_voltage.value() << "V");
         // Update the flywheel simulation
@@ -67,10 +67,10 @@ namespace general_simulators
 
         // ROS_INFO_STREAM("Write back to state");
         // Set the flywheel velocity of the simulated motor
-        state.SetRotorVelocity(angular_velocity);
+        talonfxpro->GetSimState().SetRotorVelocity(angular_velocity);
 
         // Add position delta
-        state.AddRotorPosition(angular_velocity * units::second_t{period.toSec()});
+        talonfxpro->GetSimState().AddRotorPosition(angular_velocity * units::second_t{period.toSec()});
 
         // ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
       }
