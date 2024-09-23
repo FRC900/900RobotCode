@@ -70,10 +70,10 @@ class FlywheelSimulator : public simulator_base::Simulator
 
             // ROS_INFO_STREAM("Write back to state");
             // Set the flywheel velocity of the simulated motor
-            talonfxpro->GetSimState().SetRotorVelocity(angular_velocity);
+            talonfxpro->GetSimState().SetRotorVelocity(angular_velocity * state->getRotorToSensorRatio());
 
             // Add position delta
-            talonfxpro->GetSimState().AddRotorPosition(angular_velocity * units::second_t{period.toSec()});
+            talonfxpro->GetSimState().AddRotorPosition(angular_velocity * state->getRotorToSensorRatio() * units::second_t{period.toSec()});
 
             // ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
         }

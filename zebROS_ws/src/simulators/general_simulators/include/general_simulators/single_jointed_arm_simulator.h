@@ -43,17 +43,8 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             if (!set_initial_position_)
             {
                 double position = state->getPosition();
-                if (position < min_angle_)
-                {
-                    position = min_angle_;
-                }
-                else if (position > max_angle_)
-                {
-                    position = max_angle_;
-                }
                 ROS_INFO_STREAM(name << ": position unset, setting to " << position << " rad");
                 single_jointed_arm_sim_->SetState(units::radian_t{position}, units::radians_per_second_t{0.0});
-                talonfxpro->GetSimState().SetRawRotorPosition(units::radian_t{position});
                 set_initial_position_ = true;
             }
 
@@ -69,16 +60,17 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             // ROS_INFO_STREAM("WPILib outputs");
             // Get output angular velocity
             auto angular_velocity = single_jointed_arm_sim_->GetVelocity() * state->getSensorToMechanismRatio();
+            auto angular_rotor_velocity = angular_velocity * state->getRotorToSensorRatio();
 
             // Get angle
             auto angle = single_jointed_arm_sim_->GetAngle();
 
             // ROS_INFO_STREAM("Write back to state");
             // Set the velocity of the simulated motor
-            talonfxpro->GetSimState().SetRotorVelocity(angular_velocity);
+            talonfxpro->GetSimState().SetRotorVelocity(angular_rotor_velocity);
 
             // Add position delta
-            talonfxpro->GetSimState().AddRotorPosition(angular_velocity * units::second_t{period.toSec()});
+            talonfxpro->GetSimState().AddRotorPosition(angular_rotor_velocity * units::second_t{period.toSec()});
 
             // ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
         }

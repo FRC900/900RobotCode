@@ -37,8 +37,8 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
         try {
             simulator_ = loader_->createInstance(simulator_info["type"]);
             simulator_->init(simulator_info);
-        } catch (const pluginlib::PluginlibException &ex) {
-            ROS_ERROR_STREAM("Failed to load simulator " << simulator << " for joint " << joint_name << ": " << ex.what());
+        } catch (...) {
+            ROS_ERROR_STREAM("Failed to load simulator " << simulator << " for joint " << joint_name);
         }
     }
 }
@@ -118,8 +118,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         else if (simulator_)
         {
             simulator_->update(joint_name_, time, period, talonfxpro_, state_);
-            cancoder_->GetSimState().SetRawPosition(units::radian_t{units::radian_t{talonfxpro_->GetRotorPosition().GetValue()}.value() * cancoder_invert - cancoder_offset});
-            cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value() * cancoder_invert});
+            if (cancoder_) {
+                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert;
+                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
+                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
+            }
         }
         else
         {
@@ -188,6 +191,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         {
             // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists, about to call update()");
             simulator_->update(joint_name_, time, period, talonfxpro_, state_);
+            if (cancoder_) {
+                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert;
+                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
+                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
+            }
         }
         else
         {
@@ -249,9 +257,9 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists for joint " << joint_name_ << ", about to call update()");
             simulator_->update(joint_name_, time, period, talonfxpro_, state_);
             if (cancoder_) {
-                double rotor_velocity_rad_per_sec = units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value();
-                cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{rotor_velocity_rad_per_sec * cancoder_invert});
-                cancoder_->GetSimState().SetRawPosition(units::radian_t{units::radian_t{talonfxpro_->GetRotorPosition().GetValue()}.value() * cancoder_invert - cancoder_offset});
+                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert;
+                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
+                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
             }
         }
         else
@@ -266,11 +274,9 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
                 cancoder_->GetSimState().SetVelocity(cancoder_invert * units::angular_velocity::radians_per_second_t{state_->getClosedLoopReferenceSlope()}); // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
                 // cancoder_->GetSimState().SetRawPosition(cancoder_position);
                 cancoder_->GetSimState().AddPosition(cancoder_invert * units::angular_velocity::radians_per_second_t{state_->getClosedLoopReferenceSlope()} * units::second_t{period.toSec()}); // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
-            } else {
-                sim_state.AddRotorPosition(invert * velocity * units::second_t{period.toSec()});
-                sim_state.SetRotorVelocity(velocity);
-                state_->setRotorPosition(position.value());
             }
+            sim_state.AddRotorPosition(invert * velocity * units::second_t{period.toSec()} * state_->getRotorToSensorRatio());
+            sim_state.SetRotorVelocity(velocity * state_->getRotorToSensorRatio());
         }
 
         sim_state.SetSupplyVoltage(battery_voltage);
