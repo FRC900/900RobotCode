@@ -147,6 +147,8 @@ include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/include
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/include)
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/include)
 
+include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/eigen/include/)
+
 include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/devel/include)
 include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/src/ros_control_boilerplate/include)
 

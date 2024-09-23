@@ -251,7 +251,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             if (cancoder_) {
                 double rotor_velocity_rad_per_sec = units::radians_per_second_t{talonfxpro_->GetRotorVelocity().GetValue()}.value();
                 cancoder_->GetSimState().SetVelocity(units::radians_per_second_t{rotor_velocity_rad_per_sec * cancoder_invert});
-                cancoder_->GetSimState().AddPosition(units::radians_per_second_t{rotor_velocity_rad_per_sec * cancoder_invert} * units::second_t{period.toSec()});
+                cancoder_->GetSimState().SetRawPosition(units::radian_t{units::radian_t{talonfxpro_->GetRotorPosition().GetValue()}.value() * cancoder_invert - cancoder_offset});
             }
         }
         else

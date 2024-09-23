@@ -2,6 +2,7 @@
 #include <simulator_interface/simulator_base.h>
 #include <general_simulators/flywheel_simulator.h>
 #include <general_simulators/single_jointed_arm_simulator.h>
+#include <general_simulators/swerve_simulator.h>
 
 PLUGINLIB_EXPORT_CLASS(general_simulators::FlywheelSimulator, simulator_base::Simulator)
 PLUGINLIB_EXPORT_CLASS(general_simulators::SingleJointedArmSimulator, simulator_base::Simulator)
