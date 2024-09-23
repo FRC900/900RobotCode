@@ -109,7 +109,7 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 // Apply steering ratio to calculate desired
 // measured wheel angle from a wheel angle setpoint
 template<size_t WHEELCOUNT>
-double swerve<WHEELCOUNT>::getWheelAngle(double pos) const
+double swerve<WHEELCOUNT>::getWheelAngle(const double pos) const
 {
 	return pos * units_.steeringGet;
 }

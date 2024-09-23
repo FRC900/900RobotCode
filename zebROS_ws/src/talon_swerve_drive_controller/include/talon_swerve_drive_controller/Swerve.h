@@ -82,7 +82,7 @@ class swerve
 															 const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
-		double getWheelAngle(double pos) const;
+		double getWheelAngle(const double pos) const;
 	private:
 		swerveDriveMath<WHEELCOUNT> swerveMath_;
 
