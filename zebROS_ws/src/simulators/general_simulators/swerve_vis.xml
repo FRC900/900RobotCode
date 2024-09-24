@@ -1,20 +1,28 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget name="Main Window" parent="main_window">
-  <Tab tab_name="tab1" containers="1">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab containers="1" tab_name="tab1">
    <Container>
     <DockSplitter orientation="-" count="1" sizes="1">
      <DockArea name="...">
-      <plot style="Lines" flip_y="false" mode="TimeSeries" flip_x="false">
-       <range bottom="-4.241631" top="173.906873" left="18.956232" right="33.926930"/>
+      <plot style="Lines" mode="TimeSeries" flip_y="false" flip_x="false">
+       <range top="289.608196" left="47.665370" right="64.649536" bottom="2.868461"/>
        <limitY/>
-       <curve name="/frcrobot_jetson/swerve_debug/u[0]" color="#1f77b4"/>
-       <curve name="/frcrobot_jetson/swerve_debug/u[1]" color="#d62728"/>
-       <curve name="/frcrobot_jetson/swerve_debug/x[0]" color="#1ac938"/>
-       <curve name="/frcrobot_jetson/swerve_debug/x[1]" color="#ff7f0e"/>
-       <curve name="/frcrobot_jetson/swerve_debug/xdot[0]" color="#f14cc1"/>
-       <curve name="/frcrobot_jetson/swerve_debug/y[0]" color="#9467bd"/>
-       <curve name="/frcrobot_jetson/talonfxpro_states/control_velocity[2]" color="#17becf"/>
+       <curve color="#17becf" name="/frcrobot_jetson/talonfxpro_states/control_velocity[2]"/>
+       <curve color="#d62728" name="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out/twist/linear/x"/>
+       <curve color="#1f77b4" name="/frcrobot_jetson/swerve_debug/ground_speed[0]">
+        <transform alias="/frcrobot_jetson/swerve_debug/ground_speed[0][Moving Average]" name="Moving Average">
+         <options compensate_offset="false" value="1000"/>
+        </transform>
+       </curve>
+       <curve color="#1ac938" name="slip">
+        <transform alias="slip[Moving Average]" name="Moving Average">
+         <options compensate_offset="false" value="1000"/>
+        </transform>
+       </curve>
+       <curve color="#ff7f0e" name="/frcrobot_jetson/swerve_debug/x[0]"/>
+       <curve color="#f14cc1" name="/frcrobot_jetson/talonfxpro_states/rotor_velocity[2]"/>
+       <curve color="#9467bd" name="/frcrobot_jetson/talonfxpro_states/velocity[2]"/>
       </plot>
      </DockArea>
     </DockSplitter>
@@ -27,7 +35,7 @@
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <parameters delimiter="0" time_axis=""/>
+   <parameters time_axis="" delimiter="0"/>
   </plugin>
   <plugin ID="DataLoad MCAP"/>
   <plugin ID="DataLoad ROS bags">
@@ -45,7 +53,7 @@
    <max_array_size value="100"/>
    <boolean_strings_to_number value="true"/>
    <remove_suffix_from_strings value="true"/>
-   <selected_topics value="/frcrobot_jetson/cancoder_states;/frcrobot_jetson/joint_states;/frcrobot_jetson/swerve_debug;/frcrobot_jetson/talonfxpro_states;/speaker_align/dist_and_ang"/>
+   <selected_topics value="/frcrobot_jetson/cancoder_states;/frcrobot_jetson/joint_states;/frcrobot_jetson/swerve_debug;/frcrobot_jetson/swerve_drive_controller/cmd_vel_out;/frcrobot_jetson/talonfxpro_states;/speaker_align/dist_and_ang"/>
   </plugin>
   <plugin ID="UDP Server"/>
   <plugin ID="WebSocket Server"/>
@@ -60,13 +68,28 @@
   <plugin ID="ROS /rosout Visualization"/>
   <plugin ID="ROS Topic Re-Publisher"/>
   <plugin ID="Video Viewer">
-   <config video_file="" use_frame="true" curve_name=""/>
+   <config curve_name="" video_file="" use_frame="true"/>
   </plugin>
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
  <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
  <!-- - - - - - - - - - - - - - - -->
- <customMathEquations/>
+ <customMathEquations>
+  <snippet name="slip">
+   <global></global>
+   <function>return value - v1</function>
+   <linked_source>wheel_speed</linked_source>
+   <additional_sources>
+    <v1>/frcrobot_jetson/swerve_debug/ground_speed[0]</v1>
+   </additional_sources>
+  </snippet>
+  <snippet name="wheel_speed">
+   <global></global>
+   <function>return value * 0.0508</function>
+   <linked_source>/frcrobot_jetson/swerve_debug/x[0]</linked_source>
+  </snippet>
+ </customMathEquations>
  <snippets/>
  <!-- - - - - - - - - - - - - - - -->
 </root>

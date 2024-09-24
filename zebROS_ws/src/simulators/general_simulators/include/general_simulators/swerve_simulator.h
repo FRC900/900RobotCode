@@ -10,6 +10,7 @@
 #include "geometry_msgs/TwistStamped.h"
 #include "general_simulators/SwerveDebug.h"
 #include "std_srvs/Empty.h"
+#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 // https://introcontrol.mit.edu/fall23/prelabs/prelab10/ss_1
 // thanks 22377 also :)
@@ -86,7 +87,6 @@ class DCMotorModel
             return A*x + B*u;
         }
 
-    private:
         units::ohm_t R; // resistance
         units::inductance::henry_t L; // inductance
         newton_meters_per_ampere_t Kt; // torque constant
@@ -248,6 +248,7 @@ class SwerveSimulator : public simulator_base::Simulator
 
         void init(const XmlRpc::XmlRpcValue &simulator_info) override
         {
+            // TODO ddr-ify
             // Get parameters from the parameter server in our namespace
             double gearing = simulator_info["gearing"]; // unitless
             PacejkaConstants pacejka_constants;
@@ -288,7 +289,7 @@ class SwerveSimulator : public simulator_base::Simulator
 
             // Create a DCMotorModel object
             // units::kilogram_square_meter_t kraken_inertia{0.1 * (0.95 * 0.0254) * (0.95 * 0.0254)}; // thanks 971
-            units::kilogram_square_meter_t kraken_inertia(5.8e-4);
+            units::kilogram_square_meter_t kraken_inertia(simulator_info["motor_inertia"]);
             swerve_dynamics_.drive_motor_ = DCMotorModel(drive, units::henry_t{0.001}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
             swerve_dynamics_.turn_motor_ = DCMotorModel(turn, units::henry_t{0.001}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
 
@@ -298,6 +299,20 @@ class SwerveSimulator : public simulator_base::Simulator
 
             // Reset service
             reset_service_ = nh_.advertiseService("swerve_simulator/reset", &SwerveSimulator::reset, this);
+
+            // Set up dynamic reconfigure
+            ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(ros::NodeHandle(nh_, "swerve_simulator"));
+            ddr_->registerVariable<double>("pacejka_constants/B", &swerve_dynamics_.pacejka_constants_.B, "B", 0.0, 20.0);
+            ddr_->registerVariable<double>("pacejka_constants/C", &swerve_dynamics_.pacejka_constants_.C, "C", 0.0, 3.0);
+            ddr_->registerVariable<double>("pacejka_constants/D", &swerve_dynamics_.pacejka_constants_.D, "D", 0.0, 2.0);
+            ddr_->registerVariable<double>("pacejka_constants/E", &swerve_dynamics_.pacejka_constants_.E, "E", 0.5, 1.0);
+            ddr_->registerVariable<double>("kiencke_constants/A", &swerve_dynamics_.kiencke_constants_.A, "A", 0.0, 100.0);
+            ddr_->registerVariable<double>("kiencke_constants/B", &swerve_dynamics_.kiencke_constants_.B, "B", 0.0, 100.0);
+            // ddr_->registerVariable<double>("wheel_radius", &swerve_dynamics_.wheel_radius_.value(), "m", 0.0, 0.5);
+            ddr_->registerVariable<double>("motor_inertia", [this](){ return swerve_dynamics_.drive_motor_.J.value(); }, [this](double J) { swerve_dynamics_.drive_motor_.J = units::kilogram_square_meter_t{J}; swerve_dynamics_.turn_motor_.J = units::kilogram_square_meter_t{J}; }, "kg m^2", 0.00001, 0.005);
+            ddr_->registerVariable<double>("damping_friction", [this](){ return swerve_dynamics_.drive_motor_.b; }, [this](double b) { swerve_dynamics_.drive_motor_.b = b; swerve_dynamics_.turn_motor_.b = b; }, "N m s", 0.00001, 0.01);
+            ddr_->publishServicesTopics();
+
         }
 
         void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> &state) override
@@ -388,6 +403,7 @@ class SwerveSimulator : public simulator_base::Simulator
 
         ros::Publisher vel_pub_;
         ros::ServiceServer reset_service_;
+        std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
         /*
         # Tire models
