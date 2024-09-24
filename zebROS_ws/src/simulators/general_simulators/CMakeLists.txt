@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   ctre_interfaces
   ddynamic_reconfigure
   geometry_msgs
+  message_generation
   pluginlib
   roscpp
   rospy
@@ -56,11 +57,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  SwerveDebug.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -77,10 +77,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   talon_state_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  talon_state_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -133,9 +133,6 @@ include_directories(
 	${WPI_SYSROOT}/include/navx
 )
 
-set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/shared)
-set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/x86-64/shared)
-
 # Used to find HALInitializer from wpilib internal repo
 include_directories(${ALLWPILIB}/hal/src/main/native/athena)
 include_directories(${ALLWPILIB}/hal/src/main/native/include)
@@ -175,16 +172,6 @@ add_library(general_simulators
 
 target_link_libraries(general_simulators
   wpilib_simulation_utils
-  ${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
-  ${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
-  ${CTRE_LIB_DIR}/libCTRE_PhoenixTools_Sim.so
-  ${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
-  ${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
-  ${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
-  ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
-  ${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
-  ${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
-  ${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
   ${catkin_LIBRARIES}
 )
 

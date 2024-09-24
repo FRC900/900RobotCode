@@ -37,12 +37,12 @@ hardware_interface:
        # Swerve drive
        - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, simulator: swerve_simulator, local: true}
        - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, simulator: swerve_simulator, local: true}
-       - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, simulator: swerve_simulator, local: true}
-       - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, simulator: swerve_simulator, local: true}
-       - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, simulator: swerve_simulator, local: true}
-       - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, simulator: swerve_simulator, local: true}
-       - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, simulator: swerve_simulator, local: true}
-       - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, simulator: swerve_simulator, local: true}
+       - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
+       - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
+       - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
+       - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
+       - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
+       - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
      
        - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
        - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
@@ -142,8 +142,8 @@ shooter_pivot_simulator:
 # units::kilogram_t mass = simulator_info["mass"]; // kg
 # units::kilogram_square_meter_t moment_of_inertia = simulator_info["moment_of_inertia"]; // kg m^2
 swerve_simulator:
-    joints: [fl_drive, fl_angle, fr_drive, fr_angle, br_drive, br_angle, bl_drive, bl_angle]
-    type: general_simulators/SwerveSimulator4
+    joints: [fl_drive, fl_angle]
+    type: general_simulators/SwerveSimulator1
     gearing: 5.35
     pacejka_constants:
         B: 10.0
@@ -155,12 +155,10 @@ swerve_simulator:
         B: 0.27
     wheel_radius: 0.0508 # meters
     wheel_positions: # meters
-        - [-0.250825, 0.250825]
-        - [0.250825, 0.250825]
-        - [-0.250825, -0.250825]
-        - [0.250825, -0.250825]
-    drive_joints: [fl_drive, fr_drive, br_drive, bl_drive]
-    turn_joints: [fl_angle, fr_angle, br_angle, bl_angle]
+        - [0.0, 0.0]
+    drive_joints: [fl_drive]
+    turn_joints: [fl_angle]
+    damping_friction: 0.001
     mass: 54.0 # kg
     moment_of_inertia: 4.589 # kg m^2
 

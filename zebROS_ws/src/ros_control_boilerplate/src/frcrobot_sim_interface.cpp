@@ -72,7 +72,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	{
 		d->simInit(root_nh);
 	}
-	hal::init::InitializeDriverStationData();
+	hal::init::InitializeHAL();
 
 	ROS_INFO_STREAM_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready on " << root_nh.getNamespace());
 	return true;

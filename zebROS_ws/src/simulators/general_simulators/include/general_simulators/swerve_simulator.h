@@ -8,6 +8,7 @@
 #include <units/velocity.h>
 #include <angles/angles.h>
 #include "geometry_msgs/TwistStamped.h"
+#include "general_simulators/SwerveDebug.h"
 
 // https://introcontrol.mit.edu/fall23/prelabs/prelab10/ss_1
 // thanks 22377 also :)
@@ -28,22 +29,25 @@ class DCMotorModel
 
         }
 
-        DCMotorModel(units::ohm_t R, units::inductance::henry_t L, newton_meters_per_ampere_t Kt, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply) {
+        DCMotorModel(units::ohm_t R, units::inductance::henry_t L, newton_meters_per_ampere_t Kt, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply, double b) {
             this->R = R; // resistance
             this->L = L; // inductance
             this->Kt = Kt; // torque constant
             this->J = J; // inertia
             this->gearing = gearing; // gear ratio
             this->Vsupply = Vsupply;
+            this->b = b;
         }
 
-        DCMotorModel(frc::DCMotor motor, units::inductance::henry_t L, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply) {
+        DCMotorModel(frc::DCMotor motor, units::inductance::henry_t L, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply, double b) {
             this->R = motor.R; // resistance
             this->L = L; // inductance
             this->Kt = motor.Kt; // torque constant
             this->J = J; // inertia
             this->gearing = gearing; // gear ratio
             this->Vsupply = Vsupply; // supply voltage
+            this->b = b;
+            ROS_INFO_STREAM("Initializing motor model with R=" << R.value() << ",L=" << L.value() << ",Kt=" << Kt.value() << ",J=" << J.value() << ",gearing=" << gearing << ",Vsupply=" << Vsupply.value());
         }
 
         // Actually simulate the motor
@@ -67,13 +71,16 @@ class DCMotorModel
             // so, ̇ω = (Kt * I)/J + τ_ext/J which matches the equation above and the matrices below, yay!
 
             // and I don't really know what to do with the derivative of current so will just ignore it for now and hope it works
+            // damping friction is 0.1 for now, idk what the right value is
             Eigen::Matrix2d A;
-            A <<             0.0, (Kt/J)/gearing,
-                 (-Kt/L)*gearing, -R/L;
+            A <<                    -b/J.value(), (Kt.value()/J.value())/gearing,
+                 (-Kt.value()/L.value())*gearing, -R.value()/L.value();
             
             Eigen::Matrix2d B;
-            B <<       0.0, 1.0/J,
-                 Vsupply/L, 0.0;
+            B <<       0.0, 1.0/J.value(),
+                 Vsupply.value()/L, 0.0;
+
+            ROS_INFO_STREAM("motor model, x=" << x << ",u=" << u << ",A=" << A << ",B=" << B << ",y=" << A*x + B*u);
             
             return A*x + B*u;
         }
@@ -85,6 +92,7 @@ class DCMotorModel
         units::kilogram_square_meter_t J; // inertia
         double gearing; // gear ratio
         units::volt_t Vsupply;
+        double b; // damping friction
 };
 
 struct PacejkaConstants {
@@ -110,9 +118,12 @@ public:
     Eigen::Matrix<double, WHEELCOUNT, 2> wheel_positions_;
     units::kilogram_t mass_;
     units::kilogram_square_meter_t moment_of_inertia_;
+    ros::Publisher debug_pub_;
 
     SwerveDynamics() {
-
+        // Initialize publisher
+        ros::NodeHandle nh;
+        debug_pub_ = nh.advertise<general_simulators::SwerveDebug>("swerve_debug", 1);
     }
 
     ~SwerveDynamics() {
@@ -161,6 +172,16 @@ public:
                 x[2]; // angular velocity of azimuth
         
         Eigen::Vector2d y = Eigen::Vector2d(x_direction_force.value(), y_direction_force.value());
+
+        // Print out the state vector and the output vector using ROS_INFO_STREAM
+        // ROS_INFO_STREAM_THROTTLE(0.1, "x=" << x << ",xdot=" << xdot << ",u=" << u << ",y=" << y);
+        general_simulators::SwerveDebug debug_msg;
+        debug_msg.x = std::vector<double>(x.data(), x.data() + x.size());
+        debug_msg.ground_speed = std::vector<double>(ground_speed.data(), ground_speed.data() + ground_speed.size());
+        debug_msg.xdot = std::vector<double>(xdot.data(), xdot.data() + xdot.size());
+        debug_msg.u = std::vector<double>(u.data(), u.data() + u.size());
+        debug_msg.y = std::vector<double>(y.data(), y.data() + y.size());
+        debug_pub_.publish(debug_msg);
 
         return std::make_pair(xdot, y);
     }
@@ -254,6 +275,10 @@ class SwerveSimulator : public simulator_base::Simulator
             swerve_dynamics_.mass_ = mass;
             swerve_dynamics_.moment_of_inertia_ = moment_of_inertia;
 
+            // Zero out state and control vectors
+            x.setZero();
+            u.setZero();
+
             // Create a DCMotor object for drive and steer motors
             // If we're not using Krakens here, we're doing something wrong :)
             // (although azimuth motors could be Falcons, that's fine)
@@ -261,8 +286,9 @@ class SwerveSimulator : public simulator_base::Simulator
             frc::DCMotor turn = frc::DCMotor::KrakenX60FOC(1);
 
             // Create a DCMotorModel object
-            swerve_dynamics_.drive_motor_ = DCMotorModel(drive, units::henry_t{0.01}, units::kilogram_square_meter_t{0.05}, gearing, units::volt_t{12.0});
-            swerve_dynamics_.turn_motor_ = DCMotorModel(turn, units::henry_t{0.01}, units::kilogram_square_meter_t{0.05}, gearing, units::volt_t{12.0});
+            units::kilogram_square_meter_t kraken_inertia{0.1 * (0.95 * 0.0254) * (0.95 * 0.0254)}; // thanks 971
+            swerve_dynamics_.drive_motor_ = DCMotorModel(drive, units::henry_t{0.05}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
+            swerve_dynamics_.turn_motor_ = DCMotorModel(turn, units::henry_t{0.05}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
 
             // Set up NodeHandle and velocity pub
             ros::NodeHandle nh_;
@@ -279,12 +305,24 @@ class SwerveSimulator : public simulator_base::Simulator
                 is_turn = 1;
             }
 
+            if (is_turn && !set_initial_angle_[motor_index]) {
+                // Set the initial angle of the turn motor
+                x[motor_index * 5 + 4] = state->getPosition() + (M_PI / 2.);
+                set_initial_angle_[motor_index] = true;
+            }
+
             // Get the motor voltage from the state
-            units::voltage::volt_t motor_voltage = talonfxpro->GetSimState().GetMotorVoltage();
+            units::voltage::volt_t motor_voltage = talonfxpro->GetSimState().GetMotorVoltage() * (state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1 : 1);
             last_read_times_[motor_index * 2 + is_turn] = time;
 
+            // Get the applied torque current from the state and set it in the state vector
+            units::ampere_t motor_current = talonfxpro->GetSimState().GetTorqueCurrent();
+            x[motor_index * 5 + 1 + is_turn * 2] = motor_current.value() * (is_turn ? 0 : 1);
+
             // Update the control vector
-            u[motor_index * 2 + is_turn] = motor_voltage.value();
+            u[motor_index * 2 + is_turn] = motor_voltage.value() * (is_turn ? 0 : 1); // don't sim turn motor for now, just test straight driving forward hopefully
+
+            // ROS_INFO_STREAM("Motor " << name << " voltage: " << motor_voltage.value() << "V, read time is " << last_read_times_[motor_index * 2 + is_turn]);
 
             // If all of the times in last_read_times_ are equal, update swerve dynamics
             if (std::adjacent_find(std::begin(last_read_times_), std::end(last_read_times_), std::not_equal_to<>()) == std::end(last_read_times_)) {
@@ -303,10 +341,13 @@ class SwerveSimulator : public simulator_base::Simulator
                 twist.twist.linear.x = x[5 * WHEELCOUNT];
                 twist.twist.linear.y = x[5 * WHEELCOUNT + 1];
                 twist.twist.angular.z = x[5 * WHEELCOUNT + 2];
+                // debug info: angular x one wheel speed, angular y another wheel speed
+                twist.twist.angular.x = result.first[0];
+                twist.twist.angular.y = result.first[5];
                 vel_pub_.publish(twist);
             }
 
-            units::radians_per_second_t angular_velocity{x[motor_index * 5]};
+            units::radians_per_second_t angular_velocity{x[motor_index * 5 + is_turn * 2]};
 
             // Set the velocity of the simulated motor to the actual wheel speed
             talonfxpro->GetSimState().SetRotorVelocity(angular_velocity);
@@ -325,7 +366,7 @@ class SwerveSimulator : public simulator_base::Simulator
         SwerveDynamics<WHEELCOUNT> swerve_dynamics_;
         std::vector<std::string> drive_joints_;
         std::vector<std::string> turn_joints_;
-        bool set_initial_position_ = false;
+        bool set_initial_angle_[WHEELCOUNT];
         Eigen::Matrix<double, 5 * WHEELCOUNT + 2 + 1 + 2 + 1, 1> x;
         Eigen::Matrix<double, 2 * WHEELCOUNT, 1> u;
         ros::Time last_read_times_[2*WHEELCOUNT];

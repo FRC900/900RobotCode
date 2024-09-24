@@ -7,3 +7,4 @@
 PLUGINLIB_EXPORT_CLASS(general_simulators::FlywheelSimulator, simulator_base::Simulator)
 PLUGINLIB_EXPORT_CLASS(general_simulators::SingleJointedArmSimulator, simulator_base::Simulator)
 PLUGINLIB_EXPORT_CLASS(general_simulators::SwerveSimulator<4>, simulator_base::Simulator)
+PLUGINLIB_EXPORT_CLASS(general_simulators::SwerveSimulator<1>, simulator_base::Simulator)

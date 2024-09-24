@@ -23,4 +23,12 @@
 			Swerve simulator, copied from 971 and 22377's swerve dynamics
 		</description>
 	</class>
+	<class
+		name="general_simulators/SwerveSimulator1"
+		type="general_simulators::SwerveSimulator<1>"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Swerve simulator, copied from 971 and 22377's swerve dynamics
+		</description>
+	</class>
 </library>

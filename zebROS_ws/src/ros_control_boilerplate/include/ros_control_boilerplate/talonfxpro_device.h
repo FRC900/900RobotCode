@@ -7,6 +7,7 @@
 
 #include "ros/node_handle.h"
 #include "ros_control_boilerplate/ctre_v6_device.h"
+#include "simulator_interface/simulator_base.h"
 
 namespace ctre::phoenix6
 {
@@ -38,9 +39,7 @@ public:
                      const std::string &joint_name,
                      const int can_id,
                      const std::string &can_bus,
-                     double read_hz,
-                     const std::string &simulator,
-                     const XmlRpc::XmlRpcValue &simulator_info);
+                     double read_hz);
     TalonFXProDevice(const TalonFXProDevice &) = delete;
     TalonFXProDevice(TalonFXProDevice &&other) noexcept = delete;
     ~TalonFXProDevice() override;

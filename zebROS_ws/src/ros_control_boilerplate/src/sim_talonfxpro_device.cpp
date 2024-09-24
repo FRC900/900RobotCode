@@ -11,20 +11,20 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
                                          const int can_id,
                                          const std::string &can_bus,
                                          double read_hz,
-                                         const std::string &simulator,
-                                         const XmlRpc::XmlRpcValue &simulator_info)
-    : TalonFXProDevice(name_space, joint_index, joint_name, can_id, can_bus, read_hz, simulator, simulator_info)
+                                         const std::string &simulator_name,
+                                         boost::shared_ptr<simulator_base::Simulator> simulator)
+    : TalonFXProDevice(name_space, joint_index, joint_name, can_id, can_bus, read_hz)
 {
     // Consider: http://wiki.ros.org/pluginlib for simulation interfaces
     // e.g. a FlywheelSimulator plugin that loads stuff from configs, etc
     // Basically like a controller except it's called in this function and controls simulated state
     this->joint_name_ = joint_name;
 
-    this->simulator_name_ = simulator;
+    this->simulator_name_ = simulator_name;
 
     // TODO keep a unique list of simulators so that multiple joints can specify the same simulator
     // and the instance will be shared, since that simulator needs to interact with all of the joints
-    if (simulator != "") {
+    if (simulator_name != "") {
         // Load simulator from XMLRPC values retrieved by _devices.cpp
         // Example YAML:
         /*
@@ -34,14 +34,8 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
             gear_ratio: 1.0 # already accounted for by sensor to mechanism ratio
             inertia: 0.1 # kg m^2
         */
-        loader_ = std::make_unique<pluginlib::ClassLoader<simulator_base::Simulator>>("simulator_interface", "simulator_base::Simulator");
-        // Load the simulator
-        try {
-            simulator_ = loader_->createInstance(simulator_info["type"]);
-            simulator_->init(simulator_info);
-        } catch (...) {
-            ROS_ERROR_STREAM("Failed to load simulator " << simulator << " for joint " << joint_name);
-        }
+
+        simulator_ = simulator;
     }
 }
 
@@ -271,14 +265,15 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset) * cancoder_invert}; // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
             units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
             
-            // Set rotor position and velocity
-            if (cancoder_) {
-                cancoder_->GetSimState().SetVelocity(cancoder_invert * units::angular_velocity::radians_per_second_t{state_->getClosedLoopReferenceSlope()}); // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
-                // cancoder_->GetSimState().SetRawPosition(cancoder_position);
-                cancoder_->GetSimState().AddPosition(cancoder_invert * units::angular_velocity::radians_per_second_t{state_->getClosedLoopReferenceSlope()} * units::second_t{period.toSec()}); // It seems like we should need to divide by rotor to sensor ratio here, but doing that makes it not work
-            }
             sim_state.AddRotorPosition(invert * velocity * units::second_t{period.toSec()} * state_->getRotorToSensorRatio());
             sim_state.SetRotorVelocity(velocity * state_->getRotorToSensorRatio());
+
+            // Set rotor position and velocity
+            if (cancoder_) {
+                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert;
+                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
+                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
+            }
         }
 
         sim_state.SetSupplyVoltage(battery_voltage);
