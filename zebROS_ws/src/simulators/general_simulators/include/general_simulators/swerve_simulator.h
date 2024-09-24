@@ -9,6 +9,7 @@
 #include <angles/angles.h>
 #include "geometry_msgs/TwistStamped.h"
 #include "general_simulators/SwerveDebug.h"
+#include "std_srvs/Empty.h"
 
 // https://introcontrol.mit.edu/fall23/prelabs/prelab10/ss_1
 // thanks 22377 also :)
@@ -80,7 +81,7 @@ class DCMotorModel
             B <<       0.0, 1.0/J.value(),
                  Vsupply.value()/L, 0.0;
 
-            ROS_INFO_STREAM("motor model, x=" << x << ",u=" << u << ",A=" << A << ",B=" << B << ",y=" << A*x + B*u);
+            // ROS_INFO_STREAM("motor model, x=" << x << ",u=" << u << ",A=" << A << ",B=" << B << ",y=" << A*x + B*u);
             
             return A*x + B*u;
         }
@@ -286,13 +287,17 @@ class SwerveSimulator : public simulator_base::Simulator
             frc::DCMotor turn = frc::DCMotor::KrakenX60FOC(1);
 
             // Create a DCMotorModel object
-            units::kilogram_square_meter_t kraken_inertia{0.1 * (0.95 * 0.0254) * (0.95 * 0.0254)}; // thanks 971
-            swerve_dynamics_.drive_motor_ = DCMotorModel(drive, units::henry_t{0.05}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
-            swerve_dynamics_.turn_motor_ = DCMotorModel(turn, units::henry_t{0.05}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
+            // units::kilogram_square_meter_t kraken_inertia{0.1 * (0.95 * 0.0254) * (0.95 * 0.0254)}; // thanks 971
+            units::kilogram_square_meter_t kraken_inertia(5.8e-4);
+            swerve_dynamics_.drive_motor_ = DCMotorModel(drive, units::henry_t{0.001}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
+            swerve_dynamics_.turn_motor_ = DCMotorModel(turn, units::henry_t{0.001}, kraken_inertia, gearing, units::volt_t{12.0}, simulator_info["damping_friction"]);
 
             // Set up NodeHandle and velocity pub
             ros::NodeHandle nh_;
             vel_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("swerve_simulator/actual_vel", 1);
+
+            // Reset service
+            reset_service_ = nh_.advertiseService("swerve_simulator/reset", &SwerveSimulator::reset, this);
         }
 
         void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> &state) override
@@ -357,6 +362,16 @@ class SwerveSimulator : public simulator_base::Simulator
 
         }
 
+        bool reset(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+            // Zero out state and control vectors
+            x.setZero();
+            u.setZero();
+            // for (size_t i = 0; i < WHEELCOUNT; i++) {
+            //     set_initial_angle_[i] = false;
+            // }
+            return true;
+        }
+
         ~SwerveSimulator() override
         {
 
@@ -372,6 +387,7 @@ class SwerveSimulator : public simulator_base::Simulator
         ros::Time last_read_times_[2*WHEELCOUNT];
 
         ros::Publisher vel_pub_;
+        ros::ServiceServer reset_service_;
 
         /*
         # Tire models

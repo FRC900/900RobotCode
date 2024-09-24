@@ -4,6 +4,7 @@
 #include "ros_control_boilerplate/talonfxpro_device.h"
 #include "simulator_interface/simulator_base.h"
 #include "pluginlib/class_loader.h"
+#include "ros_control_boilerplate/tracer.h"
 
 namespace ctre::phoenix6::hardware::core
 {
@@ -35,7 +36,7 @@ public:
     SimTalonFXProDevice &operator=(SimTalonFXProDevice &&) noexcept = delete;
 
     // Read and write functions which add additional sim features
-    void simRead(const ros::Time& time, const ros::Duration& period, const units::voltage::volt_t battery_voltage);
+    void simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer, const units::voltage::volt_t battery_voltage);
 
     bool setSimLimitSwitches(const bool forward_limit, const bool reverse_limit);
     bool setSimCurrent(const double stator_current, const double supply_current);
@@ -48,6 +49,8 @@ private:
     std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder_;
     boost::shared_ptr<simulator_base::Simulator> simulator_;
     std::string simulator_name_;
+    double cancoder_invert_, cancoder_offset_;
+    bool read_cancoder_configs_;
 };
 
 #endif

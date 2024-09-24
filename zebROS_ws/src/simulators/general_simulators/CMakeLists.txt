@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   simulator_interface
+  std_srvs
   talon_state_msgs
 )
 
