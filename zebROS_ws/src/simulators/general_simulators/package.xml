@@ -69,6 +69,8 @@
   <exec_depend>talon_state_msgs</exec_depend>
   <depend>simulator_interface</depend>
   <depend>ros_control_boilerplate</depend>
+  <depend>ddynamic_reconfigure</depend>
+  <depend>geometry_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

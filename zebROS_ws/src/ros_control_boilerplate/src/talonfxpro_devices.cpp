@@ -43,6 +43,8 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
             XmlRpc::XmlRpcValue simulator_info;
 
             if (simulator != "") {
+                // TODO keep a unique list of simulators so that multiple joints can specify the same simulator
+                // and the instance will be shared, since that simulator needs to interact with all of the joints
                 if (!root_nh.getParam(simulator, simulator_info))
                 {
                     ROS_ERROR_STREAM("A simulator '" << simulator << "' was specified, but no details were found.");

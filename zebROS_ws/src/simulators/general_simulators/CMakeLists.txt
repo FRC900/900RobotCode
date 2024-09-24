@@ -11,6 +11,8 @@ include ("../../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   ctre_interfaces
+  ddynamic_reconfigure
+  geometry_msgs
   pluginlib
   roscpp
   rospy

@@ -4,9 +4,17 @@
 #include <frc/simulation/SingleJointedArmSim.h>
 #include <frc/system/plant/DCMotor.h>
 #include "wpimath/MathShared.h"
+#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
+#include "ros/ros.h"
 
 // Use 6328's code as an example
 // https://github.com/Mechanical-Advantage/RobotCode2024/blob/main/src/main/java/org/littletonrobotics/frc2024/subsystems/superstructure/arm/ArmIOSim.java
+
+// Something that would be really interesting to do is to do system identification from a bag file
+// Subscribe to talonfxpro_states, simulate using bagged voltages, see what the output is, and then compare the two
+// Optimize for the best fit for the moment of inertia, all of the other things are pretty well known
+// This optimization could be done using a genetic algorithm or something similar (interesting suggestion, Copilot)
+// Maybe gradient descent could work also? I'm not sure how to even find the gradient with noncontinuous data though, should think about it more
 
 namespace general_simulators
 {
@@ -28,6 +36,77 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             max_angle_ = simulator_info["max_angle"]; // radians
             bool simulate_gravity = simulator_info["simulate_gravity"]; // bool
             double starting_angle = simulator_info["starting_angle"]; // radians
+
+            // Set up node handle
+            ros::NodeHandle nh_;
+
+            // Add dynamic reconfigure for these parameters
+            ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(nh_);
+
+            // ddr_->registerVariable<double>(
+            //     "gearing",
+            //     [this]()
+            //     { return gearing; },
+            //     [this](double b)
+            //     { gearing = b; },
+            //     "Gearing",
+            //     0.0, 100.0);
+            
+            // ddr_->registerVariable<double>(
+            //     "moment_of_inertia",
+            //     [this]()
+            //     { return moment_of_inertia; },
+            //     [this](double b)
+            //     { moment_of_inertia = b; },
+            //     "Moment of Inertia",
+            //     0.0, 10.0);
+            
+            // ddr_->registerVariable<double>(
+            //     "arm_length",
+            //     [this]()
+            //     { return arm_length; },
+            //     [this](double b)
+            //     { arm_length = b; },
+            //     "Arm Length",
+            //     0.0, 10.0);
+            
+            // ddr_->registerVariable<double>(
+            //     "min_angle",
+            //     [this]()
+            //     { return min_angle_; },
+            //     [this](double b)
+            //     { min_angle_ = b; },
+            //     "Min Angle",
+            //     0, 2*M_PI);
+            
+            // ddr_->registerVariable<double>(
+            //     "max_angle",
+            //     [this]()
+            //     { return max_angle_; },
+            //     [this](double b)
+            //     { max_angle_ = b; },
+            //     "Max Angle",
+            //     0, 2*M_PI);
+
+            // ddr_->registerVariable<bool>(
+            //     "simulate_gravity",
+            //     [this]()
+            //     { return simulate_gravity; },
+            //     [this](bool b)
+            //     { simulate_gravity = b; },
+            //     "Simulate Gravity",
+            //     false, true);
+            
+            // ddr_->registerVariable<double>(
+            //     "starting_angle",
+            //     [this]()
+            //     { return starting_angle; },
+            //     [this](double b)
+            //     { starting_angle = b; },
+            //     "Starting Angle",
+            //     0, 2*M_PI);
+            
+            // ddr_->publishServicesTopics();
 
             // Create a DCMotor object for the arm.
             // If we're not using Krakens here, we're doing something wrong :)
@@ -84,6 +163,7 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
         std::unique_ptr<frc::sim::SingleJointedArmSim> single_jointed_arm_sim_;
         bool set_initial_position_ = false;
         double min_angle_, max_angle_;
+		std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 };
 
 };

@@ -15,4 +15,12 @@
 			Single jointed arm simulator, using WPILib's single jointed arm sim
 		</description>
 	</class>
+	<class
+		name="general_simulators/SwerveSimulator4"
+		type="general_simulators::SwerveSimulator<4>"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Swerve simulator, copied from 971 and 22377's swerve dynamics
+		</description>
+	</class>
 </library>

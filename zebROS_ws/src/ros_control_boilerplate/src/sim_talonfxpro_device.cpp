@@ -22,6 +22,8 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
 
     this->simulator_name_ = simulator;
 
+    // TODO keep a unique list of simulators so that multiple joints can specify the same simulator
+    // and the instance will be shared, since that simulator needs to interact with all of the joints
     if (simulator != "") {
         // Load simulator from XMLRPC values retrieved by _devices.cpp
         // Example YAML:
