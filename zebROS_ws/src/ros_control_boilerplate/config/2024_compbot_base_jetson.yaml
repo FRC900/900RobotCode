@@ -35,8 +35,8 @@ hardware_interface:
 
    joints:
        # Swerve drive
-       - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, simulator: swerve_simulator, local: true}
-       - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, simulator: swerve_simulator, local: true}
+       - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
+       - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
        - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
        - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
        - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
@@ -60,11 +60,11 @@ hardware_interface:
        #- {name: climb_follower, type: talonfxpro, can_bus: CANivore, can_id: 42, local: true}
 
        #shooter
-       - {name: top_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, simulator: top_left_shooter_simulator, local: true}
+       - {name: top_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
        - {name: top_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 52, local: true}
        - {name: bottom_left_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 53, local: true}
        - {name: bottom_right_shooter_joint, type: talonfxpro, can_bus: CANivore, can_id: 54, local: true}
-       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 55, simulator: shooter_pivot_simulator, local: true}
+       - {name: shooter_pivot_motionmagic_joint, type: talonfxpro, can_bus: CANivore, can_id: 55, local: true}
        - {name: shooter_pivot_cancoder, type: cancoder, can_bus: CANivore, can_id: 55, local: true}
 
        #Claw/Diverter
@@ -90,6 +90,8 @@ hardware_interface:
 
         #  taken out
        - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw}] }
+
+       - {name: top_left_shooter_simulator, type: simulator, joints: [ {name: top_left_shooter_joint, type: talonfx} ]}
 
 # Create controllers for each joint
 #

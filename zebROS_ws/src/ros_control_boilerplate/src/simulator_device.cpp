@@ -147,9 +147,11 @@ void SimulatorDevice::simPostRead(const ros::Time& time, const ros::Duration& pe
         {
             // ROS_INFO_STREAM("SimulatorDevice: Updating CANcoder for joint " << joint);
             auto &cancoder = cancoders_[joint];
-            const units::radians_per_second_t cancoder_velocity{state->getRotorVelocity() / state->getRotorToSensorRatio()};
-            cancoder->GetSimState().SetVelocity(cancoder_velocity);
-            cancoder->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
+            const units::radians_per_second_t cancoder_velocity{state->getRotorVelocity() / state->getRotorToSensorRatio() * cancoder_inverts_[joint]};
+            if (cancoder) {
+                cancoder->GetSimState().SetVelocity(cancoder_velocity);
+                cancoder->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
+            }
         }
     }
 }

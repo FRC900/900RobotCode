@@ -73,6 +73,7 @@
 #include "ros_control_boilerplate/ros_iterative_robot_devices.h"
 #include "ros_control_boilerplate/rumble_devices.h"
 #include "ros_control_boilerplate/servo_devices.h"
+#include "ros_control_boilerplate/simulator_devices.h"
 #include "ros_control_boilerplate/solenoid_devices.h"
 #include "ros_control_boilerplate/sparkmax_devices.h"
 #include "ros_control_boilerplate/talonfxpro_devices.h"
@@ -206,6 +207,9 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
 	append_device_map.template operator()<TalonFXProDevices<SIM>>();
 	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
+	if constexpr (SIM) {
+		devices_.emplace_back(std::make_unique<SimulatorDevices>(root_nh, ctrev6_devices));
+	}
 
 	// Create controller interfaces for all the types created above
 	for (const auto &d : devices_)
