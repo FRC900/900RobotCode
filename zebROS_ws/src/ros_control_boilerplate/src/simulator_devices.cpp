@@ -39,6 +39,8 @@ SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap
 
             try {
                 simulators_[joint_name] = loader_->createInstance(simulator_info["type"]);
+                std::string sim_type = simulator_info["type"];
+                simulator_types_[joint_name] = sim_type;
             } catch (...) {
                 ROS_ERROR_STREAM("Failed to load simulator " << joint_name);
                 simulators_[joint_name] = nullptr;
@@ -56,7 +58,16 @@ SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap
     }
 }
 
-SimulatorDevices::~SimulatorDevices() = default; 
+SimulatorDevices::~SimulatorDevices() {
+    for (const auto &d : devices_)
+    {
+        d->~SimulatorDevice();
+    }
+    for (auto& pair : simulators_) {
+        pair.second.reset();
+        loader_->unloadLibraryForClass(simulator_types_[pair.first]);
+    }
+}
 
 void SimulatorDevices::simInit(ros::NodeHandle &nh)
 {

@@ -6,8 +6,6 @@
 #include "ros_control_boilerplate/set_limit_switch.h"
 #include "ros_control_boilerplate/set_current.h"
 #include "frc/simulation/BatterySim.h"
-#include "simulator_interface/simulator_base.h"
-#include "pluginlib/class_loader.h"
 
 class SimTalonFXProDevice;
 class TalonFXProDevice;
@@ -67,9 +65,6 @@ private:
     // be a forced true->false transition. This will be used to force the
     // devices into a disabled state.
     bool prev_robot_enabled_{true};
-
-    std::unique_ptr<pluginlib::ClassLoader<simulator_base::Simulator>> loader_;
-    std::map<std::string, boost::shared_ptr<simulator_base::Simulator>> simulators_;
 };
 
 #endif

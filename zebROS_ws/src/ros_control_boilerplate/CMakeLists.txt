@@ -155,8 +155,6 @@ add_library(frc_robot_interface STATIC
 	src/rumble_devices.cpp
 	src/servo_device.cpp
 	src/servo_devices.cpp
-	src/simulator_device.cpp
-	src/simulator_devices.cpp
 	src/solenoid_device.cpp
 	src/solenoid_devices.cpp
 	src/talon_orchestra_device.cpp
@@ -472,6 +470,8 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		src/sim_talonfxpro_device.cpp
 		src/sparkmax_sim_device.cpp
 		src/talonfxpro_sim_devices.cpp
+		src/simulator_device.cpp
+		src/simulator_devices.cpp
 	)
 	# set_source_files_properties(
 	# src/ctre_v5_motor_controller_hw_device.cpp

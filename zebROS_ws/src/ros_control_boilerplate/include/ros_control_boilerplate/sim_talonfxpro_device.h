@@ -25,9 +25,7 @@ public:
                         const std::string &joint_name,
                         const int can_id,
                         const std::string &can_bus,
-                        double read_hz,
-                        const std::string &simulator_name,
-                        boost::shared_ptr<simulator_base::Simulator> simulator);
+                        double read_hz);
     SimTalonFXProDevice(const SimTalonFXProDevice &) = delete;
     SimTalonFXProDevice(SimTalonFXProDevice &&other) noexcept = delete;
     ~SimTalonFXProDevice() override;
@@ -47,8 +45,6 @@ private:
     boost::shared_ptr<gazebo::physics::Joint> gazebo_joint_;
     // int counter_{0};
     std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder_;
-    boost::shared_ptr<simulator_base::Simulator> simulator_;
-    std::string simulator_name_;
     double cancoder_invert_, cancoder_offset_;
     bool read_cancoder_configs_;
 };

@@ -73,7 +73,6 @@
 #include "ros_control_boilerplate/ros_iterative_robot_devices.h"
 #include "ros_control_boilerplate/rumble_devices.h"
 #include "ros_control_boilerplate/servo_devices.h"
-#include "ros_control_boilerplate/simulator_devices.h"
 #include "ros_control_boilerplate/solenoid_devices.h"
 #include "ros_control_boilerplate/sparkmax_devices.h"
 #include "ros_control_boilerplate/talonfxpro_devices.h"
@@ -99,6 +98,25 @@ void FRCRobotInterface<SIM>::readParams(const ros::NodeHandle& root_nh, const ro
 	ros::NodeHandle rpnh(root_nh, "hardware_interface"); // TODO(davetcoleman): change the namespace to "frc_robot_interface" aka name_
 	run_hal_robot_ = rpnh.param<bool>("run_hal_robot", run_hal_robot_);
 	can_interface_ = rpnh.param<std::string>("can_interface", can_interface_);
+}
+
+template<bool SIM>
+std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> FRCRobotInterface<SIM>::get_ctrev6_devices() {
+	// Grab a collection of all the ctre V6 device types
+	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices;
+
+	auto append_device_map = [&ctrev6_devices, this]<typename T>(void)
+	{
+		const auto device_ptr = getDevicesOfType<T>(devices_);
+		if (device_ptr)
+		{
+			device_ptr->appendDeviceMap(ctrev6_devices);
+		}
+	};
+	append_device_map.template operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
+	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
+	append_device_map.template operator()<TalonFXProDevices<SIM>>();
+	return ctrev6_devices;
 }
 
 template <bool SIM>
@@ -191,25 +209,8 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<TalonFXProDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<TalonOrchestraDevices<SIM>>(root_nh));
 
-	// Grab a collection of all the ctre V6 device types, pass them
-	// into the Latency Compensation Groups constructor
-	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices;
-
-	auto append_device_map = [&ctrev6_devices, this]<typename T>(void)
-	{
-		const auto device_ptr = getDevicesOfType<T>(devices_);
-		if (device_ptr)
-		{
-			device_ptr->appendDeviceMap(ctrev6_devices);
-		}
-	};
-	append_device_map.template operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
-	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
-	append_device_map.template operator()<TalonFXProDevices<SIM>>();
+	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices = get_ctrev6_devices();
 	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
-	if constexpr (SIM) {
-		devices_.emplace_back(std::make_unique<SimulatorDevices>(root_nh, ctrev6_devices));
-	}
 
 	// Create controller interfaces for all the types created above
 	for (const auto &d : devices_)

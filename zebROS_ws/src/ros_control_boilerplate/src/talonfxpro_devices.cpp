@@ -24,8 +24,6 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
         throw std::runtime_error("No joints were specified.");
     }
 
-    loader_ = std::make_unique<pluginlib::ClassLoader<simulator_base::Simulator>>("simulator_interface", "simulator_base::Simulator");
-
 	for (int i = 0; i < joint_param_list.size(); i++)
 	{
 		const XmlRpc::XmlRpcValue &joint_params = joint_param_list[i];
@@ -45,36 +43,7 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
 
             XmlRpc::XmlRpcValue simulator_info;
 
-            if constexpr (SIM) {
-                if (simulator != "") {
-                    // TODO keep a unique list of simulators so that multiple joints can specify the same simulator
-                    // and the instance will be shared, since that simulator needs to interact with all of the joints
-                    if (!root_nh.getParam(simulator, simulator_info))
-                    {
-                        ROS_ERROR_STREAM("A simulator '" << simulator << "' was specified, but no details were found.");
-                    }
-                    if (simulators_.find(simulator) == simulators_.end()) {
-                        // Load the simulator
-                        try {
-                            simulators_[simulator] = loader_->createInstance(simulator_info["type"]);
-                        } catch (...) {
-                            ROS_ERROR_STREAM("Failed to load simulator " << simulator << " for joint " << joint_name);
-                            simulators_[simulator] = nullptr;
-                        }
-
-                        // Initialize the simulator
-                        try {
-                            simulators_[simulator]->init(simulator_info);
-                        } catch (...) {
-                            ROS_ERROR_STREAM("Failed to initialize simulator " << simulator << " for joint " << joint_name);
-                        }
-                    }
-                }
-                ROS_INFO_STREAM("Using simulator " << simulator << " for joint " << joint_name);
-                devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_, simulator, simulators_[simulator]));
-            } else {
-                devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_));
-            }
+            devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_));
         }
     }
 }

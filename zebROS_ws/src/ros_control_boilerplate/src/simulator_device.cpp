@@ -48,7 +48,9 @@ SimulatorDevice::SimulatorDevice(const std::string &name, const XmlRpc::XmlRpcVa
     }
 }
 
-SimulatorDevice::~SimulatorDevice() = default;
+SimulatorDevice::~SimulatorDevice() {
+    simulator_.reset();
+}
 
 // Note: registerInterface is called before simInit
 

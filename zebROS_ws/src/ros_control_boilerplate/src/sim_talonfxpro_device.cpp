@@ -10,33 +10,10 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
                                          const std::string &joint_name,
                                          const int can_id,
                                          const std::string &can_bus,
-                                         double read_hz,
-                                         const std::string &simulator_name,
-                                         boost::shared_ptr<simulator_base::Simulator> simulator)
+                                         double read_hz)
     : TalonFXProDevice(name_space, joint_index, joint_name, can_id, can_bus, read_hz)
 {
-    // Consider: http://wiki.ros.org/pluginlib for simulation interfaces
-    // e.g. a FlywheelSimulator plugin that loads stuff from configs, etc
-    // Basically like a controller except it's called in this function and controls simulated state
     this->joint_name_ = joint_name;
-
-    this->simulator_name_ = simulator_name;
-
-    // TODO keep a unique list of simulators so that multiple joints can specify the same simulator
-    // and the instance will be shared, since that simulator needs to interact with all of the joints
-    if (simulator_name != "") {
-        // Load simulator from XMLRPC values retrieved by _devices.cpp
-        // Example YAML:
-        /*
-        top_left_shooter_simulator:
-            joints: [top_left_shooter_joint]
-            type: general_simulators/FlywheelSimulator
-            gear_ratio: 1.0 # already accounted for by sensor to mechanism ratio
-            inertia: 0.1 # kg m^2
-        */
-
-        simulator_ = simulator;
-    }
 }
 
 SimTalonFXProDevice::~SimTalonFXProDevice() = default;
@@ -119,15 +96,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         {
             gazebo_joint_->SetPosition(0, state_->getRotorPosition());
         }
-        else if (simulator_)
-        {
-            simulator_->update(joint_name_, time, period, talonfxpro_, state_);
-            if (cancoder_) {
-                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert_;
-                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
-                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
-            }
-        }
         else
         {
             // Instantly get to desired position and velocity
@@ -193,16 +161,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             // gazebo_joint_->SetVelocity(0, state_->getControlVelocity());
             ROS_ERROR_STREAM_THROTTLE_NAMED(1, std::to_string(state_->getCANID()), "IN VELOCITY MODE " << torque << " " << sim_state.GetMotorVoltage().value() << " " << state_->getControlVelocity() << " " << state_->getSensorToMechanismRatio());
         }
-        else if (simulator_)
-        {
-            // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists, about to call update()");
-            simulator_->update(joint_name_, time, period, talonfxpro_, state_);
-            if (cancoder_) {
-                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert_;
-                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
-                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
-            }
-        }
         else
         {
             // Calculate velocity setpoint and position delta, applying invert and sensor : mechanism ratio
@@ -259,16 +217,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
             sim_state.AddRotorPosition(units::radian_t{gazebo_joint_->GetVelocity(0) * period.toSec()});
             // gazebo_joint_->SetVelocity(0, state_->getControlVelocity());
             ROS_ERROR_STREAM_THROTTLE_NAMED(1, std::to_string(state_->getCANID()), "IN MOTION MAGIC MODE " << torque << " " << sim_state.GetMotorVoltage().value() << " " << state_->getControlVelocity() << " " << state_->getSensorToMechanismRatio());
-        }
-        else if (simulator_)
-        {
-            // ROS_INFO_STREAM("Simulator " << simulator_name_ << " exists for joint " << joint_name_ << ", about to call update()");
-            simulator_->update(joint_name_, time, period, talonfxpro_, state_);
-            if (cancoder_) {
-                auto cancoder_velocity = talonfxpro_->GetRotorVelocity().GetValue() / state_->getRotorToSensorRatio() * cancoder_invert_;
-                cancoder_->GetSimState().SetVelocity(cancoder_velocity);
-                cancoder_->GetSimState().AddPosition(cancoder_velocity * units::second_t{period.toSec()});
-            }
         }
         else
         {

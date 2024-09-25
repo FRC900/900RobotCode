@@ -45,6 +45,7 @@ private:
 
     std::unique_ptr<pluginlib::ClassLoader<simulator_base::Simulator>> loader_;
     std::map<std::string, boost::shared_ptr<simulator_base::Simulator>> simulators_;
+    std::map<std::string, std::string> simulator_types_;
 };
 
 #endif
