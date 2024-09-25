@@ -63,4 +63,4 @@
     uri: https://github.com/pal-robotics/ddynamic_reconfigure_python.git
 - git:
     local-name: camera_info_manager_py
-    uri: https://github.com/ros-perception/camera_info_manager_py
+    uri: https://github.com/FRC900/camera_info_manager_py
