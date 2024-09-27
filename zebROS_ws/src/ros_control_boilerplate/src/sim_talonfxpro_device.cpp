@@ -1,10 +1,11 @@
 #include "ros/node_handle.h"
 #include "ctre/phoenix6/core/CoreTalonFX.hpp"
-#include "ctre/phoenix6/core/CoreCANcoder.hpp"
 #include "ros_control_boilerplate/sim_talonfxpro_device.h"
+#include "ctre_interfaces/cancoder_sim_command_interface.h" 
 #include "ctre_interfaces/talonfxpro_state_interface.h"
 #include "gazebo/physics/Joint.hh"                          // for Joint
 #include "gazebo/physics/Model.hh"                          // for Model
+
 SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
                                          const int joint_index,
                                          const std::string &joint_name,
@@ -17,19 +18,33 @@ SimTalonFXProDevice::SimTalonFXProDevice(const std::string &name_space,
 
 SimTalonFXProDevice::~SimTalonFXProDevice() = default;
 
-void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration &period)
+void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration &period, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if)
 {
-
-    if (state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder || state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder || state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder)
+    if (state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder ||
+        state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder ||
+        state_->getFeedbackSensorSource() == hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder)
     {
-        if (!cancoder_ || cancoder_->GetDeviceID() != state_->getFeedbackRemoteSensorID())
+        if (!cancoder_id_ || (state_->getFeedbackRemoteSensorID() != *cancoder_id_))
         {
-            cancoder_ = std::make_unique<ctre::phoenix6::hardware::core::CoreCANcoder>(state_->getFeedbackRemoteSensorID());
+            cancoder_id_ = std::nullopt;
+            // We have the cancoder id from Talon states, but handles are looked up by name
+            // so we need to find the name of the cancoder with the given id
+            const auto names = sim_cancoder_if->getNames();
+            for (const auto &name : names)
+            {
+                auto handle = sim_cancoder_if->getHandle(name);
+                if (handle.state()->getDeviceNumber() == *cancoder_id_)
+                {
+                    cancoder_ = handle;
+                    cancoder_id_ = state_->getFeedbackRemoteSensorID();
+                    break;
+                }
+            }
+            if (!cancoder_id_)
+            {
+                ROS_ERROR_STREAM_THROTTLE(1.0, "SimTalonFXDevice " << getName() << " : Could not find cancoder with id " << state_->getFeedbackRemoteSensorID());
+            }
         }
-    }
-    else
-    {
-        cancoder_.reset();
     }
     
     if (gazebo_joint_)
@@ -57,12 +72,10 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
 
     double cancoder_invert = 1.0;
     double cancoder_offset = 0.0;
-    if (cancoder_)
+    if (cancoder_id_)
     {
-        ctre::phoenix6::configs::MagnetSensorConfigs magnet_configs;
-        cancoder_->GetConfigurator().Refresh(magnet_configs);
-        cancoder_invert = magnet_configs.SensorDirection == ctre::phoenix6::signals::SensorDirectionValue::Clockwise_Positive ? -1.0 : 1.0;
-        cancoder_offset = units::radian_t{units::turn_t{magnet_configs.MagnetOffset}}.value();
+        cancoder_invert = cancoder_.state()->getSensorDirection() == hardware_interface::cancoder::SensorDirection::Clockwise_Positive ? -1.0 : 1.0;
+        cancoder_offset = cancoder_.state()->getMagnetOffset();
     }
 
     switch (state_->getControlMode())
@@ -86,7 +99,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         units::radian_t position{invert * state_->getControlPosition() * state_->getSensorToMechanismRatio()};
         units::radian_t cancoder_position{state_->getControlPosition() * cancoder_invert - cancoder_offset};
         sim_state.SetRawRotorPosition(position);
-        if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
+        if (cancoder_id_) { cancoder_->setRawPosition(cancoder_position.value()); }
         units::radians_per_second_t velocity{invert * state_->getControlVelocity() * state_->getSensorToMechanismRatio()};
         sim_state.SetRotorVelocity(velocity);
         sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
@@ -148,7 +161,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
         units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
         sim_state.SetRawRotorPosition(position);
-        if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
+        if (cancoder_id_) { cancoder_->setRawPosition(cancoder_position.value()); }
         sim_state.SetRotorVelocity(velocity);
         sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
         if (gazebo_joint_)
@@ -173,7 +186,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         units::radian_t cancoder_target_position{cancoder_invert * state_->getClosedLoopReference() - cancoder_offset};
         units::angular_velocity::radians_per_second_t target_velocity{invert * state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
         sim_state.SetRawRotorPosition(target_position);
-        if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_target_position); }
+        if (cancoder_id_) { cancoder_->setRawPosition(cancoder_target_position.value()); }
         sim_state.SetRotorVelocity(target_velocity);
         sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
         ROS_ERROR_STREAM("IN MOTION MAGIC MODE");

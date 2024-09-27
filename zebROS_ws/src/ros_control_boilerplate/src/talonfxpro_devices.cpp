@@ -5,6 +5,7 @@
 #include "ros_control_boilerplate/sim_talonfxpro_device.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 #include "ctre_interfaces/talonfxpro_command_interface.h"
+#include "ctre_interfaces/cancoder_sim_command_interface.h"
 
 template <bool SIM>
 TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh) 
@@ -107,7 +108,7 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
         tracer.start_unique("talonfxpro sim");
         for (const auto &d : devices_)
         {
-            d->simRead(time, period);
+            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>());
         }
     }
 }

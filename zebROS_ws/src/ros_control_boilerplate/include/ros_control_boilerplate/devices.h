@@ -18,6 +18,7 @@
 #define INC_DEVICES_H__
 
 #include <ros/ros.h>
+#include <hardware_interface/robot_hw.h>
 #include "ros_control_boilerplate/tracer.h"
 
 namespace hardware_interface
@@ -62,6 +63,8 @@ public:
     virtual void hwRead(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
     virtual void hwWrite(const ros::Time& /*time*/, const ros::Duration& /*period*/, Tracer& /*tracer*/) {}
 
+    static void setRobotHW(hardware_interface::RobotHW *robot_hw) { robot_hw_ = robot_hw; }
+
     // Used to signal that all controllers are finished loading
     static void signalReady(void) { ready_ = true; }
 
@@ -73,11 +76,13 @@ protected:
     static bool isEnabled(void)  { return enabled_; }
     static bool isHALRobot(void) { return hal_robot_; }
     static bool isReady(void)    { return ready_; }
+    static hardware_interface::RobotHW *getRobotHW(void) { return robot_hw_; }
 
 private:
     static inline bool enabled_{true};
     static inline bool hal_robot_{true};
     static inline bool ready_{false};
+    static inline hardware_interface::RobotHW *robot_hw_{nullptr};
 };
 
 template<class T>
