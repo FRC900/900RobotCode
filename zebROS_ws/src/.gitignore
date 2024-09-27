@@ -10,6 +10,7 @@ ar_track_alvar
 camera_info_manager_py
 control_toolbox
 cpu_monitor
+cv_camera
 ddynamic_reconfigure
 ddynamic_reconfigure_python
 pid

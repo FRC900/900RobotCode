@@ -133,7 +133,10 @@
         "stdfloat": "cpp",
         "valarray": "cpp",
         "forward_list": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "csetjmp": "cpp",
+        "slist": "cpp",
+        "scoped_allocator": "cpp"
     },
     "workbench.colorCustomizations": {
         "activityBar.background": "#1F1E5E",

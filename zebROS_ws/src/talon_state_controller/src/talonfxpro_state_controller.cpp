@@ -491,6 +491,9 @@ public:
 					case hardware_interface::talonfxpro::BridgeOutput::FaultCoast:
 						m.bridge_output_value[i] = "FaultCoast";
 						break;
+					case hardware_interface::talonfxpro::BridgeOutput::ActiveBrake:
+						m.bridge_output_value[i] = "ActiveBrake";
+						break;
 					default:
 						m.bridge_output_value[i] = "Unknown";
 						break;

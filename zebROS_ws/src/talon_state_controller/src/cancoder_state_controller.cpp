@@ -115,13 +115,13 @@ public:
 					switch (cs->getSensorDirection())
 					{
 					case hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive:
-						m.absolute_sensor_range[i] = "CounterClockwise_Positive";
+						m.sensor_direction[i] = "CounterClockwise_Positive";
 						break;
 					case hardware_interface::cancoder::SensorDirection::Clockwise_Positive:
-						m.absolute_sensor_range[i] = "Clockwise_Positive";
+						m.sensor_direction[i] = "Clockwise_Positive";
 						break;
 					default:
-						m.absolute_sensor_range[i] = "Unknown";
+						m.sensor_direction[i] = "Unknown";
 						break;
 					}
 					m.magnet_offset[i] = cs->getMagnetOffset();

@@ -106,6 +106,7 @@ enum class BridgeOutput
 	FOCEasy,
 	FaultBrake,
 	FaultCoast,
+	ActiveBrake,
 	Last
 };
 

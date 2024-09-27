@@ -377,11 +377,13 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_FaultCoast:
                 bridge_output_value = hardware_interface::talonfxpro::BridgeOutput::FaultCoast;
                 break;
+            case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_ActiveBrake:
+                bridge_output_value = hardware_interface::talonfxpro::BridgeOutput::ActiveBrake;
+                break;
             default:
                 ROS_ERROR_STREAM("TalonFXPro " << getName() << " read thread : could not convert bridge output value : " << static_cast<int>(ctre_bridge_output_value->value));
                 break;
         }
-
         SAFE_READ(fault_hardware, talonfxpro_->GetFault_Hardware())
         SAFE_READ(fault_proctemp, talonfxpro_->GetFault_ProcTemp())
         SAFE_READ(fault_devicetemp, talonfxpro_->GetFault_DeviceTemp())
@@ -450,7 +452,6 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVoltageFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityTorqueCurrentFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicTorqueCurrentFOC) ||
-#if 0 // TODO : fix me once CTRE updates their code
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityDutyCycle) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityDutyCycleFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicVelocityVoltage) ||
@@ -460,9 +461,8 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoDutyCycleFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoVoltage) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoVoltageFOC) ||
-#endif
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicExpoTorqueCurrentFOC)
-             )
+           )
         {
             SAFE_READ_INTO(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput())
             SAFE_READ_INTO(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput())
