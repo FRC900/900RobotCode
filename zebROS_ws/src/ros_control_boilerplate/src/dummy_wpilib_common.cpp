@@ -216,7 +216,7 @@ wpi::detail::exception::exception(int id_, std::string_view what_arg)
 
 #include <FRC_NetworkCommunication/FRCComm.h>
 
-int FRC_NetworkCommunication_getJoystickAxes(uint8_t joystickNum, struct JoystickAxes_t *axes, uint8_t maxAxes)
+int FRC_NetworkCommunication_getJoystickAxes(uint8_t /*joystickNum*/, struct JoystickAxes_t *axes, uint8_t maxAxes)
 {
 	axes->count = 0;
 	return 1;
@@ -225,12 +225,12 @@ int FRC_NetworkCommunication_getJoystickAxes(uint8_t joystickNum, struct Joystic
 #include "hal/LEDs.h"
 extern "C"
 {
-void HAL_SetRadioLEDState(HAL_RadioLEDState state, int32_t* status)
+void HAL_SetRadioLEDState(HAL_RadioLEDState /*state*/, int32_t* /*status*/)
 {
 	ROS_WARN("HAL_SetRaiodLEDState called on unsupported platform");
 }
 
-HAL_RadioLEDState HAL_GetRadioLEDState(int32_t *status)
+HAL_RadioLEDState HAL_GetRadioLEDState(int32_t */*status*/)
 {
 	ROS_WARN("HAL_GetRadioLEDState called on unsupported platform");
 	return HAL_RadioLED_kOff;

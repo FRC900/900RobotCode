@@ -147,7 +147,7 @@ static const std::vector<GPIOPin> JETSON_XAVIER_PIN_DEFS = {
     {64, "/sys/devices/2200000.gpio", 40, 21, "I2S2_DOUT", "DAP2_DOUT", "", 0}
 };
 
-class GPIOPins
+static class GPIOPins
 {
 	using PinHandle = std::map<uint8_t, GPIOPin>::iterator;
 	public :

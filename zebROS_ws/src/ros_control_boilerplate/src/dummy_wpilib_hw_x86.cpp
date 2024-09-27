@@ -131,41 +131,41 @@ int32_t HAL_GetNumRelayHeaders(void) {
   return 0;
 }
 
-const char *HALSIM_GetSimDeviceName(HAL_SimDeviceHandle handle)
+const char *HALSIM_GetSimDeviceName(HAL_SimDeviceHandle /*handle*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
 	return "";
 }
 
-HAL_SimDeviceHandle HALSIM_GetSimValueDeviceHandle(HAL_SimValueHandle handle)
+HAL_SimDeviceHandle HALSIM_GetSimValueDeviceHandle(HAL_SimValueHandle /*handle*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
 	return 0;
 }
 
-void HALSIM_CancelSimValueChangedCallback(int32_t uid)
+void HALSIM_CancelSimValueChangedCallback(int32_t /*uid*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
 }
 
 #include "hal/simulation/SimDeviceData.h"
-int32_t HALSIM_RegisterSimValueChangedCallback(HAL_SimValueHandle handle,
-											   void *param,
-											   HALSIM_SimValueCallback callback,
-											   HAL_Bool initialNotify)
+int32_t HALSIM_RegisterSimValueChangedCallback(HAL_SimValueHandle /*handle*/,
+											   void */*param*/,
+											   HALSIM_SimValueCallback /*callback*/,
+											   HAL_Bool /*initialNotify*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
 	return 0;
 }
 
 #include "hal/simulation/MockHooks.h"
-int32_t HALSIM_RegisterSimPeriodicBeforeCallback(HALSIM_SimPeriodicCallback callback, void *param)
+int32_t HALSIM_RegisterSimPeriodicBeforeCallback(HALSIM_SimPeriodicCallback /*callback*/, void */*param*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
 	return 0;
 }
 
-void HALSIM_CancelSimPeriodicBeforeCallback(int32_t uid)
+void HALSIM_CancelSimPeriodicBeforeCallback(int32_t /*uid*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
 }

@@ -24,20 +24,20 @@ extern "C"
 	{
 		// PCM arbIDs - need to filter out writes to these from the Jetson
 		// otherwise they overwrite legitimate commands from the Rio
-		const uint32_t arbId = messageID & 0xFFFFFFC0;
-		if ((arbId == PCM_CONTROL_1) || (arbId == PCM_CONTROL_2) || (arbId == PCM_CONTROL_3))
+		if (const uint32_t arbId = messageID & 0xFFFFFFC0;
+		    (arbId == PCM_CONTROL_1) || (arbId == PCM_CONTROL_2) || (arbId == PCM_CONTROL_3))
 			return;
 
 		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, status, canBus.c_str());
 	}
-	void HAL_CAN_ReceiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
+	void HAL_CAN_ReceiveMessage(uint32_t *messageID, uint32_t /*messageIDMask*/, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
 	{
 		ctre::phoenix::platform::can::canframe_t canframe{};
 		ctre::phoenix::platform::can::CANComm_ReceiveMessage(*messageID, canframe, status, canBus.c_str());
 		*dataSize = canframe.len;
 		std::memcpy(data, canframe.data, *dataSize);
 
-		*timeStamp = canframe.swTimestampUs / 1000;
+		*timeStamp = static_cast<uint32_t>(canframe.swTimestampUs / 1000);
 	}
 	void HAL_CAN_OpenStreamSession(uint32_t* sessionHandle, uint32_t messageID,
 						   uint32_t messageIDMask, uint32_t maxMessages,
@@ -59,8 +59,8 @@ extern "C"
 			for (uint32_t i = 0; i < *messagesRead; i++)
 			{
 					messages[i].messageID = localMessages[i].arbID;
-					messages[i].timeStamp = localMessages[i].swTimestampUs;
-					memcpy(messages[i].data, localMessages[i].data, sizeof(localMessages[i].data));
+					messages[i].timeStamp = static_cast<uint32_t>(localMessages[i].swTimestampUs);
+					memcpy(messages[i].data, localMessages[i].data, sizeof(messages[i].data));
 					messages[i].dataSize = localMessages[i].len;
 			}
 	}

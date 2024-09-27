@@ -27,13 +27,10 @@
 
 using namespace hal;
 
-namespace hal
-{
-namespace init
+namespace hal::init
 {
 void InitializeSPI() {}
-}  // namespace init
-}  // namespace hal
+} // namespace hal::init
 
 extern "C" {
 void HAL_InitializeSPI(HAL_SPIPort port, int32_t *status)
