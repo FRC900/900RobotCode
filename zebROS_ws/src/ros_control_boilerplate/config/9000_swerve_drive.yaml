@@ -45,7 +45,6 @@ swerve_drive_controller:
     wheel_coords: [[0.19685, 0.22225], [0.19685, -0.22225], [-0.19685, 0.22225], [-0.19685, -0.22225]]
     parking_config_time_delay: 0.75
     drive_speed_time_delay: 0.125
-    cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     use_cos_scaling: True # scale motor speed by how close angle motors are to setpoints
     fl_drive:
         joint: fl_drive
@@ -177,31 +176,3 @@ swerve_angle_phoenix6_controller:
     forward_limit_enable: False
     reverse_limit_enable: False
     dynamic_reconfigure: True
-
-bl_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: bl_cancoder
-    dynamic_reconfigure: True
-    magnet_offset: 2.5832236467994196
-    # sensor_direction: Clockwise_Positive
-
-fl_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: fl_cancoder
-    dynamic_reconfigure: True
-    magnet_offset: -3.0081363250437425
-    # sensor_direction: Clockwise_Positive
-
-br_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: br_cancoder
-    dynamic_reconfigure: True
-    magnet_offset: 1.538582730249298
-    # sensor_direction: Clockwise_Positive
-
-fr_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: fr_cancoder
-    dynamic_reconfigure: True
-    magnet_offset: -2.1751847572218392
-    # sensor_direction: Clockwise_Positive

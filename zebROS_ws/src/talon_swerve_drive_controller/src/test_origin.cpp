@@ -4,13 +4,12 @@
 #include "talon_swerve_drive_controller/get_wheel_names.h"
 
 constexpr size_t WHEELCOUNT = 4;
-void print(const std::array<double, WHEELCOUNT> &positions, const std::array<Eigen::Vector2d, WHEELCOUNT> &speedsAngles)
+void print(const std::array<double, WHEELCOUNT> &positions, const std::array<swervemath::SpeedAndAngle, WHEELCOUNT> &speedsAngles)
 {
 	ROS_INFO_STREAM("===============================");
 	for (size_t i = 0; i < WHEELCOUNT; i++)
-		ROS_INFO_STREAM("\ti=" << i << " position=" << positions[i] << " speed=" << speedsAngles[i][0] << " angle=" << speedsAngles[i][1]);
+		ROS_INFO_STREAM("\ti=" << i << " position=" << positions[i] << " speed=" << speedsAngles[i].speed << " angle=" << speedsAngles[i].angle);
 }
-
 
 int main(int argc, char **argv)
 {
@@ -18,7 +17,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 
 	XmlRpc::XmlRpcValue wheel_coords_param;
-	std::array<Eigen::Vector2d, WHEELCOUNT> wheel_coords;
+	std::array<swervemath::Point2d, WHEELCOUNT> wheel_coords;
 	if(!nh.getParam("wheel_coords", wheel_coords_param))
 	{
 		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords");
@@ -52,12 +51,11 @@ int main(int argc, char **argv)
 			ROS_ERROR("talon_swerve_drive_controller : param wheel_coords[%d] is not a pair of doubles", i);
 			return false;
 		}
-		wheel_coords[i][0] = wheel_coords_param[i][0];
-		wheel_coords[i][1] = wheel_coords_param[i][1];
+		wheel_coords[i] = swervemath::Point2d{wheel_coords_param[i][0], wheel_coords_param[i][1]};
 	}
 
 	ROS_INFO_STREAM("Coords: " << wheel_coords[0] << "\t" << wheel_coords[1] << "\t" << wheel_coords[2] << "\t" << wheel_coords[3]);
-	Eigen::Vector2d center_of_rotation{0,0};
+	swervemath::Point2d center_of_rotation{0, 0};
 
 	swerveVar::ratios ratios;
 	ratios.encodertoRotations = 0.186666666666666666666666;
@@ -82,19 +80,9 @@ int main(int argc, char **argv)
 	Eigen::Vector2d linearV;
 	double rotationV;
 
-	linearV[0] = 1;
-	linearV[1] = 0;
 	rotationV = 0;
-	auto speedsAngles = swerveC.motorOutputs(linearV, rotationV, positions, true);
+	auto speedsAngles = swerveC.motorOutputs({1, 0}, rotationV, positions, true);
 	print(positions, speedsAngles);
-	// positions[0] = speedsAngles[0][1] - 0.01;
-	// positions[1] = speedsAngles[1][1] + 0.01;
-	// positions[2] = speedsAngles[2][1] - 0.01;
-	// positions[3] = speedsAngles[3][1] + 0.01;
-	// linearV[0] = 0;
-	// linearV[1] = 1;
-	// speedsAngles = swerveC.motorOutputs(linearV, rotation, angle, positions, true);
-	// print(positions, speedsAngles);
 #if 0
 	auto angles = swerveC.parkingAngles(positions);
 	speedsAngles = swerveC.motorOutputs(linearV, rotation, angle, positions, true);

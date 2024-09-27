@@ -31,11 +31,11 @@ static WheelDirection optimizeWheelDirection(const double currentAngle, const do
 }
 
 template <size_t WHEELCOUNT>
-swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
+swerve<WHEELCOUNT>::swerve(const std::array<swervemath::Point2d, WHEELCOUNT> &wheelCoordinates,
 						   const swerveVar::ratios &ratio,
 						   const swerveVar::encoderUnits &units,
 						   const swerveVar::driveModel &drive)
-	: swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates))
+	: swerveMath_(swervemath::SwerveDriveMath<WHEELCOUNT>(wheelCoordinates))
 	, ratio_(ratio)
 	, units_(units)
 	, drive_(drive)
@@ -43,12 +43,12 @@ swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelC
 }
 
 template <size_t WHEELCOUNT>
-std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::Vector2d linearVelocity,
-																		 double angularVelocity,
-																		 const std::array<double, WHEELCOUNT> &positionsNew,
-																		 const bool norm,
-																		 const Eigen::Vector2d &centerOfRotation,
-																		 const bool useCosScaling)
+std::array<swervemath::SpeedAndAngle, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(swervemath::Point2d linearVelocity,
+																				   double angularVelocity,
+																				   const std::array<double, WHEELCOUNT> &positionsNew,
+																				   const bool norm,
+																				   const swervemath::Point2d &centerOfRotation,
+																				   const bool useCosScaling)
 {
 	// See if the current centerOfRotation coords have been used before
 	// If so, just reuse previously saved values
@@ -60,7 +60,7 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 		newSet.multipliers_ = swerveMath_.wheelMultipliersXY(centerOfRotation);
 		newSet.maxRotRate_ = drive_.maxSpeed / swerveMath_.furthestWheel(centerOfRotation);
 		mult_it = multiplierSets_.try_emplace(centerOfRotation, newSet).first;
-		ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
+		ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation.x << "," << centerOfRotation.y);
 	}
 
 	linearVelocity  /= drive_.maxSpeed;
@@ -72,7 +72,7 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		const double currpos = getWheelAngle(positionsNew[i]);
-		const auto wheel_direction = optimizeWheelDirection(currpos, speedsAndAngles[i][1]);
+		const auto wheel_direction = optimizeWheelDirection(currpos, speedsAndAngles[i].angle);
 
 		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		//ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " wheel_direction : " << wheel_direction.angle << " " << wheel_direction.speed_multiplier");
@@ -82,9 +82,10 @@ std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::
 		// in random directions while turning to the expected direction
 		// cos() shouldn't care about +/-, so don't worry about fabs()
 		const double cosScaling = useCosScaling ? cos(currpos - wheel_direction.angle) : 1.0;
+		// ROS_INFO_STREAM("i=" << i << " cosScaling: " << cosScaling << " positionsNew: " << positionsNew[i] << " currpos: " << currpos << " wheel_direction.angle: " << wheel_direction.angle << " wheel_direction.speed_multiplier: " << wheel_direction.speed_multiplier << " speedsAndAngles: " << speedsAndAngles[i][0] << " " << speedsAndAngles[i][1]);	
 
-		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * wheel_direction.speed_multiplier * cosScaling;
-		speedsAndAngles[i][1] = wheel_direction.angle * units_.steeringSet;
+		speedsAndAngles[i].speed *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * wheel_direction.speed_multiplier * cosScaling;
+		speedsAndAngles[i].angle = wheel_direction.angle * units_.steeringSet;
 		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " steeringSet: " << units_.steeringSet);
 	}
 	return speedsAndAngles;

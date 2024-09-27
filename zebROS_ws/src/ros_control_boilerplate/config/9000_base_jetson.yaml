@@ -186,3 +186,7 @@ swerve_drive_state_controller:
 latency_compensation_state_controller:
     type: latency_compensation_state_controller/LatencyCompensationStateController
     publish_rate: 250
+
+cancoder_state_controller:
+    type: cancoder_state_controller/CANCoderStateController
+    publish_rate: 100

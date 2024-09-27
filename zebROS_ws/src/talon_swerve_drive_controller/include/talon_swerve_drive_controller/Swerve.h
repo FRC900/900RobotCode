@@ -8,23 +8,6 @@
 #include <Eigen/Dense>
 #include "SwerveMath.h"
 
-// Create an ordering function for Vectors to use them in a map
-template<>
-struct std::less<Eigen::Vector2d>
-{
-	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b) const
-	{
-		assert(a.size() == b.size());
-		for(int i = 0; i < a.size(); ++i)
-		{
-			if (a[i] < b[i]) return true;
-			if (a[i] > b[i]) return false;
-			// Fallthrough if equal
-		}
-		return false;
-	}
-};
-
 //meters, radians, newtons, kg
 //Gets should be rotations/encoder unit
 //Sets should be encoder unit/rotation (or rotations/second)
@@ -69,29 +52,29 @@ class swerve
 		swerve &operator=(swerve &&) noexcept = delete;
 		virtual ~swerve() = default;
 
-		swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
+		swerve(const std::array<swervemath::Point2d, WHEELCOUNT> &wheelCoordinates,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
 			   const swerveVar::driveModel &drive);
 
-		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d linearVelocity,
-														     double angularVelocity,
-														     const std::array<double, WHEELCOUNT> &positionsNew,
-														     const bool norm,
-														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0},
-															 const bool useCosScaling = false);
+		std::array<swervemath::SpeedAndAngle, WHEELCOUNT> motorOutputs(swervemath::Point2d linearVelocity,
+																	   double angularVelocity,
+																	   const std::array<double, WHEELCOUNT> &positionsNew,
+																	   const bool norm,
+																	   const swervemath::Point2d &centerOfRotation = swervemath::Point2d{0, 0},
+																	   const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
 		double getWheelAngle(const double pos) const;
 	private:
-		swerveDriveMath<WHEELCOUNT> swerveMath_;
+		swervemath::SwerveDriveMath<WHEELCOUNT> swerveMath_;
 
 		struct multiplierSet
 		{
-			std::array<Eigen::Vector2d, WHEELCOUNT> multipliers_;
+			std::array<swervemath::Point2d, WHEELCOUNT> multipliers_;
 			double maxRotRate_;
 		};
-		std::map<Eigen::Vector2d, multiplierSet> multiplierSets_;
+		std::map<swervemath::Point2d, multiplierSet> multiplierSets_;
 		swerveVar::ratios ratio_;
 		swerveVar::encoderUnits units_;
 		swerveVar::driveModel drive_;
