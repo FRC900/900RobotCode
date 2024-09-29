@@ -162,7 +162,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<AnalogInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<AS726xDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANBusStatusDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<CANCoderDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<CANCoderDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANdleDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
@@ -202,7 +202,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 			device_ptr->appendDeviceMap(ctrev6_devices);
 		}
 	};
-	append_device_map.template operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
+	append_device_map.template operator()<CANCoderDevices<SIM>>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
 	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
 	append_device_map.template operator()<TalonFXProDevices<SIM>>();
 	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
