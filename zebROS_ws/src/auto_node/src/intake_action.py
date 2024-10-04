@@ -1,17 +1,29 @@
+import rospy
+import actionlib
 from action import Action
 from datetime import datetime
 from typing import List
 from subsystem import Subsystem
+from behavior_actions.msg import Intaking2024Action, Intaking2024Goal, Intaking2024Feedback, Intaking2024Result
 
 class IntakeAction(Action):
-    """An action that waits for the specified amount of time in seconds"""
-    def __init__(self, time_to_wait_sec : float):
-        self.__time_to_wait = time_to_wait_sec
-        self.__start_time = datetime.now()
+    """Turns on the intake forever"""
+    def __init__(self, off=False):        
+        self.__intake_client = actionlib.SimpleActionClient("/intaking/intaking_server_2024", Intaking2024Action)
+        self.__finished = False
+        self.__off = off
 
     def start(self):
-        print(f"start called with ttw {self.__time_to_wait}")
-        self.__start_time = datetime.now()
+        if self.__off:
+            rospy.loginfo("Turning off intake!")
+            self.__intake_client.cancel_goals_at_and_before_time(rospy.Time.now())
+        else:
+            rospy.loginfo("Turning on intake in auto mode!")
+            intake_action = Intaking2024Goal()
+            intake_action.run_until_preempt = True
+            intake_action.destination = intake_action.SHOOTER
+            self.__intake_client.send_goal(intake_action)
+        self.__finished = True
 
     def update(self):
         pass
@@ -20,10 +32,7 @@ class IntakeAction(Action):
         pass
 
     def isFinished(self) -> bool:
-        duration = datetime.now() - self.__start_time
-        if duration.total_seconds() > self.__time_to_wait:
-            print("Wait action finished!")
-            return True 
+        return self.__finished
 
     def affectedSystems(self) -> List[Subsystem]:
         return [ Subsystem.INTAKE ]

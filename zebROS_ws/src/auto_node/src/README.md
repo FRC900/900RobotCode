@@ -9,6 +9,8 @@ Actual autos all inherit from `auto_base.py`, which currently has just one impor
  
 Pathing is somewhat a special case. The path is loaded and published (latching) to `/auto/current_auto_path`. The type is `auto_node_msgs/PathGoalArray.msg`. This msg contains an array of what is needed to make a `path_follower_msgs/Path.action` goal to send to the path follower. There are two actions relating to path following. `drive_trajectory_action.py` takes a trajectory index, which is then used to run the indexth path found on `/auto/current_auto_path`. `drive_trajectory_iterator.py` is the action actually called in autos and allows the next segment of a path to be run with `get_next_trajectory_action()`. 
 
+## How to make Choreo paths
+Open `choreo` in docker. Right now it is expected that all waypoints the "split" option is checked if it corresponds to a stop waypoint. Split or stop point on its own currently does nothing. There is other little bits of knowledge, probably the best advice for pathing is be humble and get something simple working and THEN speed it up.   
 
 ## Current Possible Problems
 Main one is don't have a preempt situation set up yet, so if you disable in auto and then reenable in teleop quickly the path follower etc will still be running. Should be solvable if a real problem. 

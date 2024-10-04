@@ -6,7 +6,7 @@ from auto_base import AutoBase
 from Test4Note import Test4Note
 
 class AutonomousNames(str, Enum):
-    Test4Note = "Test4Note"
+    Test4Note = "2025_4_Note"
 
     def __str__(self) -> str:
         return str.__str__(self)
