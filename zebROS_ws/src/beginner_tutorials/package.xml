@@ -54,6 +54,8 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>message_generation</depend>
+  <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
