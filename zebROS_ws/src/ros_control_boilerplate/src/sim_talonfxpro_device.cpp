@@ -167,7 +167,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         sim_state.SetRawRotorPosition(position);
         if (cancoder_id_)
         {
-            ROS_WARN_STREAM("cancoder id = " << *cancoder_id_ << " cancoder_value = " << cancoder_position.value());
+            // ROS_WARN_STREAM("cancoder id = " << *cancoder_id_ << " cancoder_value = " << cancoder_position.value());
             cancoder_->setRawPosition(cancoder_position.value());
         }
         sim_state.SetRotorVelocity(velocity);
