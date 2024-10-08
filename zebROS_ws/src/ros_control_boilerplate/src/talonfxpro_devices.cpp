@@ -83,35 +83,19 @@ void TalonFXProDevices<SIM>::write(const ros::Time& time, const ros::Duration& p
 }
 
 template <bool SIM>
-void TalonFXProDevices<SIM>::simInit(ros::NodeHandle &nh)
+void TalonFXProDevices<SIM>::appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const
 {
-    if constexpr (SIM)
+    for (auto &d : devices_)
     {
-        if (!devices_.empty())
+        const auto ptr = d->getParentDevice();
+        if (ptr)
         {
-            sim_limit_switch_srv_ = nh.advertiseService("set_talonfxpro_limit_switch", &TalonFXProDevices::setlimit, this);
-            sim_current_srv_ = nh.advertiseService("set_talonfxpro_current", &TalonFXProDevices::setcurrent, this);
+            device_map.emplace(d->getName(), ptr);
         }
     }
 }
 
-template <bool SIM>
-void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
-{
-    if constexpr (SIM)
-    {
-        tracer.start_unique("talonfxpro FeedEnable");
-        if (!devices_.empty())
-        {
-            ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
-        }
-        tracer.start_unique("talonfxpro sim");
-        for (const auto &d : devices_)
-        {
-            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>());
-        }
-    }
-}
+/// Sim-only functions below
 
 template <bool SIM>
 bool TalonFXProDevices<SIM>::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
@@ -150,20 +134,38 @@ bool TalonFXProDevices<SIM>::setcurrent(ros_control_boilerplate::set_current::Re
 }
 
 template <bool SIM>
-void TalonFXProDevices<SIM>::appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const
+void TalonFXProDevices<SIM>::simInit(ros::NodeHandle &nh)
 {
-    for (auto &d : devices_)
+    if constexpr (SIM)
     {
-        const auto ptr = d->getParentDevice();
-        if (ptr)
+        if (!devices_.empty())
         {
-            device_map.emplace(d->getName(), ptr);
+            sim_fields_.sim_limit_switch_srv_ = nh.advertiseService("set_talonfxpro_limit_switch", &TalonFXProDevices::setlimit, this);
+            sim_fields_.sim_current_srv_ = nh.advertiseService("set_talonfxpro_current", &TalonFXProDevices::setcurrent, this);
         }
     }
 }
 
 template <bool SIM>
-bool TalonFXProDevices<SIM>::gazeboSimInit(const ros::NodeHandle &/*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model)
+void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+{
+    if constexpr (SIM)
+    {
+        tracer.start_unique("talonfxpro FeedEnable");
+        if (!devices_.empty())
+        {
+            ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
+        }
+        tracer.start_unique("talonfxpro sim");
+        for (const auto &d : devices_)
+        {
+            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>());
+        }
+    }
+}
+
+template <bool SIM>
+ bool TalonFXProDevices<SIM>::gazeboSimInit(const ros::NodeHandle &/*nh*/, boost::shared_ptr<gazebo::physics::Model> parent_model)
 {
     if constexpr (SIM)
     {

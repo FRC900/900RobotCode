@@ -112,6 +112,13 @@ void Pigeon2Device::simInit(ros::NodeHandle nh, size_t joint_index)
 {
     if (local_hardware_)
     {
+        // Start with a valid normalized quaternion
+        sim_odom_.pose.pose.orientation.x = 0;
+        sim_odom_.pose.pose.orientation.y = 0;
+        sim_odom_.pose.pose.orientation.z = 0;
+        sim_odom_.pose.pose.orientation.w = 1;
+
+        // Create a subscriber to sim inputs
         std::stringstream s;
         s << "imu_" << joint_index << "_in";
         sim_sub_ = nh.subscribe<nav_msgs::Odometry>(s.str(), 1, &Pigeon2Device::imuOdomCallback, this);
@@ -229,30 +236,28 @@ void Pigeon2Device::simRead(const ros::Time &/*time*/, const ros::Duration &/*pe
 {
     if (local_hardware_)
     {
-        {
-            std::scoped_lock(sim_odom_mutex_);
-            const geometry_msgs::Quaternion &q = sim_odom_.pose.pose.orientation;
-            tf2::Quaternion tf_q(q.x, q.y, q.z, q.w);
-            double roll;
-            double pitch;
-            double yaw;
-            tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
-            pigeon2_->GetSimState().SetRoll(units::radian_t{roll});
-            pigeon2_->GetSimState().SetPitch(units::radian_t{pitch});
-            pigeon2_->GetSimState().SetRawYaw(units::radian_t{yaw});
-            // This is run after read(), so we overwite whatever ctre's internal state is with
-            // the most recent sim orientation data
-            imu_orientation_[3] = q.w;
-            imu_orientation_[0] = q.x;
-            imu_orientation_[1] = q.y;
-            imu_orientation_[2] = q.z;
+        std::scoped_lock l(sim_odom_mutex_);
+        const geometry_msgs::Quaternion &q = sim_odom_.pose.pose.orientation;
+        tf2::Quaternion tf_q(q.x, q.y, q.z, q.w);
+        double roll;
+        double pitch;
+        double yaw;
+        tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
+        pigeon2_->GetSimState().SetRoll(units::radian_t{roll});
+        pigeon2_->GetSimState().SetPitch(units::radian_t{pitch});
+        pigeon2_->GetSimState().SetRawYaw(units::radian_t{yaw});
+        // This is run after read(), so we overwite whatever ctre's internal state is with
+        // the most recent sim orientation data
+        imu_orientation_[3] = q.w;
+        imu_orientation_[0] = q.x;
+        imu_orientation_[1] = q.y;
+        imu_orientation_[2] = q.z;
 
-            imu_angular_velocity_[0] = sim_odom_.twist.twist.angular.x;
-            imu_angular_velocity_[1] = sim_odom_.twist.twist.angular.y;
-            imu_angular_velocity_[2] = sim_odom_.twist.twist.angular.z;
+        imu_angular_velocity_[0] = sim_odom_.twist.twist.angular.x;
+        imu_angular_velocity_[1] = sim_odom_.twist.twist.angular.y;
+        imu_angular_velocity_[2] = sim_odom_.twist.twist.angular.z;
 
-            // No idea what to do for linear acceleration - we could try to get a delta of linear velocity?
-        }
+        // No idea what to do for linear acceleration - we could try to get a delta of linear velocity?
     }
 }
 

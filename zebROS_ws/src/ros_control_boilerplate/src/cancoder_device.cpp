@@ -224,7 +224,7 @@ void CANCoderDevice<SIM>::read_thread(std::unique_ptr<Tracer> tracer,
 	}
 #endif
 	ros::Duration(2.452 + read_thread_state_->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
-    ROS_INFO_STREAM("Starting CANCoder read thead for " << getName() << " id = " << getId());
+    ROS_INFO_STREAM("Starting CANCoder read thread for " << getName() << " id = " << getId());
 
     std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
 

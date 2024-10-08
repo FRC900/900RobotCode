@@ -7,9 +7,6 @@
 
 template <bool SIM>
 CANCoderDevices<SIM>::CANCoderDevices(ros::NodeHandle &root_nh)
-    : state_interface_{std::make_unique<hardware_interface::cancoder::CANCoderStateInterface>()}
-    , command_interface_{std::make_unique<hardware_interface::cancoder::CANCoderCommandInterface>()}
-    , remote_state_interface_{std::make_unique<hardware_interface::cancoder::RemoteCANcoderStateInterface>()}
 {
     ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop"); // TODO : this shouldn't be hard-coded?
     if(!param_nh.param("cancoder_read_hz", read_hz_, read_hz_)) 
@@ -74,7 +71,10 @@ hardware_interface::InterfaceManager *CANCoderDevices<SIM>::registerInterface()
     interface_manager_.registerInterface(state_interface_.get());
     interface_manager_.registerInterface(command_interface_.get());
     interface_manager_.registerInterface(remote_state_interface_.get());
-    interface_manager_.registerInterface(command_sim_interface_.get());
+    if constexpr (SIM)
+    {
+        interface_manager_.registerInterface(command_sim_interface_.get());
+    }
     return &interface_manager_;
 }
 
@@ -116,7 +116,8 @@ void CANCoderDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duratio
 {
     if constexpr (SIM)
     {
-        for (auto &d : devices_)
+        tracer.start_unique("cancoder simPostRead");
+        for (const auto &d : devices_)
         {
             d->simRead(time, tracer);
         }

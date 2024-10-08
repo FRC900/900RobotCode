@@ -155,6 +155,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	}
 	ROS_INFO_STREAM("Phoenix Version String : " << ctre::phoenix::unmanaged::Unmanaged::GetPhoenixVersion());
 	Devices::setHALRobot(run_hal_robot_);
+	Devices::setRobotHW(this);
 
 	// Create all the devices specified in the yaml joint list, one type at a time
 	// Those that need different code for sim vs real hardware are templated using

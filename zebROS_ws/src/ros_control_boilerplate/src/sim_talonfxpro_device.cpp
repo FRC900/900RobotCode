@@ -33,7 +33,7 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
             for (const auto &name : names)
             {
                 auto handle = sim_cancoder_if->getHandle(name);
-                if (handle.state()->getDeviceNumber() == *cancoder_id_)
+                if (handle.state()->getDeviceNumber() == state_->getFeedbackRemoteSensorID())
                 {
                     cancoder_ = handle;
                     cancoder_id_ = state_->getFeedbackRemoteSensorID();
@@ -45,6 +45,10 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
                 ROS_ERROR_STREAM_THROTTLE(1.0, "SimTalonFXDevice " << getName() << " : Could not find cancoder with id " << state_->getFeedbackRemoteSensorID());
             }
         }
+    }
+    else
+    {
+        cancoder_id_ = std::nullopt;
     }
     
     if (gazebo_joint_)
@@ -161,7 +165,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
         units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
         sim_state.SetRawRotorPosition(position);
-        if (cancoder_id_) { cancoder_->setRawPosition(cancoder_position.value()); }
+        if (cancoder_id_)
+        {
+            ROS_WARN_STREAM("cancoder id = " << *cancoder_id_ << " cancoder_value = " << cancoder_position.value());
+            cancoder_->setRawPosition(cancoder_position.value());
+        }
         sim_state.SetRotorVelocity(velocity);
         sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
         if (gazebo_joint_)
