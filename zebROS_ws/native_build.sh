@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/2023RobotCode/zebROS_ws/
+cd ~/900RobotCode/zebROS_ws/
 echo INCOMPLETE > .native_build.status
 
 if [ -z $ROS_ROOT ]; then
@@ -8,6 +8,10 @@ if [ -z $ROS_ROOT ]; then
 	if [ ! -z devel/setup.bash ]; then
 		source devel/setup.bash
 	fi
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/dist-packages
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/site-packages
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
+	PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/site-packages
 elif [[ ! $ROS_ROOT = "/opt/ros/noetic/share/ros" ]]; then
 	echo -e "\e[1m\e[31mROS is not configured for a native build (maybe set up for a cross build instead?)\e[0m"
 	echo -e "\e[1m\e[31mRun ./native_build.sh in a new terminal window\e[0m"

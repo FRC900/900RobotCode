@@ -19,12 +19,12 @@ import matplotlib.pyplot as plt
 import time
 
 # should be the faster bag running 971's tag detector (6fps)
-with open("/home/ubuntu/.2023RobotCode.readonly/bagfiles/ncdcmp2024/trimmed/elims5.csv", "r") as f:
+with open("/home/ubuntu/.900RobotCode.readonly/bagfiles/ncdcmp2024/trimmed/elims5.csv", "r") as f:
     data = f.read().splitlines()
 
 
 # the actually faster bag running cameras at lower res, (20fps)
-with open("/home/ubuntu/.2023RobotCode.readonly/bagfiles/2024ncash/trimmed/ASHelims7.csv", "r") as f:
+with open("/home/ubuntu/.900RobotCode.readonly/bagfiles/2024ncash/trimmed/ASHelims7.csv", "r") as f:
     data = f.read().splitlines()
 
 

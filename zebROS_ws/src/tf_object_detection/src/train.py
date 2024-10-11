@@ -90,11 +90,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--yolo-model',
                         type=str,
-                        default='/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024m.pt',
+                        default='/home/ubuntu/900RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024m.pt',
                         help='Engine file')
     parser.add_argument('--config',
                         type=str,
-                        default='/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024.yaml',
+                        default='/home/ubuntu/900RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024.yaml',
                         help='Config file')
     parser.add_argument('--output_stem',
                         type=str,

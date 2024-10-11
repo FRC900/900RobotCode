@@ -9,7 +9,7 @@
 
 	<arg name="rviz" default="false" />
 
-	<node if="$(eval arg('rviz')==true)" type="rviz" name="rviz" pkg="rviz" args="-d /home/ubuntu/2023RobotCode/utility/other_rviz.rviz" />
+	<node if="$(eval arg('rviz')==true)" type="rviz" name="rviz" pkg="rviz" args="-d /home/ubuntu/900RobotCode/utility/other_rviz.rviz" />
 	<!-- <include file="$(find wpilib_swerve_odom)/launch/odom.launch"/> -->
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_zedodomtoodom" args="0 0 0 0 0 0 1 zed_objdet_odom odom" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_pigeontobase" args="0 0 0 0 0 0 1 pigeon2_frame base_link" />

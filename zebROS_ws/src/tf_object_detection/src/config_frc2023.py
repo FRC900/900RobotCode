@@ -1,7 +1,7 @@
 from object_classes import ObjectClasses
 
 # detection model classes
-OBJECT_CLASSES = ObjectClasses('/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2023.yaml')
+OBJECT_CLASSES = ObjectClasses('/home/ubuntu/900RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2023.yaml')
 
 # Constants
 ALPHA = 0.7

@@ -3,8 +3,8 @@ import yaml
 import pprint
 import math
 
-MAPPED_TAGS_PATH = "/home/ubuntu/2023RobotCode/zebROS_ws/src/tagslam_launch/y2024_comp/wake_mapped_tags.yaml"
-DEFAULT_TAGS_PATH = "/home/ubuntu/2023RobotCode/zebROS_ws/src/tagslam_launch/y2024_comp/backup_tag_map.yaml"
+MAPPED_TAGS_PATH = "/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2024_comp/wake_mapped_tags.yaml"
+DEFAULT_TAGS_PATH = "/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2024_comp/backup_tag_map.yaml"
 
 # load both yaml's
 with open(MAPPED_TAGS_PATH, "r") as f:

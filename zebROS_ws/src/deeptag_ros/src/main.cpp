@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     // Parse the command line arguments
-    const std::string modelPath = "/home/ubuntu/2023RobotCode/zebROS_ws/src/deeptag_ros/models";
+    const std::string modelPath = "/home/ubuntu/900RobotCode/zebROS_ws/src/deeptag_ros/models";
     const std::string detectOnnxModelFileName = "arucotag_roi_detector.onnx";
     const std::string decodeOnnxModelFileName = "arucotag_decoder.onnx";
 

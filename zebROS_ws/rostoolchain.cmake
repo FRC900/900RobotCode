@@ -8,7 +8,7 @@ set(CMAKE_CXX_COMPILER ${ARM_PREFIX}-g++)
 set(CMAKE_SYSROOT $ENV{HOME}/wpilib/2024/roborio/arm-nilrt-linux-gnueabi/sysroot)
 
 # Set find_libraries and friends to only look in sysroot, ignoring host lib dirs
-set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT};$ENV{HOME}/2023RobotCode/zebROS_ws/install_isolated)
+set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT};$ENV{HOME}/900RobotCode/zebROS_ws/install_isolated)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)

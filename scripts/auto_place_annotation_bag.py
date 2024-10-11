@@ -103,8 +103,8 @@ joy = False
 auto = False
 moving = True
 
-joystick_img = cv2.imread("/home/ubuntu/2023RobotCode/scripts/button_imgs/joystick.png", cv2.IMREAD_UNCHANGED)
-robot_img = cv2.imread("/home/ubuntu/2023RobotCode/scripts/button_imgs/robot_1f916.png", cv2.IMREAD_UNCHANGED)
+joystick_img = cv2.imread("/home/ubuntu/900RobotCode/scripts/button_imgs/joystick.png", cv2.IMREAD_UNCHANGED)
+robot_img = cv2.imread("/home/ubuntu/900RobotCode/scripts/button_imgs/robot_1f916.png", cv2.IMREAD_UNCHANGED)
 
 apriltag_locations = {"6": (0, 0)}
 auto_samples = 0

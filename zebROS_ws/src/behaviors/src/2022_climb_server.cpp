@@ -163,8 +163,8 @@ public:
     if (!nh_.getParam("finale_track", finale_track_))
     {
       // Does follower follow the leader for the mode this uses? I'm assuming so but if not the shooter follower should be here too
-      ROS_WARN_STREAM("2022_climb_server : Could not find finale_track, defaulting to \"/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/chirp/mario.chrp\"");
-      finale_track_ = "/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/chirp/mario.chrp";
+      ROS_WARN_STREAM("2022_climb_server : Could not find finale_track, defaulting to \"/home/ubuntu/900RobotCode/zebROS_ws/src/behaviors/chirp/mario.chrp\"");
+      finale_track_ = "/home/ubuntu/900RobotCode/zebROS_ws/src/behaviors/chirp/mario.chrp";
     }
     dynamic_arm_.waitForExistence();
     setupFinale();

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/2023RobotCode/zebROS_ws/
+cd ~/900RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
 	source /opt/ros/noetic/setup.bash

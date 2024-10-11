@@ -64,13 +64,13 @@ cd &&\
 
 # Install repo - perhaps ssh version inside container, worry about SSH keys?
 cd 
-git clone https://github.com/FRC900/2023RobotCode.git
-cd 2023RobotCode
+git clone https://github.com/FRC900/900RobotCode.git
+cd 900RobotCode
 git submodule update --init
 docker run --net=host -v /tmp/.X11-unix:/tmp/.X11-unix \
- -v $HOME/2023RobotCode:/home/ubuntu/.2023RobotCode.readonly \
+ -v $HOME/900RobotCode:/home/ubuntu/.900RobotCode.readonly \
  --ipc=host \
  --shm-size=8G \
- -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2024-dev:latest /bin/bash -c 'wstool update -t /home/ubuntu/2023RobotCode/zebROS_ws/src -j2'
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2025-dev:latest /bin/bash -c 'wstool update -t /home/ubuntu/900RobotCode/zebROS_ws/src -j2'
 
 sudo apt autoremove

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/2023RobotCode/zebROS_ws/
+cd ~/900RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
 	#PATH=$PATH:$HOME/wpilib/2024/roborio/bin
@@ -33,6 +33,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	controllers_2020_msgs \
 	controllers_2022 \
 	controllers_2022_msgs \
+	cv_camera \
 	cuda_apriltag_ros \
 	cv_camera \
 	deeptag_ros \

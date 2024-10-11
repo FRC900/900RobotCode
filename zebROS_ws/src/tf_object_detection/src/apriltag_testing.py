@@ -13,7 +13,7 @@ x_diffs = []
 y_diffs = []
 z_diffs = []
 
-PATH = "/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/apriltags_testing.txt"
+PATH = "/home/ubuntu/900RobotCode/zebROS_ws/src/tf_object_detection/src/apriltags_testing.txt"
 def save(_):
     rospy.logwarn("SAVING RESULTS")
     

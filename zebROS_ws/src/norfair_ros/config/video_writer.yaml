@@ -8,4 +8,4 @@ video_writer_subscribers:
   detections:
     topic: "/norfair/output"
 
-output_path: "/home/ubuntu/2023RobotCode/zebROS_ws/tracking.mp4"
+output_path: "/home/ubuntu/900RobotCode/zebROS_ws/tracking.mp4"

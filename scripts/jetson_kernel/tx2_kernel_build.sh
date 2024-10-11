@@ -17,7 +17,7 @@ tar -xf public_sources.tbz2 Linux_for_Tegra/source/public/kernel_src.tbz2
 mkdir jetson_kernel
 cd jetson_kernel
 tar -xf ../Linux_for_Tegra/source/public/kernel_src.tbz2
-patch -p0 < ~/2023RobotCode/scripts/jetson_kernel/patch_j120_l4t32.2.3.txt
+patch -p0 < ~/900RobotCode/scripts/jetson_kernel/patch_j120_l4t32.2.3.txt
 
 ## Apply realsense patches to modules
 cd ~/jetson_kernel/kernel/kernel-4.9

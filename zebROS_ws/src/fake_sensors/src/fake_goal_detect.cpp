@@ -188,7 +188,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "fake_goal_detect");
 
 	ros::NodeHandle nh;
-	FakeGoalDetection fakeGoalDetection(nh, parsePBTXT("/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024.yaml"));
+	FakeGoalDetection fakeGoalDetection(nh, parsePBTXT("/home/ubuntu/900RobotCode/zebROS_ws/src/tf_object_detection/src/FRC2024.yaml"));
 
 	ros::spin();
 	return 0;

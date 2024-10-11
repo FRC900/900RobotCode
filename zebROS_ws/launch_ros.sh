@@ -40,7 +40,7 @@ launch_rqt_console()
 }
 launch_visualizer()
 {
-    python ~/2023RobotCode/zebROS_ws/src/visualize_profile/scripts/visualizer.py &
+    python ~/900RobotCode/zebROS_ws/src/visualize_profile/scripts/visualizer.py &
 }
 
 run_sim=0

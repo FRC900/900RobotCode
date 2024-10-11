@@ -31,7 +31,7 @@ from std_msgs.msg import Header
 #       float64 w
 # timeSeconds, xPositionMeters, yPositionMeters, headingDegrees, velocityMetersPerSecond, accelerationMetersPerSecondSq, curvatureRadPerMeter, holonomicRotationDegrees, angularVelocityDegreesPerSec, holonomicAngularVelocityDegreesPerSec
 path = []
-with open("/home/ubuntu/2023RobotCode/zebROS_ws/src/pathplanner_ros/paths/PlacePickCone.csv", "r") as csv:
+with open("/home/ubuntu/900RobotCode/zebROS_ws/src/pathplanner_ros/paths/PlacePickCone.csv", "r") as csv:
     for line in csv.readlines():
         if line[0] == '#':
             continue # comment

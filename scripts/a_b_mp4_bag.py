@@ -67,8 +67,8 @@ out = cv2.VideoWriter(out_mp4, fourcc, fps, (cv_img.shape[1], cv_img.shape[0]))
 a = False
 b = False
 
-a_img = cv2.imread("/home/ubuntu/2023RobotCode/scripts/button_imgs/a_button.png", cv2.IMREAD_UNCHANGED)
-b_img = cv2.imread("/home/ubuntu/2023RobotCode/scripts/button_imgs/b_button.png", cv2.IMREAD_UNCHANGED)
+a_img = cv2.imread("/home/ubuntu/900RobotCode/scripts/button_imgs/a_button.png", cv2.IMREAD_UNCHANGED)
+b_img = cv2.imread("/home/ubuntu/900RobotCode/scripts/button_imgs/b_button.png", cv2.IMREAD_UNCHANGED)
 
 print(a_img.shape)
 

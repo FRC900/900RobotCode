@@ -638,7 +638,7 @@ class AutoNode {
 				// 0    1 2 3   4                5    6    7
 				// time,x,y,yaw,angular_velocity,xvel,yvel,waypointIdx
 				ROS_INFO_STREAM("auto_node : Loading Choreo path located at behaviors/path/" << auto_steps_[j] << ".csv");
-				std::ifstream csv("/home/ubuntu/2023RobotCode/zebROS_ws/src/behaviors/path/" + auto_steps_[j] + ".csv");
+				std::ifstream csv("/home/ubuntu/900RobotCode/zebROS_ws/src/behaviors/path/" + auto_steps_[j] + ".csv");
 				std::string line;
 				std::vector<std::vector<double>> path;
 				while (std::getline(csv, line)) {
