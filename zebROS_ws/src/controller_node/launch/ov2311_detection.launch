@@ -62,7 +62,7 @@
   </node>
   <!--
     To collect profile info from the Jetson :
-  sudo nsys profile -t cuda,nvtx -s cpu -f true 900RobotCode/zebROS_ws/ROSJetsonMaster.sh rosrun gpu_apriltag gpu_apriltag_node image_rect_color:=/ov2311_reformatter/image_reformatted /apriltag_ov2311/apriltag_detection/tag_detection_msg:=/apriltag_ov2311/tag_detection_msg __name:=apriltag_detection_ov2311
+  sudo nsys profile -t cuda,nvtx -s cpu -f true ~/900RobotCode/zebROS_ws/ROSJetsonMaster.sh rosrun gpu_apriltag gpu_apriltag_node image_rect_color:=/ov2311_reformatter/image_reformatted /apriltag_ov2311/apriltag_detection/tag_detection_msg:=/apriltag_ov2311/tag_detection_msg __name:=apriltag_detection_ov2311
   -->
   <group ns="$(arg camera_name)_reformatter" if="$(eval static_image)">
     <node pkg="tf_object_detection" type="simple_static_img_pub.py" name="static_img_pub" output="screen" >
