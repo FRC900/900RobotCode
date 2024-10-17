@@ -22,6 +22,7 @@ bool CTREV6Device::safeCall(ctre::phoenix::StatusCode status_code, const std::st
         can_error_count_ = 0;
         can_error_sent_ = false;
         // Only for debugging traces of successful calls ROS_INFO_STREAM("safeCall : " << name_ << " : " << method_name);
+        // ROS_INFO_STREAM("safeCall : " << name_ << " : " << method_name);
         return true; // Yay us!
     }
     ROS_ERROR_STREAM("Error : " << device_type_ << " " << name_ << " id = " << id_ << " calling " << method_name << " : " << status_code.GetName());

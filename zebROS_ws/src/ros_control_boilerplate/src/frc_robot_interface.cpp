@@ -146,15 +146,24 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 		 * but aren't using any of the CAN device classes.
 		 **/
 		ctre::phoenix::unmanaged::Unmanaged::LoadPhoenix();
+		if constexpr (SIM)
+		{
+			// Only run Phoenix tuner server on the Jetson in sim, disable it here for the Rio
+			ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
+		}
 
 	}
 	else
 	{
-		// Only run Phoenix tuner server on the Rio, disable it here for the Jetson
-		ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
+		if constexpr (!SIM)
+		{
+			// Only run Phoenix tuner server on the Rio, disable it here for the Jetson
+			ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
+		}
 	}
 	ROS_INFO_STREAM("Phoenix Version String : " << ctre::phoenix::unmanaged::Unmanaged::GetPhoenixVersion());
 	Devices::setHALRobot(run_hal_robot_);
+	Devices::setRobotHW(this);
 
 	// Create all the devices specified in the yaml joint list, one type at a time
 	// Those that need different code for sim vs real hardware are templated using
@@ -162,7 +171,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<AnalogInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<AS726xDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANBusStatusDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<CANCoderDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<CANCoderDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANdleDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
@@ -202,7 +211,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 			device_ptr->appendDeviceMap(ctrev6_devices);
 		}
 	};
-	append_device_map.template operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
+	append_device_map.template operator()<CANCoderDevices<SIM>>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
 	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
 	append_device_map.template operator()<TalonFXProDevices<SIM>>();
 	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
@@ -212,7 +221,9 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	{
 		auto i = d->registerInterface();
 		if (i)
+		{
 			registerInterfaceManager(i);
+		}
 	}
 
 	// Orchestra needs a set of previously created TalonFXs to use as instruments

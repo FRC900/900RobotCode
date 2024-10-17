@@ -3,24 +3,28 @@
 #include "ctre/phoenix6/core/CoreCANcoder.hpp"
 
 #include "ctre_interfaces/cancoder_command_interface.h"
+#include "ctre_interfaces/cancoder_sim_command_interface.h" // TODO - split sim into derived class so this isn't included in HW code?
 #include "ros_control_boilerplate/cancoder_device.h"
 #include "ros_control_boilerplate/tracer.h"
 
-static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue & input,
-                                       hardware_interface::cancoder::MagnetHealth &output);
+static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue &input,
+                                hardware_interface::cancoder::MagnetHealth &output);
+static bool convertMagnetHealth(const hardware_interface::cancoder::MagnetHealth input,
+                                ctre::phoenix6::signals::MagnetHealthValue &output);
 static bool convertSensorDirection(hardware_interface::cancoder::SensorDirection input,
                                    ctre::phoenix6::signals::SensorDirectionValue &output);
 static bool convertAbsoluteSensorRange(hardware_interface::cancoder::AbsoluteSensorRange input,
                                        ctre::phoenix6::signals::AbsoluteSensorRangeValue &output);
 
-CANCoderDevice::CANCoderDevice(const std::string &name_space,
-                               const int joint_index,
-                               const std::string &joint_name,
-                               const int can_id,
-                               const std::string &can_bus,
-                               const bool local_hardware,
-                               const bool local_update,
-                               const double read_hz_)
+template <bool SIM>
+CANCoderDevice<SIM>::CANCoderDevice(const std::string &name_space,
+                                    const int joint_index,
+                                    const std::string &joint_name,
+                                    const int can_id,
+                                    const std::string &can_bus,
+                                    const bool local_hardware,
+                                    const bool local_update,
+                                    const double read_hz_)
     : CTREV6Device("CANcoder", joint_name, can_id)
     , local_hardware_{local_hardware}
     , local_update_{local_update}
@@ -38,17 +42,20 @@ CANCoderDevice::CANCoderDevice(const std::string &name_space,
         setParentDevice(cancoder_.get());
         read_thread_state_ = std::make_unique<hardware_interface::cancoder::CANCoderHWState>(can_id);
         read_state_mutex_ = std::make_unique<std::mutex>();
-        read_thread_ = std::make_unique<std::jthread>(&CANCoderDevice::read_thread, this,
+        read_thread_ = std::make_unique<std::jthread>(&CANCoderDevice<SIM>::read_thread, this,
                                                       std::make_unique<Tracer>("cancoder_read_" + joint_name + " " + name_space),
                                                       read_hz_);
     }
 }
 
-CANCoderDevice::~CANCoderDevice(void) = default;
+template <bool SIM>
+CANCoderDevice<SIM>::~CANCoderDevice(void) = default;
 
-void CANCoderDevice::registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
-                                        hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
-                                        hardware_interface::cancoder::RemoteCANcoderStateInterface &remote_state_interface) const
+template <bool SIM>
+void CANCoderDevice<SIM>::registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
+                                             hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
+                                             hardware_interface::cancoder::RemoteCANcoderStateInterface &remote_state_interface,
+                                             hardware_interface::cancoder::CANCoderSimCommandInterface &sim_command_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for CANCoder : " << getName() << " at CAN id " << getId());
 
@@ -63,9 +70,16 @@ void CANCoderDevice::registerInterfaces(hardware_interface::cancoder::CANCoderSt
         hardware_interface::cancoder::CANCoderWritableStateHandle remote_handle(getName(), state_.get());
         remote_state_interface.registerHandle(remote_handle);
     }
+
+    if constexpr (SIM)
+    {
+        hardware_interface::cancoder::CANCoderSimCommandHandle command_sim_handle(state_handle, sim_fields_.command_sim_.get());
+        sim_command_interface.registerHandle(command_sim_handle);
+    }
 }
 
-void CANCoderDevice::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
+template <bool SIM>
+void CANCoderDevice<SIM>::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
     if (local_update_)
     {
@@ -105,7 +119,8 @@ void CANCoderDevice::read(const ros::Time &/*time*/, const ros::Duration &/*peri
     }
 }
 
-void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*period*/)
+template <bool SIM>
+void CANCoderDevice<SIM>::write(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
     if (!local_hardware_)
     {
@@ -196,8 +211,9 @@ signals.push_back(&var##_signal);
 const auto var = safeRead(var##_signal, #function); \
 if (!var) { tracer->stop() ; continue; }
 
-void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
-                                 const double poll_frequency)
+template <bool SIM>
+void CANCoderDevice<SIM>::read_thread(std::unique_ptr<Tracer> tracer,
+                                      const double poll_frequency)
 {
 #ifdef __linux__
     std::stringstream thread_name{"cancdr_rd_"};
@@ -208,7 +224,7 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 	}
 #endif
 	ros::Duration(2.452 + read_thread_state_->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
-    ROS_INFO_STREAM("Starting CANCoder read thead for " << getName() << " id = " << getId());
+    ROS_INFO_STREAM("Starting CANCoder read thread for " << getName() << " id = " << getId());
 
     std::vector<ctre::phoenix6::BaseStatusSignal *> signals;
 
@@ -332,7 +348,7 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 	}
 }
 
-static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue & input,
+static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue &input,
                                 hardware_interface::cancoder::MagnetHealth &output)
 {
     switch (input.value)
@@ -350,12 +366,35 @@ static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue
         output = hardware_interface::cancoder::MagnetHealth::Green;
         break;
     default:
-        ROS_ERROR("Invalid input in convertCANCoderMagnetFieldStrength");
+        ROS_ERROR("Invalid input in convertMagentHealth");
         return false;
     }
     return true;
 }
 
+static bool convertMagnetHealth(const hardware_interface::cancoder::MagnetHealth input,
+                                ctre::phoenix6::signals::MagnetHealthValue &output)
+{
+    switch (input)
+    {
+    case hardware_interface::cancoder::MagnetHealth::Invalid:
+        output.value = ctre::phoenix6::signals::MagnetHealthValue::Magnet_Invalid;
+        break;
+    case hardware_interface::cancoder::MagnetHealth::Red:
+        output.value = ctre::phoenix6::signals::MagnetHealthValue::Magnet_Red;
+        break;
+    case hardware_interface::cancoder::MagnetHealth::Orange:
+        output.value = ctre::phoenix6::signals::MagnetHealthValue::Magnet_Orange;
+        break;
+    case hardware_interface::cancoder::MagnetHealth::Green:
+        output.value = ctre::phoenix6::signals::MagnetHealthValue::Magnet_Green;
+        break;
+    default:
+        ROS_ERROR("Invalid input in convertMagnetHealth");
+        return false;
+    }
+    return true;
+}
 static bool convertSensorDirection(hardware_interface::cancoder::SensorDirection input,
                                    ctre::phoenix6::signals::SensorDirectionValue &output)
 {
@@ -389,4 +428,89 @@ static bool convertAbsoluteSensorRange(hardware_interface::cancoder::AbsoluteSen
         return false;
     }
     return true;
+}
+
+template <bool SIM>
+void CANCoderDevice<SIM>::simWrite(const ros::Time &time, Tracer &tracer)
+{
+    if constexpr (SIM)
+    {
+        tracer.start_unique("cancoder_sim_read");
+        if (!local_hardware_)
+        {
+            return;
+        }
+
+        auto &sim_collection = cancoder_->GetSimState();
+
+        if (double supply_voltage; sim_fields_.command_sim_->supplyVoltageChanged(supply_voltage))
+        {
+            if (safeCall(sim_collection.SetSupplyVoltage(units::volt_t{supply_voltage}), "cancoder sim->SetSupplyVoltage"))
+            {
+                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set supply voltage to " << supply_voltage);
+                // Don't set state - it will be updated in next read() loop
+            }
+            else
+            {
+                sim_fields_.command_sim_->resetSupplyVoltage();
+                return;
+            }
+        }
+        if (double raw_position; sim_fields_.command_sim_->rawPositionChanged(raw_position))
+        {
+            ROS_INFO_STREAM("CANCoderDevice::simWrite raw_position: " << raw_position);
+            if (safeCall(sim_collection.SetRawPosition(units::radian_t{raw_position}), "cancoder sim->SetRawPosition"))
+            {
+                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set raw position to " << raw_position);
+                // Don't set state - it will be updated in next read() loop
+            }
+            else
+            {
+                sim_fields_.command_sim_->resetRawPosition();
+                return;
+            }
+        }
+        if (double add_position; sim_fields_.command_sim_->addPositionChanged(add_position))
+        {
+            if (safeCall(sim_collection.AddPosition(units::radian_t{add_position}), "cancoder sim->AddPosition"))
+            {
+                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Adding position " << add_position);
+                // Don't set state - it will be updated in next read() loop
+            }
+            else
+            {
+                sim_fields_.command_sim_->resetAddPosition();
+                return;
+            }
+        }
+        if (double velocity; sim_fields_.command_sim_->velocityChanged(velocity))
+        {
+            if (safeCall(sim_collection.SetVelocity(units::radians_per_second_t{velocity}), "cancoder sim->SetVelocity"))
+            {
+                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set velocity to " << velocity);
+                // Don't set state - it will be updated in next read() loop
+            }
+            else
+            {
+                sim_fields_.command_sim_->resetVelocity();
+                return;
+            }
+        }
+        if (hardware_interface::cancoder::MagnetHealth magnet_health_hwi; sim_fields_.command_sim_->magnetHealthChanged(magnet_health_hwi))
+        {
+            ctre::phoenix6::signals::MagnetHealthValue magnet_health_ctre;
+            if (convertMagnetHealth(magnet_health_hwi, magnet_health_ctre))
+            {
+                if (safeCall(sim_collection.SetMagnetHealth(magnet_health_ctre), "cancoder sim->SetMagnetHealth"))
+                {
+                    // Don't set state - it will be updated in next read() loop
+                }
+                else
+                {
+                    sim_fields_.command_sim_->resetMagnetHealth();
+                    return;
+                }
+            }
+        }
+    }
 }

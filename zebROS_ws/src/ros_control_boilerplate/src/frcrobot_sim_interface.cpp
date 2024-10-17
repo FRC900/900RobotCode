@@ -60,7 +60,6 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	FRCRobotInterface::readParams(root_nh, robot_hw_nh);
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
-	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
 
 	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
 	{
@@ -103,7 +102,6 @@ void FRCRobotSimInterface::read(const ros::Time &time, const ros::Duration &peri
 	{
 		d->simPostRead(time, period, *read_tracer_);
 	}
-
 }
 
 template <class T>

@@ -1,13 +1,9 @@
 #include "ctre_interfaces/cancoder_command_interface.h"
 
-namespace hardware_interface
-{
-namespace cancoder
+namespace hardware_interface::cancoder
 {
 
-CANCoderHWCommand::CANCoderHWCommand(void)
-{
-}
+CANCoderHWCommand::CANCoderHWCommand(void) = default;
 
 double CANCoderHWCommand::getSetPosition(void) const
 {
@@ -122,6 +118,6 @@ bool CANCoderHWCommand::getEnableReadThread(void) const
 	return enable_read_thread_;
 }
 
-} // namespace hardware_interface
+// namespace hardware_interface
 } // namespace cancoder
 

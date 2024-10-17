@@ -1,13 +1,12 @@
 #include <hardware_interface/robot_hw.h> // for hardware_interface::InterfaceManager
 #include "ctre_interfaces/cancoder_command_interface.h"
+#include "ctre_interfaces/cancoder_sim_command_interface.h"
 #include "ros_control_boilerplate/cancoder_devices.h"
 #include "ros_control_boilerplate/cancoder_device.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 
-CANCoderDevices::CANCoderDevices(ros::NodeHandle &root_nh)
-    : state_interface_{std::make_unique<hardware_interface::cancoder::CANCoderStateInterface>()}
-    , command_interface_{std::make_unique<hardware_interface::cancoder::CANCoderCommandInterface>()}
-    , remote_state_interface_{std::make_unique<hardware_interface::cancoder::RemoteCANcoderStateInterface>()}
+template <bool SIM>
+CANCoderDevices<SIM>::CANCoderDevices(ros::NodeHandle &root_nh)
 {
     ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop"); // TODO : this shouldn't be hard-coded?
     if(!param_nh.param("cancoder_read_hz", read_hz_, read_hz_)) 
@@ -54,26 +53,33 @@ CANCoderDevices::CANCoderDevices(ros::NodeHandle &root_nh)
 				throw std::runtime_error("A CANCoder can_bus was specified with local_hardware == false for joint " + joint_name);
             }
 
-            devices_.emplace_back(std::make_unique<CANCoderDevice>(root_nh.getNamespace(), i, joint_name, can_id, can_bus, local_update, local_hardware, read_hz_));
+            devices_.emplace_back(std::make_unique<CANCoderDevice<SIM>>(root_nh.getNamespace(), i, joint_name, can_id, can_bus, local_update, local_hardware, read_hz_));
         }
     }
 }
 
-CANCoderDevices::~CANCoderDevices() = default;
+template <bool SIM>
+CANCoderDevices<SIM>::~CANCoderDevices() = default;
 
-hardware_interface::InterfaceManager *CANCoderDevices::registerInterface()
+template <bool SIM>
+hardware_interface::InterfaceManager *CANCoderDevices<SIM>::registerInterface()
 {
     for (const auto &d : devices_)
     {
-        d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_);
+        d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_, *sim_command_interface_);
     }
     interface_manager_.registerInterface(state_interface_.get());
     interface_manager_.registerInterface(command_interface_.get());
     interface_manager_.registerInterface(remote_state_interface_.get());
+    if constexpr (SIM)
+    {
+        interface_manager_.registerInterface(sim_command_interface_.get());
+    }
     return &interface_manager_;
 }
 
-void CANCoderDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void CANCoderDevices<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("cancoder");
     for (const auto &d : devices_)
@@ -82,7 +88,8 @@ void CANCoderDevices::read(const ros::Time& time, const ros::Duration& period, T
     }
 }
 
-void CANCoderDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+template <bool SIM>
+void CANCoderDevices<SIM>::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("cancoder");
     for (const auto &d : devices_)
@@ -91,7 +98,8 @@ void CANCoderDevices::write(const ros::Time& time, const ros::Duration& period, 
     }
 }
 
-void CANCoderDevices::appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const
+template <bool SIM>
+void CANCoderDevices<SIM>::appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const
 {
     for (auto &d : devices_)
     {
@@ -99,6 +107,19 @@ void CANCoderDevices::appendDeviceMap(std::multimap<std::string, ctre::phoenix6:
         if (ptr)
         {
             device_map.emplace(d->getName(), ptr);
+        }
+    }
+}
+
+template <bool SIM>
+void CANCoderDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duration& /*period*/, Tracer& tracer)
+{
+    if constexpr (SIM)
+    {
+        tracer.start_unique("cancoder simPostRead");
+        for (const auto &d : devices_)
+        {
+            d->simWrite(time, tracer);
         }
     }
 }

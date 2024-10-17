@@ -20,6 +20,7 @@ namespace hardware_interface::cancoder
 }
 class Tracer;
 
+template <bool SIM>
 class CANCoderDevice : public CTREV6Device
 {
 public:
@@ -39,9 +40,13 @@ public:
 
     void registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
                             hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
-                            hardware_interface::cancoder::RemoteCANcoderStateInterface &remote_state_interface) const;
+                            hardware_interface::cancoder::RemoteCANcoderStateInterface &remote_state_interface,
+                            hardware_interface::cancoder::CANCoderSimCommandInterface &sim_interface) const;
     void read(const ros::Time &time, const ros::Duration &period);
     void write(const ros::Time &time, const ros::Duration &period);
+
+    // Code responsible for writing changes queued in sim_command_ to the actual CTRE simulation code
+    void simWrite(const ros::Time &time, Tracer &tracer);
 
 private:
     const bool local_hardware_;
@@ -51,6 +56,14 @@ private:
 
     std::unique_ptr<hardware_interface::cancoder::CANCoderHWState> state_;
     std::unique_ptr<hardware_interface::cancoder::CANCoderHWCommand> command_{std::make_unique<hardware_interface::cancoder::CANCoderHWCommand>()};
+    // Only instantiate the sim command interface if SIM is true
+    struct HwFields {};
+    struct SimFields
+    {
+        // TODO : defer init in hopes of not having to include corresponding .h here and in devices
+        std::unique_ptr<hardware_interface::cancoder::CANCoderSimCommand> command_sim_{std::make_unique<hardware_interface::cancoder::CANCoderSimCommand>()};
+    };
+    std::conditional_t<SIM, SimFields, HwFields> sim_fields_{};
 
     std::unique_ptr<hardware_interface::cancoder::CANCoderHWState> read_thread_state_{};
     std::unique_ptr<std::mutex> read_state_mutex_{};
