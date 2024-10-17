@@ -225,7 +225,7 @@ void LatencyCompensationGroup::read_thread()
 #endif
     Tracer tracer("latency compensation " + name_);
     ROS_INFO_STREAM("Starting latency compensation read thread for " << name_ << " at " << ros::Time::now());
-    ROS_INFO_STREAM("CTRE / steady clock time = " << ctre:: phoenix6::GetCurrentTimeSeconds());
+    ROS_INFO_STREAM("CTRE / steady clock time = " << ctre:: phoenix6::utils::GetCurrentTimeSeconds());
     while (ros::ok())
     {
         tracer.start("WaitForAll");
@@ -235,7 +235,7 @@ void LatencyCompensationGroup::read_thread()
         {
             // Redo this offset from steady-clock time to wall clock time
             // each iteration in case system time changes.
-            const ros::Duration time_offset{ros::Time::now().toSec() - ctre::phoenix6::GetCurrentTimeSeconds()};
+            const ros::Duration time_offset{ros::Time::now().toSec() - ctre::phoenix6::utils::GetCurrentTimeSeconds()};
             std::scoped_lock l{read_state_mutex_};
 
             for (const auto &[name, val]: entries_)

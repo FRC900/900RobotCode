@@ -174,7 +174,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<CANCoderDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANdleDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));
-	devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
+	// devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalOutputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DoubleSolenoidDevices>(root_nh));
@@ -195,7 +195,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<RumbleDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<ServoDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<SolenoidDevices>(root_nh));
-	devices_.emplace_back(std::make_unique<SparkMaxDevices<SIM>>(root_nh));
+	// devices_.emplace_back(std::make_unique<SparkMaxDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<TalonFXProDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<TalonOrchestraDevices<SIM>>(root_nh));
 

@@ -7,10 +7,6 @@ frc::DigitalInput::DigitalInput(int)
 {
 	ROS_ERROR("Called DigitalInput::DigitalInput(int) on unsupported platform");
 }
-frc::DigitalInput::~DigitalInput()
-{
-	ROS_ERROR("Called DigitalInput::~DigitalInput() on unsupported platform");
-}
 bool frc::DigitalInput::Get() const
 {
 	ROS_ERROR("Called DigitalInput::Get() const on unsupported platform");

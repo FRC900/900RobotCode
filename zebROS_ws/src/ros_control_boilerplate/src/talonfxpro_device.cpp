@@ -904,31 +904,36 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     //    else if writing was unsuccessful
     //        reset the changed flag for the config so it is retried the next time through
     //        return; (since the motor controller isn't in the expected state)
+    double kP;
+    double kI;
+    double kD;
+    double kS;
+    double kV;
+    double kA;
+    double kG;
     hardware_interface::talonfxpro::GravityType gravity_type;
     hardware_interface::talonfxpro::StaticFeedforwardSign static_feedforward_sign;
-    if (command_->slotChanged(config_->Slot0.kP,
-                              config_->Slot0.kI,
-                              config_->Slot0.kD,
-                              config_->Slot0.kS,
-                              config_->Slot0.kV,
-                              config_->Slot0.kA,
-                              config_->Slot0.kG,
-                              gravity_type,
-                              static_feedforward_sign,
-                              0) &&
+    if (command_->slotChanged(kP, kI, kD, kS, kV, kA, kG, gravity_type, static_feedforward_sign, 0) &&
         convertGravityType(gravity_type, config_->Slot0.GravityType) &&
         convertStaticFeedforwardSign(static_feedforward_sign, config_->Slot0.StaticFeedforwardSign))
     {
+        config_->Slot0.kP = kP;
+        config_->Slot0.kI = kI;
+        config_->Slot0.kD = kD;
+        config_->Slot0.kS = kS;
+        config_->Slot0.kV = kV;
+        config_->Slot0.kA = kA;
+        config_->Slot0.kG = kG;
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot0), "GetConfigurator().Apply(config_->Slot0)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot0 " << config_->Slot0);
-            state_->setkP(config_->Slot0.kP, 0);
-            state_->setkI(config_->Slot0.kI, 0);
-            state_->setkD(config_->Slot0.kD, 0);
-            state_->setkS(config_->Slot0.kS, 0);
-            state_->setkV(config_->Slot0.kV, 0);
-            state_->setkA(config_->Slot0.kA, 0);
-            state_->setkG(config_->Slot0.kG, 0);
+            state_->setkP(kP, 0);
+            state_->setkI(kI, 0);
+            state_->setkD(kD, 0);
+            state_->setkS(kS, 0);
+            state_->setkV(kV, 0);
+            state_->setkA(kA, 0);
+            state_->setkG(kG, 0);
             state_->setGravityType(gravity_type, 0);
             state_->setStaticFeedforwardSign(static_feedforward_sign, 0);
         }
@@ -939,29 +944,27 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
             return;
         }
     }
-    if (command_->slotChanged(config_->Slot1.kP,
-                              config_->Slot1.kI,
-                              config_->Slot1.kD,
-                              config_->Slot1.kS,
-                              config_->Slot1.kV,
-                              config_->Slot1.kA,
-                              config_->Slot1.kG,
-                              gravity_type,
-                              static_feedforward_sign,
-                              1) &&
+    if (command_->slotChanged(kP, kI, kD, kS, kV, kA, kG, gravity_type, static_feedforward_sign, 1) &&
         convertGravityType(gravity_type, config_->Slot1.GravityType) &&
         convertStaticFeedforwardSign(static_feedforward_sign, config_->Slot1.StaticFeedforwardSign))
     {
+        config_->Slot1.kP = kP;
+        config_->Slot1.kI = kI;
+        config_->Slot1.kD = kD;
+        config_->Slot1.kS = kS;
+        config_->Slot1.kV = kV;
+        config_->Slot1.kA = kA;
+        config_->Slot1.kG = kG;
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot1), "GetConfigurator().Apply(config_->Slot1)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot1 " << config_->Slot1);
-            state_->setkP(config_->Slot1.kP, 1);
-            state_->setkI(config_->Slot1.kI, 1);
-            state_->setkD(config_->Slot1.kD, 1);
-            state_->setkS(config_->Slot1.kS, 1);
-            state_->setkV(config_->Slot1.kV, 1);
-            state_->setkV(config_->Slot1.kA, 1);
-            state_->setkV(config_->Slot1.kG, 1);
+            state_->setkP(kP, 1);
+            state_->setkI(kI, 1);
+            state_->setkD(kD, 1);
+            state_->setkS(kS, 1);
+            state_->setkV(kV, 1);
+            state_->setkV(kA, 1);
+            state_->setkV(kG, 1);
             state_->setGravityType(gravity_type, 1);
             state_->setStaticFeedforwardSign(static_feedforward_sign, 1);
 
@@ -973,29 +976,27 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
             return;
         }
     }
-    if (command_->slotChanged(config_->Slot2.kP,
-                              config_->Slot2.kI,
-                              config_->Slot2.kD,
-                              config_->Slot2.kS,
-                              config_->Slot2.kV,
-                              config_->Slot2.kA,
-                              config_->Slot2.kG,
-                              gravity_type,
-                              static_feedforward_sign,
-                              2) &&
+    if (command_->slotChanged(kP, kI, kD, kS, kV, kA, kG, gravity_type, static_feedforward_sign, 2) &&
         convertGravityType(gravity_type, config_->Slot2.GravityType) &&
         convertStaticFeedforwardSign(static_feedforward_sign, config_->Slot2.StaticFeedforwardSign))
     {
+        config_->Slot2.kP = kP;
+        config_->Slot2.kI = kI;
+        config_->Slot2.kD = kD;
+        config_->Slot2.kS = kS;
+        config_->Slot2.kV = kV;
+        config_->Slot2.kA = kA;
+        config_->Slot2.kG = kG;
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->Slot2), "GetConfigurator().Apply(config_->Slot2)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " Slot2 " << config_->Slot2);
-            state_->setkP(config_->Slot2.kP, 2);
-            state_->setkI(config_->Slot2.kI, 2);
-            state_->setkD(config_->Slot2.kD, 2);
-            state_->setkS(config_->Slot2.kS, 2);
-            state_->setkV(config_->Slot2.kV, 2);
-            state_->setkV(config_->Slot2.kA, 2);
-            state_->setkV(config_->Slot2.kG, 2);
+            state_->setkP(kP, 2);
+            state_->setkI(kI, 2);
+            state_->setkD(kD, 2);
+            state_->setkS(kS, 2);
+            state_->setkV(kV, 2);
+            state_->setkV(kA, 2);
+            state_->setkV(kG, 2);
             state_->setGravityType(gravity_type, 2);
             state_->setStaticFeedforwardSign(static_feedforward_sign, 2);
         }
@@ -1009,22 +1010,28 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
 
     hardware_interface::talonfxpro::Inverted invert;
     hardware_interface::talonfxpro::NeutralMode neutral_mode;
+    double duty_cycle_neutral_deadband;
+    double peak_forward_duty_cycle;
+    double peak_reverse_duty_cycle;
     if (command_->motorOutputConfigChanged(invert,
                                            neutral_mode,
-                                           config_->MotorOutput.DutyCycleNeutralDeadband,
-                                           config_->MotorOutput.PeakForwardDutyCycle,
-                                           config_->MotorOutput.PeakReverseDutyCycle) &&
+                                           duty_cycle_neutral_deadband,
+                                           peak_forward_duty_cycle,
+                                           peak_reverse_duty_cycle) &&
         convertInverted(invert, config_->MotorOutput.Inverted) &&
         convertNeutralMode(neutral_mode, config_->MotorOutput.NeutralMode))
     {
+        config_->MotorOutput.DutyCycleNeutralDeadband = duty_cycle_neutral_deadband;
+        config_->MotorOutput.PeakForwardDutyCycle = peak_forward_duty_cycle;
+        config_->MotorOutput.PeakReverseDutyCycle = peak_reverse_duty_cycle;
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotorOutput), "GetConfigurator().Apply(config_->MotorOutput)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " MotorOutput " << config_->MotorOutput);
             state_->setInvert(invert);
             state_->setNeutralMode(neutral_mode);
-            state_->setDutyCycleNeutralDeadband(config_->MotorOutput.DutyCycleNeutralDeadband);
-            state_->setPeakForwardDutyCycle(config_->MotorOutput.PeakForwardDutyCycle);
-            state_->setPeakReverseDutyCycle(config_->MotorOutput.PeakReverseDutyCycle);
+            state_->setDutyCycleNeutralDeadband(duty_cycle_neutral_deadband);
+            state_->setPeakForwardDutyCycle(peak_forward_duty_cycle);
+            state_->setPeakReverseDutyCycle(peak_reverse_duty_cycle);
         }
         else
         {
@@ -1034,19 +1041,24 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         }
     }
 
-    if (command_->currentLimitChanged(config_->CurrentLimits.StatorCurrentLimit,
+    double stator_current_limit;
+    double supply_current_limit;
+    double supply_current_threshold;
+    if (command_->currentLimitChanged(stator_current_limit,
                                       config_->CurrentLimits.StatorCurrentLimitEnable,
-                                      config_->CurrentLimits.SupplyCurrentLimit,
+                                      stator_current_limit,
                                       config_->CurrentLimits.SupplyCurrentLimitEnable,
                                       config_->CurrentLimits.SupplyCurrentThreshold,
                                       config_->CurrentLimits.SupplyTimeThreshold))
     {
+        config_->CurrentLimits.StatorCurrentLimit = units::ampere_t{stator_current_limit};
+        config_->CurrentLimits.SupplyCurrentLimit = units::ampere_t{supply_current_limit};
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->CurrentLimits), "GetConfigurator().Apply(config_->CurrentLimits)"))
         {
             ROS_INFO_STREAM("Updated TalonFXPro id " <<  getId() << " = " << getName() << " CurrentLimits " << config_->CurrentLimits);
-            state_->setStatorCurrentLimit(config_->CurrentLimits.StatorCurrentLimit);
+            state_->setStatorCurrentLimit(stator_current_limit);
             state_->setStatorCurrentLimitEnable(config_->CurrentLimits.StatorCurrentLimitEnable);
-            state_->setSupplyCurrentLimit(config_->CurrentLimits.SupplyCurrentLimit);
+            state_->setSupplyCurrentLimit(supply_current_limit);
             state_->setSupplyCurrentLimitEnable(config_->CurrentLimits.SupplyCurrentLimitEnable);
             state_->setSupplyCurrentThreshold(config_->CurrentLimits.SupplyCurrentThreshold);
             state_->setSupplyTimeThreshold(config_->CurrentLimits.SupplyTimeThreshold);
