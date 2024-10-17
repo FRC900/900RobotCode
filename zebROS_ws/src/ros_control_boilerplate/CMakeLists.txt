@@ -171,13 +171,13 @@ set (FRCROBOT_HW_MAIN_SRCS
 	src/as726x_hw_device.cpp
 	src/cancoder_hw_device.cpp
 	src/candle_hw_device.cpp
-	src/ctre_v5_motor_controller_hw_device.cpp
+	# src/ctre_v5_motor_controller_hw_device.cpp
 	src/error_queue.cpp
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
     src/joystick_hw_device.cpp
 	src/match_data_hw_device.cpp
-	src/sparkmax_hw_device.cpp
+	# src/sparkmax_hw_device.cpp
 	src/talonfxpro_hw_devices.cpp
 )
 
@@ -457,16 +457,16 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		src/as726x_sim_device.cpp
 		src/cancoder_sim_device.cpp
 		src/candle_sim_device.cpp
-		src/ctre_v5_motor_controller_sim_device.cpp
+		# src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_sim.cpp
 		src/joystick_sim_device.cpp
 		src/match_data_sim_device.cpp
-		src/sim_ctre_v5_motor_controller.cpp
+		# src/sim_ctre_v5_motor_controller.cpp
 		src/sim_talonfxpro_device.cpp
-		src/sparkmax_sim_device.cpp
+		# src/sparkmax_sim_device.cpp
 		src/talonfxpro_sim_devices.cpp
 	)
 	# set_source_files_properties(
@@ -495,7 +495,8 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
 		${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
         ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
-		${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
+        ${CTRE_LIB_DIR}/libCTRE_SimProPigeon2.so
+		${CTRE_LIB_DIR}/libCTRE_SimProTalonFX.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
 		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
 		${REV_USER_LIBS}
@@ -516,16 +517,16 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		src/as726x_sim_device.cpp
 		src/cancoder_sim_device.cpp
 		src/candle_sim_device.cpp
-		src/ctre_v5_motor_controller_sim_device.cpp
+		# src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_sim.cpp
 		src/joystick_sim_device.cpp
 		src/match_data_sim_device.cpp
-		src/sim_ctre_v5_motor_controller.cpp
+		# src/sim_ctre_v5_motor_controller.cpp
 		src/sim_talonfxpro_device.cpp
-		src/sparkmax_sim_device.cpp
+		# src/sparkmax_sim_device.cpp
 		src/talonfxpro_sim_devices.cpp
 	)
 
@@ -540,7 +541,8 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
 		${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
 		${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
         ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
-		${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
+        ${CTRE_LIB_DIR}/libCTRE_SimProPigeon2.so
+		${CTRE_LIB_DIR}/libCTRE_SimProTalonFX.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
 		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
 		${REV_USER_LIBS}
@@ -581,6 +583,11 @@ target_link_libraries(frcrobot_hw_main
 	${FRC_COMMON_WPILIB}
 	${catkin_LIBRARIES}
 	${TBB_LIBRARIES}
+	${CTRE_LIB_DIR}/libCTRE_Phoenix.so
+	${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.so
+	${CTRE_LIB_DIR}/libCTRE_PhoenixTools.so
+	${CTRE_LIB_DIR}/libCTRE_Phoenix_WPI.so
+	${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPI.so
 )
 
 ## Add cmake target dependencies of the executable
