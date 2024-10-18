@@ -82,6 +82,7 @@ public:
 			m.control_limit_reverse_motion.push_back(false);
             m.control_differential_position.push_back(0);
 			m.control_differential_slot.push_back(0);
+			m.control_use_timesync.push_back(false);
 			m.version_major.push_back(0);
 			m.version_minor.push_back(0);
 			m.version_bugfix.push_back(0);
@@ -115,6 +116,10 @@ public:
 			m.differential_difference_velocity.push_back(0);
 			m.differential_difference_position.push_back(0);
 
+			m.motor_kt.push_back(0);
+			m.motor_kv.push_back(0);
+			m.motor_stall_current.push_back(0);
+
 			m.bridge_output_value.emplace_back("");
 
 			m.fault_hardware.push_back(false);
@@ -133,6 +138,8 @@ public:
 			m.fault_forwardhardlimit.push_back(false);
 			m.fault_reversesoftlimit.push_back(false);
 			m.fault_forwardsoftlimit.push_back(false);
+			m.fault_missingsoftlimitremote.push_back(false);
+			m.fault_missinghardlimitremote.push_back(false);
 			m.fault_remotesensordatainvalid.push_back(false);
 			m.fault_fusedsensoroutofsync.push_back(false);
 			m.fault_statorcurrlimit.push_back(false);
@@ -154,6 +161,8 @@ public:
 			m.sticky_fault_forwardhardlimit.push_back(false);
 			m.sticky_fault_reversesoftlimit.push_back(false);
 			m.sticky_fault_forwardsoftlimit.push_back(false);
+			m.sticky_fault_missingsoftlimitremote.push_back(false);
+			m.sticky_fault_missinghardlimitremote.push_back(false);
 			m.sticky_fault_remotesensordatainvalid.push_back(false);
 			m.sticky_fault_fusedsensoroutofsync.push_back(false);
 			m.sticky_fault_statorcurrlimit.push_back(false);
@@ -338,6 +347,7 @@ public:
 					m.control_limit_reverse_motion[i] = ts->getControlLimitReverseMotion();
 					m.control_differential_position[i] = ts->getControlDifferentialPosition();
 					m.control_differential_slot[i] = ts->getControlDifferentialSlot();
+					m.control_use_timesync[i] = ts->getControlUseTimesync();
 					m.version_major[i] = ts->getVersionMajor();
 					m.version_minor[i] = ts->getVersionMinor();
 					m.version_bugfix[i] = ts->getVersionBugfix();
@@ -465,6 +475,10 @@ public:
 
 					m.device_enable[i] = ts->getDeviceEnable();
 
+					m.motor_kt[i] = ts->getMotorKT();
+					m.motor_kv[i] = ts->getMotorKV();
+					m.motor_stall_current[i] = ts->getMotorStallCurrent();
+
 					switch(ts->getBridgeOutput())
 					{
 					case hardware_interface::talonfxpro::BridgeOutput::Coast:
@@ -515,6 +529,8 @@ public:
 					m.fault_forwardhardlimit[i] = ts->getFaultForwardHardLimit();
 					m.fault_reversesoftlimit[i] = ts->getFaultReverseSoftLimit();
 					m.fault_forwardsoftlimit[i] = ts->getFaultForwardSoftLimit();
+					m.fault_missingsoftlimitremote[i] = ts->getFaultMissingSoftLimitRemote();
+					m.fault_missinghardlimitremote[i] = ts->getFaultMissingHardLimitRemote();
 					m.fault_remotesensordatainvalid[i] = ts->getFaultRemoteSensorDataInvalid();
 					m.fault_fusedsensoroutofsync[i] = ts->getFaultFusedSensorOutOfSync();
 					m.fault_statorcurrlimit[i] = ts->getFaultStatorCurrLimit();
@@ -536,6 +552,8 @@ public:
 					m.sticky_fault_forwardhardlimit[i] = ts->getStickyFaultForwardHardLimit();
 					m.sticky_fault_reversesoftlimit[i] = ts->getStickyFaultReverseSoftLimit();
 					m.sticky_fault_forwardsoftlimit[i] = ts->getStickyFaultForwardSoftLimit();
+					m.sticky_fault_missingsoftlimitremote[i] = ts->getStickyFaultMissingSoftLimitRemote();
+					m.sticky_fault_missinghardlimitremote[i] = ts->getStickyFaultMissingHardLimitRemote();
 					m.sticky_fault_remotesensordatainvalid[i] = ts->getStickyFaultRemoteSensorDataInvalid();
 					m.sticky_fault_fusedsensoroutofsync[i] = ts->getStickyFaultFusedSensorOutOfSync();
 					m.sticky_fault_statorcurrlimit[i] = ts->getStickyFaultStatorCurrLimit();

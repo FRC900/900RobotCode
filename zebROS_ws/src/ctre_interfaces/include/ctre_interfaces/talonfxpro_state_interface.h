@@ -375,6 +375,15 @@ public:
 	void setDifferentialDifferencePosition(const double differential_difference_position);
 	double getDifferentialDifferencePosition(void) const;
 
+	void setMotorKT(const double motor_kt);
+	double getMotorKT(void) const;
+
+	void setMotorKV(const double motor_kv);
+	double getMotorKV(void) const;
+
+	void setMotorStallCurrent(const double motor_stall_current);
+	double getMotorStallCurrent(void) const;
+ 
 	void setBridgeOutput(const BridgeOutput bridge_output_value);
 	BridgeOutput getBridgeOutput(void) const;
 
@@ -410,6 +419,10 @@ public:
 	bool getFaultReverseSoftLimit(void) const;
 	void setFaultForwardSoftLimit(const bool fault_forwardsoftlimit);
 	bool getFaultForwardSoftLimit(void) const;
+	void setFaultMissingSoftLimitRemote(const bool fault_missingsoftlimitremote);
+	bool getFaultMissingSoftLimitRemote(void) const;
+	void setFaultMissingHardLimitRemote(const bool fault_missinghardlimitremote);
+	bool getFaultMissingHardLimitRemote(void) const;
 	void setFaultRemoteSensorDataInvalid(const bool fault_remotesensordatainvalid);
 	bool getFaultRemoteSensorDataInvalid(void) const;
 	void setFaultFusedSensorOutOfSync(const bool fault_fusedsensoroutofsync);
@@ -451,6 +464,10 @@ public:
 	bool getStickyFaultReverseSoftLimit(void) const;
 	void setStickyFaultForwardSoftLimit(const bool sticky_fault_forwardsoftlimit);
 	bool getStickyFaultForwardSoftLimit(void) const;
+	void setStickyFaultMissingSoftLimitRemote(const bool fault_missingsoftlimitremote);
+	bool getStickyFaultMissingSoftLimitRemote(void) const;
+	void setStickyFaultMissingHardLimitRemote(const bool fault_missinghardlimitremote);
+	bool getStickyFaultMissingHardLimitRemote(void) const;
 	void setStickyFaultRemoteSensorDataInvalid(const bool sticky_fault_remotesensordatainvalid);
 	bool getStickyFaultRemoteSensorDataInvalid(void) const;
 	void setStickyFaultFusedSensorOutOfSync(const bool sticky_fault_fusedsensoroutofsync);
@@ -667,6 +684,10 @@ private:
 	double differential_difference_velocity_{0};
 	double differential_difference_position_{0};
 
+	double motor_kt_{0};
+	double motor_kv_{0};
+	double motor_stall_current_{0};
+
 	BridgeOutput bridge_output_value_{BridgeOutput::Coast};
 
 	bool fault_hardware_{false};
@@ -685,6 +706,8 @@ private:
 	bool fault_forwardhardlimit_{false};
 	bool fault_reversesoftlimit_{false};
 	bool fault_forwardsoftlimit_{false};
+	bool fault_missingsoftlimitremote_{false};
+	bool fault_missinghardlimitremote_{false};
 	bool fault_remotesensordatainvalid_{false};
 	bool fault_fusedsensoroutofsync_{false};
 	bool fault_statorcurrlimit_{false};
@@ -706,6 +729,8 @@ private:
 	bool sticky_fault_forwardhardlimit_{false};
 	bool sticky_fault_reversesoftlimit_{false};
 	bool sticky_fault_forwardsoftlimit_{false};
+	bool sticky_fault_missingsoftlimitremote_{false};
+	bool sticky_fault_missinghardlimitremote_{false};
 	bool sticky_fault_remotesensordatainvalid_{false};
 	bool sticky_fault_fusedsensoroutofsync_{false};
 	bool sticky_fault_statorcurrlimit_{false};

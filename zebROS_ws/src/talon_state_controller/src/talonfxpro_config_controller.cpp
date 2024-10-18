@@ -97,14 +97,16 @@ public:
 			m.duty_cycle_neutral_deadband.push_back(0);
 			m.peak_forward_duty_cycle.push_back(0);
 			m.peak_reverse_duty_cycle.push_back(0);
+			m.control_timesync_freq_hz.push_back(0);
 
 			m.stator_current_limit.push_back(0);
 			m.stator_current_limit_enable.push_back(false);
 
 			m.supply_current_limit.push_back(0);
 			m.supply_current_limit_enable.push_back(false);
-			m.supply_current_threshold.push_back(0);
-			m.supply_time_threshold.push_back(0);
+
+			m.supply_current_lower_limit.push_back(0);
+			m.supply_current_lower_time.push_back(0);
 
 			m.supply_voltage_time_constant.push_back(0);
 			m.peak_forward_voltage.push_back(0);
@@ -119,6 +121,7 @@ public:
 			m.rotor_to_sensor_ratio.push_back(0);
 			m.feedback_sensor_source.emplace_back("");
 			m.feedback_remote_sensor_id.push_back(0);
+			m.velocity_filter_time_constant.push_back(0);
 
 			m.differential_sensor_source.emplace_back("");
 			m.differential_talonfx_sensor_id.push_back(0);
@@ -293,14 +296,16 @@ public:
 					m.duty_cycle_neutral_deadband[i] = ts->getDutyCycleNeutralDeadband();
 					m.peak_forward_duty_cycle[i] = ts->getPeakForwardDutyCycle();
 					m.peak_reverse_duty_cycle[i] = ts->getPeakReverseDutyCycle();
+					m.control_timesync_freq_hz[i] = ts->getControlTimesyncFreqHz();
 
 					m.stator_current_limit[i] = ts->getStatorCurrentLimit();
 					m.stator_current_limit_enable[i] = ts->getStatorCurrentLimitEnable();
 
 					m.supply_current_limit[i] = ts->getSupplyCurrentLimit();
 					m.supply_current_limit_enable[i] = ts->getSupplyCurrentLimitEnable();
-					m.supply_current_threshold[i] = ts->getSupplyCurrentThreshold();
-					m.supply_time_threshold[i] = ts->getSupplyTimeThreshold();
+
+					m.supply_current_lower_limit[i] = ts->getSupplyCurrentLowerLimit();
+					m.supply_current_lower_time[i] = ts->getSupplyCurrentLowerTime();
 
 					m.supply_voltage_time_constant[i] = ts->getSupplyVoltageTimeConstant();
 					m.peak_forward_voltage[i] = ts->getPeakForwardVoltage();
@@ -341,6 +346,7 @@ public:
 						break;
 					}
 					m.feedback_remote_sensor_id[i] = ts->getFeedbackRemoteSensorID();
+					m.velocity_filter_time_constant[i] = ts->getVelocityFilterTimeConstant();
 
 					m.differential_sensor_source[i] = differentialSensorSourceToString(ts->getDifferentialSensorSource());
 					m.differential_talonfx_sensor_id[i] = ts->getDifferentialTalonFXSensorID();

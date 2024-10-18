@@ -18,6 +18,7 @@ bool[]    control_limit_forward_motion
 bool[]    control_limit_reverse_motion
 float64[] control_differential_position
 int8[]    control_differential_slot
+bool[]    control_use_timesync
 
 float64[] motor_voltage
 
@@ -53,6 +54,10 @@ float64[] differential_average_position
 float64[] differential_difference_velocity
 float64[] differential_difference_position
 
+float64[] motor_kt
+float64[] motor_kv
+float64[] motor_stall_current
+
 string[]  bridge_output_value
 
 bool[]    fault_hardware
@@ -71,6 +76,8 @@ bool[]    fault_reversehardlimit
 bool[]    fault_forwardhardlimit
 bool[]    fault_reversesoftlimit
 bool[]    fault_forwardsoftlimit
+bool[]    fault_missingsoftlimitremote
+bool[]    fault_missinghardlimitremote
 bool[]    fault_remotesensordatainvalid
 bool[]    fault_fusedsensoroutofsync
 bool[]    fault_statorcurrlimit
@@ -92,6 +99,8 @@ bool[]    sticky_fault_reversehardlimit
 bool[]    sticky_fault_forwardhardlimit
 bool[]    sticky_fault_reversesoftlimit
 bool[]    sticky_fault_forwardsoftlimit
+bool[]    sticky_fault_missingsoftlimitremote
+bool[]    sticky_fault_missinghardlimitremote
 bool[]    sticky_fault_remotesensordatainvalid
 bool[]    sticky_fault_fusedsensoroutofsync
 bool[]    sticky_fault_statorcurrlimit
