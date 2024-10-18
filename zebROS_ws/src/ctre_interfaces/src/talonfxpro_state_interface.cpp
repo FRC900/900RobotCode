@@ -264,6 +264,15 @@ double TalonFXProHWState::getPeakReverseDutyCycle(void) const
 	return peak_reverse_duty_cycle_;
 }
 
+void TalonFXProHWState::setControlTimesyncFreqHz(const double control_timesync_freq_hz)
+{
+	control_timesync_freq_hz_ = control_timesync_freq_hz;
+}
+double TalonFXProHWState::getControlTimesyncFreqHz(void) const
+{
+	return control_timesync_freq_hz_;
+}
+
 void TalonFXProHWState::setStatorCurrentLimit(const double stator_current_limit)
 {
 	stator_current_limit_ = stator_current_limit;
@@ -297,21 +306,21 @@ bool TalonFXProHWState::getSupplyCurrentLimitEnable(void) const
 {
 	return supply_current_limit_enable_;
 }
-void TalonFXProHWState::setSupplyCurrentThreshold(const double supply_current_threshold)
+void TalonFXProHWState::setSupplyCurrentLowerLimit(const double supply_current_lower_limit)
 {
-	supply_current_threshold_ = supply_current_threshold;
+	supply_current_lower_limit_ = supply_current_lower_limit;
 }
-double TalonFXProHWState::getSupplyCurrentThreshold(void) const
+double TalonFXProHWState::getSupplyCurrentLowerLimit(void) const
 {
-	return supply_current_threshold_;
+	return supply_current_lower_limit_;
 }
-void TalonFXProHWState::setSupplyTimeThreshold(const double supply_time_threshold)
+void TalonFXProHWState::setSupplyCurrentLowerTime(const double supply_current_lower_time)
 {
-	supply_time_threshold_ = supply_time_threshold;
+	supply_current_lower_time_ = supply_current_lower_time;
 }
-double TalonFXProHWState::getSupplyTimeThreshold(void) const
+double TalonFXProHWState::getSupplyCurrentLowerTime(void) const
 {
-	return supply_time_threshold_;
+	return supply_current_lower_time_;
 }
 
 void TalonFXProHWState::setSupplyVoltageTimeConstant(const double supply_voltage_time_constant) 
@@ -409,6 +418,15 @@ void TalonFXProHWState::setFeedbackRemoteSensorID(const int feedback_remote_sens
 int TalonFXProHWState::getFeedbackRemoteSensorID(void) const
 {
 	return feedback_remote_sensor_id_;
+}
+
+void TalonFXProHWState::setVelocityFilterTimeConstant(const double velocity_filter_time_constant)
+{
+	velocity_filter_time_constant_ = velocity_filter_time_constant;
+}
+double TalonFXProHWState::getVelocityFilterTimeConstant(void) const
+{
+	return velocity_filter_time_constant_;
 }
 
 void TalonFXProHWState::setDifferentialSensorSource(const DifferentialSensorSource differential_sensor_source)
@@ -913,6 +931,15 @@ void TalonFXProHWState::setControlDifferentialSlot(const int control_differentia
 int TalonFXProHWState::getControlDifferentialSlot(void) const
 {
 	return control_differential_slot_;
+}
+
+void TalonFXProHWState::setControlUseTimesync(const bool control_use_timesync)
+{
+	control_use_timesync_ = control_use_timesync;
+}
+bool TalonFXProHWState::getControlUseTimesync(void) const
+{
+	return control_use_timesync_;
 }
 
 void TalonFXProHWState::setEnableReadThread(const bool enable_read_thread)

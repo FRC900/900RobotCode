@@ -110,6 +110,7 @@ class TalonFXProController:
 using TalonFXProDutyCycleOutController = TalonFXProController<TalonFXProDutyCycleOutControllerInterface, &TalonFXProDutyCycleOutControllerInterface::setControlOutput>;
 using TalonFXProTorqueCurrentFOCController = TalonFXProController<TalonFXProTorqueCurrentFOCControllerInterface, &TalonFXProTorqueCurrentFOCControllerInterface::setControlOutput>;
 using TalonFXProVoltageOutputController = TalonFXProController<TalonFXProVoltageOutControllerInterface, &TalonFXProVoltageOutControllerInterface::setControlOutput>;
+using TalonFXProMusicToneController = TalonFXProController<TalonFXProMusicToneControllerInterface, &TalonFXProMusicToneControllerInterface::setControlOutput>;
 
 // Add a service to set PIDF config slot for all close-loop controllers
 template <typename TALON_IF, auto UPDATE_FN>
@@ -279,4 +280,7 @@ PLUGINLIB_EXPORT_CLASS(talonfxpro_controllers::TalonFXProFollowerController,
 					   controller_interface::ControllerBase)
 
 PLUGINLIB_EXPORT_CLASS(talonfxpro_controllers::TalonFXProStrictFollowerController,
+					   controller_interface::ControllerBase)
+
+PLUGINLIB_EXPORT_CLASS(talonfxpro_controllers::TalonFXProMusicToneController,
 					   controller_interface::ControllerBase)

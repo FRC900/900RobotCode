@@ -146,7 +146,7 @@ void CANCoderDevice<SIM>::write(const ros::Time &/*time*/, const ros::Duration &
         if (convertSensorDirection(sensor_direction, magnet_sensor_configs.SensorDirection) &&
             convertAbsoluteSensorRange(absolute_sensor_range, magnet_sensor_configs.AbsoluteSensorRange))
         {
-            magnet_sensor_configs.MagnetOffset = units::turn_t{units::radian_t{offset_radians}}.value();
+            magnet_sensor_configs.MagnetOffset = units::radian_t{offset_radians};
             if (safeCall(cancoder_->GetConfigurator().Apply(magnet_sensor_configs), "GetConfigurator().Apply(magnet_sensor_configs)"))
             {
                 ROS_INFO_STREAM("Updated CANcoder id << " << getId() << " = " << getName() << "magnetSensorConfigs " << magnet_sensor_configs);

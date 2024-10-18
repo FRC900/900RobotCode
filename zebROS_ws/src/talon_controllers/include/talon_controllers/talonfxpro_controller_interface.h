@@ -116,14 +116,16 @@ public:
     std::atomic<double> duty_cycle_neutral_deadband_{0.};
     std::atomic<double> peak_forward_duty_cycle_{1.};
     std::atomic<double> peak_reverse_duty_cycle_{-1.};
+    std::atomic<double> control_timesync_freq_hz_{0.};
 
-    std::atomic<double> stator_current_limit_{0.};
-    std::atomic<bool>   stator_current_limit_enable_{false};
+    std::atomic<double> stator_current_limit_{100.};
+    std::atomic<bool>   stator_current_limit_enable_{true};
 
-    std::atomic<double> supply_current_limit_{0.};
-    std::atomic<bool>   supply_current_limit_enable_{false};
-    std::atomic<double> supply_current_threshold_{0.};
-    std::atomic<double> supply_time_threshold_{0.};
+    std::atomic<double> supply_current_limit_{70.};
+    std::atomic<bool>   supply_current_limit_enable_{true};
+
+    std::atomic<double> supply_current_lower_limit_{40.};
+    std::atomic<double> supply_current_lower_time_{1.};
 
     std::atomic<double> supply_voltage_time_constant_{0.};
     std::atomic<double> peak_forward_voltage_{16.};
@@ -138,6 +140,7 @@ public:
     std::atomic<double> rotor_to_sensor_ratio_{1.0};
     std::atomic<hardware_interface::talonfxpro::FeedbackSensorSource> feedback_sensor_source_{hardware_interface::talonfxpro::FeedbackSensorSource::RotorSensor};
     std::atomic<int> feedback_remote_sensor_id_{0};
+    std::atomic<double> velocity_filter_time_constant_{0.};
 
 	std::atomic<hardware_interface::talonfxpro::DifferentialSensorSource> differential_sensor_source_{hardware_interface::talonfxpro::DifferentialSensorSource::Disabled};
 	std::atomic<int> differential_talonfx_sensor_id_{0};
@@ -194,6 +197,7 @@ public:
     std::atomic<bool>   control_limit_forward_motion_{false};
     std::atomic<bool>   control_limit_reverse_motion_{false};
     std::atomic<int>    control_differential_slot_{0};
+    std::atomic<bool>   control_use_timesync_{false};
 
     std::atomic<bool> continuous_wrap_{false};
     std::atomic<bool> enable_read_thread_{true};
@@ -269,12 +273,13 @@ public:
     void setDutyCycleNeutralDeadband(const double duty_cycle_neutral_deadband, const bool update_ddr = true);
     void setPeakForwardDutyCycle(const double peak_forward_duty_cycle, const bool update_ddr = true);
     void setPeakReverseDutyCycle(const double peak_reverse_duty_cycle, const bool update_ddr = true);
+    void setControlTimesyncFreqHz(const double control_timesync_freq_hz, const bool update_ddr = true);
     void setStatorCurrentLimit(const double stator_current_limit, const bool update_ddr = true);
     void setStatorCurrentLimitEnable(const bool stator_current_limit_enable, const bool update_ddr = true);
     void setSupplyCurrentLimit(const double supply_current_limit, const bool update_ddr = true);
     void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable, const bool update_ddr = true);
-    void setSupplyCurrentThreshold(const double supply_current_threshold, const bool update_ddr = true);
-    void setSupplyTimeThreshold(const double supply_time_threshold, const bool update_ddr = true);
+    void setSupplyCurrentLowerLimit(const double supply_current_lower_limit, const bool update_ddr = true);
+    void setSupplyCurrentLowerTime(const double supply_current_lower_time, const bool update_ddr = true);
     void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant, const bool update_ddr = true);
     void setPeakForwardVoltage(const double peak_forward_voltage, const bool update_ddr = true);
     void setPeakReverseVoltage(const double peak_reverse_voltage, const bool update_ddr = true);
@@ -284,6 +289,9 @@ public:
     void setFeedbackRotorOffset(const double feedback_rotor_offset, const bool update_ddr = true);
     void setSensorToMechanismRatio(const double sensor_to_mechanism_ratio, const bool update_ddr = true);
     void setRotorToSensorRatio(const double rotor_to_sensor_ratio, const bool update_ddr = true);
+    void setFeedbackSensorSource(const hardware_interface::talonfxpro::FeedbackSensorSource feedback_sensor_source, const bool update_ddr = true);
+    void setFeedbackRemoteSensorID(const int feedback_remote_sensor_id, const bool update_ddr = true);
+    void setVelocityFilterTimeConstant(const double velocity_filter_time_constant, const bool update_ddr = true);
     void setDifferentialSensorSource(const hardware_interface::talonfxpro::DifferentialSensorSource differential_sensor_source, const bool update_ddr = true);
     void setDifferentialTalonFXSensorID(const int differential_talonfx_sensor_id, const bool update_ddr = true);
     void setDifferentialRemoteSensorID(const int differential_remote_sensor_id, const bool update_ddr = true);
@@ -331,6 +339,7 @@ public:
     void setControlLimitForwardMotion(const bool control_limit_forward_motion, const bool update_ddr = true);
     void setControlLimitReverseMotion(const bool control_limit_reverse_motion, const bool update_ddr = true);
     void setControlDifferentialSlot(const int control_differential_slot, const bool update_ddr = true);
+    void setControlUseTimesync(const bool control_use_timesync, const bool update_ddr = true);
     void setEnableReadThread(const bool enable_read_thread, const bool update_ddr = true);
     void setRotorPosition(const double set_position, const bool update_ddr = true);
 
@@ -350,12 +359,13 @@ public:
 	STATE_PASSTHRU_FN(getDutyCycleNeutralDeadband)
 	STATE_PASSTHRU_FN(getPeakForwardDutyCycle)
 	STATE_PASSTHRU_FN(getPeakReverseDutyCycle)
+	STATE_PASSTHRU_FN(getControlTimesyncFreqHz)
 	STATE_PASSTHRU_FN(getStatorCurrentLimit)
 	STATE_PASSTHRU_FN(getStatorCurrentLimitEnable)
 	STATE_PASSTHRU_FN(getSupplyCurrentLimit)
 	STATE_PASSTHRU_FN(getSupplyCurrentLimitEnable)
-	STATE_PASSTHRU_FN(getSupplyCurrentThreshold)
-	STATE_PASSTHRU_FN(getSupplyTimeThreshold)
+	STATE_PASSTHRU_FN(getSupplyCurrentLowerLimit)
+	STATE_PASSTHRU_FN(getSupplyCurrentLowerTime)
 	STATE_PASSTHRU_FN(getSupplyVoltageTimeConstant)
 	STATE_PASSTHRU_FN(getPeakForwardVoltage)
 	STATE_PASSTHRU_FN(getPeakReverseVoltage)
@@ -367,6 +377,7 @@ public:
 	STATE_PASSTHRU_FN(getRotorToSensorRatio)
 	STATE_PASSTHRU_FN(getFeedbackSensorSource)
 	STATE_PASSTHRU_FN(getFeedbackRemoteSensorID)
+    STATE_PASSTHRU_FN(getVelocityFilterTimeConstant)
 	STATE_PASSTHRU_FN(getDutyCycleOpenLoopRampPeriod)
 	STATE_PASSTHRU_FN(getVoltageOpenLoopRampPeriod)
 	STATE_PASSTHRU_FN(getTorqueOpenLoopRampPeriod)
@@ -415,6 +426,7 @@ public:
     STATE_PASSTHRU_FN(getControlLimitReverseMotion);
     STATE_PASSTHRU_FN(getControlDifferentialPosition)
 	STATE_PASSTHRU_FN(getControlDifferentialSlot)
+    STATE_PASSTHRU_FN(getControlUseTimesync)
 	STATE_PASSTHRU_FN(getEnableReadThread)
 	STATE_PASSTHRU_FN(getHasResetOccurred)
 	STATE_PASSTHRU_FN(getVersionMajor)
@@ -692,6 +704,7 @@ extern const char MOTION_MAGIC_VELOCITY_TORQUE_CURRENT_FOC_NAME[];
 extern const char DYNAMIC_MOTION_MAGIC_DUTY_CYCLE_NAME[];
 extern const char DYNAMIC_MOTION_MAGIC_VOLTAGE_NAME[];
 extern const char DYNAMIC_MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME[];
+extern const char MUSIC_TONE_NAME[];
 using TalonFXProDutyCycleOutControllerInterface = TalonFXProFixedModeControllerInterface<hardware_interface::talonfxpro::TalonMode::DutyCycleOut, DUTY_CYCLE_NAME>;
 using TalonFXProTorqueCurrentFOCControllerInterface = TalonFXProFixedModeControllerInterface<hardware_interface::talonfxpro::TalonMode::TorqueCurrentFOC, TORQUE_CURRENT_FOC_NAME>;
 using TalonFXProVoltageOutControllerInterface = TalonFXProFixedModeControllerInterface<hardware_interface::talonfxpro::TalonMode::VoltageOut, VOLTAGE_NAME>;
@@ -713,6 +726,7 @@ using TalonFXProMotionMagicVelocityTorqueCurrentFOCControllerInterface = TalonFX
 using TalonFXProDynamicMotionMagicDutyCycleControllerInterface = TalonFXProDynamicMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicDutyCycle, DYNAMIC_MOTION_MAGIC_DUTY_CYCLE_NAME>;
 using TalonFXProDynamicMotionMagicVoltageControllerInterface = TalonFXProDynamicMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicVoltage, DYNAMIC_MOTION_MAGIC_VOLTAGE_NAME>;
 using TalonFXProDynamicMotionMagicTorqueCurrentFOCControllerInterface = TalonFXProDynamicMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicTorqueCurrentFOC, DYNAMIC_MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME>;
+using TalonFXProMusicToneControllerInterface = TalonFXProFixedModeControllerInterface<hardware_interface::talonfxpro::TalonMode::MusicTone, MUSIC_TONE_NAME>;
 
 template <bool STRICT>
 class TalonFXProFollowerControllerInterfaceBase : public TalonFXProControllerInterface
