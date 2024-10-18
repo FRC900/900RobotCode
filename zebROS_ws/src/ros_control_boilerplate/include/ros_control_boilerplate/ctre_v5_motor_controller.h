@@ -12,7 +12,6 @@ namespace ctre::phoenix::motorcontrol
     class IMotorControllerEnhanced;
     namespace can
     {
-        class TalonFX;
         class TalonSRX;
         class VictorSPX;
     }
@@ -55,7 +54,6 @@ protected:
 
     std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc_;
     std::shared_ptr<ctre::phoenix::motorcontrol::IMotorControllerEnhanced> talon_;
-    std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonFX> talon_fx_;
     std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon_srx_;
     std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> victor_spx_;
 

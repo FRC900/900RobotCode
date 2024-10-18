@@ -114,4 +114,9 @@
      Configure and run a TalonFX pro in strict follower mode
     </description>
   </class>
+  <class name="talonfxpro_controllers/TalonFXProMusicToneController" type="talonfxpro_controllers::TalonFXProMusicToneController" base_class_type="controller_interface::ControllerBase">
+    <description>
+     Configure and run a TalonFX pro in music tone mode (why???)
+    </description>
+  </class>
 </library>

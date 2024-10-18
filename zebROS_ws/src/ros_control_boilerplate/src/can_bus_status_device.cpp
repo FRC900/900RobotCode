@@ -6,9 +6,9 @@
 
 CANBusStatusDevice::CANBusStatusDevice(const std::string &name, const double read_hz)
     : state_{std::make_unique <hardware_interface::can_bus_status::CANBusStatusHWState>(name)}
+    , interval_counter_{std::make_unique<PeriodicIntervalCounter>(read_hz)}
+    , can_bus_{std::make_unique<ctre::phoenix6::CANBus>(name)}
 {
-	interval_counter_ = std::make_unique<PeriodicIntervalCounter>(read_hz);
-
     ROS_INFO_STREAM("Loading CAN Bus Status Device " << name << " running at " << read_hz << "Hz");
 }
 
@@ -26,7 +26,7 @@ void CANBusStatusDevice::read(const ros::Time &/*time*/, const ros::Duration &pe
     // check if sufficient time has passed since last read
     if (interval_counter_->update(period))
     {
-        const auto can_bus_status = ctre::phoenix6::CANBus::GetStatus(state_->getName());
+        const auto can_bus_status = can_bus_->GetStatus();
 
         if (can_bus_status.Status == ctre::phoenix::StatusCode::OK)
         {

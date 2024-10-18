@@ -354,17 +354,33 @@ double TalonFXProHWCommand::getPeakReverseDutyCycle(void) const
 	return peak_reverse_duty_cycle_;
 }
 
+
+void TalonFXProHWCommand::setControlTimesyncFreqHz(const double control_timesync_freq_hz)
+{
+	if (fabs(control_timesync_freq_hz - control_timesync_freq_hz_) > double_value_epsilon)
+	{
+		control_timesync_freq_hz_ = control_timesync_freq_hz;
+		motor_output_config_changed_ = true;
+	}
+}
+double TalonFXProHWCommand::getControlTimesyncFreqHz(void) const
+{
+	return control_timesync_freq_hz_;
+}
+
 bool TalonFXProHWCommand::motorOutputConfigChanged(Inverted &invert,
 												   NeutralMode &neutral_mode,
 												   double &duty_cycle_neutral_deadband,
 												   double &peak_forward_duty_cycle,
-												   double &peak_reverse_duty_cycle) const
+												   double &peak_reverse_duty_cycle,
+												   double &control_timesync_freq_hz) const
 {
 	invert = invert_;
 	neutral_mode = neutral_mode_;
 	duty_cycle_neutral_deadband = duty_cycle_neutral_deadband_;
 	peak_forward_duty_cycle = peak_forward_duty_cycle_;
 	peak_reverse_duty_cycle = peak_reverse_duty_cycle_;
+	control_timesync_freq_hz = control_timesync_freq_hz_;
 	const auto ret = motor_output_config_changed_;
 	motor_output_config_changed_ = false;
 	return ret;
@@ -424,44 +440,44 @@ bool TalonFXProHWCommand::getSupplyCurrentLimitEnable(void) const
 {
 	return supply_current_limit_enable_;
 }
-void TalonFXProHWCommand::setSupplyCurrentThreshold(const double supply_current_threshold)
+void TalonFXProHWCommand::setSupplyCurrentLowerLimit(const double supply_current_lower_limit)
 {
-	if (fabs(supply_current_threshold_ - supply_current_threshold) > double_value_epsilon)
+	if (fabs(supply_current_lower_limit_ - supply_current_lower_limit) > double_value_epsilon)
 	{
-		supply_current_threshold_ = supply_current_threshold;
+		supply_current_lower_limit_ = supply_current_lower_limit;
 		current_limit_changed_ = true;
 	}
 }
-double TalonFXProHWCommand::getSupplyCurrentThreshold(void) const
+double TalonFXProHWCommand::getSupplyCurrentLowerLimit(void) const
 {
-	return supply_current_threshold_;
+	return supply_current_lower_limit_;
 }
-void TalonFXProHWCommand::setSupplyTimeThreshold(const double supply_time_threshold)
+void TalonFXProHWCommand::setSupplyCurrentLowerTime(const double supply_current_lower_time)
 {
-	if (fabs(supply_time_threshold_ - supply_time_threshold) > double_value_epsilon)
+	if (fabs(supply_current_lower_time - supply_current_lower_time) > double_value_epsilon)
 	{
-		supply_time_threshold_ = supply_time_threshold;
+		supply_current_lower_time_ = supply_current_lower_time;
 		current_limit_changed_ = true;
 	}
 }
-double TalonFXProHWCommand::getSupplyTimeThreshold(void) const
+double TalonFXProHWCommand::getSupplyCurrentLowerTime(void) const
 {
-	return supply_time_threshold_;
+	return supply_current_lower_time_;
 }
 
 bool TalonFXProHWCommand::currentLimitChanged(double &stator_current_limit,
 											  bool &stator_current_limit_enable,
 											  double &supply_current_limit,
 											  bool &supply_current_limit_enable,
-											  double &supply_current_threshold,
-											  double &supply_time_threshold) const
+											  double &supply_current_lower_limit,
+											  double &supply_current_lower_time) const
 {
 	stator_current_limit = stator_current_limit_;
 	stator_current_limit_enable = stator_current_limit_enable_;
 	supply_current_limit = supply_current_limit_;
 	supply_current_limit_enable = supply_current_limit_enable_;
-	supply_current_threshold = supply_current_threshold_;
-	supply_time_threshold = supply_time_threshold_;
+	supply_current_lower_limit = supply_current_lower_limit_;
+	supply_current_lower_time = supply_current_lower_time_;
 	const bool ret = current_limit_changed_;
 	current_limit_changed_ = false;
 	return ret;
@@ -644,17 +660,32 @@ int TalonFXProHWCommand::setFeedbackRemoteSensorID(void) const
 	return feedback_remote_sensor_id_;
 }
 
+void TalonFXProHWCommand::setVelocityFilterTimeConstant(const double velocity_filter_time_constant)
+{
+	if (fabs(velocity_filter_time_constant - velocity_filter_time_constant_) > double_value_epsilon)
+	{
+		velocity_filter_time_constant_ = velocity_filter_time_constant;
+		feedback_changed_ = true;
+	}
+}	
+double TalonFXProHWCommand::getVelocityFilterTimeConstant(void) const
+{
+	return velocity_filter_time_constant_;
+}
+
 bool TalonFXProHWCommand::feebackChanged(double &feedback_rotor_offset,
 										 double &sensor_to_mechanism_ratio,
 										 double &rotor_to_sensor_ratio,
 										 FeedbackSensorSource &feedback_sensor_source,
-										 int &feedback_remote_sensor_id) const
+										 int &feedback_remote_sensor_id,
+										 double &velocity_filter_time_constant) const
 {
 	feedback_rotor_offset = feedback_rotor_offset_;
 	sensor_to_mechanism_ratio = sensor_to_mechanism_ratio_;
 	rotor_to_sensor_ratio = rotor_to_sensor_ratio_;
 	feedback_sensor_source = feedback_sensor_source_;
 	feedback_remote_sensor_id = feedback_remote_sensor_id_;
+	velocity_filter_time_constant = velocity_filter_time_constant_;
 	const auto ret = feedback_changed_;
 	feedback_changed_ = false;
 	return ret;
@@ -1575,6 +1606,19 @@ bool TalonFXProHWCommand::getControlLimitReverseMotion(void) const
 	return control_limit_reverse_motion_;
 }
 
+void TalonFXProHWCommand::setControlUseTimesync(const bool control_use_timesync)
+{
+	if (control_use_timesync != control_use_timesync_)
+	{
+		control_use_timesync_ = control_use_timesync;
+		control_changed_ = true;
+	}
+}
+bool TalonFXProHWCommand::getControlUseTimesync(void) const
+{
+	return control_use_timesync_;
+}
+
 bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 										 double &control_output,
 										 double &control_position,
@@ -1591,7 +1635,8 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 										 bool &control_limit_reverse_motion,
 										 double &control_differential_position,
 										 int &control_differential_slot,
-										 bool &control_oppose_master_direction) const
+										 bool &control_oppose_master_direction,
+										 bool &control_use_timesync) const
 {
 	control_mode = control_mode_;
 	control_output = control_output_;
@@ -1610,6 +1655,7 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 	control_differential_position = control_differential_position_;
 	control_differential_slot = control_differential_slot_;
 	control_oppose_master_direction = control_oppose_master_direction_;
+	control_use_timesync = control_use_timesync_;
 	const auto ret = control_changed_;
 	control_changed_ = false;
 	return ret;

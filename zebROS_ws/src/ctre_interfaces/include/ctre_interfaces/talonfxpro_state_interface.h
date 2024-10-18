@@ -76,6 +76,8 @@ public:
 	double getPeakForwardDutyCycle(void) const;
 	void setPeakReverseDutyCycle(const double peak_reverse_duty_cycle);
 	double getPeakReverseDutyCycle(void) const;
+	void setControlTimesyncFreqHz(const double control_timesync_freq_hz);
+	double getControlTimesyncFreqHz(void) const;
 
 	void setStatorCurrentLimit(const double stator_current_limit);
 	double getStatorCurrentLimit(void) const;
@@ -86,10 +88,11 @@ public:
 	double getSupplyCurrentLimit(void) const;
 	void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable);
 	bool getSupplyCurrentLimitEnable(void) const;
-	void setSupplyCurrentThreshold(const double supply_current_threshold);
-	double getSupplyCurrentThreshold(void) const;
-	void setSupplyTimeThreshold(const double supply_time_threshold);
-	double getSupplyTimeThreshold(void) const;
+
+	void setSupplyCurrentLowerLimit(const double supply_current_lower_limit);
+	double getSupplyCurrentLowerLimit(void) const;
+	void setSupplyCurrentLowerTime(const double supply_current_lower_time);
+	double getSupplyCurrentLowerTime(void) const;
 
 	void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant);
 	double getSupplyVoltageTimeConstant(void) const;
@@ -121,6 +124,9 @@ public:
 
 	void setFeedbackRemoteSensorID(const int feedback_remote_sensor_id);
 	int getFeedbackRemoteSensorID(void) const;
+
+	void setVelocityFilterTimeConstant(const double velocity_filter_time_constant);
+	double getVelocityFilterTimeConstant(void) const;
 
 	void setDifferentialSensorSource(const DifferentialSensorSource differential_sensor_source);
 	DifferentialSensorSource getDifferentialSensorSource(void) const;
@@ -278,6 +284,9 @@ public:
 
 	void setControlOpposeMasterDirection(const bool control_oppose_master_direction);
 	bool getControlOpposeMasterDirection(void) const;
+
+	void setControlUseTimesync(const bool control_use_timesync);
+	bool getControlUseTimesync(void) const;
 
 	void setEnableReadThread(const bool enable_read_thread);
 	bool getEnableReadThread(void) const;
@@ -523,14 +532,16 @@ private:
 	double duty_cycle_neutral_deadband_{0.};
 	double peak_forward_duty_cycle_{1.};
 	double peak_reverse_duty_cycle_{-1.};
+	double control_timesync_freq_hz_{0.};
 
 	double stator_current_limit_{0.};
 	bool   stator_current_limit_enable_{false};
 
 	double supply_current_limit_{0.};
 	bool   supply_current_limit_enable_{false};
-	double supply_current_threshold_{0.};
-	double supply_time_threshold_{0.};
+
+	double supply_current_lower_limit_{0.};
+	double supply_current_lower_time_{0.};
 
 	double supply_voltage_time_constant_{0.};
 	double peak_forward_voltage_{16.};
@@ -545,6 +556,7 @@ private:
 	double rotor_to_sensor_ratio_{1.0};
 	FeedbackSensorSource feedback_sensor_source_{FeedbackSensorSource::RotorSensor};
 	int feedback_remote_sensor_id_{0};
+	double velocity_filter_time_constant_{0.};
 
 	DifferentialSensorSource differential_sensor_source_{DifferentialSensorSource::Disabled};
 	int differential_talonfx_sensor_id_{0};
@@ -612,6 +624,7 @@ private:
 	double control_differential_position_{0.0};
 	int control_differential_slot_{0};
 	bool control_oppose_master_direction_{false};
+	bool control_use_timesync_{false};
 
 	bool enable_read_thread_{true};
 
