@@ -92,6 +92,9 @@ void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*pe
     state_->setDifferentialAveragePosition(read_thread_state_->getDifferentialAveragePosition());
     state_->setDifferentialDifferenceVelocity(read_thread_state_->getDifferentialDifferenceVelocity());
     state_->setDifferentialDifferencePosition(read_thread_state_->getDifferentialDifferencePosition());
+    state_->setMotorKT(read_thread_state_->getMotorKT());
+    state_->setMotorKV(read_thread_state_->getMotorKV());
+    state_->setMotorStallCurrent(read_thread_state_->getMotorStallCurrent());
     state_->setBridgeOutput(read_thread_state_->getBridgeOutput());
 
     state_->setFaultHardware(read_thread_state_->getFaultHardware());
@@ -110,6 +113,8 @@ void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*pe
     state_->setFaultForwardHardLimit(read_thread_state_->getFaultForwardHardLimit());
     state_->setFaultReverseSoftLimit(read_thread_state_->getFaultReverseSoftLimit());
     state_->setFaultForwardSoftLimit(read_thread_state_->getFaultForwardSoftLimit());
+    state_->setFaultMissingSoftLimitRemote(read_thread_state_->getFaultMissingSoftLimitRemote());
+    state_->setFaultMissingHardLimitRemote(read_thread_state_->getFaultMissingHardLimitRemote());
     state_->setFaultRemoteSensorDataInvalid(read_thread_state_->getFaultRemoteSensorDataInvalid());
     state_->setFaultFusedSensorOutOfSync(read_thread_state_->getFaultFusedSensorOutOfSync());
     state_->setFaultStatorCurrLimit(read_thread_state_->getFaultStatorCurrLimit());
@@ -130,6 +135,9 @@ void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*pe
     state_->setStickyFaultReverseHardLimit(read_thread_state_->getStickyFaultReverseHardLimit());
     state_->setStickyFaultForwardHardLimit(read_thread_state_->getStickyFaultForwardHardLimit());
     state_->setStickyFaultReverseSoftLimit(read_thread_state_->getStickyFaultReverseSoftLimit());
+    state_->setStickyFaultForwardSoftLimit(read_thread_state_->getStickyFaultForwardSoftLimit());
+    state_->setStickyFaultMissingSoftLimitRemote(read_thread_state_->getStickyFaultMissingSoftLimitRemote());
+    state_->setStickyFaultMissingHardLimitRemote(read_thread_state_->getStickyFaultMissingHardLimitRemote());
     state_->setStickyFaultRemoteSensorDataInvalid(read_thread_state_->getStickyFaultRemoteSensorDataInvalid());
     state_->setStickyFaultFusedSensorOutOfSync(read_thread_state_->getStickyFaultFusedSensorOutOfSync());
     state_->setStickyFaultStatorCurrLimit(read_thread_state_->getStickyFaultStatorCurrLimit());
@@ -349,7 +357,11 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             SAFE_READ_INTO(differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition())
         }
 
-        SAFE_READ(ctre_bridge_output_value, talonfxpro_->GetBridgeOutput());
+        SAFE_READ(motor_kt, talonfxpro_->GetMotorKT())
+        SAFE_READ(motor_kv, talonfxpro_->GetMotorKV())
+        SAFE_READ(motor_stall_current, talonfxpro_->GetMotorStallCurrent())
+
+        SAFE_READ(ctre_bridge_output_value, talonfxpro_->GetBridgeOutput())
         hardware_interface::talonfxpro::BridgeOutput bridge_output_value;
         switch (ctre_bridge_output_value->value)
         {
@@ -401,6 +413,8 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(fault_forwardhardlimit, talonfxpro_->GetFault_ForwardHardLimit())
         SAFE_READ(fault_reversesoftlimit, talonfxpro_->GetFault_ReverseSoftLimit())
         SAFE_READ(fault_forwardsoftlimit, talonfxpro_->GetFault_ForwardSoftLimit())
+        SAFE_READ(fault_missingsoftlimitremote, talonfxpro_->GetFault_MissingSoftLimitRemote())
+        SAFE_READ(fault_missinghardlimitremote, talonfxpro_->GetFault_MissingHardLimitRemote())
         SAFE_READ(fault_remotesensordatainvalid, talonfxpro_->GetFault_RemoteSensorDataInvalid())
         SAFE_READ(fault_fusedsensoroutofsync, talonfxpro_->GetFault_FusedSensorOutOfSync())
         SAFE_READ(fault_statorcurrlimit, talonfxpro_->GetFault_StatorCurrLimit())
@@ -422,6 +436,8 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(sticky_fault_forwardhardlimit, talonfxpro_->GetStickyFault_ForwardHardLimit())
         SAFE_READ(sticky_fault_reversesoftlimit, talonfxpro_->GetStickyFault_ReverseSoftLimit())
         SAFE_READ(sticky_fault_forwardsoftlimit, talonfxpro_->GetStickyFault_ForwardSoftLimit())
+        SAFE_READ(sticky_fault_missingsoftlimitremote, talonfxpro_->GetStickyFault_MissingSoftLimitRemote())
+        SAFE_READ(sticky_fault_missinghardlimitremote, talonfxpro_->GetStickyFault_MissingHardLimitRemote())
         SAFE_READ(sticky_fault_remotesensordatainvalid, talonfxpro_->GetStickyFault_RemoteSensorDataInvalid())
         SAFE_READ(sticky_fault_fusedsensoroutofsync, talonfxpro_->GetStickyFault_FusedSensorOutOfSync())
         SAFE_READ(sticky_fault_statorcurrlimit, talonfxpro_->GetStickyFault_StatorCurrLimit())
@@ -549,6 +565,10 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setDifferentialDifferenceVelocity(differential_difference_velocity.value());
             read_thread_state_->setDifferentialDifferencePosition(differential_difference_position.value());
 
+            read_thread_state_->setMotorKT(motor_kt->value());
+            read_thread_state_->setMotorKV(motor_kv->value());
+            read_thread_state_->setMotorStallCurrent(motor_stall_current->value());
+
             read_thread_state_->setBridgeOutput(bridge_output_value);
 
             read_thread_state_->setFaultHardware(*fault_hardware);
@@ -567,6 +587,8 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setFaultForwardHardLimit(*fault_forwardhardlimit);
             read_thread_state_->setFaultReverseSoftLimit(*fault_reversesoftlimit);
             read_thread_state_->setFaultForwardSoftLimit(*fault_forwardsoftlimit);
+            read_thread_state_->setFaultMissingSoftLimitRemote(*fault_missingsoftlimitremote);
+            read_thread_state_->setFaultMissingHardLimitRemote(*fault_missinghardlimitremote);
             read_thread_state_->setFaultRemoteSensorDataInvalid(*fault_remotesensordatainvalid);
             read_thread_state_->setFaultFusedSensorOutOfSync(*fault_fusedsensoroutofsync);
             read_thread_state_->setFaultStatorCurrLimit(*fault_statorcurrlimit);
@@ -588,6 +610,8 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setStickyFaultForwardHardLimit(*sticky_fault_forwardhardlimit);
             read_thread_state_->setStickyFaultReverseSoftLimit(*sticky_fault_reversesoftlimit);
             read_thread_state_->setStickyFaultForwardSoftLimit(*sticky_fault_forwardsoftlimit);
+            read_thread_state_->setStickyFaultMissingSoftLimitRemote(*sticky_fault_missingsoftlimitremote);
+            read_thread_state_->setStickyFaultMissingHardLimitRemote(*sticky_fault_missinghardlimitremote);
             read_thread_state_->setStickyFaultRemoteSensorDataInvalid(*sticky_fault_remotesensordatainvalid);
             read_thread_state_->setStickyFaultFusedSensorOutOfSync(*sticky_fault_fusedsensoroutofsync);
             read_thread_state_->setStickyFaultStatorCurrLimit(*sticky_fault_statorcurrlimit);

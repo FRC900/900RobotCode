@@ -41,5 +41,17 @@ NT_Publisher Publish(NT_Topic , NT_Type , std::string_view ,
                      nt::PubSubOptions const & ) {
   return {};
 }
-
+NT_Publisher NT_PublishEx(NT_Topic topic, NT_Type type,
+						  const struct WPI_String *typeStr,
+						  const struct WPI_String *properties,
+						  const struct NT_PubSubOptions *options)
+{
+	return {};
+}
+NT_Publisher PublishEx(NT_Topic topic, NT_Type type, std::string_view typeStr,
+					   const wpi::json &properties,
+					   const PubSubOptions &options)
+{
+	return {};
+}
 }

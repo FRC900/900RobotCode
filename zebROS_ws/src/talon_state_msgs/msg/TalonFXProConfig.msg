@@ -34,14 +34,16 @@ string[]  neutral_mode
 float64[] duty_cycle_neutral_deadband
 float64[] peak_forward_duty_cycle
 float64[] peak_reverse_duty_cycle
+float64[] control_timesync_freq_hz
 
 float64[] stator_current_limit
 bool[]    stator_current_limit_enable
 
 float64[] supply_current_limit
 bool[]    supply_current_limit_enable
-float64[] supply_current_threshold
-float64[] supply_time_threshold
+
+float64[] supply_current_lower_limit
+float64[] supply_current_lower_time
 
 float64[] supply_voltage_time_constant
 float64[] peak_forward_voltage
@@ -56,6 +58,7 @@ float64[] sensor_to_mechanism_ratio
 float64[] rotor_to_sensor_ratio
 string[]  feedback_sensor_source
 uint8[]   feedback_remote_sensor_id
+float64[] velocity_filter_time_constant
 
 string[]  differential_sensor_source
 int8[]    differential_talonfx_sensor_id
