@@ -13,7 +13,8 @@
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/9000_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/9000_swerve_drive.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/9000_swerve_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/9000_swerve_cancoder_hw.yaml" command="load" if="$(eval arg('hw_or_sim') == 'hw')"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" unless="$(eval arg('hw_or_sim') == 'hw')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 
 		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>
@@ -43,6 +44,7 @@
 			 fr_cancoder_controller
 			 swerve_drive_controller
 			 swerve_drive_state_controller
+			 cancoder_state_controller
 			 robot_code_ready_controller" />
 			 <!--
 			 swerve_angle_phoenix6_controller
@@ -55,6 +57,8 @@
 		<include file="$(find cpu_monitor)/launch/cpu_monitor.launch">
 			<arg name="poll_period" value="5"/>
 		</include>
+
+		<node name="swerve_visualizer" pkg="talon_swerve_drive_controller" type="swerve_visualizer.py" output="screen" if="$(eval hw_or_sim == 'sim')"/>
 	</group>
 
 	<group ns="imu">

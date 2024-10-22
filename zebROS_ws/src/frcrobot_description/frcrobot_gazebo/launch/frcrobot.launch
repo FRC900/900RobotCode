@@ -27,7 +27,7 @@
 
     <rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson.yaml" command="load"/>
     <rosparam file="$(find ros_control_boilerplate)/config/2023_swerve_drive_phoenix6.yaml" command="load"/>
-    <rosparam file="$(find ros_control_boilerplate)/config/sim_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" />
     <rosparam file="$(find ros_control_boilerplate)/config/2023_elevator_phoenix6_params.yaml" command="load"/>
     <rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
     <rosparam file="$(find ros_control_boilerplate)/config/2023_gazebo_test.yaml" command="load"/>

@@ -14,7 +14,8 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_swerve_drive_phoenix6.yaml" command="load"/>
 		<!-- For sim, stage simulation is responsible for odometry -->
 		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_swerve_cancoder_hw.yaml" command="load" if="$(eval arg('hw_or_sim') == 'hw')"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" unless="$(eval arg('hw_or_sim') == 'hw')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_pivot_cancoder.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2024_compbot_arm_cancoder.yaml" command="load"/>
 

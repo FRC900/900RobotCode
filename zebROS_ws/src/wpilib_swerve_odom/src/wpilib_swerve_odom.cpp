@@ -329,7 +329,7 @@ class ROSSwerveKinematics
             // Initialize kinematics object
             m_kinematics = frc::SwerveDriveKinematics<4>(moduleLocations);
 
-            // read offsets using nh_params, see the 2023_swerve_drive.yaml file for how these are encoded
+            // read offsets using nh_params, see the 2023_swerve_drive_phoenix6.yaml file for how these are encoded
             for (size_t i = 0; i < WHEELCOUNT; i++)
             {
                 ros::NodeHandle nh(params_nh, steering_names[i]);

@@ -46,6 +46,11 @@ hardware_interface:
        - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
        - {name: four_bar, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
 
+       - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
+       - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
+       - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
+       - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
+
        - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
 
        #- {name: pcm, type: pcm, pcm_id: 0}

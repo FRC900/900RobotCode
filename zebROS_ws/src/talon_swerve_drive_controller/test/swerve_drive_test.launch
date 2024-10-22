@@ -9,7 +9,7 @@
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_swerve_drive_phoenix6.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/sim_interface_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" />
 
 		<!-- Load hardware interface -->
 		<node name="swervebot" pkg="talon_swerve_drive_controller" type="swervebot"

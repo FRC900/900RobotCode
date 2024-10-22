@@ -14,27 +14,8 @@ class TalonStateRepublisher
             pub_(n.advertise<sensor_msgs::JointState>("talon_joint_states", 1)),
             pub_timer_(n.createTimer(ros::Duration(1. / 100.), boost::bind(&TalonStateRepublisher::publisher, this)))
             {
-                // load swerve drive offsets from /frcrobot_jetson/swerve_drive_controller/steering_joint_bl/offset
-                if (!n.getParam("/frcrobot_jetson/swerve_drive_controller/steering_joint_bl/offset", bl_offset)) {
-                    ROS_ERROR("Failed to get swerve drive offset for bl");
-                }
-                if (!n.getParam("/frcrobot_jetson/swerve_drive_controller/steering_joint_br/offset", br_offset)) {
-                    ROS_ERROR("Failed to get swerve drive offset for br");
-                }
-                if (!n.getParam("/frcrobot_jetson/swerve_drive_controller/steering_joint_fl/offset", fl_offset)) {
-                    ROS_ERROR("Failed to get swerve drive offset for fl");
-                }
-                if (!n.getParam("/frcrobot_jetson/swerve_drive_controller/steering_joint_fr/offset", fr_offset)) {
-                    ROS_ERROR("Failed to get swerve drive offset for fr");
-                }
-                // print offsets
-                ROS_INFO_STREAM("bl offset: " << bl_offset);
-                ROS_INFO_STREAM("br offset: " << br_offset);
-                ROS_INFO_STREAM("fl offset: " << fl_offset);
-                ROS_INFO_STREAM("fr offset: " << fr_offset);
             }
     
-
         template <class T, size_t N>
         void callback(T msgIn)
         {
@@ -49,16 +30,16 @@ class TalonStateRepublisher
 			for (size_t i = 0; i < msgIn->name.size(); i++)
             {
                 if(msgIn->name[i]=="bl_angle") {
-                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i] - bl_offset));
+                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i]));
                 }
                 else if(msgIn->name[i]=="br_angle") {
-                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i] - br_offset));
+                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i]));
                 }
                 else if(msgIn->name[i]=="fl_angle") {
-                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i] - fl_offset));
+                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i]));
                 }
                 else if(msgIn->name[i]=="fr_angle") {
-                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i] - fr_offset));
+                    msgOut.position.push_back(angles::normalize_angle_positive(msgIn->position[i]));
                 }
                 else if(msgIn->name[i]=="four_bar")
                 {
@@ -116,16 +97,11 @@ class TalonStateRepublisher
         }
 
     private:
-        double bl_offset = 0;
-        double br_offset = 0;
-        double fl_offset = 0;
-        double fr_offset = 0;
         ros::Subscriber sub_;
         ros::Subscriber fxprosub_;
 		ros::Publisher  pub_;
         ros::Timer      pub_timer_;
         std::array<sensor_msgs::JointState, 2> msgsOut_;
-
 };
 
 

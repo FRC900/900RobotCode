@@ -40,7 +40,11 @@ swerve_drive_controller:
     encoder_steering_get_units: 1
     encoder_steering_set_units: 1
 
-    wheel_coords: [[-0.250825, 0.250825], [0.250825, 0.250825], [-0.250825, -0.250825], [0.250825, -0.250825]]
+    # fl : +x, +y
+    # fr : +x, -y
+    # bl : -x, +y
+    # br : -x, -y
+    wheel_coords: [[0.250825, 0.250825], [0.250825, -0.250825], [-0.250825, 0.250825], [-0.250825, -0.250825]]
     parking_config_time_delay: 0.75
     drive_speed_time_delay: 0.125
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
@@ -203,31 +207,3 @@ swerve_angle_phoenix6_controller:
     reverse_limit_enable: False
     dynamic_reconfigure: True
     invert: clockwise_positive
-
-bl_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: bl_cancoder
-    dynamic_reconfigure: False
-    magnet_offset: 2.5770877236478773
-    enable_read_thread: False
-
-fl_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: fl_cancoder
-    dynamic_reconfigure: False
-    magnet_offset: 0.4172427743048944
-    enable_read_thread: False
-
-br_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: br_cancoder
-    dynamic_reconfigure: False
-    magnet_offset: 1.217980745581199
-    enable_read_thread: False
-
-fr_cancoder_controller:
-    type:      cancoder_controller/CANCoderController
-    joint_name: fr_cancoder
-    dynamic_reconfigure: False
-    magnet_offset: 2.715145994557585
-    enable_read_thread: False

@@ -60,9 +60,6 @@ hardware_interface:
         - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
         - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw} ] }
 
-
-
-
 # Create controllers for each joint
 #
 # Entry is the name of the controller. It can be anything.
@@ -189,3 +186,7 @@ swerve_drive_state_controller:
 latency_compensation_state_controller:
     type: latency_compensation_state_controller/LatencyCompensationStateController
     publish_rate: 250
+
+cancoder_state_controller:
+    type: cancoder_state_controller/CANCoderStateController
+    publish_rate: 100

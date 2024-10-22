@@ -377,9 +377,10 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_FaultCoast:
                 bridge_output_value = hardware_interface::talonfxpro::BridgeOutput::FaultCoast;
                 break;
-            case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_ActiveBrake:
-                bridge_output_value = hardware_interface::talonfxpro::BridgeOutput::ActiveBrake;
-                break;
+            // TODO - reenable with update CTRE code
+            // case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_ActiveBrake:
+            //     bridge_output_value = hardware_interface::talonfxpro::BridgeOutput::ActiveBrake;
+            //     break;
             default:
                 ROS_ERROR_STREAM("TalonFXPro " << getName() << " read thread : could not convert bridge output value : " << static_cast<int>(ctre_bridge_output_value->value));
                 break;

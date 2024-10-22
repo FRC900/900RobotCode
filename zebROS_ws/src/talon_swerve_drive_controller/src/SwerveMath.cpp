@@ -1,106 +1,109 @@
+#include <algorithm>
 #include <array>
+#include <numeric>
 #include <cmath>
 #include <talon_swerve_drive_controller/SwerveMath.h>
 //#include <ros/console.h> // for debugging ROS_*_STREAM functions when needed
 
+namespace swervemath
+{
 template<size_t WHEELCOUNT>
-swerveDriveMath<WHEELCOUNT>::swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
-	: wheelCoordinate_(wheelCoordinate)
+SwerveDriveMath<WHEELCOUNT>::SwerveDriveMath(const std::array<Point2d, WHEELCOUNT> &wheelCoordinates)
+	: wheelCoordinates_(wheelCoordinates)
 	, parkingAngle_(parkingAngles()) // Has to be run after wheelCoordinates are set
 {
 }
 
-//used for varying center of rotation and must be run once for initialization
+// Calculate the X&Y components of the vector from the center of rotation to each wheel
 template<size_t WHEELCOUNT>
-std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const
+std::array<Point2d, WHEELCOUNT> SwerveDriveMath<WHEELCOUNT>::wheelMultipliersXY(const Point2d &rotationCenter) const
 {
-	std::array<double, WHEELCOUNT> wheelAngles;
+	// Used to scale the wheel speeds by the distance of each
+	// from the center of the robot
 	std::array<double, WHEELCOUNT> wheelMultipliers;
-	for (size_t i = 0; i < WHEELCOUNT; i++) //increment for each wheel
-	{
-		const double x = wheelCoordinate_[i][0] - rotationCenter[0];
-		const double y = wheelCoordinate_[i][1] - rotationCenter[1];
-		wheelMultipliers[i] = -hypot(x, y);
-		wheelAngles[i] = atan2(x, y) + .5 * M_PI;
-	}
-	normalize(wheelMultipliers, true);
-	std::array<Eigen::Vector2d, WHEELCOUNT> multipliersXY;
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		multipliersXY[i][0] = wheelMultipliers[i] * cos(wheelAngles[i]);
-		multipliersXY[i][1] = wheelMultipliers[i] * sin(wheelAngles[i]);
+		wheelMultipliers[i] = hypot(wheelCoordinates_[i].x - rotationCenter.x,
+									wheelCoordinates_[i].y - rotationCenter.y);
+	}
+	normalize(wheelMultipliers, true);
+	std::array<Point2d, WHEELCOUNT> multipliersXY;
+	for (size_t i = 0; i < WHEELCOUNT; i++)
+	{
+		// Add M_PI_2 to get the angle normal to the corner rather than
+		// the angle pointing out from the center of the robot
+		const double wheelAngle = atan2(wheelCoordinates_[i].y - rotationCenter.y,
+										wheelCoordinates_[i].x - rotationCenter.x) +
+								  M_PI_2;
+		multipliersXY[i].x = wheelMultipliers[i] * cos(wheelAngle);
+		multipliersXY[i].y = wheelMultipliers[i] * sin(wheelAngle);
 	}
 	return multipliersXY;
 }
 
-//Below function calculates wheel speeds and angles for some target rotation and translation velocity
-//Rotation is positive counter clockwise
-//Angle is the angle of the gyro for field centric driving
-//In radians, 0 is horizontal, increases counterclockwise
-//For non field centric set angle to pi/2
-template<size_t WHEELCOUNT>
-std::array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const
+//Below function calculates wheel speeds and angles for some target linear and angular velocity
+//Angular velocity is positive counter clockwise
+template <size_t WHEELCOUNT>
+std::array<SpeedAndAngle, WHEELCOUNT> SwerveDriveMath<WHEELCOUNT>::wheelSpeedsAngles(const std::array<Point2d, WHEELCOUNT> &wheelMultipliersXY,
+																					   const Point2d &linearVelocity,
+																					   const double angularVelocity,
+																					   const bool norm) const
 {
-	//Rotate the target velocity by the robots angle to make it field centric
-	const Eigen::Rotation2Dd r(M_PI / 2 - angle);
-	const Eigen::Vector2d rotatedVelocity = r.toRotationMatrix() * velocityVector;
-
-	//Should this instead be a function in 900Math of the form: rotate(vector, angle) rather than 2 lines of eigen stuff?
+	std::array<SpeedAndAngle, WHEELCOUNT> speedsAngles;
+	// Speeds are put into one array here because they might need to be normalized,
+	// and the function to do that expects a single array of speeds
 	std::array<double, WHEELCOUNT> speeds;
-	std::array<double, WHEELCOUNT> angles;
-	//Sum cartisian velocity for each wheel and then convert to polar coordinates
 
+	//Sum cartisian velocity for each wheel and then convert to polar coordinates
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		//Only the rotation of the robot differently effects each wheel
-		const double x = wheelMultipliersXY[i][0] * rotation + rotatedVelocity[0];
-		const double y = wheelMultipliersXY[i][1] * rotation - rotatedVelocity[1];
-		//ROS_INFO_STREAM("rot: " << rotation << " wheel_multipliers_x: " << wheelMultipliersXY[i][0]<< " wheel_multipliers_y " << wheelMultipliersXY[i][1]);
-		angles[i] = atan2(x, y);
+		const double x = wheelMultipliersXY[i].x * angularVelocity + linearVelocity.x;
+		const double y = wheelMultipliersXY[i].y * angularVelocity + linearVelocity.y;
 		speeds[i] = hypot(x, y);
-        //ROS_INFO_STREAM("angles at " << i << " = " << angles[i] << " speeds at " << i << " = " << speeds[i]);
+		speedsAngles[i].angle = atan2(y, x);
 	}
 	if(norm)
 	{
 		normalize(speeds);
 	}
-	//Speed and angles are put into one array here because speeds needed to be normalized
-	std::array<Eigen::Vector2d, WHEELCOUNT> speedsAngles;
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		speedsAngles[i][0] = speeds[i];
-		speedsAngles[i][1] = angles[i];
+		speedsAngles[i].speed = speeds[i];
 	}
 	return speedsAngles;
 }
 
 template<size_t WHEELCOUNT>
-std::array<double, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::parkingAngles(void) const
+std::array<double, WHEELCOUNT> SwerveDriveMath<WHEELCOUNT>::parkingAngles(void) const
 {
 	//only must be run once to determine the angles of the wheels in parking config
 	std::array<double, WHEELCOUNT> angles;
-	//ROS_WARN_STREAM("######## " << __PRETTY_FUNCTION__ << " wheelCoordinate_.size() = " << wheelCoordinate_.size());
-	for (size_t i = 0; i < wheelCoordinate_.size(); i++)
-	{
-		angles[i] = atan2(wheelCoordinate_[i][0], wheelCoordinate_[i][1]);
-	}
+	std::transform(wheelCoordinates_.cbegin(), wheelCoordinates_.cend(), angles.begin(),
+				   [](const Point2d &wheelCoordinate)
+				   {
+					   return atan2(wheelCoordinate.y, wheelCoordinate.x);
+				   });
 	return angles;
 }
 
 template<size_t WHEELCOUNT>
-double swerveDriveMath<WHEELCOUNT>::getParkingAngle(size_t wheel) const
+double SwerveDriveMath<WHEELCOUNT>::getParkingAngle(const size_t wheel) const
 {
 	return parkingAngle_[wheel];
 }
 
+// input is an array of wheel speeds
+// find the absolute value of the min and max speeds for all wheels
+// If this absolute max is greater than 1, scale all speeds down so
+// the fastest wheel is moving at 1
+// If force_norm is set, do the same normalization
 template<size_t WHEELCOUNT>
-void swerveDriveMath<WHEELCOUNT>::normalize(std::array<double, WHEELCOUNT> &input, const bool force_norm) const
+void SwerveDriveMath<WHEELCOUNT>::normalize(std::array<double, WHEELCOUNT> &input, const bool force_norm) const
 {
-	//Note that this function only works on arrays of size WHEELCOUNT
-	const double maxi = fabs(*std::max_element(input.begin(), input.end()));
-	const double mini = fabs(*std::min_element(input.begin(), input.end()));
-	const double absoluteMax = std::max(maxi, mini);
-	if (absoluteMax > 1 || force_norm)
+	const auto [minv, maxv] = std::minmax_element(input.cbegin(), input.cend());
+	const double absoluteMax = std::max(fabs(*minv), fabs(*maxv));
+	if ((absoluteMax > 1.0) || force_norm)
 	{
 		for (auto &i : input)
 		{
@@ -109,4 +112,18 @@ void swerveDriveMath<WHEELCOUNT>::normalize(std::array<double, WHEELCOUNT> &inpu
 	}
 }
 
-template class swerveDriveMath<4>;
+// Return the larges of the distances between the wheels and the 
+// provided center of rotation
+template<size_t WHEELCOUNT>
+double SwerveDriveMath<WHEELCOUNT>::furthestWheel(const Point2d &centerOfRotation) const
+{
+	return std::accumulate(wheelCoordinates_.cbegin(), wheelCoordinates_.cend(), 0.0,
+						   [centerOfRotation](const double maxD, const Point2d &wheelCoordinate)
+						   {
+							   return std::max(maxD, hypot(wheelCoordinate.x - centerOfRotation.x, wheelCoordinate.y - centerOfRotation.y));
+						   });
+}
+
+template class SwerveDriveMath<4>;
+
+};

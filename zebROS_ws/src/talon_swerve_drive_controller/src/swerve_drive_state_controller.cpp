@@ -35,8 +35,8 @@ private:
 
 public:
 	bool init(hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface *hw,
-			  ros::NodeHandle &root_nh,
-			  ros::NodeHandle &controller_nh)
+			  ros::NodeHandle & /*root_nh*/,
+			  ros::NodeHandle &controller_nh) override
 	{
 		// get name of our latency compensation joint
 		if (!controller_nh.getParam("latency_compensation_group", latency_compensation_group_))
@@ -151,40 +151,36 @@ public:
 		// realtime publisher
 		realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<nav_msgs::Odometry>>(controller_nh, "odom", 2);
 
-		auto &m = realtime_pub_->msg_;
-
 		// get joints and allocate message
 		latency_compensation_state_ = hw->getHandle(joint_names[latency_compensation_group_index_]);
 
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &/*time*/) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration & period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		// Compute odometry (Eigen magic)
 		Eigen::Matrix<double, WHEELCOUNT * 2, 1> wheel_states_vector;
 
-		ros::Time ts = time;
 
 		for (size_t i = 0; i < WHEELCOUNT; i++) {
 			std::string steering_name = steering_names_[i];
 			std::string speed_name = speed_names_[i];
 			
-			double angle = latency_compensation_state_->getLatencyCompensatedValue(steering_name, time) - offsets_[i];
+			// TODO : get average of previous and current wheel angle?
+			const double angle = latency_compensation_state_->getLatencyCompensatedValue(steering_name, time) - offsets_[i];
 
-			double value, velocity;
-			
 			// The timestamped slope is probably close enough for speed joint velocity
-			latency_compensation_state_->getEntry(speed_name, ts, value, velocity);
+			double velocity;
+			latency_compensation_state_->getSlope(speed_name, velocity);
 
-			wheel_states_vector(i*2, 0) = velocity * wheel_radius_ * encoder_to_rotations_ * cos(angle);
-			wheel_states_vector(i*2 + 1, 0) = velocity * wheel_radius_ * encoder_to_rotations_ * sin(angle);
-
+			wheel_states_vector(i * 2, 0) = velocity * wheel_radius_ * encoder_to_rotations_ * cos(angle);
+			wheel_states_vector(i * 2 + 1, 0) = velocity * wheel_radius_ * encoder_to_rotations_ * sin(angle);
 		}
 
 		Eigen::Matrix<double, 3, 1> chassis_speeds = forward_kinematics_matrix_ * wheel_states_vector; // least-squares solution
@@ -211,10 +207,6 @@ public:
 				interval_counter_->force_publish();
 			}
 		}
-	}
-
-	void stopping(const ros::Time & /*time*/)
-	{
 	}
 
 }; // class

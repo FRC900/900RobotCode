@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INC_SWERVE_H__
+#define INC_SWERVE_H__
 
 #include <array>
 #include <cmath>
@@ -6,25 +7,6 @@
 #include <map>
 #include <Eigen/Dense>
 #include "SwerveMath.h"
-
-// Create an ordering function for Vectors to use them in a map
-namespace std
-{
-template<>
-struct less<Eigen::Vector2d>
-{
-	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b) const
-	{
-		assert(a.size()==b.size());
-		for(int i = 0; i < a.size(); ++i)
-		{
-			if (a[i] < b[i]) return true;
-			if (a[i] > b[i]) return false;
-		}
-		return false;
-	}
-};
-}
 
 //meters, radians, newtons, kg
 //Gets should be rotations/encoder unit
@@ -63,44 +45,39 @@ template <size_t WHEELCOUNT>
 class swerve
 {
 	public:
-		swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
-			   const std::array<double, WHEELCOUNT> &offsets,
+		swerve() = delete;
+		swerve(const swerve &) = delete;
+		swerve(swerve &&) noexcept = delete;
+		swerve &operator=(const swerve &) = delete;
+		swerve &operator=(swerve &&) noexcept = delete;
+		virtual ~swerve() = default;
+
+		swerve(const std::array<swervemath::Point2d, WHEELCOUNT> &wheelCoordinates,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
 			   const swerveVar::driveModel &drive);
 
-		//for non field centric drive set angle = pi/2
-		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d velocityVector,
-														     double rotation,
-														     double angle,
-														     const std::array<double, WHEELCOUNT> &positionsNew,
-														     bool norm,
-														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0},
-															 const bool useCosScaling = false);
+		std::array<swervemath::SpeedAndAngle, WHEELCOUNT> motorOutputs(swervemath::Point2d linearVelocity,
+																	   double angularVelocity,
+																	   const std::array<double, WHEELCOUNT> &positionsNew,
+																	   const bool norm,
+																	   const swervemath::Point2d &centerOfRotation = swervemath::Point2d{0, 0},
+																	   const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
-		double getWheelAngle(size_t index, double pos) const;
+		double getWheelAngle(const double pos) const;
 	private:
-		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
-		swerveDriveMath<WHEELCOUNT> swerveMath_; //this should be public
-		//should we get them together instead?
-		//the angle it passes out isn't normalized
-		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
-
-		std::array<double, WHEELCOUNT> offsets_;
-
-		//Second piece of data is here just for physics/modeling
-
-		//std::array<double, WHEELCOUNT> savedEncoderVals_;
-		//int8_t wheelAngleInvert_;
+		swervemath::SwerveDriveMath<WHEELCOUNT> swerveMath_;
 
 		struct multiplierSet
 		{
-			std::array<Eigen::Vector2d, WHEELCOUNT> multipliers_;
+			std::array<swervemath::Point2d, WHEELCOUNT> multipliers_;
 			double maxRotRate_;
 		};
-		std::map<Eigen::Vector2d, multiplierSet> multiplierSets_;
+		std::map<swervemath::Point2d, multiplierSet> multiplierSets_;
 		swerveVar::ratios ratio_;
 		swerveVar::encoderUnits units_;
 		swerveVar::driveModel drive_;
 };
+
+#endif

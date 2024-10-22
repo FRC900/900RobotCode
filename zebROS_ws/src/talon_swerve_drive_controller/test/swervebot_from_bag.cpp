@@ -51,7 +51,7 @@ class SimTime
 class SwerveBotFromBag {
 
 public:
-	SwerveBotFromBag(): robot(), swerve_controller(), nh(), sim_time() {
+	SwerveBotFromBag() {
 
 		ros::NodeHandle controller_nh("swerve_drive_controller");
 		swerve_controller.init(&robot, nh, controller_nh);
@@ -103,10 +103,10 @@ private:
 	}
 
 	ros::NodeHandle nh;
-	SimTime sim_time;
-	SwerveBot<4> robot;
-	talon_swerve_drive_controller::TalonSwerveDriveController<4> swerve_controller;
-	talon_state_msgs::LatencyCompensationState last_latency_compensation_state;
+	SimTime sim_time{};
+	SwerveBot<4> robot{};
+	talon_swerve_drive_controller::TalonSwerveDriveController<4> swerve_controller{};
+	talon_state_msgs::LatencyCompensationState last_latency_compensation_state{};
 	ros::Subscriber latency_compensation_state_sub;
 };
 

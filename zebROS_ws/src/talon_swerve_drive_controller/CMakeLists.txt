@@ -4,6 +4,7 @@ project(talon_swerve_drive_controller)
 include ("../cmake_modules/CMakeOpt.cmake")
 
 find_package(catkin REQUIRED COMPONENTS
+    angles
     cmake_modules
     controller_interface
     ctre_interfaces
@@ -59,7 +60,6 @@ add_library(${PROJECT_NAME}
   src/swerve_drive_state_controller.cpp
 	#src/odometry.cpp 
 	#src/speed_limiter.cpp
-	src/900Math.cpp
 	src/SwerveMath.cpp
 	src/Swerve.cpp
 )
@@ -89,21 +89,27 @@ add_dependencies(dump_offsets_service
 if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
-	add_executable(test_filtering src/test_filtering.cpp src/Swerve.cpp src/SwerveMath.cpp src/900Math.cpp)
-	target_link_libraries(test_filtering ${catkin_LIBRARIES})
-	add_dependencies(test_filtering
-		${${PROJECT_NAME}_EXPORTED_TARGETS}
-		${catkin_EXPORTED_TARGETS}
-	)
+	# add_executable(test_filtering src/test_filtering.cpp src/Swerve.cpp src/SwerveMath.cpp)
+	# target_link_libraries(test_filtering ${catkin_LIBRARIES})
+	# add_dependencies(test_filtering
+	# 	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	# 	${catkin_EXPORTED_TARGETS}
+	# )
+	# add_executable(test_origin src/test_origin.cpp src/Swerve.cpp src/SwerveMath.cpp)
+	# target_link_libraries(test_origin ${catkin_LIBRARIES})
+	# add_dependencies(test_origin
+	# 	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	# 	${catkin_EXPORTED_TARGETS}
+	# )
 
-  add_executable(swervebot test/swervebot.cpp src/Swerve.cpp src/SwerveMath.cpp src/900Math.cpp)
+  add_executable(swervebot test/swervebot.cpp src/Swerve.cpp src/SwerveMath.cpp)
 	target_link_libraries(swervebot ${catkin_LIBRARIES})
 	add_dependencies(swervebot
 		${${PROJECT_NAME}_EXPORTED_TARGETS}
 		${catkin_EXPORTED_TARGETS}
 	)
 
-  add_executable(swervebot_from_bag test/swervebot_from_bag.cpp src/Swerve.cpp src/SwerveMath.cpp src/900Math.cpp)
+  add_executable(swervebot_from_bag test/swervebot_from_bag.cpp src/Swerve.cpp src/SwerveMath.cpp)
   target_link_libraries(swervebot_from_bag ${catkin_LIBRARIES})
   add_dependencies(swervebot_from_bag
     ${${PROJECT_NAME}_EXPORTED_TARGETS}

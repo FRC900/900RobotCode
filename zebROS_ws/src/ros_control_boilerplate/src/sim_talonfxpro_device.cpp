@@ -53,11 +53,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
             }
         }
     }
-    else
+    else if (cancoder_id_)
     {
         cancoder_id_ = std::nullopt;
     }
-    
+
     if (gazebo_joint_)
     {
         const double position = gazebo_joint_->Position(0);
@@ -87,6 +87,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         cancoder_invert = cancoder_.state()->getSensorDirection() == hardware_interface::cancoder::SensorDirection::Clockwise_Positive ? -1.0 : 1.0;
         cancoder_offset = cancoder_.state()->getMagnetOffset();
     }
+
+    const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
 
     switch (state_->getControlMode())
     {
@@ -184,7 +186,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
     case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
     case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage: 
     {
-        const double position{state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
+        // TODO : is invert needed for velocity as well?
+        const double position{invert * state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
         const double velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
         sim_command_->setRawRotorPosition(position);
         sim_command_->setRotorVelocity(velocity);
@@ -192,8 +195,12 @@ void SimTalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration
         if (cancoder_id_)
         {
             // ROS_WARN_STREAM("cancoder id = " << *cancoder_id_ << " cancoder_value = " << cancoder_position.value());
-            const double cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
+            // TODO : debug, cancoder offset doesn't seem to matter here?
+            // Does cancoder invert matter?  If not, there's no need to read anything from the cancoder here, get rid of cancoder handle
+            const double cancoder_position{state_->getClosedLoopReference() * cancoder_invert};
+            const auto cancoder_velocity { state_->getRotorVelocity() / state_->getRotorToSensorRatio() * cancoder_invert};
             cancoder_->setRawPosition(cancoder_position);
+            cancoder_->setVelocity(cancoder_velocity);
         }
         if (gazebo_joint_)
         {

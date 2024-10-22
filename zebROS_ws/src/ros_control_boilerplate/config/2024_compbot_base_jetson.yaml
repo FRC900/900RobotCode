@@ -22,7 +22,6 @@ generic_hw_control_loop:
 
   talon_config_count_limit: 10
 
-
 # Settings for ros_control hardware interface
 # Map a name for each valid joint to a CAN id
 # For future expansion, change hw_id to specify one

@@ -7,29 +7,19 @@
 /*
 Procedure
 - Bevel facing right
-- Run old dump offsets  
-- 2pi - each offset
-- that + pi
+- Zero all encoder offsets
+- Run this service
+- Move resulting offsets_*.yaml file to correct robot name
 */
 
-
 // TODO : make these config items, maybe?
-const std::map<const std::string, const std::string> offset_joint_names{
-	{"fl_angle", "steering_joint_fl"},
-	{"fr_angle", "steering_joint_fr"},
-	{"bl_angle", "steering_joint_bl"},
-	{"br_angle", "steering_joint_br"}
+const std::set<std::string> offset_joint_names{
+	"bl_angle", 
+	"br_angle", 
+	"fl_angle", 
+	"fr_angle", 
 };
 std::map<const std::string, double> joint_position_map;
-
-#if 0
-talon_state_msgs::TalonConfig talon_config_msg;
-void talon_config_cb(const talon_state_msgs::TalonConfig& msg)
-{
-	talon_config_msg = msg;
-}
-#endif
-
 
 bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Response& res)
 {
@@ -38,27 +28,25 @@ bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Res
 	offsets_file_name <<  "/home/ubuntu/900RobotCode/zebROS_ws/src/ros_control_boilerplate/config/offsets_" << std::to_string(ros::Time::now().toSec()) << ".yaml";
 	std::ofstream offsets_file(offsets_file_name.str());
 
-	offsets_file << "swerve_drive_controller:" << std::endl;
-	for (const auto& joint : offset_joint_names)
+	for (const auto& joint_name: offset_joint_names)
 	{
-		const auto o = joint_position_map.find(joint.first); // lookup by name
+		const auto o = joint_position_map.find(joint_name); // lookup each joint's position by name
 		if (o != joint_position_map.cend())
 		{
-			double offset;
-			offset = angles::normalize_angle(o->second - M_PI / 2.);
-#if 0
-			if (talon_config_msg.invert[i]) {
-				offset = angles::normalize_angle(M_PI - (o->second - M_PI / 2.0));
-			}
-#endif
+			const auto offset = angles::normalize_angle(-o->second);
 
-			// Subtracing from pi because that is what worked before
-			ROS_INFO_STREAM("JOINT: " << joint.first << " OFFSET: " << offset);
-			offsets_file << "    " << joint.second << ":" << std::endl;
-			offsets_file << "        offset: " << offset << std::endl;
+			ROS_INFO_STREAM("JOINT: " << joint_name << " OFFSET: " << offset);
+			offsets_file << joint_name[0] << joint_name[1] << "_cancoder_controller:" << std::endl;
+			offsets_file << "    type:       cancoder_controller/CANCoderController" << std::endl;
+			offsets_file << "    joint_name: bl_cancoder" << std::endl;
+			offsets_file << "    magnet_offset: " << offset << std::endl;
+			offsets_file << "    dynamic_reconfigure: False" << std::endl;
+			offsets_file << "    enable_read_thread: False" << std::endl;
+			offsets_file << std::endl;
 		}
-		else{
-			ROS_WARN_STREAM("Could not find joint name " << joint.first << " in talonfxpro_states");
+		else
+		{
+			ROS_WARN_STREAM("Could not find joint name " << joint_name << " in talonfxpro_states");
 		}
 	}
 	res.success = true;
@@ -83,7 +71,6 @@ int main(int argc, char ** argv)
 	ros::NodeHandle nh;
 
 	ros::Subscriber talon_states_sub = nh.subscribe("/frcrobot_jetson/talonfxpro_states", 1, talon_states_cb);
-	//ros::Subscriber talon_configs_sub = nh.subscribe("/frcrobot_jetson/talon_configs", 1, talon_config_cb);
 	ros::ServiceServer offsets_srv = nh.advertiseService("dump_offsets", get_offsets_srv);
 
 	ros::spin();

@@ -1,0 +1,27 @@
+bl_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: bl_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 1.5707963267948966192313216916398
+    # sensor_direction: Clockwise_Positive
+
+fl_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: fl_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 1.5707963267948966192313216916398
+    # sensor_direction: Clockwise_Positive
+
+br_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: br_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 1.5707963267948966192313216916398
+    # sensor_direction: Clockwise_Positive
+
+fr_cancoder_controller:
+    type:      cancoder_controller/CANCoderController
+    joint_name: fr_cancoder
+    dynamic_reconfigure: True
+    magnet_offset: 1.5707963267948966192313216916398
+    # sensor_direction: Clockwise_Positive
