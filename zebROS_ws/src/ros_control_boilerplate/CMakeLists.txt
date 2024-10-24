@@ -182,7 +182,7 @@ set (FRCROBOT_HW_MAIN_SRCS
 )
 
 set (ALLWPILIB ../../../allwpilib)
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2024/roborio/arm-frc2024-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2025/roborio/arm-frc2024-linux-gnueabi)
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
@@ -211,9 +211,9 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libvisa.so.23.3.0
 		${WPI_SHARED_LIB_DIR}/libembcanshim.so
 		${WPI_SHARED_LIB_DIR}/libfpgalvshim.so
-		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.24.0.0
-		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.24.0.0
-		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
+		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.25.0.0
+		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.25.0.0
+		# ${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
 		src/dummy_wpilib_rio.cpp
@@ -232,8 +232,8 @@ else() # x86-64, hopefully. First person to try and build native on a Mac gets k
 endif()
   
 set (REV_USER_LIBS
-	${REV_LIB_DIR}/libREVLibDriver.so
-	${REV_LIB_DIR}/libREVLib.so
+	# ${REV_LIB_DIR}/libREVLibDriver.so
+	# ${REV_LIB_DIR}/libREVLib.so
 )
 # Used to find HALInitializer from wpilib internal repo
 include_directories(${ALLWPILIB}/hal/src/main/native/athena)
