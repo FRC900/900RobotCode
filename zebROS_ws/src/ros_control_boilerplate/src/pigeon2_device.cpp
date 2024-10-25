@@ -279,19 +279,20 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         //command_->resetSetYaw(); // TODO, not sure about this, there's no telling how long ago this value was correct
     }
 
-    if (command_->mountPoseRPYChanged(mount_pose_configs_->MountPoseYaw,
-                                      mount_pose_configs_->MountPosePitch,
-                                      mount_pose_configs_->MountPoseRoll))
+    double mount_pose_yaw;
+    double mount_pose_pitch;
+    double mount_pose_roll;
+    if (command_->mountPoseRPYChanged(mount_pose_yaw, mount_pose_pitch, mount_pose_roll))
     {
-        mount_pose_configs_->MountPoseYaw = angles::to_degrees(mount_pose_configs_->MountPoseYaw);
-        mount_pose_configs_->MountPosePitch = angles::to_degrees(mount_pose_configs_->MountPosePitch);
-        mount_pose_configs_->MountPoseRoll = angles::to_degrees(mount_pose_configs_->MountPoseRoll);
+        mount_pose_configs_->MountPoseYaw = units::radian_t{mount_pose_yaw};
+        mount_pose_configs_->MountPosePitch = units::radian_t{mount_pose_pitch};
+        mount_pose_configs_->MountPoseRoll = units::radian_t{mount_pose_roll};
         if (safeCall(pigeon2_->GetConfigurator().Apply(*mount_pose_configs_), "ApplyConfig(MountPoseConfigs"))
         {
             ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " MountPose " << *mount_pose_configs_);
-            state_->setMountPoseYaw(angles::from_degrees(mount_pose_configs_->MountPoseYaw ));
-            state_->setMountPosePitch(angles::from_degrees(mount_pose_configs_->MountPosePitch));
-            state_->setMountPoseRoll(angles::from_degrees(mount_pose_configs_->MountPoseRoll));
+            state_->setMountPoseYaw(mount_pose_yaw);
+            state_->setMountPosePitch(mount_pose_pitch);
+            state_->setMountPoseRoll(mount_pose_roll);
         }
         else
         {
@@ -300,19 +301,20 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         }
     }
 
-    if (command_->gyroTrimChanged(gyro_trim_configs_->GyroScalarX,
-                                  gyro_trim_configs_->GyroScalarY,
-                                  gyro_trim_configs_->GyroScalarZ))
+    double gyro_trim_scalar_x;
+    double gyro_trim_scalar_y;
+    double gyro_trim_scalar_z;
+    if (command_->gyroTrimChanged(gyro_trim_scalar_x, gyro_trim_scalar_y, gyro_trim_scalar_z))
     {
-        gyro_trim_configs_->GyroScalarX = angles::to_degrees(gyro_trim_configs_->GyroScalarX);
-        gyro_trim_configs_->GyroScalarY = angles::to_degrees(gyro_trim_configs_->GyroScalarY);
-        gyro_trim_configs_->GyroScalarZ = angles::to_degrees(gyro_trim_configs_->GyroScalarZ);
+        gyro_trim_configs_->GyroScalarX = units::scalar_t{gyro_trim_scalar_x};
+        gyro_trim_configs_->GyroScalarY = units::scalar_t{gyro_trim_scalar_y};
+        gyro_trim_configs_->GyroScalarZ = units::scalar_t{gyro_trim_scalar_z};
         if (safeCall(pigeon2_->GetConfigurator().Apply(*gyro_trim_configs_), "ApplyConfig(GyroTrimConfigs"))
         {
             ROS_INFO_STREAM("Updated Pigeon2 " << getId() << " = " << getName() << " GyroTrim " << *gyro_trim_configs_);
-            state_->setGyroTrimScalarX(angles::from_degrees(gyro_trim_configs_->GyroScalarX ));
-            state_->setGyroTrimScalarY(angles::from_degrees(gyro_trim_configs_->GyroScalarY));
-            state_->setGyroTrimScalarZ(angles::from_degrees(gyro_trim_configs_->GyroScalarZ));
+            state_->setGyroTrimScalarX(gyro_trim_scalar_x);
+            state_->setGyroTrimScalarY(gyro_trim_scalar_y);
+            state_->setGyroTrimScalarZ(gyro_trim_scalar_z);
         }
         else
         {

@@ -91,6 +91,7 @@ enum class TalonMode
 	DifferentialMotionMagicVoltage,
 	DifferentialFollower,
 	DifferentialStrictFollower,
+	MusicTone,
 	Disabled,
 	Last
 };

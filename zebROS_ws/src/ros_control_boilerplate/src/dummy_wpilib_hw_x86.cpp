@@ -7,10 +7,6 @@ frc::DigitalInput::DigitalInput(int)
 {
 	ROS_ERROR("Called DigitalInput::DigitalInput(int) on unsupported platform");
 }
-frc::DigitalInput::~DigitalInput()
-{
-	ROS_ERROR("Called DigitalInput::~DigitalInput() on unsupported platform");
-}
 bool frc::DigitalInput::Get() const
 {
 	ROS_ERROR("Called DigitalInput::Get() const on unsupported platform");
@@ -129,6 +125,18 @@ int32_t HAL_GetNumPWMChannels(void) {
 }
 int32_t HAL_GetNumRelayHeaders(void) {
   return 0;
+}
+
+void HAL_FreeDIOPort(HAL_DigitalHandle /*dioPortHandle*/) {
+	ROS_ERROR("Called HAL_FreeDIOPort(HAL_DigitalHandle) on unsupported platform");
+}
+
+void HAL_FreePWMPort(HAL_DigitalHandle /*pwmPortHandle*/) {
+	ROS_ERROR("Called HAL_FreePWMPort(HAL_DigitalHandle) on unsupported platform");
+}
+
+void HAL_FreeAnalogInputPort(HAL_AnalogInputHandle /*analogPortHandle*/) {
+	ROS_ERROR("Called HAL_FreeAnalogInputPort(HAL_AnalogInputHandle) on unsupported platform");
 }
 
 const char *HALSIM_GetSimDeviceName(HAL_SimDeviceHandle /*handle*/)

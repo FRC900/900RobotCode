@@ -24,6 +24,7 @@ const char MOTION_MAGIC_VELOCITY_TORQUE_CURRENT_FOC_NAME[] = "MotionMagicVelocit
 const char DYNAMIC_MOTION_MAGIC_DUTY_CYCLE_NAME[] = "DynamicMotionMagicDutyCycle";
 const char DYNAMIC_MOTION_MAGIC_VOLTAGE_NAME[] = "DynamicMotionMagicVoltage";
 const char DYNAMIC_MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME[] = "DynamicMotionMagicTorqueCurrentFOC";
+const char MUSIC_TONE_NAME[] = "MusicTone";
 
 template <typename T>
 static bool readIntoScalar(const ros::NodeHandle &n, const char *name, std::atomic<T> &scalar)
@@ -166,14 +167,16 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept
     duty_cycle_neutral_deadband_.exchange(other.duty_cycle_neutral_deadband_);
     peak_forward_duty_cycle_.exchange(other.peak_forward_duty_cycle_);
     peak_reverse_duty_cycle_.exchange(other.peak_reverse_duty_cycle_);
+    control_timesync_freq_hz_.exchange(other.control_timesync_freq_hz_);
 
     stator_current_limit_.exchange(other.stator_current_limit_);
     stator_current_limit_enable_.exchange(other.stator_current_limit_enable_);
 
     supply_current_limit_.exchange(other.supply_current_limit_);
     supply_current_limit_enable_.exchange(other.supply_current_limit_enable_);
-    supply_current_threshold_.exchange(other.supply_current_threshold_);
-    supply_time_threshold_.exchange(other.supply_time_threshold_);
+
+    supply_current_lower_limit_.exchange(other.supply_current_lower_limit_);
+    supply_current_lower_time_.exchange(other.supply_current_lower_time_);
 
     supply_voltage_time_constant_.exchange(other.supply_voltage_time_constant_);
     peak_forward_voltage_.exchange(other.peak_forward_voltage_);
@@ -188,6 +191,7 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept
     rotor_to_sensor_ratio_.exchange(other.rotor_to_sensor_ratio_);
     feedback_sensor_source_.exchange(other.feedback_sensor_source_);
     feedback_remote_sensor_id_.exchange(other.feedback_remote_sensor_id_);
+    velocity_filter_time_constant_.exchange(other.velocity_filter_time_constant_);
 
     differential_sensor_source_.exchange(other.differential_sensor_source_);
     differential_talonfx_sensor_id_.exchange(other.differential_talonfx_sensor_id_);
@@ -241,10 +245,10 @@ TalonFXProCIParams::TalonFXProCIParams(TalonFXProCIParams &&other) noexcept
     control_feedforward_.exchange(other.control_feedforward_);
     control_slot_.exchange(other.control_slot_);
     control_oppose_master_direction_.exchange(other.control_oppose_master_direction_);
-    //does not appear to exist in the params struct but keeping here anyway
-    //control_limit_forward_motion_.exchange(other.control_limit_forward_motion_);
-    //control_limit_reverse_motion_.exchange(other.control_limit_reverse_motion_);
+    control_limit_forward_motion_.exchange(other.control_limit_forward_motion_);
+    control_limit_reverse_motion_.exchange(other.control_limit_reverse_motion_);
     control_differential_slot_.exchange(other.control_differential_slot_);
+    control_use_timesync_.exchange(other.control_use_timesync_);
 
     continuous_wrap_.exchange(other.continuous_wrap_);
     enable_read_thread_.exchange(other.enable_read_thread_);
@@ -278,14 +282,16 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
         duty_cycle_neutral_deadband_.store(other.duty_cycle_neutral_deadband_.load());
         peak_forward_duty_cycle_.store(other.peak_forward_duty_cycle_.load());
         peak_reverse_duty_cycle_.store(other.peak_reverse_duty_cycle_.load());
+        control_timesync_freq_hz_.store(other.control_timesync_freq_hz_.load());
 
         stator_current_limit_.store(other.stator_current_limit_.load());
         stator_current_limit_enable_.store(other.stator_current_limit_enable_.load());
 
         supply_current_limit_.store(other.supply_current_limit_.load());
         supply_current_limit_enable_.store(other.supply_current_limit_enable_.load());
-        supply_current_threshold_.store(other.supply_current_threshold_.load());
-        supply_time_threshold_.store(other.supply_time_threshold_.load());
+
+        supply_current_lower_limit_.store(other.supply_current_lower_limit_.load());
+        supply_current_lower_time_.store(other.supply_current_lower_time_.load());
 
         supply_voltage_time_constant_.store(other.supply_voltage_time_constant_.load());
         peak_forward_voltage_.store(other.peak_forward_voltage_.load());
@@ -300,6 +306,7 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
         rotor_to_sensor_ratio_.store(other.rotor_to_sensor_ratio_.load());
         feedback_sensor_source_.store(other.feedback_sensor_source_.load());
         feedback_remote_sensor_id_.store(other.feedback_remote_sensor_id_.load());
+        velocity_filter_time_constant_.store(other.velocity_filter_time_constant_.load());
 
         differential_sensor_source_.store(other.differential_sensor_source_.load());
         differential_talonfx_sensor_id_.store(differential_talonfx_sensor_id_.load());
@@ -356,6 +363,7 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
         control_limit_forward_motion_.store(other.control_limit_forward_motion_.load());
         control_limit_reverse_motion_.store(other.control_limit_reverse_motion_.load());
         control_differential_slot_.store(other.control_differential_slot_.load());
+        control_use_timesync_.store(other.control_use_timesync_.load());
 
         continuous_wrap_.store(other.continuous_wrap_.load());
         enable_read_thread_.store(other.enable_read_thread_.load());
@@ -501,6 +509,7 @@ bool TalonFXProCIParams::readDutyCycleOutputShaping(const ros::NodeHandle &n)
     readIntoScalar(n, "peak_forward_duty_cycle", peak_forward_duty_cycle_);
     readIntoScalar(n, "peak_reverse_duty_cycle", peak_reverse_duty_cycle_);
     readIntoScalar(n, "duty_cycle_neutral_deadband", duty_cycle_neutral_deadband_);
+    readIntoScalar(n, "control_timesync_freq_hz", control_timesync_freq_hz_);
     return true;
 }
 
@@ -513,8 +522,8 @@ bool TalonFXProCIParams::readSupplyCurrentLimits(const ros::NodeHandle &n)
         ROS_WARN_STREAM("Supply current limit not set for " << joint_name_
                         << " before enabling - using defaults might not work as expected");
     }
-    readIntoScalar(n, "supply_current_threshold", supply_current_threshold_);
-    readIntoScalar(n, "supply_time_threshold", supply_time_threshold_);
+    readIntoScalar(n, "supply_current_lower_limit", supply_current_lower_limit_);
+    readIntoScalar(n, "supply_current_lower_time", supply_current_lower_time_);
     return true;
 }
 
@@ -559,6 +568,7 @@ bool TalonFXProCIParams::readFeedback(const ros::NodeHandle &n)
     readIntoScalar(n, "feedback_rotor_offset", feedback_rotor_offset_);
     readIntoScalar(n, "sensor_to_mechanism_ratio", sensor_to_mechanism_ratio_);
     readIntoScalar(n, "rotor_to_sensor_ratio", rotor_to_sensor_ratio_);
+    readIntoScalar(n, "velocity_filter_time_constant", velocity_filter_time_constant_);
 
     std::string str;
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
@@ -815,6 +825,7 @@ bool TalonFXProCIParams::readControl(const ros::NodeHandle &n)
     readIntoScalar(n, "control_limit_forward_motion", control_limit_forward_motion_);
     readIntoScalar(n, "control_limit_reverse_motion", control_limit_reverse_motion_);
     readIntoScalar(n, "control_differential_slot", control_differential_slot_);
+    readIntoScalar(n, "control_use_timesync", control_use_timesync_);
     return true;
 }
 bool TalonFXProCIParams::readContinuousWrap(const ros::NodeHandle &n)
@@ -1359,6 +1370,11 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         boost::bind(&TalonFXProControllerInterface::setPeakReverseDutyCycle, this, _1, false),
                                                         "Max %% output reverse",
                                                         0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("control_timesync_freq_hz",
+                                                        [this]() { return params_.control_timesync_freq_hz_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlTimesyncFreqHz, this, _1, false),
+                                                        "Control timesync frequency in Hz",
+                                                        0, 1000.);
             ddr_updater_->ddr_.registerVariable<double>("stator_current_limit",
                                                         [this]() { return params_.stator_current_limit_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setStatorCurrentLimit, this, _1, false),
@@ -1377,16 +1393,16 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.supply_current_limit_enable_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLimitEnable, this, _1, false),
                                                         "Enable supply current limit");
-            ddr_updater_->ddr_.registerVariable<double>("supply_current_threshold",
-                                                        [this]() { return params_.supply_current_threshold_.load();},
-                                                        boost::bind(&TalonFXProControllerInterface::setSupplyCurrentThreshold, this, _1, false),
-                                                        "Supply current threshold in amps",
-                                                        0, 511);
-            ddr_updater_->ddr_.registerVariable<double>("supply_time_threshold",
-                                                        [this]() { return params_.supply_time_threshold_.load();},
-                                                        boost::bind(&TalonFXProControllerInterface::setSupplyTimeThreshold, this, _1, false),
-                                                        "Supply time threshold in amps",
-                                                        0, 1.275);
+            ddr_updater_->ddr_.registerVariable<double>("supply_current_lower_limit",
+                                                        [this]() { return params_.supply_current_lower_limit_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLowerLimit, this, _1, false),
+                                                        "Supply current lower limit in amps",
+                                                        0, 500);
+            ddr_updater_->ddr_.registerVariable<double>("supply_current_lower_time",
+                                                        [this]() { return params_.supply_current_lower_time_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLowerTime, this, _1, false),
+                                                        "Supply current lower time in seconds",
+                                                        0, 2.5);
             ddr_updater_->ddr_.registerVariable<double>("supply_voltage_time_constraint",
                                                         [this]() { return params_.supply_voltage_time_constant_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setSupplyVoltageTimeConstant, this, _1, false),
@@ -1432,6 +1448,30 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         boost::bind(&TalonFXProControllerInterface::setRotorToSensorRatio, this, _1, false),
                                                         "the ratio between the remote sensor and the motor rotor",
                                                         -1000, 1000);
+            ddr_updater_->ddr_.registerEnumVariable<int>("feedback_sensor_source",
+                                                        [this]() { return static_cast<int>(params_.feedback_sensor_source_.load());},
+                                                        [this](const int feedback_sensor_source) { this->setFeedbackSensorSource(static_cast<hardware_interface::talonfxpro::FeedbackSensorSource>(feedback_sensor_source), false);},
+                                                        "Feedback sensor source",
+                                                        std::map<std::string, int>{
+                                                            {"RotorSensor", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::RotorSensor)},
+                                                            {"RemoteCANcoder", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder)},
+                                                            {"RemotePigeon2_Yaw", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Yaw)},
+                                                            {"RemotePigeon2_Pitch", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Pitch)},
+                                                            {"RemotePigeon2_Roll", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::RemotePigeon2_Roll)},
+                                                            {"FusedCANcoder", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder)},
+                                                            {"SyncCANcoder", static_cast<int>(hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder)},
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerVariable<int>   ("feedback_remote_sensor_id",
+                                                        [this]() { return params_.feedback_remote_sensor_id_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setFeedbackRemoteSensorID, this, _1, false),
+                                                        "Device ID of which remote to use",
+                                                        0, 62);
+            ddr_updater_->ddr_.registerVariable<double>("velocity_filter_time_constant",
+                                                        [this]() { return params_.velocity_filter_time_constant_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setVelocityFilterTimeConstant, this, _1, false),
+                                                        "Configurable time constant of the Kalman velocity filter",
+                                                        0., 1.);
 
             ddr_updater_->ddr_.registerEnumVariable<int>("differential_sensor_source",
                                                         [this]() { return static_cast<int>(params_.differential_sensor_source_.load());},
@@ -1656,6 +1696,10 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         boost::bind(&TalonFXProControllerInterface::setControlDifferentialSlot, this, _1, false),
                                                         "Control Differential Slot",
                                                         0, 2);
+            ddr_updater_->ddr_.registerVariable<bool>  ("control_use_timesync",
+                                                        [this]() { return params_.control_use_timesync_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlUseTimesync, this, _1, false),
+                                                        "Sync control writes to a timesync boundary");
             ddr_updater_->ddr_.registerVariable<bool>  ("enable_read_thread",
                                                         [this]() { return params_.enable_read_thread_.load();},
                                                         boost::bind(&TalonFXProControllerInterface::setEnableReadThread, this, _1, false),
@@ -1744,12 +1788,13 @@ SET_PARAM_FN(params_.neutral_mode_, setNeutralMode)
 SET_PARAM_FN(params_.duty_cycle_neutral_deadband_, setDutyCycleNeutralDeadband)
 SET_PARAM_FN(params_.peak_forward_duty_cycle_, setPeakForwardDutyCycle)
 SET_PARAM_FN(params_.peak_reverse_duty_cycle_, setPeakReverseDutyCycle);
+SET_PARAM_FN(params_.control_timesync_freq_hz_, setControlTimesyncFreqHz);
 SET_PARAM_FN(params_.stator_current_limit_, setStatorCurrentLimit)
 SET_PARAM_FN(params_.stator_current_limit_enable_, setStatorCurrentLimitEnable);
 SET_PARAM_FN(params_.supply_current_limit_, setSupplyCurrentLimit);
 SET_PARAM_FN(params_.supply_current_limit_enable_, setSupplyCurrentLimitEnable);
-SET_PARAM_FN(params_.supply_current_threshold_, setSupplyCurrentThreshold);
-SET_PARAM_FN(params_.supply_time_threshold_, setSupplyTimeThreshold);
+SET_PARAM_FN(params_.supply_current_lower_limit_, setSupplyCurrentLowerLimit);
+SET_PARAM_FN(params_.supply_current_lower_time_, setSupplyCurrentLowerTime);
 SET_PARAM_FN(params_.supply_voltage_time_constant_, setSupplyVoltageTimeConstant);
 SET_PARAM_FN(params_.peak_forward_voltage_, setPeakForwardVoltage);
 SET_PARAM_FN(params_.peak_reverse_voltage_, setPeakReverseVoltage);
@@ -1759,6 +1804,9 @@ SET_PARAM_FN(params_.torque_neutral_deadband_, setTorqueNeutralDeadband);
 SET_PARAM_FN(params_.feedback_rotor_offset_, setFeedbackRotorOffset);
 SET_PARAM_FN(params_.sensor_to_mechanism_ratio_, setSensorToMechanismRatio);
 SET_PARAM_FN(params_.rotor_to_sensor_ratio_, setRotorToSensorRatio);
+SET_PARAM_FN(params_.feedback_sensor_source_, setFeedbackSensorSource);
+SET_PARAM_FN(params_.feedback_remote_sensor_id_, setFeedbackRemoteSensorID);
+SET_PARAM_FN(params_.velocity_filter_time_constant_, setVelocityFilterTimeConstant);
 SET_PARAM_FN(params_.differential_sensor_source_, setDifferentialSensorSource);
 SET_PARAM_FN(params_.differential_talonfx_sensor_id_, setDifferentialTalonFXSensorID);
 SET_PARAM_FN(params_.differential_remote_sensor_id_, setDifferentialRemoteSensorID);
@@ -1806,6 +1854,7 @@ SET_PARAM_FN(params_.control_oppose_master_direction_, setControlOpposeMasterDir
 SET_PARAM_FN(params_.control_limit_forward_motion_, setControlLimitForwardMotion);
 SET_PARAM_FN(params_.control_limit_reverse_motion_, setControlLimitReverseMotion);
 SET_PARAM_FN(params_.control_differential_slot_, setControlDifferentialSlot);
+SET_PARAM_FN(params_.control_use_timesync_, setControlUseTimesync);
 SET_PARAM_FN(params_.enable_read_thread_, setEnableReadThread);
 SET_PARAM_FN(params_.set_position_, setRotorPosition);
 
@@ -2068,12 +2117,13 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
     talon->setDutyCycleNeutralDeadband(params.duty_cycle_neutral_deadband_);
     talon->setPeakForwardDutyCycle(params.peak_forward_duty_cycle_);
     talon->setPeakReverseDutyCycle(params.peak_reverse_duty_cycle_);
+    talon->setControlTimesyncFreqHz(params.control_timesync_freq_hz_);
     talon->setStatorCurrentLimit(params.stator_current_limit_);
     talon->setStatorCurrentLimitEnable(params.stator_current_limit_enable_);
     talon->setSupplyCurrentLimit(params.supply_current_limit_);
     talon->setSupplyCurrentLimitEnable(params.supply_current_limit_enable_);
-    talon->setSupplyCurrentThreshold(params.supply_current_threshold_);
-    talon->setSupplyTimeThreshold(params.supply_time_threshold_);
+    talon->setSupplyCurrentLowerLimit(params.supply_current_lower_limit_);
+    talon->setSupplyCurrentLowerTime(params.supply_current_lower_time_);
     talon->setSupplyVoltageTimeConstant(params.supply_voltage_time_constant_);
     talon->setPeakForwardVoltage(params.peak_forward_voltage_);
     talon->setPeakReverseVoltage(params.peak_reverse_voltage_);
@@ -2085,6 +2135,7 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
     talon->setRotorToSensorRatio(params.rotor_to_sensor_ratio_);
     talon->setFeedbackSensorSource(params.feedback_sensor_source_);
     talon->setFeedbackRemoteSensorID(params.feedback_remote_sensor_id_);
+    talon->setVelocityFilterTimeConstant(params.velocity_filter_time_constant_);
     talon->setDifferentialSensorSource(params.differential_sensor_source_);
     talon->setDifferentialTalonFXSensorID(params.differential_talonfx_sensor_id_);
     talon->setDifferentialRemoteSensorID(params.differential_remote_sensor_id_);
@@ -2133,6 +2184,7 @@ void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
     talon->setControlLimitReverseMotion(params.control_limit_reverse_motion_);
     talon->setEnableReadThread(params.enable_read_thread_);
     talon->setControlDifferentialSlot(params.control_differential_slot_);
+    talon->setControlUseTimesync(params.control_use_timesync_);
     // Don't call setSetRotorPosition at startup since this isn't a value read from config
 }
 

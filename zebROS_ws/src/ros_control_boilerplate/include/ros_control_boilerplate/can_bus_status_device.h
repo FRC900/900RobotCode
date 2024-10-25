@@ -10,6 +10,10 @@ namespace hardware_interface::can_bus_status
     class CANBusStatusHWState;
     class CANBusStatusStateInterface;
 }
+namespace ctre::phoenix6
+{
+    class CANBus;
+}   
 class PeriodicIntervalCounter;
 
 class CANBusStatusDevice
@@ -30,6 +34,7 @@ public:
 private:
     std::unique_ptr<hardware_interface::can_bus_status::CANBusStatusHWState> state_;
     std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+    std::unique_ptr<ctre::phoenix6::CANBus> can_bus_;
 };
 
 #endif

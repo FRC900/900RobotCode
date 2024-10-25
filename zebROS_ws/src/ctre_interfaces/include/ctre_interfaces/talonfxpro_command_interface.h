@@ -85,12 +85,15 @@ public:
 	double getPeakForwardDutyCycle(void) const;
 	void setPeakReverseDutyCycle(const double peak_reverse_duty_cycle);
 	double getPeakReverseDutyCycle(void) const;
+	void setControlTimesyncFreqHz(const double control_timesync_freq_hz);
+	double getControlTimesyncFreqHz(void) const;
 
 	bool motorOutputConfigChanged(Inverted &invert,
 								  NeutralMode &neutral_mode,
 								  double &duty_cycle_neutral_deadband,
 								  double &peak_forward_duty_cycle,
-								  double &peak_reverse_duty_cycle) const;
+								  double &peak_reverse_duty_cycle,
+								  double &control_timesync_freq_hz) const;
 	void resetMotorOutputConfig(void);
 
 	void setStatorCurrentLimit(const double stator_current_limit);
@@ -102,16 +105,18 @@ public:
 	double getSupplyCurrentLimit(void) const;
 	void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable);
 	bool getSupplyCurrentLimitEnable(void) const;
-	void setSupplyCurrentThreshold(const double supply_current_threshold);
-	double getSupplyCurrentThreshold(void) const;
-	void setSupplyTimeThreshold(const double supply_time_threshold);
-	double getSupplyTimeThreshold(void) const;
+
+	void setSupplyCurrentLowerLimit(const double supply_current_lower_limit);
+	double getSupplyCurrentLowerLimit(void) const;
+	void setSupplyCurrentLowerTime(const double supply_current_lower_time);
+	double getSupplyCurrentLowerTime(void) const;
+
 	bool currentLimitChanged(double &stator_current_limit,
 							 bool &stator_current_limit_enable,
 							 double &supply_current_limit,
 							 bool &supply_current_limit_enable,
-							 double &supply_current_threshold,
-							 double &supply_time_threshold) const;
+							 double &supply_current_lower_limit,
+							 double &supply_current_lower_time) const;
 	void resetCurrentLimit(void);
 
 	void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant);
@@ -155,11 +160,15 @@ public:
 	void setFeedbackRemoteSensorID(const int feedback_remote_sensor_id);
 	int setFeedbackRemoteSensorID(void) const;
 
+	void setVelocityFilterTimeConstant(const double velocity_filter_time_constant);
+	double getVelocityFilterTimeConstant(void) const;
+
 	bool feebackChanged(double &feedback_rotor_offset,
 						double &sensor_to_mechanism_ratio,
 						double &rotor_to_sensor_ratio,
 						FeedbackSensorSource &feedback_sensor_source,
-						int &feedback_remote_sensor_id) const;
+						int &feedback_remote_sensor_id,
+						double &velocity_filter_time_constant) const;
 	void resetFeedback(void);
 
 	void setDifferentialSensorSource(const DifferentialSensorSource differential_sensor_source);
@@ -373,6 +382,9 @@ public:
 	void setControlLimitReverseMotion(const bool limit_reverse_direction);
 	bool getControlLimitReverseMotion(void) const;
 
+	void setControlUseTimesync(const bool control_use_timesync);
+	bool getControlUseTimesync(void) const;
+
 	bool controlChanged(TalonMode &control_mode,
 						double &control_output,
 						double &control_position,
@@ -389,7 +401,8 @@ public:
 						bool &control_limit_reverse_motion,
 						double &control_differential_position,
 						int &control_differential_slot,
-						bool &oppose_master_direction) const;
+						bool &oppose_master_direction,
+						bool &control_use_timesync) const;
 	void resetControl(void);
 						
 	void setEnableReadThread(const bool enable_read_thread);
@@ -416,14 +429,15 @@ private :
 	double duty_cycle_neutral_deadband_{0.};
 	double peak_forward_duty_cycle_{1.};
 	double peak_reverse_duty_cycle_{-1.};
+	double control_timesync_freq_hz_{0.};
 	mutable bool motor_output_config_changed_{true};
 
-	double stator_current_limit_{0.};
-	bool   stator_current_limit_enable_{false};
-	double supply_current_limit_{0.};
-	bool   supply_current_limit_enable_{false};
-	double supply_current_threshold_{0.};
-	double supply_time_threshold_{0.};
+	double stator_current_limit_{120.};
+	bool   stator_current_limit_enable_{true};
+	double supply_current_limit_{70.};
+	bool   supply_current_limit_enable_{true};
+	double supply_current_lower_limit_{40.};
+	double supply_current_lower_time_{1.};
 	mutable bool current_limit_changed_{true};
 
 	double supply_voltage_time_constant_{0.};
@@ -441,6 +455,7 @@ private :
 	double rotor_to_sensor_ratio_{1.0};
 	FeedbackSensorSource feedback_sensor_source_{FeedbackSensorSource::RotorSensor};
 	int    feedback_remote_sensor_id_{0};
+	double velocity_filter_time_constant_{0.};
 	mutable bool feedback_changed_{true};
 
 	DifferentialSensorSource differential_sensor_source_{DifferentialSensorSource::Disabled};
@@ -520,6 +535,7 @@ private :
 	bool control_limit_reverse_motion_{false};
 	double control_differential_position_{0.0};
 	int control_differential_slot_{0};
+	bool control_use_timesync_{false};
 	mutable bool control_changed_{false};
 
 	bool enable_read_thread_{true};

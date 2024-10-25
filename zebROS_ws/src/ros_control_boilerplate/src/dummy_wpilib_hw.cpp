@@ -71,10 +71,6 @@ frc::AnalogInput::AnalogInput(int)
 {
 	ROS_ERROR("Called AnalogInput::AnalogInput(int) on unsupported platform");
 }
-frc::AnalogInput::~AnalogInput()
-{
-	ROS_ERROR("Called ::AnalogInput::~AnalogInput( on unsupported platform");
-}
 
 int frc::AnalogInput::GetValue() const
 {

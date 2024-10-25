@@ -76,6 +76,8 @@ public:
 	double getPeakForwardDutyCycle(void) const;
 	void setPeakReverseDutyCycle(const double peak_reverse_duty_cycle);
 	double getPeakReverseDutyCycle(void) const;
+	void setControlTimesyncFreqHz(const double control_timesync_freq_hz);
+	double getControlTimesyncFreqHz(void) const;
 
 	void setStatorCurrentLimit(const double stator_current_limit);
 	double getStatorCurrentLimit(void) const;
@@ -86,10 +88,11 @@ public:
 	double getSupplyCurrentLimit(void) const;
 	void setSupplyCurrentLimitEnable(const bool supply_current_limit_enable);
 	bool getSupplyCurrentLimitEnable(void) const;
-	void setSupplyCurrentThreshold(const double supply_current_threshold);
-	double getSupplyCurrentThreshold(void) const;
-	void setSupplyTimeThreshold(const double supply_time_threshold);
-	double getSupplyTimeThreshold(void) const;
+
+	void setSupplyCurrentLowerLimit(const double supply_current_lower_limit);
+	double getSupplyCurrentLowerLimit(void) const;
+	void setSupplyCurrentLowerTime(const double supply_current_lower_time);
+	double getSupplyCurrentLowerTime(void) const;
 
 	void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant);
 	double getSupplyVoltageTimeConstant(void) const;
@@ -121,6 +124,9 @@ public:
 
 	void setFeedbackRemoteSensorID(const int feedback_remote_sensor_id);
 	int getFeedbackRemoteSensorID(void) const;
+
+	void setVelocityFilterTimeConstant(const double velocity_filter_time_constant);
+	double getVelocityFilterTimeConstant(void) const;
 
 	void setDifferentialSensorSource(const DifferentialSensorSource differential_sensor_source);
 	DifferentialSensorSource getDifferentialSensorSource(void) const;
@@ -279,6 +285,9 @@ public:
 	void setControlOpposeMasterDirection(const bool control_oppose_master_direction);
 	bool getControlOpposeMasterDirection(void) const;
 
+	void setControlUseTimesync(const bool control_use_timesync);
+	bool getControlUseTimesync(void) const;
+
 	void setEnableReadThread(const bool enable_read_thread);
 	bool getEnableReadThread(void) const;
 
@@ -366,6 +375,15 @@ public:
 	void setDifferentialDifferencePosition(const double differential_difference_position);
 	double getDifferentialDifferencePosition(void) const;
 
+	void setMotorKT(const double motor_kt);
+	double getMotorKT(void) const;
+
+	void setMotorKV(const double motor_kv);
+	double getMotorKV(void) const;
+
+	void setMotorStallCurrent(const double motor_stall_current);
+	double getMotorStallCurrent(void) const;
+ 
 	void setBridgeOutput(const BridgeOutput bridge_output_value);
 	BridgeOutput getBridgeOutput(void) const;
 
@@ -401,6 +419,10 @@ public:
 	bool getFaultReverseSoftLimit(void) const;
 	void setFaultForwardSoftLimit(const bool fault_forwardsoftlimit);
 	bool getFaultForwardSoftLimit(void) const;
+	void setFaultMissingSoftLimitRemote(const bool fault_missingsoftlimitremote);
+	bool getFaultMissingSoftLimitRemote(void) const;
+	void setFaultMissingHardLimitRemote(const bool fault_missinghardlimitremote);
+	bool getFaultMissingHardLimitRemote(void) const;
 	void setFaultRemoteSensorDataInvalid(const bool fault_remotesensordatainvalid);
 	bool getFaultRemoteSensorDataInvalid(void) const;
 	void setFaultFusedSensorOutOfSync(const bool fault_fusedsensoroutofsync);
@@ -442,6 +464,10 @@ public:
 	bool getStickyFaultReverseSoftLimit(void) const;
 	void setStickyFaultForwardSoftLimit(const bool sticky_fault_forwardsoftlimit);
 	bool getStickyFaultForwardSoftLimit(void) const;
+	void setStickyFaultMissingSoftLimitRemote(const bool fault_missingsoftlimitremote);
+	bool getStickyFaultMissingSoftLimitRemote(void) const;
+	void setStickyFaultMissingHardLimitRemote(const bool fault_missinghardlimitremote);
+	bool getStickyFaultMissingHardLimitRemote(void) const;
 	void setStickyFaultRemoteSensorDataInvalid(const bool sticky_fault_remotesensordatainvalid);
 	bool getStickyFaultRemoteSensorDataInvalid(void) const;
 	void setStickyFaultFusedSensorOutOfSync(const bool sticky_fault_fusedsensoroutofsync);
@@ -523,14 +549,16 @@ private:
 	double duty_cycle_neutral_deadband_{0.};
 	double peak_forward_duty_cycle_{1.};
 	double peak_reverse_duty_cycle_{-1.};
+	double control_timesync_freq_hz_{0.};
 
 	double stator_current_limit_{0.};
 	bool   stator_current_limit_enable_{false};
 
 	double supply_current_limit_{0.};
 	bool   supply_current_limit_enable_{false};
-	double supply_current_threshold_{0.};
-	double supply_time_threshold_{0.};
+
+	double supply_current_lower_limit_{0.};
+	double supply_current_lower_time_{0.};
 
 	double supply_voltage_time_constant_{0.};
 	double peak_forward_voltage_{16.};
@@ -545,6 +573,7 @@ private:
 	double rotor_to_sensor_ratio_{1.0};
 	FeedbackSensorSource feedback_sensor_source_{FeedbackSensorSource::RotorSensor};
 	int feedback_remote_sensor_id_{0};
+	double velocity_filter_time_constant_{0.};
 
 	DifferentialSensorSource differential_sensor_source_{DifferentialSensorSource::Disabled};
 	int differential_talonfx_sensor_id_{0};
@@ -612,6 +641,7 @@ private:
 	double control_differential_position_{0.0};
 	int control_differential_slot_{0};
 	bool control_oppose_master_direction_{false};
+	bool control_use_timesync_{false};
 
 	bool enable_read_thread_{true};
 
@@ -654,6 +684,10 @@ private:
 	double differential_difference_velocity_{0};
 	double differential_difference_position_{0};
 
+	double motor_kt_{0};
+	double motor_kv_{0};
+	double motor_stall_current_{0};
+
 	BridgeOutput bridge_output_value_{BridgeOutput::Coast};
 
 	bool fault_hardware_{false};
@@ -672,6 +706,8 @@ private:
 	bool fault_forwardhardlimit_{false};
 	bool fault_reversesoftlimit_{false};
 	bool fault_forwardsoftlimit_{false};
+	bool fault_missingsoftlimitremote_{false};
+	bool fault_missinghardlimitremote_{false};
 	bool fault_remotesensordatainvalid_{false};
 	bool fault_fusedsensoroutofsync_{false};
 	bool fault_statorcurrlimit_{false};
@@ -693,6 +729,8 @@ private:
 	bool sticky_fault_forwardhardlimit_{false};
 	bool sticky_fault_reversesoftlimit_{false};
 	bool sticky_fault_forwardsoftlimit_{false};
+	bool sticky_fault_missingsoftlimitremote_{false};
+	bool sticky_fault_missinghardlimitremote_{false};
 	bool sticky_fault_remotesensordatainvalid_{false};
 	bool sticky_fault_fusedsensoroutofsync_{false};
 	bool sticky_fault_statorcurrlimit_{false};

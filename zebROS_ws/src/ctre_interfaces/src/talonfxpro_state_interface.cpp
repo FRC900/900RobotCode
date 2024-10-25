@@ -264,6 +264,15 @@ double TalonFXProHWState::getPeakReverseDutyCycle(void) const
 	return peak_reverse_duty_cycle_;
 }
 
+void TalonFXProHWState::setControlTimesyncFreqHz(const double control_timesync_freq_hz)
+{
+	control_timesync_freq_hz_ = control_timesync_freq_hz;
+}
+double TalonFXProHWState::getControlTimesyncFreqHz(void) const
+{
+	return control_timesync_freq_hz_;
+}
+
 void TalonFXProHWState::setStatorCurrentLimit(const double stator_current_limit)
 {
 	stator_current_limit_ = stator_current_limit;
@@ -297,21 +306,21 @@ bool TalonFXProHWState::getSupplyCurrentLimitEnable(void) const
 {
 	return supply_current_limit_enable_;
 }
-void TalonFXProHWState::setSupplyCurrentThreshold(const double supply_current_threshold)
+void TalonFXProHWState::setSupplyCurrentLowerLimit(const double supply_current_lower_limit)
 {
-	supply_current_threshold_ = supply_current_threshold;
+	supply_current_lower_limit_ = supply_current_lower_limit;
 }
-double TalonFXProHWState::getSupplyCurrentThreshold(void) const
+double TalonFXProHWState::getSupplyCurrentLowerLimit(void) const
 {
-	return supply_current_threshold_;
+	return supply_current_lower_limit_;
 }
-void TalonFXProHWState::setSupplyTimeThreshold(const double supply_time_threshold)
+void TalonFXProHWState::setSupplyCurrentLowerTime(const double supply_current_lower_time)
 {
-	supply_time_threshold_ = supply_time_threshold;
+	supply_current_lower_time_ = supply_current_lower_time;
 }
-double TalonFXProHWState::getSupplyTimeThreshold(void) const
+double TalonFXProHWState::getSupplyCurrentLowerTime(void) const
 {
-	return supply_time_threshold_;
+	return supply_current_lower_time_;
 }
 
 void TalonFXProHWState::setSupplyVoltageTimeConstant(const double supply_voltage_time_constant) 
@@ -409,6 +418,15 @@ void TalonFXProHWState::setFeedbackRemoteSensorID(const int feedback_remote_sens
 int TalonFXProHWState::getFeedbackRemoteSensorID(void) const
 {
 	return feedback_remote_sensor_id_;
+}
+
+void TalonFXProHWState::setVelocityFilterTimeConstant(const double velocity_filter_time_constant)
+{
+	velocity_filter_time_constant_ = velocity_filter_time_constant;
+}
+double TalonFXProHWState::getVelocityFilterTimeConstant(void) const
+{
+	return velocity_filter_time_constant_;
 }
 
 void TalonFXProHWState::setDifferentialSensorSource(const DifferentialSensorSource differential_sensor_source)
@@ -915,6 +933,15 @@ int TalonFXProHWState::getControlDifferentialSlot(void) const
 	return control_differential_slot_;
 }
 
+void TalonFXProHWState::setControlUseTimesync(const bool control_use_timesync)
+{
+	control_use_timesync_ = control_use_timesync;
+}
+bool TalonFXProHWState::getControlUseTimesync(void) const
+{
+	return control_use_timesync_;
+}
+
 void TalonFXProHWState::setEnableReadThread(const bool enable_read_thread)
 {
 	enable_read_thread_ = enable_read_thread;
@@ -1176,6 +1203,33 @@ double TalonFXProHWState::getDifferentialDifferencePosition(void) const
 	return differential_difference_position_;
 }
 
+void TalonFXProHWState::setMotorKT(const double motor_kt)
+{
+	motor_kt_ = motor_kt;
+}
+double TalonFXProHWState::getMotorKT(void) const
+{
+	return motor_kt_;
+}	
+
+void TalonFXProHWState::setMotorKV(const double motor_kv)
+{
+	motor_kv_ = motor_kv;
+}
+double TalonFXProHWState::getMotorKV(void) const
+{
+	return motor_kv_;
+}
+
+void TalonFXProHWState::setMotorStallCurrent(const double motor_stall_current)
+{
+	motor_stall_current_ = motor_stall_current;
+}
+double TalonFXProHWState::getMotorStallCurrent(void) const
+{
+	return motor_stall_current_;
+}
+
 void TalonFXProHWState::setBridgeOutput(const BridgeOutput bridge_output_value)
 {
 	bridge_output_value_ = bridge_output_value;
@@ -1213,6 +1267,10 @@ void TalonFXProHWState::setFaultReverseHardLimit(const bool fault_reversehardlim
 bool TalonFXProHWState::getFaultReverseHardLimit(void) const {return fault_reversehardlimit_;}
 void TalonFXProHWState::setFaultForwardHardLimit(const bool fault_forwardhardlimit) {fault_forwardhardlimit_ = fault_forwardhardlimit;}
 bool TalonFXProHWState::getFaultForwardHardLimit(void) const {return fault_forwardhardlimit_;}
+void TalonFXProHWState::setFaultMissingSoftLimitRemote(const bool fault_missingsoftlimitremote) {fault_missingsoftlimitremote_ = fault_missingsoftlimitremote;}
+bool TalonFXProHWState::getFaultMissingSoftLimitRemote(void) const {return fault_missingsoftlimitremote_;}
+void TalonFXProHWState::setFaultMissingHardLimitRemote(const bool fault_missinghardlimitremote) {fault_missinghardlimitremote_ = fault_missinghardlimitremote;}
+bool TalonFXProHWState::getFaultMissingHardLimitRemote(void) const {return fault_missinghardlimitremote_;}
 void TalonFXProHWState::setFaultReverseSoftLimit(const bool fault_reversesoftlimit) {fault_reversesoftlimit_ = fault_reversesoftlimit;}
 bool TalonFXProHWState::getFaultReverseSoftLimit(void) const {return fault_reversesoftlimit_;}
 void TalonFXProHWState::setFaultForwardSoftLimit(const bool fault_forwardsoftlimit) {fault_forwardsoftlimit_ = fault_forwardsoftlimit;}
@@ -1258,6 +1316,10 @@ void TalonFXProHWState::setStickyFaultReverseSoftLimit(const bool sticky_fault_r
 bool TalonFXProHWState::getStickyFaultReverseSoftLimit(void) const {return sticky_fault_reversesoftlimit_;}
 void TalonFXProHWState::setStickyFaultForwardSoftLimit(const bool sticky_fault_forwardsoftlimit) {sticky_fault_forwardsoftlimit_ = sticky_fault_forwardsoftlimit;}
 bool TalonFXProHWState::getStickyFaultForwardSoftLimit(void) const {return sticky_fault_forwardsoftlimit_;}
+void TalonFXProHWState::setStickyFaultMissingSoftLimitRemote(const bool sticky_fault_missingsoftlimitremote) {sticky_fault_missingsoftlimitremote_ = sticky_fault_missingsoftlimitremote;}
+bool TalonFXProHWState::getStickyFaultMissingSoftLimitRemote(void) const {return sticky_fault_missingsoftlimitremote_;}
+void TalonFXProHWState::setStickyFaultMissingHardLimitRemote(const bool sticky_fault_missinghardlimitremote) {sticky_fault_missinghardlimitremote_ = sticky_fault_missinghardlimitremote;}
+bool TalonFXProHWState::getStickyFaultMissingHardLimitRemote(void) const {return sticky_fault_missinghardlimitremote_;}
 void TalonFXProHWState::setStickyFaultRemoteSensorDataInvalid(const bool sticky_fault_remotesensordatainvalid) {sticky_fault_remotesensordatainvalid_ = sticky_fault_remotesensordatainvalid;}
 bool TalonFXProHWState::getStickyFaultRemoteSensorDataInvalid(void) const {return sticky_fault_remotesensordatainvalid_;}
 void TalonFXProHWState::setStickyFaultFusedSensorOutOfSync(const bool sticky_fault_fusedsensoroutofsync) {sticky_fault_fusedsensoroutofsync_ = sticky_fault_fusedsensoroutofsync;}
