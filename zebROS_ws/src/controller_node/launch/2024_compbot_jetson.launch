@@ -120,7 +120,7 @@
 	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	
-	<include file="$(find behaviors)/launch/auto_node.launch"/>
+	<include file="$(find auto_node)/launch/auto_node.launch"/>
 
 	<!-- Add 2024 actionlib servers here -->
 	<include file="$(find behaviors)/launch/2024_arm.launch"/>

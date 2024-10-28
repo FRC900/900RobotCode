@@ -5,6 +5,11 @@ topics:
   timeout : 0.05
   priority: 900
 -
+  name    : auto_cmd_vel
+  topic   : /auto/cmd_vel
+  timeout : 0.2
+  priority: 899
+-
   name    : combine orient strafing
   topic   : /teleop/orient_strafing/swerve_drive_controller/cmd_vel
   timeout : 0.2
@@ -19,11 +24,6 @@ topics:
   topic   : /placing/cmd_vel
   timeout : 0.2
   priority: 148
--
-  name    : auto_cmd_vel
-  topic   : /auto/cmd_vel
-  timeout : 0.2
-  priority: 130
 -
   name    : path_follower
   topic   : /path_follower/path_follower_pid/swerve_drive_controller/cmd_vel

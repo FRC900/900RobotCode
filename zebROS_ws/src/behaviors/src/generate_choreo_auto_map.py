@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# generates red and blue versions of a path
 import sys, os, math, json
 
 import tf2_geometry_msgs

@@ -16,7 +16,7 @@
 #include <angles/angles.h>
 #include <std_srvs/SetBool.h>
 
-// #define DEBUG
+#define DEBUG
 
 class PathAction
 {
@@ -426,6 +426,12 @@ class PathAction
 				}
 				else if (!preempted && !timed_out)
 				{
+					#ifdef DEBUG
+					ROS_INFO_STREAM("X ERROR: " << fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) << " tolerance " << final_pos_tol);
+					ROS_INFO_STREAM("Y ERROR: " << fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) << " tolerance " << final_pos_tol);
+					ROS_INFO_STREAM("ROT ERROR: " << angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) << " tolerance " << final_rot_tol);
+					ROS_INFO_STREAM("CURRENT INDEX: " << current_index << " goal poses -2: " << goal->position_path.poses.size() - 2);
+					#endif
 					ros::spinOnce();
 					// Pass along the current x, y robot states
 					// to the PID controllers for each axis

@@ -8,6 +8,7 @@
     "python.analysis.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages",
         "/home/ubuntu/900RobotCode/zebROS_ws/devel/lib/python3.8/site-packages",
+        "/home/ubuntu/900RobotCode/zebROS_ws/src/frc_utils"
     ],
     "sonarlint.pathToCompileCommands": "/home/ubuntu/900RobotCode/zebROS_ws/build/compile_commands.json",
     "files.associations": {

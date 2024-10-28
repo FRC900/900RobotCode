@@ -85,7 +85,7 @@
 	<include file="$(find controller_node)/launch/hold_position.launch"/>
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 
-	<include file="$(find behaviors)/launch/auto_node.launch"/>
+	<include file="$(find auto_node)/launch/auto_node.launch"/>
 
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">

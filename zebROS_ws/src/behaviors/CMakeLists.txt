@@ -143,9 +143,6 @@ catkin_package(
 )
 
 # Generic actionlib code
-add_executable(auto_node src/auto_node.cpp)
-target_link_libraries(auto_node ${catkin_LIBRARIES})
-add_dependencies(auto_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # Used by path planner to merge separate x,y,rotation into one Twist message
 add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
@@ -395,7 +392,6 @@ install(PROGRAMS
 
 ## Mark executables and/or libraries for installation
 install(TARGETS
-	auto_node
 	publish_pid_cmd_vel_node
 	#game_piece_path_server
 	#2023_updown_elevater_server

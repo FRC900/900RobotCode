@@ -5,7 +5,7 @@
 #include "path_follower/path_follower.h"
 #include "ros/ros.h"
 
-// #define DEBUG
+#define DEBUG
 
 bool PathFollower::loadPath(const nav_msgs::Path &path, const nav_msgs::Path &velocities, double &final_distace)
 {

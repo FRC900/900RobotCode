@@ -2,7 +2,7 @@ nav_msgs/Path position_path
 nav_msgs/Path position_waypoints
 nav_msgs/Path velocity_path
 nav_msgs/Path velocity_waypoints
-int32[] waypointsIdx
+int32[] waypointsIdx # waypoints are largely irrelvent with paths being split up by choreo
 
 # Linear and angular tolerances for finishing path
 # Set to non-zero to override config defaults
