@@ -13,15 +13,15 @@ if [ $? -ne 1 ] ; then
 	return
 fi
 
-ssh -p 22 ubuntu@$1 'rm -rf /home/ubuntu/wpilib/2024'
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/ctre'
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/navx'
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/rev '
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/wpilib'
-rsync -avru -e 'ssh -p 22' $HOME/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/ $1:/home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/include/
+ssh -p 22 ubuntu@$1 'rm -rf /home/ubuntu/wpilib/2025'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/include/ctre'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/include/navx'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/include/rev '
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/include/wpilib'
+rsync -avru -e 'ssh -p 22' $HOME/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/include/ $1:/home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/include/
 
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ctre'
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/navx'
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/rev'
-ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/wpilib'
-rsync -avzu -e 'ssh -p 22' --exclude '*.debug' --exclude 'athena' --exclude 'raspbian' --exclude 'x86-64' $HOME/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/ $1:/home/ubuntu/wpilib/2024/roborio/arm-frc2024-linux-gnueabi/lib/
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/lib/ctre'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/lib/navx'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/lib/rev'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/lib/wpilib'
+rsync -avzu -e 'ssh -p 22' --exclude '*.debug' --exclude 'athena' --exclude 'raspbian' --exclude 'x86-64' $HOME/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/lib/ $1:/home/ubuntu/wpilib/2025/roborio/arm-frc2024-linux-gnueabi/lib/
