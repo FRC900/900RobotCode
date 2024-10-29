@@ -127,18 +127,6 @@ int32_t HAL_GetNumRelayHeaders(void) {
   return 0;
 }
 
-void HAL_FreeDIOPort(HAL_DigitalHandle /*dioPortHandle*/) {
-	ROS_ERROR("Called HAL_FreeDIOPort(HAL_DigitalHandle) on unsupported platform");
-}
-
-void HAL_FreePWMPort(HAL_DigitalHandle /*pwmPortHandle*/) {
-	ROS_ERROR("Called HAL_FreePWMPort(HAL_DigitalHandle) on unsupported platform");
-}
-
-void HAL_FreeAnalogInputPort(HAL_AnalogInputHandle /*analogPortHandle*/) {
-	ROS_ERROR("Called HAL_FreeAnalogInputPort(HAL_AnalogInputHandle) on unsupported platform");
-}
-
 const char *HALSIM_GetSimDeviceName(HAL_SimDeviceHandle /*handle*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
@@ -176,6 +164,10 @@ int32_t HALSIM_RegisterSimPeriodicBeforeCallback(HALSIM_SimPeriodicCallback /*ca
 void HALSIM_CancelSimPeriodicBeforeCallback(int32_t /*uid*/)
 {
 	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
+}
+
+void HAL_FreeDIOPort(HAL_DigitalHandle /*dioPortHandle*/) {
+	ROS_ERROR("Called HAL_FreeDIOPort(HAL_DigitalHandle) on unsupported platform");
 }
 
 }  // extern "C"

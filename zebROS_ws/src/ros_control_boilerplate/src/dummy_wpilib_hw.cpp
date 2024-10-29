@@ -707,6 +707,14 @@ const char* HAL_GetErrorMessage(int32_t code) {
   }
 }
 
+void HAL_FreePWMPort(HAL_DigitalHandle /*pwmPortHandle*/) {
+	ROS_ERROR("Called HAL_FreePWMPort(HAL_DigitalHandle) on unsupported platform");
+}
+
+void HAL_FreeAnalogInputPort(HAL_AnalogInputHandle /*analogPortHandle*/) {
+	ROS_ERROR("Called HAL_FreeAnalogInputPort(HAL_AnalogInputHandle) on unsupported platform");
+}
+
 } // extern "C"
 
 #include "hal/Notifier.h"
