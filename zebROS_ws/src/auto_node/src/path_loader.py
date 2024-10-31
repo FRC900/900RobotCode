@@ -53,7 +53,7 @@ class PathLoader:
 
 
         rospy.loginfo(f"Publishing {self.auto_name}'s path for the {alliance.name} alliance")
-        os.chdir("/home/ubuntu/2023RobotCode/zebROS_ws/src/auto_node/paths")
+        os.chdir("/home/ubuntu/900RobotCode/zebROS_ws/src/auto_node/paths")
         files = os.listdir(".")
         #print(f"Files {files}")
 

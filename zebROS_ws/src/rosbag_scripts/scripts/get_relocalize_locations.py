@@ -64,7 +64,7 @@ y = [loc[1] for loc in locations]
 # Make the heatmap opacity 0.5, and overlay the map of the field on top of it
 # The map is located at /home/ubuntu/2023RobotCode/zebROS_ws/src/controller_node/maps/crescendo_field.png
 
-img = plt.imread("/home/ubuntu/2023RobotCode/zebROS_ws/src/controller_node/maps/crescendo_field.png")
+img = plt.imread("/home/ubuntu/900RobotCode/zebROS_ws/src/controller_node/maps/crescendo_field.png")
 
 plt.imshow(img, extent=[0, 16.54, 0, 8.21])
 plt.scatter(x, y, alpha=0.5) # hist2d , bins=100, norm=matplotlib.colors.LogNorm(), cmap='Greys'

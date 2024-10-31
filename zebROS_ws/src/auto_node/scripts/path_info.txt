@@ -1,3 +1,0 @@
-Last paths regenerated at 2024-10-21 22:22:28.393473
- Using /home/ubuntu/.2023RobotCode.readonly/zebROS_ws/src/auto_node/paths dir
-['2025_4_Note.traj']

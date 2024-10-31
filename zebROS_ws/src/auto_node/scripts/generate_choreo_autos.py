@@ -10,7 +10,7 @@ from tf import transformations
 
 print("SHOULD BE RUN FROM CMAKE!!")
 
-os.chdir("/home/ubuntu/2023RobotCode/zebROS_ws/src/auto_node/scripts")
+os.chdir("/home/ubuntu/900RobotCode/zebROS_ws/src/auto_node/scripts")
 with open("path_info.txt", "w+") as f:
     f.write(f"Last paths regenerated at {datetime.datetime.now()}\n ")
     os.chdir("../paths")

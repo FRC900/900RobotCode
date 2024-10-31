@@ -149,11 +149,11 @@ add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
 add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(publish_pid_cmd_vel_node ${catkin_LIBRARIES})
 
+if (0)
 add_executable(path_to_apriltag src/path_to_apriltag.cpp)
 target_link_libraries(path_to_apriltag ${catkin_LIBRARIES})
 add_dependencies(path_to_apriltag ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-if (0)
 # 2023 actionlib servers
 add_executable(align_and_place_grid src/2023_align_and_place_grid.cpp)
 target_link_libraries(align_and_place_grid ${catkin_LIBRARIES})

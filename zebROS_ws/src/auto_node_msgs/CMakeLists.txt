@@ -9,15 +9,10 @@ project(auto_node_msgs)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
-  actionlib
-  actionlib_msgs
-  behavior_actions
-  geometry_msgs
   path_follower_msgs
   message_generation
   rospy
   std_msgs
-  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -84,7 +79,7 @@ add_message_files(
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
-generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs path_follower_msgs)
+generate_messages(DEPENDENCIES path_follower_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -116,12 +111,11 @@ generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs pa
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES auto_node
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+   #INCLUDE_DIRS include
+   #LIBRARIES behaviors
+   CATKIN_DEPENDS path_follower_msgs std_msgs
+   DEPENDS 
 )
-
 ###########
 ## Build ##
 ###########
