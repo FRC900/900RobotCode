@@ -54,6 +54,7 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>frc_utils</exec_depend>
   <exec_depend>auto_node_msgs</exec_depend>
+  <exec_depend>behavior_actions</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
