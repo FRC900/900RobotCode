@@ -1,19 +1,20 @@
 #ifndef GPU_APRILTAG_IMPL_INC__
 #define GPU_APRILTAG_IMPL_INC__
+#include <vector>
 #include "gpu_apriltag/gpu_apriltag_result.h"
 
 #include <sensor_msgs/CameraInfo.h>
 #include "frc971/orin/apriltag.h"
+#include "frc971/orin/apriltag_input_format.h"
 #include "third_party/apriltag/apriltag_pose.h"
 #include "third_party/apriltag/apriltag.h"
 namespace frc971_gpu_apriltag
 {
-template <frc971::apriltag::InputFormat INPUT_FORMAT>
 class FRC971GpuApriltagDetectorImpl
 {
 public:
-    
-    FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info);
+    FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info,
+                                  const frc971::apriltag::InputFormat input_format);
     virtual ~FRC971GpuApriltagDetectorImpl();
     void Detect(std::vector<GpuApriltagResult> &results,
                 std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
@@ -32,7 +33,7 @@ private:
     frc971::apriltag::CameraMatrix distortion_camera_matrix_;
     frc971::apriltag::DistCoeffs distortion_coefficients_;
 
-    frc971::apriltag::GpuDetector<INPUT_FORMAT> gpu_detector_;
+    frc971::apriltag::GpuDetector gpu_detector_;
     cv::Size image_size_;
 
     size_t rejections_{0};

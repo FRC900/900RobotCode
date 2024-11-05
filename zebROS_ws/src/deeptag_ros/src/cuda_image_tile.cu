@@ -74,19 +74,19 @@ static cudaError_t launchImageTile(const void *input,
 	const dim3 gridDim(iDivUp(outputSize.x, blockDim.x), iDivUp(outputSize.y, blockDim.y));
 
 	//added BGR options
-	if ((format == IMAGE_RGB8) || (format == IMAGE_BGR8))
+	if ((format == imageFormat::IMAGE_RGB8) || (format == imageFormat::IMAGE_BGR8))
 	{
 		gpuImageTile<uchar3, isBGR><<<gridDim, blockDim, 0, stream>>>((uchar3 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
 	}
-	else if ((format == IMAGE_RGBA8) || (format == IMAGE_BGRA8))
+	else if ((format == imageFormat::IMAGE_RGBA8) || (format == imageFormat::IMAGE_BGRA8))
 	{
 		gpuImageTile<uchar4, isBGR><<<gridDim, blockDim, 0, stream>>>((uchar4 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
 	}
-	else if ((format == IMAGE_RGB32F) || (format == IMAGE_BGR32F))
+	else if ((format == imageFormat::IMAGE_RGB32F) || (format == imageFormat::IMAGE_BGR32F))
 	{
 		gpuImageTile<float3, isBGR><<<gridDim, blockDim, 0, stream>>>((float3 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
 	}
-	else if ((format == IMAGE_RGBA32F) || (format == IMAGE_BGRA32F))
+	else if ((format == imageFormat::IMAGE_RGBA32F) || (format == imageFormat::IMAGE_BGRA32F))
 	{
 		gpuImageTile<float4, isBGR><<<gridDim, blockDim, 0, stream>>>((float4 *)input, inputSize, output, outputSize, shift, multiplier, range.x);
 	}

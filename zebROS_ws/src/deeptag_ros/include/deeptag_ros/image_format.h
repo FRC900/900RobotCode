@@ -1,8 +1,9 @@
 #ifndef IMAGE_FORMAT_INC__
 #define IMAGE_FORMAT_INC__
 
-enum imageFormat
+enum class imageFormat
 {
+    IMAGE_MONO8,
     IMAGE_RGB8,
     IMAGE_BGR8,
     IMAGE_RGBA8,

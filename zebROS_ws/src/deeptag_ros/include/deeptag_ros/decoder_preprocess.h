@@ -17,15 +17,23 @@ class DecoderPreprocess
     DecoderPreprocess &operator=(DecoderPreprocess &&other) noexcept = default;
 
     virtual ~DecoderPreprocess();
-    cudaError_t decoderPreprocessRGB(float *hH, void *input, imageFormat format, size_t inputWidth, size_t inputHeight,
+    cudaError_t decoderPreprocessRGB(const float *hH, void *input, imageFormat format, size_t inputWidth, size_t inputHeight,
                                      float *output, size_t outputWidth, size_t outputHeight,
                                      const float2 &range, cudaStream_t stream);
     cudaError_t decoderPreprocessBGR(const float *hH, void *input, imageFormat format, size_t inputWidth, size_t inputHeight,
                                      float *output, size_t outputWidth, size_t outputHeight,
                                      const float2 &range, cudaStream_t stream);
+    // Preprocess from grayscale image for input into net expecting grayscale image
+    cudaError_t decoderPreprocessGray(const float *hH, void *input, imageFormat format, size_t inputWidth, size_t inputHeight,
+                                      float *output, size_t outputWidth, size_t outputHeight,
+                                      const float2 &range, cudaStream_t stream);
+    // Preprocess from grayscale image for input into net expecting three channel image
+    cudaError_t decoderPreprocessGrayForThreeChannelOutput(const float *hH, void *input, imageFormat format, size_t inputWidth, size_t inputHeight,
+                                                           float *output, size_t outputWidth, size_t outputHeight,
+                                                           const float2 &range, cudaStream_t stream);
 
 private:
-    template <bool isBGR>
+    template <bool isBGR, bool isGray, bool threeOutputChannels>
     cudaError_t launchDecoderPreprocess(const float *hH, void *input, imageFormat format, size_t inputWidth, size_t inputHeight,
                                         float *output, size_t outputWidth, size_t outputHeight,
                                         const float2 &range, cudaStream_t stream);

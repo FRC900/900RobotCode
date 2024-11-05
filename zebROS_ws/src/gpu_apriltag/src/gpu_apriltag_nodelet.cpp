@@ -44,23 +44,26 @@ public:
 
         if (!detector_)
         {
+            frc971::apriltag::InputFormat input_format;
             if (cv_frame->encoding == sensor_msgs::image_encodings::MONO8)
             {
-                detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::Mono8>>(camera_info);
+                 input_format = frc971::apriltag::InputFormat::Mono8;
             }
             else if (cv_frame->encoding == sensor_msgs::image_encodings::BGR8)
             {
-                detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGR8>>(camera_info);
+                 input_format = frc971::apriltag::InputFormat::BGR8;
             }
             else if (cv_frame->encoding == sensor_msgs::image_encodings::BGRA8)
             {
-                detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGRA8>>(camera_info);
+                 input_format = frc971::apriltag::InputFormat::BGRA8;
             }
             else
             {
                 ROS_ERROR_STREAM_THROTTLE(1.0, "Unsupported image encoding " << cv_frame->encoding);
                 return;
             }
+
+            detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector>(camera_info, input_format);
         }
 
         std::vector<GpuApriltagResult> results;
@@ -169,7 +172,7 @@ private:
     image_transport::Publisher pub_debug_image_;
     cv_bridge::CvImage debug_image_;
 
-    std::unique_ptr<frc971_gpu_apriltag::FRC971GpuApriltagDetectorBase> detector_;
+    std::unique_ptr<frc971_gpu_apriltag::FRC971GpuApriltagDetector> detector_;
 
     ddynamic_reconfigure::DDynamicReconfigure ddr_;
     ros::ServiceServer save_input_image_srv_;

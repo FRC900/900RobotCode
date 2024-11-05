@@ -79,7 +79,7 @@ void DetectionEngineCalibrator::blobFromGpuImageWrappers(const std::vector<GpuIm
         // which might be a bug, but since we're using their
         // trained model we're stuck with their channel input order
         cudaSafeCall(cudaSSDPreprocessRGB(batchInput[i].getDataPtr(),
-                                          IMAGE_RGB8,
+                                          imageFormat::IMAGE_RGB8,
                                           batchInputSize,
                                           static_cast<float *>(m_deviceInput) + i * imgSize,
                                           ushort2{static_cast<unsigned short>(m_inputW),
@@ -257,7 +257,7 @@ void DetectionEngine<NUM_TILES, USE_SCALED_IMAGE>::blobFromGpuMats(const std::ve
         for (size_t tile = 0; tile < NUM_TILES; tile++)
         {
             cudaSafeCall(cudaImageTileRGB(batchInput[0].getDataPtr(),
-                                          IMAGE_RGB8,
+                                          imageFormat::IMAGE_RGB8,
                                           batchInputSize,
                                           static_cast<float *>(destBuffer) + tile * imgSize,
                                           outputSize,
@@ -277,7 +277,7 @@ void DetectionEngine<NUM_TILES, USE_SCALED_IMAGE>::blobFromGpuMats(const std::ve
         // trained model we're stuck with their channel input order
         // Run this in the main detection stream
         cudaSafeCall(cudaSSDPreprocessRGB(batchInput[0].getDataPtr(),
-                                          IMAGE_RGB8,
+                                          imageFormat::IMAGE_RGB8,
                                           batchInputSize,
                                           static_cast<float *>(destBuffer) + NUM_TILES * imgSize,
                                           outputSize,

@@ -88,7 +88,7 @@ void ConfidenceFilter<OUTPUT, GRID_DIM, PREDICATE>::detect(const std::array<cons
 // Have to wait until a queued async D2H memcpy into m_hOutputCountPtr finishes
 // before allowing host to get the number of output which passed filtering
 template <class OUTPUT, class GRID_DIM, class PREDICATE>
-const tcb::span<const OUTPUT> ConfidenceFilter<OUTPUT, GRID_DIM, PREDICATE>::getOutput()
+tcb::span<const OUTPUT> ConfidenceFilter<OUTPUT, GRID_DIM, PREDICATE>::getOutput()
 {
     cudaSafeCall(cudaEventSynchronize(m_outputReadyEvent));
     return tcb::span<const OUTPUT>(m_dOutput, m_hOutputCountPtr[0]);

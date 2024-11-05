@@ -71,17 +71,19 @@ size_t GpuImageWrapper::bytesPerPixel(const imageFormat format)
 {
     switch(format)
     {
-    case IMAGE_RGB8:
-    case IMAGE_BGR8:
+    case imageFormat::IMAGE_MONO8:
+        return 1;
+    case imageFormat::IMAGE_RGB8:
+    case imageFormat::IMAGE_BGR8:
         return 3;
-    case IMAGE_RGBA8:
-    case IMAGE_BGRA8:
+    case imageFormat::IMAGE_RGBA8:
+    case imageFormat::IMAGE_BGRA8:
         return 4;
-    case IMAGE_RGB32F:
-    case IMAGE_BGR32F:
+    case imageFormat::IMAGE_RGB32F:
+    case imageFormat::IMAGE_BGR32F:
         return 3 * sizeof(float);
-    case IMAGE_RGBA32F:
-    case IMAGE_BGRA32F:
+    case imageFormat::IMAGE_RGBA32F:
+    case imageFormat::IMAGE_BGRA32F:
         return 4 * sizeof(float);
     }
     std::cout << "Invalid image format ( " << static_cast<int>(format) << " in " << __PRETTY_FUNCTION__ << std::endl;

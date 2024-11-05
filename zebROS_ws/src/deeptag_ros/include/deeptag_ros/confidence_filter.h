@@ -44,7 +44,7 @@ public:
                 cudaStream_t cudaStream, 
                 const bool forceCudaGraphRegen);
 
-    const tcb::span<const OUTPUT> getOutput();
+    tcb::span<const OUTPUT> getOutput();
 
 private:
     bool reallocBuffers(const size_t length, cudaStream_t cudaStream);

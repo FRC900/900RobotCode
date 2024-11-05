@@ -210,7 +210,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         // then split channels, convert to float.
         cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessRGB(m_hH[batchIdx],
                                                                         batchInput[0].getDataPtr(),
-                                                                        IMAGE_RGB8,
+                                                                        imageFormat::IMAGE_RGB8,
                                                                         batchInput[0].cols(),
                                                                         batchInput[0].rows(),
                                                                         static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,

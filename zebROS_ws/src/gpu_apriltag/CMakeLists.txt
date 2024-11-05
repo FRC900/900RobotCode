@@ -38,6 +38,8 @@ find_library(LIBNVTOOLSEXT nvToolsExt PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORI
 # find_package(glog REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(glog REQUIRED libglog)
+find_package(GTest REQUIRED)
+find_package(absl REQUIRED)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -148,6 +150,7 @@ include_directories(
   ${FRC971}
   ${FRC971}/third_party/apriltag
   ${glog_INCLUDE_DIRS}
+  ${absl_INCLUDE_DIRS}
 )
 
 set_source_files_properties(${FRC971}/frc971/orin/apriltag.cc PROPERTIES LANGUAGE CUDA)

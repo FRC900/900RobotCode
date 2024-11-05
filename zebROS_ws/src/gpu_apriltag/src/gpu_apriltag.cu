@@ -1,26 +1,28 @@
+#ifndef __host__
+#define __host__
+#endif
+#ifndef __device__
+#define __device__
+#endif
+
+#include <array>
+#include <vector>
 #include "gpu_apriltag/gpu_apriltag.h"
 #include "gpu_apriltag/gpu_apriltag_impl.h"
 
 namespace frc971_gpu_apriltag
 {
-    template <frc971::apriltag::InputFormat INPUT_FORMAT>
-    FRC971GpuApriltagDetector<INPUT_FORMAT>::FRC971GpuApriltagDetector(const sensor_msgs::CameraInfo::ConstPtr &camera_info)
-        : impl_{std::make_unique<FRC971GpuApriltagDetectorImpl<INPUT_FORMAT>>(camera_info)}
+    FRC971GpuApriltagDetector::FRC971GpuApriltagDetector(const sensor_msgs::CameraInfo::ConstPtr &camera_info, frc971::apriltag::InputFormat input_format)
+        : impl_{std::make_unique<FRC971GpuApriltagDetectorImpl>(camera_info, input_format)}
     {
     }
-    template <frc971::apriltag::InputFormat INPUT_FORMAT>
-    FRC971GpuApriltagDetector<INPUT_FORMAT>::~FRC971GpuApriltagDetector() = default;
+    FRC971GpuApriltagDetector::~FRC971GpuApriltagDetector() = default;
 
-    template <frc971::apriltag::InputFormat INPUT_FORMAT>
-    void FRC971GpuApriltagDetector<INPUT_FORMAT>::Detect(std::vector<GpuApriltagResult> &results,
-                                                              std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
-                                                              std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
-                                                              const cv::Mat &color_image)
+    void FRC971GpuApriltagDetector::Detect(std::vector<GpuApriltagResult> &results,
+                                           std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,
+                                           std::vector<std::array<cv::Point2d, 4>> &rejected_noconverge_corners,
+                                           const cv::Mat &color_image)
     {
         impl_->Detect(results, rejected_margin_corners, rejected_noconverge_corners, color_image);
     }
-
-    template class FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::Mono8>;
-    template class FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGR8>;
-    template class FRC971GpuApriltagDetector<frc971::apriltag::InputFormat::BGRA8>;
-}
+} // namespace
