@@ -74,6 +74,7 @@ sudo apt install -y \
 	ros-noetic-controller-manager \
 	ros-noetic-control-msgs \
 	ros-noetic-cv-bridge \
+	ros-noetic-cv-camera \
 	ros-noetic-ecl-geometry \
 	ros-noetic-grid-map-core \
 	ros-noetic-grid-map-cv \

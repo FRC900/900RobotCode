@@ -416,7 +416,7 @@ cd /home/ubuntu &&\
     cd abseil-cpp &&\
     mkdir build &&\
     cd build &&\
-    cmake -DABSL_BUILD_TESTING=OFF -DABSL_USE_GOOGLETEST_HEAD=ON -DCMAKE_CXX_STANDARD=17 -GNinja .. &&\
+    cmake -DABSL_BUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DABSL_USE_GOOGLETEST_HEAD=ON -DCMAKE_CXX_STANDARD=17 -GNinja .. &&\
     ninja &&\
     sudo ninja install &&\
     cd /home/ubuntu && \
