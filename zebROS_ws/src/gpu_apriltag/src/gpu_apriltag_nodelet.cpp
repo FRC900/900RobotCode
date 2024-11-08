@@ -62,6 +62,11 @@ public:
                 ROS_ERROR_STREAM_THROTTLE(1.0, "Unsupported image encoding " << cv_frame->encoding);
                 return;
             }
+            if (camera_info->height == 0 || camera_info->width == 0)
+            {
+                ROS_ERROR_STREAM_THROTTLE(1.0, "Camera info not available - make sure .yaml file is loaded from ~/.ros/camera_info/filename.yaml.");
+                return;
+            }
 
             detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector>(camera_info, input_format);
         }

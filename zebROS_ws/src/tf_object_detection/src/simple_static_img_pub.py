@@ -28,7 +28,7 @@ else:
 
 camera_name = "ov2311"
 camera_name = rospy.get_param("~camera_name", camera_name)  
-camera_info_manager = CameraInfoManager(camera_name)
+camera_info_manager = CameraInfoManager(camera_name, 'file:///home/ubuntu/900RobotCode/scripts/jetson_install/calibration_files/${NAME}.yaml')
 camera_info_manager.loadCameraInfo()
 camera_info_msg = camera_info_manager.getCameraInfo()
 camera_info_msg.header.frame_id = camera_name

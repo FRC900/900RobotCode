@@ -201,6 +201,10 @@ target_link_libraries(${PROJECT_NAME}
   ${CUDA_LIBRARIES} 
   ${LIBNVTOOLSEXT}
   ${glog_LIBRARIES}
+  # absl::flags_internal
+  /usr/local/lib/libabsl_flags_internal.a
+  absl::flags
+  absl::log
 )
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
   # Xavier and Orin ... Xavier can probably be disabled before too long
