@@ -36,4 +36,4 @@ teraranger_description
 turing_smart_screen
 ydlidar
 zed-ros-wrapper
-
+*.egg-info

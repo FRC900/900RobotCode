@@ -34,6 +34,8 @@
     <param name="frame_id"                value="$(arg camera_name)" />
     <param name="camera_name"             value="$(arg camera_name)" />
     <param name="cv_cap_prop_convert_rgb" value="0" />
+    <!-- TODO - move calibration files into a packae so we can do something like $(find calibration_files) as the base rather than hardcoding /home/ubuntu? -->
+    <param name="camera_info_url"         value="file:///home/ubuntu/900RobotCode/scripts/jetson_install/calibration_files/$(arg camera_name).yaml" />
     <!-- <param name="image_width"             value="1600" /> -->
     <!-- <param name="image_height"            value="1300" /> -->
     <!-- <param name="cv_cap_prop_fourcc" value="BA81" /> -->
@@ -56,7 +58,8 @@
   ========== GPU Apriltag Detector
   -->
   <group ns="apriltag_detection_$(arg camera_name)" if="$(eval run_gpu_apriltag)" >
-    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" launch-prefix="gdb -ex run --args ">
+    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" >
+    <!-- launch-prefix="gdb -ex run - -args "> -->
       <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
       <!-- Match tag topic to CPU apriltag detection topic names -->
       <remap from="/apriltag_$(arg camera_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg camera_name)/tag_detection_msg"/>

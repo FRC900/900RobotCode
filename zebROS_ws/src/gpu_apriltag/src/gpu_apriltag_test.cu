@@ -16,12 +16,10 @@ public:
 }
 int main(void)
 {
-
-frc971_gpu_apriltag::FRC971GpuApriltagNodelet nodelet;
-nodelet.onInit();
-sensor_msgs::ImageConstPtr image;
-sensor_msgs::CameraInfoConstPtr camera_info;
-nodelet.callback(image, camera_info);
-return 0;
-
+    frc971_gpu_apriltag::FRC971GpuApriltagNodelet nodelet;
+    nodelet.onInit();
+    sensor_msgs::ImageConstPtr image;
+    sensor_msgs::CameraInfoConstPtr camera_info;
+    nodelet.callback(image, camera_info);
+    return 0;
 }
