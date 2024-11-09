@@ -3,7 +3,7 @@
 
 #include <stdint.h>        // for int32_t
 #include "driver_types.h"  // for cudaStream_t
-#include "span.hpp"        // for span
+#include "deeptag_ros/span.hpp"        // for span
 
 // Class to handle Softmax ops.
 // Input is result from model, all bg scores (h x w) followed by all fg scores for grid

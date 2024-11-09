@@ -1,7 +1,7 @@
 #ifndef CONFIDENCE_FILTER_INC__
 #define CONFIDENCE_FILTER_INC__
 
-#include "span.hpp"
+#include "deeptag_ros/span.hpp"
 
 #ifndef __host__
 #define __host__
