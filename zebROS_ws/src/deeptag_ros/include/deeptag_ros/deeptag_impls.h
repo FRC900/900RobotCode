@@ -1,13 +1,13 @@
 #ifndef DEEPTAG_IMPLS_INC__
 #define DEEPTAG_IMPLS_INC__
 
-#include "cuda_event_timing.h"
-#include "deeptag.h"
-#include "detection_engine.h"
-#include "marker_dict.h"
-#include "pose_estimator.h"
-#include "stag_decoder.h"
-#include "stag_detector.h"
+#include "deeptag_ros/cuda_event_timing.h"
+#include "deeptag_ros/deeptag.h"
+#include "deeptag_ros/detection_engine.h"
+#include "deeptag_ros/marker_dict.h"
+#include "deeptag_ros/pose_estimator.h"
+#include "deeptag_ros/stag_decoder.h"
+#include "deeptag_ros/stag_detector.h"
 
 class DeepTagImplBase
 {

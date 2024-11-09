@@ -8,7 +8,7 @@
 template <bool BOOL> struct BoolTag;
 
 #undef  DEBUG
-#include "debug.h"
+#include "deeptag_ros/debug.h"
 
 template <size_t GRID_SIZE, class UNIT_TAG_TYPE, size_t STEP_ELEM_NUM, bool IS_RANSAC_SOLVEPNP, bool IS_INVERSE_X = true>
 class PoseEstimator

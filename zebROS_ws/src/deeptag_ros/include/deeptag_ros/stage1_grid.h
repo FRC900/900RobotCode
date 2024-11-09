@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "vector_types.h"
-#include "grid_prior_value.h"
+#include "deeptag_ros/grid_prior_value.h"
 
 #ifndef __host__
 #define __host__

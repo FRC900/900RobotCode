@@ -190,8 +190,8 @@ std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> STagDecoder<MARKER_DICT, GRID_
                 if (iter == 0)
                 {
                     ret.push_back(std::array<DecodedTag<GRID_SIZE>, 2>{});
-                    ret[retIdx][0].m_HCrop = m_decodeEngine->getH(ii);
                 }
+                ret[retIdx][iter].m_HCrop = m_decodeEngine->getH(ii);
                 ret[retIdx][iter].m_isValid = stage2KeypointGroups[retIdx].size() > 0;
 #ifdef DEBUG
                 std::cout << "iter = " << iter << " ret[" << retIdx << "].m_isValid = " << ret[retIdx].m_isValid << std::endl;
@@ -361,6 +361,12 @@ ushort2 STagDecoder<MARKER_DICT, GRID_SIZE>::getModelSize(void) const
 {
     auto inputDim = m_decodeEngine->getInputDims()[0];
     return ushort2{inputDim.d[2], inputDim.d[3]};
+}
+
+template <class MARKER_DICT, size_t GRID_SIZE>
+cudaStream_t STagDecoder<MARKER_DICT, GRID_SIZE>::getCudaStream(void)
+{
+    return m_decodeEngine->getCudaStream();
 }
 
 #include "deeptag_ros/marker_dict.h"

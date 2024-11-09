@@ -151,8 +151,8 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
 #ifdef DEBUG
     static int callNum = 0;
 #endif
-    constexpr size_t outputHW = 256;
-    constexpr size_t imgSize = outputHW * outputHW * 3;
+    const size_t outputHW = batchInput[0].cols(); // This assumes a square image
+    const size_t imgSize = outputHW * outputHW * batchInput[0].channels();
     const size_t thisBatchSize = std::min(m_rois.size(), static_cast<size_t>(m_options.maxBatchSize));
     //std::cout << "thisBatchSize = " << thisBatchSize << std::endl;
     // Get crop images ordered corners
@@ -208,24 +208,39 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         // buffer output
         // Needs to pick appropriate input pixel for each output pixel, possible with bilinear filtering
         // then split channels, convert to float.
-        cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessRGB(m_hH[batchIdx],
-                                                                        batchInput[0].getDataPtr(),
-                                                                        imageFormat::IMAGE_RGB8,
-                                                                        batchInput[0].cols(),
-                                                                        batchInput[0].rows(),
-                                                                        static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,
-                                                                        outputHW,
-                                                                        outputHW,
-                                                                        float2{0., 1.},
-                                                                        m_preprocCudaStreams[batchIdx]));
-
+        if (batchInput[0].channels() == 1)
+        {
+            cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessGray(m_hH[batchIdx],
+                                                                             batchInput[0].getDataPtr(), // TODO - should this be batchInput[batchIdx] instead?
+                                                                             imageFormat::IMAGE_MONO8,
+                                                                             batchInput[0].cols(),
+                                                                             batchInput[0].rows(),
+                                                                             static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,
+                                                                             outputHW,
+                                                                             outputHW,
+                                                                             float2{0., 1.},
+                                                                             m_preprocCudaStreams[batchIdx]));
+        }
+        else
+        {
+            cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessRGB(m_hH[batchIdx],
+                                                                            batchInput[0].getDataPtr(), // TODO - should this be batchInput[batchIdx] instead?
+                                                                            imageFormat::IMAGE_RGB8,
+                                                                            batchInput[0].cols(),
+                                                                            batchInput[0].rows(),
+                                                                            static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,
+                                                                            outputHW,
+                                                                            outputHW,
+                                                                            float2{0., 1.},
+                                                                            m_preprocCudaStreams[batchIdx]));
+        }
         cudaSafeCall(cudaEventRecord(m_preprocCudaEvents[batchIdx], m_preprocCudaStreams[batchIdx]));
 #ifdef DEBUG
         cv::Mat m = getDebugImage(batchIdx);
         std::stringstream s;
         s << "C" << callNum << "B" << batchIdx;
         cv::imshow(s.str().c_str(), m);
-        cv::imwrite(s.str() + ".png", m);
+        // cv::imwrite(s.str() + ".png", m);
 #endif
     }
     for (size_t batchIdx = 0; batchIdx < thisBatchSize; batchIdx++)
@@ -235,7 +250,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
 
 #ifdef DEBUG
     callNum += 1;
-    constexpr size_t channelStride = outputHW * outputHW;
+    const size_t channelStride = outputHW * outputHW;
 #if 0
     std::cout << " imgSize = " << imgSize << std::endl;
     cv::Mat hR(outputHW, outputHW, CV_32FC1);
@@ -282,7 +297,7 @@ nvinfer1::Dims DecoderEngine::inputDimsFromInputImage(const GpuImageWrapper &gpu
     // Decoder is fixed at 3, 256, 256
     return nvinfer1::Dims{4,
                           {modelInputDims.d[0],
-                          3,
+                          static_cast<int32_t>(gpuImg.channels()),
                           256,
                           256}};
 }

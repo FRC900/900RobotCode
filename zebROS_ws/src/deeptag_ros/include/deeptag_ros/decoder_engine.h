@@ -1,10 +1,10 @@
 #ifndef DECODER_ENGINE_INC__
 #define DECODER_ENGINE_INC__
 
-#include "span.hpp"
+#include "deeptag_ros/span.hpp"
 
-#include "decoder_preprocess.h"
-#include "engine.h"
+#include "deeptag_ros/decoder_preprocess.h"
+#include "deeptag_ros/engine.h"
 
 class DecoderEngineCalibrator : public Int8EntropyCalibrator2
 {

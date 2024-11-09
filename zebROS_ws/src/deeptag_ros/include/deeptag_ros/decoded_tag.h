@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 #include "opencv2/core.hpp"
-#include "points_and_ids.h"
+#include "deeptag_ros/points_and_ids.h"
 
 template <size_t GRID_SIZE>
 class DecodedTag
