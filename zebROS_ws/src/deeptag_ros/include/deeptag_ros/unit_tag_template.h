@@ -17,8 +17,7 @@
 #endif
 
 class Stage2KeypointGroup;
-struct PointsAndIDs;
-
+template <size_t GRID_SIZE> struct PointsAndIDs;
 
 template <size_t GRID_SIZE, class UNIT_TAG_CLASS, bool IS_NEED_MAIN_IDX, size_t STEP_ELEM_NUM, size_t KPT_START_IDX>
 class UnitTagTemplate
@@ -37,11 +36,11 @@ public:
     // mainIdx is the orientation of the tag, in 90* increments (0-3)
     // the two outputs are the rotated fine grid points (points including tag borders),
     // and rotated keypoints (just the "data" bits of the tag)
-    template <typename T>
-    void reorderPointsWithMainIdx(std::array<T, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &fineGridPointsRotated,
-                                  std::array<T, GRID_SIZE * GRID_SIZE> &keypointsRotated,
+    template <typename T, typename T1>
+    void reorderPointsWithMainIdx(T &fineGridPointsRotated,
+                                  T1 &keypointsRotated,
                                   const size_t mainIdx,
-                                  const std::array<T, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &fineGridPoints) const
+                                  const T &fineGridPoints) const
     {
         constexpr auto N = GRID_SIZE + 2;
         auto reorderedXYs = m_unitTags.getFineGridPoints(mainIdx, false, STEP_ELEM_NUM);
@@ -67,6 +66,26 @@ public:
 #endif
         }
     }
+
+    void reorderPointsWithMainIdx(PointsAndIDs<GRID_SIZE + 2> &fineGridPointsRotated,
+                                  const size_t mainIdx,
+                                  const PointsAndIDs<GRID_SIZE + 2> &fineGridPoints) const
+    {
+        constexpr auto N = GRID_SIZE + 2;
+        const auto reorderedXYs = m_unitTags.getFineGridPoints(mainIdx, false, STEP_ELEM_NUM);
+        for (size_t i = 0; i < fineGridPointsRotated.size(); i++)
+        {
+            const auto &p = reorderedXYs[i];
+            const size_t idx = p.y / STEP_ELEM_NUM * N + p.x / STEP_ELEM_NUM;
+            fineGridPointsRotated.m_point[i] = fineGridPoints.m_point[idx];
+            fineGridPointsRotated.m_id[i] = fineGridPoints.m_id[idx];
+            fineGridPointsRotated.m_score[i] = fineGridPoints.m_score[idx];
+#ifdef DEBUG
+            std::cout << "fineGridPointsRotated[" << i << "] = " << fineGridPointsRotated[i] << std::endl;
+#endif
+        }
+    }
+    #if 0
     template <typename T>
     void reorderPointsWithMainIdx(std::vector<T> &fineGridPointsRotated,
                                   std::vector<T> &keypointsRotated,
@@ -93,16 +112,17 @@ public:
             keypointsRotated.push_back(fineGridPoints[idx]);
         }
     }
+    #endif
 
     void matchFineGrid(double &matchRatio,
-                       std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &fineGridPointsAndIDs,
+                       PointsAndIDs<GRID_SIZE + 2> &bestOrderedPoints,
                        const tcb::span<const Stage2KeypointGroup> &stage2KeypointGroups,
                        const cv::Mat &H,
                        const tcb::span<const float2> &stage2PredCorners,
                        const cv::Mat &cameraMatrix,
                        const cv::Mat &distCoeffs) const;
 
-    std::array<cv::Point2d, 4> updateCornersInImage(const std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &orderedPoints,
+    std::array<cv::Point2d, 4> updateCornersInImage(const PointsAndIDs<GRID_SIZE + 2> &orderedPoints,
                                                     const cv::Mat &HCrop,
                                                     const cv::Mat &cameraMatrix,
                                                     const cv::Mat &distCoeffs) const;

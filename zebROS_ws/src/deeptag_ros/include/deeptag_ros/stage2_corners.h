@@ -18,7 +18,7 @@ public:
 
     virtual ~Stage2Corners();
     void compute(const float *input, const tcb::span<const GridPriorValue> &priors, const float centerVariance, cudaStream_t cudaStream);
-    const tcb::span<const float2> getDeviceOutput(void);
+    // const tcb::span<const float2> getDeviceOutput(void);
     const tcb::span<const float2> getHostOutput(void);
 
 private:
