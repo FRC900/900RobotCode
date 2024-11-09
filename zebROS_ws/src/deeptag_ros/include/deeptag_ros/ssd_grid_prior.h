@@ -6,8 +6,8 @@
 #include <vector>
 #include <cuda_runtime.h>
 
-#include "span.hpp"
-#include "ssd_box.h"
+#include "deeptag_ros/span.hpp"
+#include "deeptag_ros/ssd_box.h"
 
 // Class to handle all of the SSDGridPrior ops.
 // Stores the grid priors (a map from model output indexes to image coords) along

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <opencv2/core/types.hpp>  // for Point2d
-#include "span.hpp"
+#include "deeptag_ros/span.hpp"
 
 template <uint32_t BATCH_SIZE> class Stage1GridGroup;
 class Stage1SSDGroup;

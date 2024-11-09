@@ -2,8 +2,8 @@
 #define STAGE2_CORNERS_INC__
 
 #include "cuda_runtime.h"
-#include "grid_prior_value.h"
-#include "span.hpp"
+#include "deeptag_ros/grid_prior_value.h"
+#include "deeptag_ros/span.hpp"
 
 class Stage2Corners
 {
