@@ -221,8 +221,10 @@ std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> STagDecoder<MARKER_DICT, GRID_
                     m_timing.start("stage2_matchfinegrid", m_decodeEngine->getCudaStream());
                     double matchRatio;
                     constexpr auto FINE_GRID_SIZE = MARKER_DICT::getGridSize() + 2;
-                    // std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> orderedFineGridPointsIds;
                     PointsAndIDs <FINE_GRID_SIZE> orderedFineGridPointsIds;
+                    // Assign the points detected in the crop to actual grid
+                    // points in the proposed tag. This is done by matching the
+                    // detected keypoints to the nearest grid points in the tag
                     m_markerDict.getUnitTagTemplate().matchFineGrid(matchRatio,
                                                                     orderedFineGridPointsIds,
                                                                     stage2KeypointGroups[retIdx],
@@ -237,9 +239,9 @@ std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> STagDecoder<MARKER_DICT, GRID_
 #endif
                     if (matchRatio > m_minGridMatchRatio)
                     {
-                        m_timing.start("stage2_fillemptyids", m_decodeEngine->getCudaStream());
+                        // m_timing.start("stage2_fillemptyids", m_decodeEngine->getCudaStream());
                         //fillEmptyIds(orderedFineGridPointsIds, stage2KeypointGroups[retIdx]);
-                        m_timing.end("stage2_fillemptyids");
+                        // m_timing.end("stage2_fillemptyids");
 
                         m_timing.start("stage2_updatecornersinimage", m_decodeEngine->getCudaStream());
                         const auto roiUpdated = m_markerDict.getUnitTagTemplate().updateCornersInImage(orderedFineGridPointsIds,

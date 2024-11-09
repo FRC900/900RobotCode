@@ -173,7 +173,11 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
     cv::Mat inputRoi(4, 2, CV_64FC1);
     for (size_t batchIdx = 0; batchIdx < thisBatchSize; batchIdx++)
     {
-        // std::cout << "batchIdx = " << batchIdx << std::endl;
+        // Create a mapping from the input roi (tag corners) in
+        // the input image to a fixed position in the output image
+        // Assign to a location in the output image with a border
+        // to catch the tag corners even if the initial detection
+        // is off by a bit.
         for (int i = 0; i < 4; i++)
         {
             inputRoi.at<double>(i, 0) = m_rois[batchIdx][i].x;
@@ -193,25 +197,17 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         std::cout << "H = " << std::endl << "\t" << H << std::endl;
         std::cout << "H.inv() = " << std::endl << "\t" << H.inv() << std::endl;
 #endif
-        m_hH[batchIdx][0] = static_cast<float>(H.at<double>(0, 0));
-        m_hH[batchIdx][1] = static_cast<float>(H.at<double>(0, 1));
-        m_hH[batchIdx][2] = static_cast<float>(H.at<double>(0, 2));
-        m_hH[batchIdx][3] = static_cast<float>(H.at<double>(1, 0));
-        m_hH[batchIdx][4] = static_cast<float>(H.at<double>(1, 1));
-        m_hH[batchIdx][5] = static_cast<float>(H.at<double>(1, 2));
-        m_hH[batchIdx][6] = static_cast<float>(H.at<double>(2, 0));
-        m_hH[batchIdx][7] = static_cast<float>(H.at<double>(2, 1));
-        m_hH[batchIdx][8] = static_cast<float>(H.at<double>(2, 2));
-        // Calculate H mat from roi
-        // Get inv transform matrix (from dest to src)
-        // pass this into a kernel which creates output image at requested
-        // buffer output
-        // Needs to pick appropriate input pixel for each output pixel, possible with bilinear filtering
-        // then split channels, convert to float.
+        // Use a separate H matrix for each batch entry since they
+        // might not be copied to the device before the next
+        // iteration writes over the same memory
+        for (size_t i = 0; i < 9; i++)
+        {
+            m_hH[batchIdx][i] = static_cast<float>(H.at<double>(i / 3, i % 3));
+        }
         if (batchInput[0].channels() == 1)
         {
             cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessGray(m_hH[batchIdx],
-                                                                             batchInput[0].getDataPtr(), // TODO - should this be batchInput[batchIdx] instead?
+                                                                             batchInput[0].getDataPtr(),
                                                                              imageFormat::IMAGE_MONO8,
                                                                              batchInput[0].cols(),
                                                                              batchInput[0].rows(),
@@ -224,7 +220,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         else
         {
             cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessRGB(m_hH[batchIdx],
-                                                                            batchInput[0].getDataPtr(), // TODO - should this be batchInput[batchIdx] instead?
+                                                                            batchInput[0].getDataPtr(),
                                                                             imageFormat::IMAGE_RGB8,
                                                                             batchInput[0].cols(),
                                                                             batchInput[0].rows(),
