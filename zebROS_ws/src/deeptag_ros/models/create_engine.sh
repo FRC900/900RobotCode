@@ -2,7 +2,7 @@
 # Then run deeptag_ros and see what specific int8 file name it wants (e.g. Searching for engine file with name: /home/ubuntu/.900RobotCode.readonly/zebROS_ws/src/deeptag_ros/models/arucotag_roi_detector.engine.NVIDIAGeForceRTX4060LaptopGPU.int8.4.4)
 # ln -s arucotag_roi_detector_int8_batch4.engine aruco_roi_detector.engine.NVIDIAGeForceRTX4060LaptopGPU.int8.4.4
 python3 ~/900RobotCode/zebROS_ws/src/tf_object_detection/src/onnx_to_tensorrt.py arucotag_decoder.onnx --output arucotag_decoder.engine --fp16 --batch-size-min=1 --batch-size-max=4 --batch-size=4 --max-workspace-size=1073741824
-python3 ~/900RobotCode/zebROS_ws/src/tf_object_detection/src/onnx_to_tensorrt.py apriltag_decoder_mono.onnx --output apriltag_decoder.engine.NVIDIAGeForceRTX3080Ti.fp16.4.4 --fp16 --batch-size-min=1 --batch-size-max=4 --batch-size=4 --max-workspace-size=1073741824
+python3 ~/900RobotCode/zebROS_ws/src/tf_object_detection/src/onnx_to_tensorrt.py apriltag_decoder_mono.onnx --output apriltag_decoder_mono.engine --fp16 --batch-size-min=1 --batch-size-max=4 --batch-size=4 --max-workspace-size=1073741824
 #python3 ~/900RobotCode/zebROS_ws/src/tf_object_detection/src/onnx_to_tensorrt.py arucotag_decoder.onnx --output arucotag_decoder_int8.engine --fp16 --int8 --batch-size-min=1 --batch-size-max=4 --batch-size=4 --max-workspace-size=1073741824 --dataset-path /home/ubuntu/tensorflow_workspace/2023Game/data/combined_88_test --calibration-file arucotag_decoder.calib
 
 #python3 ~/900RobotCode/zebROS_ws/src/tf_object_detection/src/onnx_to_tensorrt.py arucotag_roi_detector.onnx --output arucotag_roi_detector.engine --fp16 --input-width=1088 --input-width-min=512 --input-width-max=2048 --max-workspace-size=1073741824

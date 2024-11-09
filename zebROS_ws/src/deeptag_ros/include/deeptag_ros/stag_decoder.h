@@ -23,7 +23,7 @@ struct GridPriorValue;
 class Stage2Keypoint;
 class Stage2KeypointGroup;
 class Timings;
-struct PointsAndIDs;
+template <size_t GRID_SIZE> struct PointsAndIDs;
 
 template <class MARKER_DICT, size_t GRID_SIZE>
 class STagDecoder
@@ -50,10 +50,10 @@ public:
 
 private:
     void runInference(std::vector<std::vector<Stage2KeypointGroup>> &stage2KeypointGroupss,
-                      std::vector<std::vector<float2>> &stage2Corners,
+                      std::vector<std::array<float2, 4>> &stage2Corners,
                       const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
                       const tcb::span<const std::array<cv::Point2d, 4>> &rois);
-    void fillEmptyIds(std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &orderedFineGridPointsIds,
+    void fillEmptyIds(PointsAndIDs<GRID_SIZE + 2> &orderedFineGridPointsIds,
                       const tcb::span<const Stage2KeypointGroup> &fineGridPointsWithIdsCandidates) const;
 
     const MARKER_DICT &m_markerDict;

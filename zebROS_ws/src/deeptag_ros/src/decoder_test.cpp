@@ -17,14 +17,14 @@ static cv::Mat getTag(const cv::Mat &image, const size_t outputHW, const cv::Mat
 
 template <size_t GRID_SIZE>
 static void writeStage2Debug(cv::Mat &image,
-                             const std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &keypointsAndIds,
+                             const PointsAndIDs<GRID_SIZE + 2> &keypointsAndIds,
                              const uint16_t tagId)
 {
-    for (size_t kp = 0; kp < keypointsAndIds.size(); kp++)
+    for (size_t kp = 0; kp < keypointsAndIds.m_point.size(); kp++)
     {
-        const auto id = keypointsAndIds[kp].m_id;
+        const auto id = keypointsAndIds.m_id[kp];
         cv::circle(image,
-                   cv::Point2d(keypointsAndIds[kp].m_point.x, keypointsAndIds[kp].m_point.y),
+                   cv::Point2d(keypointsAndIds.m_point[kp].x, keypointsAndIds.m_point[kp].y),
                    3,
                    (id < 0) ?
                         cv::Scalar(255, 0, 0) : (id == 0) ? cv::Scalar(0, 0, 255)
