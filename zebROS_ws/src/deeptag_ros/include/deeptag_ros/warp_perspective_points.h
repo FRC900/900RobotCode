@@ -11,7 +11,7 @@
 #include <vector>                        // for vector
 
 #undef  DEBUG
-#include "debug.h"
+#include "deeptag_ros/debug.h"
 
 std::vector<cv::Point2d> warpPerspectivePts(const cv::Mat &H, const std::vector<cv::Point2d> &points, const double image_scale = 1.);
 

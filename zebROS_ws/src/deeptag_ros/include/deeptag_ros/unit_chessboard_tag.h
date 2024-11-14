@@ -9,7 +9,7 @@
 #include "opencv2/core/mat.hpp"
 #include "opencv2/core/types.hpp"
 
-#include "bool_tag.h"
+#include "deeptag_ros/bool_tag.h"
 
 class UnitChessboardTagBase
 {

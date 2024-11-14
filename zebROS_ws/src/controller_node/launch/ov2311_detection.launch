@@ -58,7 +58,7 @@
   ========== GPU Apriltag Detector
   -->
   <group ns="apriltag_detection_$(arg camera_name)" if="$(eval run_gpu_apriltag)" >
-    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" >
+    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" launch-prefix="compute-sanitizer " >
     <!-- launch-prefix="gdb -ex run - -args "> -->
       <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
       <!-- Match tag topic to CPU apriltag detection topic names -->

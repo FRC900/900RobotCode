@@ -8,7 +8,7 @@
 
 #include "opencv2/core/mat.hpp"
 #include "opencv2/core/types.hpp"
-#include "span.hpp"
+#include "deeptag_ros/span.hpp"
 #include "vector_types.h"
 
 //#define DEBUG
@@ -135,7 +135,7 @@ private:
     const UNIT_TAG_CLASS m_unitTags;
 };
 
-#include "unit_arucotag.h"
+#include "deeptag_ros/unit_arucotag.h"
 template <size_t GRID_SIZE>
 class UnitTagTemplateArucotag : public UnitTagTemplate<GRID_SIZE, UnitArucoTag<GRID_SIZE>, false, 1, 0>
 {
