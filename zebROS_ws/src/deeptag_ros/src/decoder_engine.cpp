@@ -151,7 +151,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
 #ifdef DEBUG
     static int callNum = 0;
 #endif
-    const size_t outputHW = batchInput[0].cols(); // This assumes a square image
+    const size_t outputHW = 256; // This assumes a square image
     const size_t imgSize = outputHW * outputHW * batchInput[0].channels();
     const size_t thisBatchSize = std::min(m_rois.size(), static_cast<size_t>(m_options.maxBatchSize));
     //std::cout << "thisBatchSize = " << thisBatchSize << std::endl;
