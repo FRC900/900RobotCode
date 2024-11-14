@@ -25,14 +25,16 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 # Use the correct version of CUDA
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+find_package(TensorRT REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 find_library(LIBNVTOOLSEXT nvToolsExt PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
@@ -147,6 +149,7 @@ include_directories(
   ../../../cccl/thrust
   ../../../cccl/libcudacxx/include
   ${CUDA_INCLUDE_DIRS}
+  ${TensorRT_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${FRC971}
   ${FRC971}/third_party/apriltag
@@ -168,12 +171,30 @@ add_library(${PROJECT_NAME}
   src/stubs.cpp
   ${FRC971}/frc971/orin/apriltag.cc
   ${FRC971}/frc971/orin/apriltag_detect.cc
+  ${FRC971}/frc971/orin/aruco_dict.cpp
+  ${FRC971}/frc971/orin/confidence_filter.cu
   ${FRC971}/frc971/orin/cuda.cc
   ${FRC971}/frc971/orin/cuda_event_timing.cc
   ${FRC971}/frc971/orin/cuda_utils.cc
   ${FRC971}/frc971/orin/labeling_allegretti_2019_BKE.cc
   ${FRC971}/frc971/orin/line_fit_filter.cc
   ${FRC971}/frc971/orin/threshold.cc
+  ${FRC971}/frc971/orin/engine.cpp
+  ${FRC971}/frc971/orin/decoder_engine.cpp
+  ${FRC971}/frc971/orin/decoder_preprocess.cu
+  ${FRC971}/frc971/orin/decoder_softmax.cu
+  ${FRC971}/frc971/orin/grid_prior.cu
+  ${FRC971}/frc971/orin/marker_dict.cpp
+  ${FRC971}/frc971/orin/stag_decoder.cpp
+  ${FRC971}/frc971/orin/stage2_corners.cu
+  ${FRC971}/frc971/orin/stage2_keypoint_group.cu
+  ${FRC971}/frc971/orin/stage2_keypoint_trust.cu
+  ${FRC971}/frc971/orin/stage2_keypoint.cu
+  ${FRC971}/frc971/orin/suppress_and_average_keypoints.cu
+  ${FRC971}/frc971/orin/unit_arucotag.cpp
+  ${FRC971}/frc971/orin/unit_chessboard_tag.cpp
+  ${FRC971}/frc971/orin/unit_tag_template.cpp
+  ${FRC971}/frc971/orin/warp_perspective_points.cpp
   ${FRC971}/third_party/apriltag/apriltag.c
   ${FRC971}/third_party/apriltag/apriltag_pose.c
   ${FRC971}/third_party/apriltag/apriltag_quad_thresh.c
@@ -200,6 +221,7 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${CUDA_LIBRARIES} 
+  ${TensorRT_LIBRARIES}
   ${LIBNVTOOLSEXT}
   ${glog_LIBRARIES}
   # absl::flags_internal

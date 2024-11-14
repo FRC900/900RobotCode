@@ -65,7 +65,7 @@ void visualizeStage2(cv::Mat &image,
 }
 int main(int argc, char **argv)
 {
-    const auto  cameraMatrix = (cv::Mat_<double>(3, 3) << 128., 0.0, 128., 0.0, 128., 128., 0.0, 0.0, 1.0);
+    const auto cameraMatrix = (cv::Mat_<double>(3, 3) << 128., 0.0, 128., 0.0, 128., 128., 0.0, 0.0, 1.0);
     const auto distCoeffs = (cv::Mat_<double>(1, 8) << 0, 0, 0, 0, 0, 0, 0, 0);
     Timings timings{};
     ArucoMarkerDict<MARKER_GRID_SIZE> arucoMarkerDict{cv::aruco::PREDEFINED_DICTIONARY_NAME::DICT_APRILTAG_36h11};

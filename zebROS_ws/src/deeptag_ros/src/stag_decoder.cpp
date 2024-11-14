@@ -272,7 +272,7 @@ std::vector<std::array<DecodedTag<GRID_SIZE>, 2>> STagDecoder<MARKER_DICT, GRID_
                         m_markerDict.getUnitTagTemplate().reorderPointsWithMainIdx(ret[retIdx][iter].m_keypointsWithIds, // [re] orderedFineGridPointsIds
                                                                                    ret[retIdx][iter].m_mainIdx,
                                                                                    orderedFineGridPointsIds);
-                        warpPerspectivePts(ret[retIdx][0].m_HCrop.inv(), ret[retIdx][iter].m_keypointsWithIds.m_point);
+                        warpPerspectivePts(ret[retIdx][iter].m_HCrop.inv(), ret[retIdx][iter].m_keypointsWithIds.m_point);
                         m_timing.end("stage2_reorderpointswithmainidx");
 #ifdef DEBUG
                         std::cout << "orderedFineGripPointsIds" << std::endl

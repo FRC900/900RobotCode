@@ -4,7 +4,7 @@
 #include <array>
 #include <cstddef>
 
-#include "unit_chessboard_tag.h"
+#include "deeptag_ros/unit_chessboard_tag.h"
 
 template <std::size_t GRID_SIZE>
 std::array<uint8_t, GRID_SIZE * GRID_SIZE> constexpr makeBinaryIDArray()
