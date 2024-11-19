@@ -5,6 +5,8 @@ enable_language(CUDA)
 include("../cmake_modules/CMakeOpt.cmake")
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Ofast -DNDEBUG -Wno-deprecated-declarations")
+add_compile_options(-Wno-deprecated-declarations)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -188,6 +190,7 @@ add_library(${PROJECT_NAME}
   ${FRC971}/frc971/orin/stag_decoder.cpp
   ${FRC971}/frc971/orin/stage2_corners.cu
   ${FRC971}/frc971/orin/stage2_keypoint_group.cu
+  ${FRC971}/frc971/orin/stage2_keypoint_group_trust.cpp
   ${FRC971}/frc971/orin/stage2_keypoint_trust.cu
   ${FRC971}/frc971/orin/stage2_keypoint.cu
   ${FRC971}/frc971/orin/suppress_and_average_keypoints.cu

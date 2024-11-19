@@ -89,10 +89,48 @@ int main(int argc, char **argv)
     rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
     rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
     rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
-    const auto decodedTags = sTagDecoder.detectTags(detectInputs, rois);
-    for (const auto &decodedTag : decodedTags)
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    rois.emplace_back();
+    rois[0][0] = cv::Point2d{.15 * 256, .15 * 256};
+    rois[0][1] = cv::Point2d{.85 * 256, .15 * 256};
+    rois[0][2] = cv::Point2d{.85 * 256, .85 * 256};
+    rois[0][3] = cv::Point2d{.15 * 256, .85 * 256};
+    for (size_t i = 0; i < 1000; i++)
     {
-        std::cout << "Tag " << decodedTag[1].m_tagId << std::endl;
+        const auto decodedTags = sTagDecoder.detectTags(detectInputs, rois);
+        for (const auto &decodedTag : decodedTags)
+        {
+            std::cout << "Tag " << decodedTag[1].m_tagId << std::endl;
+        }
     }
     cv::Mat stage2DebugImg = cpuImg.clone();
     cv::cvtColor(stage2DebugImg, stage2DebugImg, cv::COLOR_GRAY2BGR);
