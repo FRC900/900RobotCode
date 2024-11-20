@@ -10,6 +10,7 @@
   <arg name="cam_pitch"            default="0.0" />
   <arg name="cam_yaw"              default="0.0" />
    -->
+  <arg name="camera_id"            default="0" />
   <arg name="run_camera"           default="true" />
   <arg name="static_image"         default="false" />
   <arg name="run_gpu_apriltag"     default="true" />
@@ -29,7 +30,7 @@
   ========== cv_camera node, run as a nodelet
   -->
   <node pkg="nodelet" type="nodelet" name="$(arg camera_name)" args="load cv_camera/CvCameraNodelet /$(arg nodelet_manager_name)" if="$(eval run_camera)" output="screen" >
-    <param name="device_path"             value="/dev/video0" />
+    <param name="device_path"             value="/dev/video$(arg camera_id)" />
     <param name="rate"                    value="60" />
     <param name="frame_id"                value="$(arg camera_name)" />
     <param name="camera_name"             value="$(arg camera_name)" />
@@ -59,6 +60,7 @@
   -->
   <group ns="apriltag_detection_$(arg camera_name)" if="$(eval run_gpu_apriltag)" >
     <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" >
+     <!-- launch-prefix="compute-sanitizer " > -->
     <!-- launch-prefix="gdb -ex run - -args "> -->
       <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
       <!-- Match tag topic to CPU apriltag detection topic names -->

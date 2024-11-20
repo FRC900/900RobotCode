@@ -377,7 +377,7 @@ rm ${PYTORCH_WHL}
 
 
 export TORCHVISION_VERSION=0.15
-export TORCH_CUDA_ARCH_LIST=7.2;8.7 
+export TORCH_CUDA_ARCH_LIST="7.2;8.7" 
 sudo apt install -y libjpeg-dev libpng-dev zlib1g-dev
 git clone --branch release/${TORCHVISION_VERSION} --recursive --depth=1 https://github.com/pytorch/vision torchvision
 cd torchvision
