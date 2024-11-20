@@ -77,7 +77,15 @@ class ShooterPivotServer2024:
         r = rospy.Rate(50)
 
         initial_motion_magic_value = self.motion_magic_value 
-        self.shooter_pivot_client.call(ShooterPivotSrvRequest(goal.pivot_position))
+        try:
+          self.shooter_pivot_client.call(ShooterPivotSrvRequest(goal.pivot_position))  
+        except:
+            rospy.logerr(f"This is Wrong - 2024_shooter_pivot_server: {goal.pivot_position}")
+            self._result.success = True
+            self.server.set_aborted(self._result)
+            return
+
+        
         self._feedback.percent_complete = 0.0
         self._feedback.is_at_pivot_position = False
         self.server.publish_feedback(self._feedback)
