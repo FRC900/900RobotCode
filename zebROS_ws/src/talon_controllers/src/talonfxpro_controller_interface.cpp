@@ -2420,6 +2420,7 @@ template class TalonFXProMotionMagicVelocityControllerInterface<hardware_interfa
 template class TalonFXProDynamicMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicVoltage, DYNAMIC_MOTION_MAGIC_VOLTAGE_NAME>;
 template class TalonFXProDynamicMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicDutyCycle, DYNAMIC_MOTION_MAGIC_DUTY_CYCLE_NAME>;
 template class TalonFXProDynamicMotionMagicControllerInterface<hardware_interface::talonfxpro::TalonMode::DynamicMotionMagicTorqueCurrentFOC, DYNAMIC_MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME>;
+template class TalonFXProFixedModeControllerInterface<hardware_interface::talonfxpro::TalonMode::MusicTone, MUSIC_TONE_NAME>;
 
 template class TalonFXProFollowerControllerInterfaceBase<false>;
 template class TalonFXProFollowerControllerInterfaceBase<true>;
