@@ -76,9 +76,8 @@
 	-->
 	</group>
 
-	<!-- TODO split teleop into driving and buttons so we can reuse driving? -->
 	<include file="$(find controller_node)/launch/teleop.launch">
-		<arg name="year" value="2023" />
+		<arg name="year" value="9000" />
 		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 	</include>
 
@@ -111,6 +110,7 @@
 		<arg name="run_object_detection" value="true" />
 	</include> -->
 
+<!--
 	<include file="$(find controller_node)/launch/zed_detection.launch">
 		<arg name="run_camera"      value="false" if="$(eval hw_or_sim == 'sim')"/>
 		<arg name="zed_name"        value="zed_back" />
@@ -124,7 +124,7 @@
 		<arg name="cam_yaw"              value="3.14159" />
 		<arg name="run_object_detection" value="false" />
 	</include>
-
+-->
 	<include file="$(find tagslam_launch)/launch/frc9000_tagslam_realtime.launch"/>
 	<include file="$(find behaviors)/launch/2024_align_to_speaker.launch">
 	</include>
