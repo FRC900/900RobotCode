@@ -32,6 +32,7 @@ public:
     void read(const ros::Time& time, const ros::Duration& period);
 
 private:
+    std::string name_;
     std::unique_ptr<hardware_interface::can_bus_status::CANBusStatusHWState> state_;
     std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
     std::unique_ptr<ctre::phoenix6::CANBus> can_bus_;

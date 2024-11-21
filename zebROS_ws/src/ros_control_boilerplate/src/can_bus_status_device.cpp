@@ -5,9 +5,11 @@
 #include "ros_control_boilerplate/can_bus_status_device.h"
 
 CANBusStatusDevice::CANBusStatusDevice(const std::string &name, const double read_hz)
-    : state_{std::make_unique <hardware_interface::can_bus_status::CANBusStatusHWState>(name)}
+    : name_{name}
+    , state_{std::make_unique <hardware_interface::can_bus_status::CANBusStatusHWState>(name_)}
     , interval_counter_{std::make_unique<PeriodicIntervalCounter>(read_hz)}
-    , can_bus_{std::make_unique<ctre::phoenix6::CANBus>(name)}
+    
+    , can_bus_{std::make_unique<ctre::phoenix6::CANBus>(name_)}
 {
     ROS_INFO_STREAM("Loading CAN Bus Status Device " << name << " running at " << read_hz << "Hz");
 }
