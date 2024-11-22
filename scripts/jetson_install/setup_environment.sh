@@ -150,10 +150,12 @@ cd ~/900RobotCode
 
 sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
-sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2025.list "https://deb.ctr-electronics.com/ctr2025.list"
+sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2024.list "https://deb.ctr-electronics.com/ctr2024.list"
+sudo sed -i -e 's/tools stable main/tools jetson main/' /etc/apt/sources.list.d/ctr2024.list
+
 sudo apt update
-sudo apt install -y canivore-usb=1.11
-sudo apt-mark hold canivore-usb
+sudo apt install -y canivore-usb
+#sudo apt-mark hold canivore-usb
 
 # Re-enable if we want to use a canivore usb interface
 # sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
@@ -345,7 +347,7 @@ sudo python3 -m pip install --no-cache-dir --upgrade 'pascal_voc==0.0.7'
 sudo python3 -m pip install --no-cache-dir --upgrade 'matplotlib>=3.2.2'
 sudo python3 -m pip install --no-cache-dir --upgrade 'opencv-python>=4.6.0'
 sudo python3 -m pip install --no-cache-dir --upgrade 'Pillow>=7.1.2'
-sudo python3 -m pip install --no-cache-dir --upgrade 'PyYAML>=5.3.1'
+sudo python3 -m pip install --no-cache-dir --upgrade 'PyYAML==5.4.1'
 sudo python3 -m pip install --no-cache-dir --upgrade 'requests>=2.23.0'
 sudo python3 -m pip install --no-cache-dir --upgrade 'scipy>=1.4.1'
 sudo python3 -m pip install --no-cache-dir --upgrade 'tqdm>=4.64.0'
