@@ -98,6 +98,13 @@ add_dependencies(teleop_joystick_comp_2023
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
+add_executable(teleop_joystick_comp_9000 src/teleop_joystick_comp_9000.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+target_link_libraries(teleop_joystick_comp_9000
+	${catkin_LIBRARIES})
+add_dependencies(teleop_joystick_comp_9000
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS})
+
 if(0)
 add_executable(teleop_joystick_comp_2022 src/teleop_joystick_comp_2022.cpp src/robot_orientation_driver.cpp)
 target_link_libraries(teleop_joystick_comp_2022
