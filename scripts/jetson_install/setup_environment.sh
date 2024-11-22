@@ -21,8 +21,8 @@ sudo apt install -y \
     exfat-fuse \
     exfat-utils \
 	gcc-10 \
-	gcc-13 \
     gcc-11 \
+	gcc-13 \
 	g++-10 \
     g++-11 \
     g++-13 \
@@ -102,7 +102,6 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9
 sudo update-alternatives --auto gcc
 
-
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
 #wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
@@ -151,7 +150,7 @@ cd ~/900RobotCode
 
 sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
-sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2023.list "https://deb.ctr-electronics.com/ctr2023.list"
+sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2025.list "https://deb.ctr-electronics.com/ctr2025.list"
 sudo apt update
 sudo apt install -y canivore-usb=1.11
 sudo apt-mark hold canivore-usb
