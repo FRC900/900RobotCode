@@ -22,12 +22,12 @@ class CANCoderHWCommand
 		double getMagnetOffset(void) const;
 		void setMagnetOffset(const double magnet_offset);
 
-		AbsoluteSensorRange getAbsoluteSensorRange(void) const;
-		void setAbsoluteSensorRange(const AbsoluteSensorRange absolute_sensor_range);
+		double getAbsoluteSensorDiscontinuityPoint(void) const;
+		void setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_range);
 
 		bool magnetSensorConfigsChanged(SensorDirection &sensor_direction,
 										double &magnet_offset,
-										AbsoluteSensorRange &absoulte_sensor_range);
+										double &absoulte_sensor_discontinuity_point);
 		void resetMagnetSensorConfigs();
 
 		void setClearStickyFaults(void);
@@ -41,15 +41,15 @@ class CANCoderHWCommand
 		bool getEnableReadThread(void) const;
 
 	private:
-		double              set_position_{};
-		bool                set_position_changed_{false};
-		SensorDirection     sensor_direction_{SensorDirection::CounterClockwise_Positive};
-		double              magnet_offset_{0.0};
-		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Signed_PlusMinusHalf};
-		bool                magnet_sensor_configs_changed_{true};
-		bool                clear_sticky_faults_{false};
-		double              conversion_factor_{1.0};
-		bool                enable_read_thread_{true};
+		double          set_position_{};
+		bool            set_position_changed_{false};
+		SensorDirection sensor_direction_{SensorDirection::CounterClockwise_Positive};
+		double          magnet_offset_{0.0};
+		double          absolute_sensor_discontinuity_point_{M_PI};
+		bool            magnet_sensor_configs_changed_{true};
+		bool            clear_sticky_faults_{false};
+		double          conversion_factor_{1.0};
+		bool            enable_read_thread_{true};
 };
 
 // Handle - used by each controller to get, by name of the

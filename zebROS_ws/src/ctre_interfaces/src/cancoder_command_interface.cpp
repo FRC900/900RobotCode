@@ -55,26 +55,26 @@ void CANCoderHWCommand::setMagnetOffset(const double magnet_offset)
 	}
 }
 
-AbsoluteSensorRange CANCoderHWCommand::getAbsoluteSensorRange(void) const
+double CANCoderHWCommand::getAbsoluteSensorDiscontinuityPoint(void) const
 {
-	return absolute_sensor_range_;
+	return absolute_sensor_discontinuity_point_;
 }
-void CANCoderHWCommand::setAbsoluteSensorRange(const AbsoluteSensorRange absolute_sensor_range)
+void CANCoderHWCommand::setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_discontinuity_point)
 {
-	if (absolute_sensor_range != absolute_sensor_range_)
+	if (absolute_sensor_discontinuity_point != absolute_sensor_discontinuity_point_)
 	{
-		absolute_sensor_range_ = absolute_sensor_range;
+		absolute_sensor_discontinuity_point_ = absolute_sensor_discontinuity_point;
 		magnet_sensor_configs_changed_ = true;
 	}
 }
 
 bool CANCoderHWCommand::magnetSensorConfigsChanged(SensorDirection &sensor_direction,
 												   double &magnet_offset,
-												   AbsoluteSensorRange &absoulte_sensor_range)
+												   double &absolute_sensor_discontinuity_point)
 {
 	sensor_direction = sensor_direction_;
 	magnet_offset = magnet_offset_;
-	absoulte_sensor_range = absolute_sensor_range_;
+	absolute_sensor_discontinuity_point = absolute_sensor_discontinuity_point_;
 	const auto ret = magnet_sensor_configs_changed_;
 	magnet_sensor_configs_changed_ = false;
 	return ret;

@@ -12,11 +12,6 @@ enum class SensorDirection
 	CounterClockwise_Positive,
 	Clockwise_Positive
 };
-enum class AbsoluteSensorRange
-{
-	Unsigned_0To1,
-	Signed_PlusMinusHalf
-};
 enum class MagnetHealth
 {
 	Red,
@@ -37,8 +32,8 @@ class CANCoderHWState
 		double getMagnetOffset(void) const;
 		void setMagnetOffset(const double magnet_offset);
 
-		AbsoluteSensorRange getAbsoluteSensorRange(void) const;
-		void setAbsoluteSensorRange(const AbsoluteSensorRange absolute_sensor_range);
+		double getAbsoluteSensorDiscontinuityPoint(void) const;
+		void setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_discontinuity_point);
 
 		void   setConversionFactor(const double conversion_factor);
 		double getConversionFactor(void) const;
@@ -102,39 +97,39 @@ class CANCoderHWState
 		bool getStickyFaultBadMagnet(void) const;
 
 	private :
-		int                 device_number_{};
+		int             device_number_{};
 
-		SensorDirection     sensor_direction_{SensorDirection::CounterClockwise_Positive};
-		double              magnet_offset_{0.0};
-		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Signed_PlusMinusHalf};
+		SensorDirection sensor_direction_{SensorDirection::CounterClockwise_Positive};
+		double          magnet_offset_{0.0};
+		double          absolute_sensor_discontinuity_point_{M_PI};
 
-		double              conversion_factor_{1.0};
+		double          conversion_factor_{1.0};
 
-		int                 version_major_{0};
-		int                 version_minor_{0};
-		int                 version_bugfix_{0};
-		int                 version_build_{0};
-		double              velocity_{0.0};
-		double              position_{0.0};
-		double              absolute_position_{0.0};
-		double              unfiltered_velocity_{0.0};
-		double              position_since_boot_{0.0};
-		double              supply_voltage_{0.0};
-		MagnetHealth        magnet_health_{MagnetHealth::Invalid};
+		int             version_major_{0};
+		int             version_minor_{0};
+		int             version_bugfix_{0};
+		int             version_build_{0};
+		double          velocity_{0.0};
+		double          position_{0.0};
+		double          absolute_position_{0.0};
+		double          unfiltered_velocity_{0.0};
+		double          position_since_boot_{0.0};
+		double          supply_voltage_{0.0};
+		MagnetHealth    magnet_health_{MagnetHealth::Invalid};
 
-		bool                fault_hardware_{false};
-		bool                fault_undervolage_{false};
-		bool                fault_boot_during_enable_{false};
-		bool                fault_unlicensed_feature_in_use_{false};
-		bool                fault_bad_magnet_{false};
-                      
-		bool                sticky_fault_hardware_{false};
-		bool                sticky_fault_undervolage_{false};
-		bool                sticky_fault_boot_during_enable_{false};
-		bool                sticky_fault_unlicensed_feature_in_use_{false};
-		bool                sticky_fault_bad_magnet_{false};
+		bool            fault_hardware_{false};
+		bool            fault_undervolage_{false};
+		bool            fault_boot_during_enable_{false};
+		bool            fault_unlicensed_feature_in_use_{false};
+		bool            fault_bad_magnet_{false};
+                  
+		bool            sticky_fault_hardware_{false};
+		bool            sticky_fault_undervolage_{false};
+		bool            sticky_fault_boot_during_enable_{false};
+		bool            sticky_fault_unlicensed_feature_in_use_{false};
+		bool            sticky_fault_bad_magnet_{false};
 
-		bool                enable_read_thread_{true};
+		bool            enable_read_thread_{true};
 };
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is

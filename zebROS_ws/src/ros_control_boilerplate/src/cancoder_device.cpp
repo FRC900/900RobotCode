@@ -13,8 +13,6 @@ static bool convertMagnetHealth(const hardware_interface::cancoder::MagnetHealth
                                 ctre::phoenix6::signals::MagnetHealthValue &output);
 static bool convertSensorDirection(hardware_interface::cancoder::SensorDirection input,
                                    ctre::phoenix6::signals::SensorDirectionValue &output);
-static bool convertAbsoluteSensorRange(hardware_interface::cancoder::AbsoluteSensorRange input,
-                                       ctre::phoenix6::signals::AbsoluteSensorRangeValue &output);
 
 template <bool SIM>
 CANCoderDevice<SIM>::CANCoderDevice(const std::string &name_space,
@@ -136,23 +134,23 @@ void CANCoderDevice<SIM>::write(const ros::Time &/*time*/, const ros::Duration &
 
     hardware_interface::cancoder::SensorDirection sensor_direction;
     double offset_radians;
-    hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range;
+    double absolute_sensor_discontinuity_point;
 
     if (command_->magnetSensorConfigsChanged(sensor_direction,
                                              offset_radians,
-                                             absolute_sensor_range))
+                                             absolute_sensor_discontinuity_point))
     {
         ctre::phoenix6::configs::MagnetSensorConfigs magnet_sensor_configs;
-        if (convertSensorDirection(sensor_direction, magnet_sensor_configs.SensorDirection) &&
-            convertAbsoluteSensorRange(absolute_sensor_range, magnet_sensor_configs.AbsoluteSensorRange))
+        if (convertSensorDirection(sensor_direction, magnet_sensor_configs.SensorDirection))
         {
             magnet_sensor_configs.MagnetOffset = units::radian_t{offset_radians};
+            magnet_sensor_configs.AbsoluteSensorDiscontinuityPoint = units::radian_t{absolute_sensor_discontinuity_point};
             if (safeCall(cancoder_->GetConfigurator().Apply(magnet_sensor_configs), "GetConfigurator().Apply(magnet_sensor_configs)"))
             {
                 ROS_INFO_STREAM("Updated CANcoder id << " << getId() << " = " << getName() << "magnetSensorConfigs " << magnet_sensor_configs);
                 state_->setSensorDirection(sensor_direction);
                 state_->setMagnetOffset(offset_radians);
-                state_->setAbsoluteSensorRange(absolute_sensor_range);
+                state_->setAbsoluteSensorDiscontinuityPoint(absolute_sensor_discontinuity_point);
             }
             else
             {
@@ -408,23 +406,6 @@ static bool convertSensorDirection(hardware_interface::cancoder::SensorDirection
         break;
     default:
         ROS_ERROR("Invalid input in convertSensorDirection");
-        return false;
-    }
-    return true;
-}
-static bool convertAbsoluteSensorRange(hardware_interface::cancoder::AbsoluteSensorRange input,
-                                       ctre::phoenix6::signals::AbsoluteSensorRangeValue &output)
-{
-    switch (input)
-    {
-    case hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1:
-        output = ctre::phoenix6::signals::AbsoluteSensorRangeValue::Unsigned_0To1;
-        break;
-    case hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf:
-        output = ctre::phoenix6::signals::AbsoluteSensorRangeValue::Signed_PlusMinusHalf;
-        break;
-    default:
-        ROS_ERROR("Invalid input in convertAbsoluteSensorRange");
         return false;
     }
     return true;

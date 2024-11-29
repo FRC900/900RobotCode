@@ -5,6 +5,10 @@
 sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt-add-repository ppa:borglab/gtsam-release-4.1 -y
 sudo apt update
+
+# Keep these the original version to line up with kernel versions supported by arducam?
+# TODO : Test updating after installing camera stuff
+sudo apt-mark hold nvidia-l4t-bootloader nvidia-l4t-display-kernel nvidia-l4t-initrd nvidia-l4t-kernel nvidia-l4t-kernel-dtbs nvidia-l4t-kernel-headers nvidia-l4t-tools nvidia-l4t-xusb-firmware
 sudo apt -y upgrade
 
 # These are listed 1 package per line to hopefully make git merging easier
@@ -423,3 +427,6 @@ cd /home/ubuntu &&\
     cd /home/ubuntu && \
     rm -rf abseil-cpp
 
+
+# Jetvariety camera stuff
+sudo pip3 install v4l2-fix jetson-stats

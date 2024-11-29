@@ -170,4 +170,9 @@ void HAL_FreeDIOPort(HAL_DigitalHandle /*dioPortHandle*/) {
 	ROS_ERROR("Called HAL_FreeDIOPort(HAL_DigitalHandle) on unsupported platform");
 }
 
+#include "hal/I2CTypes.h"
+void HAL_CloseI2C(HAL_I2CPort /*port*/) {
+	ROS_ERROR("Called HAL_CloseI2C(HAL_I2CPort) on unsupported platform");
+}
+
 }  // extern "C"

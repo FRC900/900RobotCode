@@ -4,7 +4,7 @@ int8[]    device_number
 
 string[]  sensor_direction
 float64[] magnet_offset
-string[]  absolute_sensor_range
+float64[] absolute_sensor_discontinuity_point
 
 float64[] conversion_factor
 

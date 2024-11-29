@@ -17,18 +17,18 @@ CANCoderCIParams::CANCoderCIParams(const ros::NodeHandle &n)
 	{
 		// Then hook them up to dynamic reconfigure options
 		// TODO : these can be lambda functions
-		ddr_.registerEnumVariable<int>("sensor_direction", [this]() { return static_cast<int>(sensor_direction_.load()); }, boost::bind(&CANCoderCIParams::setSensorDirection, this, _1, false), "Sensor Direction", sensor_direction_enum_map_);
-		ddr_.registerVariable<double>("magnet_offset", [this]() { return static_cast<double>(magnet_offset_.load()); }, boost::bind(&CANCoderCIParams::setMagnetOffset, this, _1, false), "Magnet Offset", -M_PI, M_PI);
-		ddr_.registerEnumVariable<int>("absolute_sensor_range", [this]() { return static_cast<int>(absolute_sensor_range_.load()); }, boost::bind(&CANCoderCIParams::setAbsoluteSensorRange, this, _1, false), "Absolute Sensor Range", absolute_sensor_range_enum_map_);
-		ddr_.registerVariable<double>("conversion_factor", [this]() { return static_cast<double>(conversion_factor_.load()); }, boost::bind(&CANCoderCIParams::setConversionFactor, this, _1, false), "Conversion Factor", 0., 1000.);
-		ddr_.registerVariable<bool>("enable_read_thread", [this]() { return static_cast<bool>(enable_read_thread_.load()); }, boost::bind(&CANCoderCIParams::setEnableReadThread, this, _1, false), "Enable Read Thread");
+		ddr_.registerEnumVariable<int>("sensor_direction", [this]() { return static_cast<int>(sensor_direction_.load()); }, [this](const int v) { setSensorDirection(v, false); }, "Sensor Direction", sensor_direction_enum_map_);
+		ddr_.registerVariable<double>("magnet_offset", [this]() { return magnet_offset_.load(); }, [this](const double v) {setMagnetOffset(v, false); }, "Magnet Offset", -M_PI, M_PI);
+		ddr_.registerVariable<double>("absolute_sensor_discontinuity_point", [this]() { return absolute_sensor_discontinuity_point_.load(); }, [this](const double v) {setAbsoluteSensorDiscontinuityPoint(v, false);}, "Absolute Sensor Discontinuty Point", 0, 2. * M_PI);
+		ddr_.registerVariable<double>("conversion_factor", [this]() { return conversion_factor_.load(); }, [this](const double v) {setConversionFactor(v, false); }, "Conversion Factor", 0., 1000.);
+		ddr_.registerVariable<bool>("enable_read_thread", [this]() { return enable_read_thread_.load(); }, [this](const bool v) {setEnableReadThread(v, false); }, "Enable Read Thread");
 		ddr_.publishServicesTopics();
 	}
 
 	// Override default values with config params, if present
 	readIntoEnum(n, "sensor_direction", sensor_direction_enum_map_, sensor_direction_);
 	readIntoScalar(n, "magnet_offset", magnet_offset_);
-	readIntoEnum(n, "absolute_sensor_range", absolute_sensor_range_enum_map_, absolute_sensor_range_);
+	readIntoScalar(n, "absolute_sensor_discontinuity_point", absolute_sensor_discontinuity_point_);
 	readIntoScalar(n, "conversion_factor", conversion_factor_);
 	readIntoScalar(n, "enable_read_thread", enable_read_thread_);
 }
@@ -59,11 +59,10 @@ void CANCoderCIParams::setMagnetOffset(const double magnet_offset, bool update_d
 		triggerDDRUpdate();
 	}
 }
-void CANCoderCIParams::setAbsoluteSensorRange(const int absolute_sensor_range, bool update_dynamic)
+void CANCoderCIParams::setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_discontinuity_point, bool update_dynamic)
 {
-	const auto absolute_sensor_range_enum = static_cast<hardware_interface::cancoder::AbsoluteSensorRange>(absolute_sensor_range);
-	const bool publish_update = update_dynamic && (absolute_sensor_range_enum != absolute_sensor_range_);
-	absolute_sensor_range_ = absolute_sensor_range_enum;
+	const bool publish_update = update_dynamic && (absolute_sensor_discontinuity_point != absolute_sensor_discontinuity_point_);
+	absolute_sensor_discontinuity_point_ = absolute_sensor_discontinuity_point;
 	if (publish_update)
 	{
 		triggerDDRUpdate();
@@ -96,9 +95,9 @@ double CANCoderCIParams::getMagnetOffset(void) const
 {
 	return magnet_offset_;
 }
-hardware_interface::cancoder::AbsoluteSensorRange CANCoderCIParams::getAbsoluteSensorRange(void) const
+double CANCoderCIParams::getAbsoluteSensorDiscontinuityPoint(void) const
 {
-	return absolute_sensor_range_;
+	return absolute_sensor_discontinuity_point_;
 }
 double CANCoderCIParams::getConversionFactor(void) const
 {
@@ -119,7 +118,7 @@ void CANCoderControllerInterface::update(void)
 {
 	handle_->setSensorDirection(params_.getSensorDirection());
 	handle_->setMagnetOffset(params_.getMagnetOffset());
-	handle_->setAbsoluteSensorRange(params_.getAbsoluteSensorRange());
+	handle_->setAbsoluteSensorDiscontinuityPoint(params_.getAbsoluteSensorDiscontinuityPoint());
 	handle_->setConversionFactor(params_.getConversionFactor());
 	handle_->setEnableReadThread(params_.getEnableReadThread());
 
@@ -159,10 +158,11 @@ void CANCoderControllerInterface::setMagnetOffset(const double magnet_offset)
 	params_.setMagnetOffset(magnet_offset);
 }
 
-void CANCoderControllerInterface::setAbsoluteSensorRange(const hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range)
+void CANCoderControllerInterface::setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_discontinuity_point)
 {
-	params_.setAbsoluteSensorRange(static_cast<int>(absolute_sensor_range));
+	params_.setAbsoluteSensorDiscontinuityPoint(absolute_sensor_discontinuity_point);
 }
+
 void CANCoderControllerInterface::setConversionFactor(const double conversion_factor)
 {
 	params_.setConversionFactor(conversion_factor);

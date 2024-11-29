@@ -22,7 +22,7 @@ private:
 public:
 	bool init(hardware_interface::cancoder::CANCoderStateInterface *hw,
 			  ros::NodeHandle &root_nh,
-			  ros::NodeHandle &controller_nh)
+			  ros::NodeHandle &controller_nh) override
 	{
 		// get all joint names from the hardware interface
 		const std::vector<std::string> &joint_names = hw->getNames();
@@ -56,9 +56,9 @@ public:
 
 			m.device_number.push_back(cancoder_state_.back()->getDeviceNumber());
 
-			m.sensor_direction.push_back({});
+			m.sensor_direction.emplace_back();
 			m.magnet_offset.push_back({0.0});
-			m.absolute_sensor_range.push_back({});
+			m.absolute_sensor_discontinuity_point.push_back({});
 
 			m.conversion_factor.push_back({1.0});
 
@@ -72,7 +72,7 @@ public:
 			m.unfiltered_velocity.push_back({});
 			m.position_since_boot.push_back({});
 			m.supply_voltage.push_back({});
-			m.magnet_health.push_back({});
+			m.magnet_health.emplace_back();
 
 			m.fault_hardware.push_back({});
 			m.fault_undervolage.push_back({});
@@ -90,12 +90,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration & period)
+	void update(const ros::Time &time, const ros::Duration & period) override
 	{
 		// limit rate of publishing
 		if (interval_counter_->update(period))
@@ -110,7 +110,7 @@ public:
 				m.header.stamp = time;
 				for (size_t i = 0; i < num_hw_joints_; i++)
 				{
-					auto &cs = cancoder_state_[i];
+					const auto &cs = cancoder_state_[i];
 
 					switch (cs->getSensorDirection())
 					{
@@ -125,18 +125,7 @@ public:
 						break;
 					}
 					m.magnet_offset[i] = cs->getMagnetOffset();
-					switch (cs->getAbsoluteSensorRange())
-					{
-					case hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1:
-						m.absolute_sensor_range[i] = "Unsigned_0To1";
-						break;
-					case hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf:
-						m.absolute_sensor_range[i] = "Signed_PlusMinusHalf";
-						break;
-					default:
-						m.absolute_sensor_range[i] = "Unknown";
-						break;
-					}
+					m.absolute_sensor_discontinuity_point[i] = cs->getAbsoluteSensorDiscontinuityPoint();
 
 					m.conversion_factor[i] = cs->getConversionFactor();
 
@@ -191,7 +180,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{
 	}
 

@@ -31,14 +31,14 @@ void CANCoderHWState::setMagnetOffset(const double magnet_offset)
 	magnet_offset_ = magnet_offset;
 }
 
-AbsoluteSensorRange CANCoderHWState::getAbsoluteSensorRange(void) const
+double CANCoderHWState::getAbsoluteSensorDiscontinuityPoint(void) const
 {
-	return absolute_sensor_range_;
+	return absolute_sensor_discontinuity_point_;
 }
-void CANCoderHWState::setAbsoluteSensorRange(const AbsoluteSensorRange absolute_sensor_range)
+void CANCoderHWState::setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_discontinuity_point)
 {
-	absolute_sensor_range_ = absolute_sensor_range;
-}
+	absolute_sensor_discontinuity_point_ = absolute_sensor_discontinuity_point;
+}	
 
 void CANCoderHWState::setConversionFactor(double conversion_factor)
 {

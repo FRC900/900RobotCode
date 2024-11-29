@@ -15,20 +15,20 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 
 		void setSensorDirection(const int sensor_direction, bool update_dynamic = true);
 		void setMagnetOffset(const double magnet_offset, bool update_dynamic = true);
-		void setAbsoluteSensorRange(const int absolute_sensor_range, bool update_dynamic = true);
+		void setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_discontinuity_point, bool update_dynamic = true);
 		void setConversionFactor(const double conversion_factor, bool update_dynamic = true);
 		void setEnableReadThread(const bool enable_read_thread, bool update_dynamic = true);
 
-		hardware_interface::cancoder::SensorDirection     getSensorDirection(void) const;
-		double                                            getMagnetOffset(void) const;
-		hardware_interface::cancoder::AbsoluteSensorRange getAbsoluteSensorRange(void) const;
-		double                                            getConversionFactor(void) const;
-		bool                                              getEnableReadThread(void) const;
+		hardware_interface::cancoder::SensorDirection getSensorDirection(void) const;
+		double                                        getMagnetOffset(void) const;
+		double                                        getAbsoluteSensorDiscontinuityPoint(void) const;
+		double                                        getConversionFactor(void) const;
+		bool                                          getEnableReadThread(void) const;
 
 	private:
 		std::atomic<hardware_interface::cancoder::SensorDirection>     sensor_direction_{hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive};
 		std::atomic<double>                                            magnet_offset_{0.0};
-		std::atomic<hardware_interface::cancoder::AbsoluteSensorRange> absolute_sensor_range_{hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf};
+		std::atomic<double>                                            absolute_sensor_discontinuity_point_{M_PI};
 		std::atomic<double>                                            conversion_factor_{1.0};
 		std::atomic<bool>                                              enable_read_thread_{true};
 
@@ -36,11 +36,6 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 		{
 			{"CounterClockwise_Positive", static_cast<int>(hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive)},
 			{"Clockwise_Positive", static_cast<int>(hardware_interface::cancoder::SensorDirection::Clockwise_Positive)}
-		};
-		const std::map<std::string, int> absolute_sensor_range_enum_map_ =
-		{
-			{"Unsigned_0To1", static_cast<int>(hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1)},
-			{"Signed_PlusMinusHalf", static_cast<int>(hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf)}
 		};
 
 		template <typename T>
@@ -86,7 +81,7 @@ class CANCoderControllerInterface
 
 		void setSensorDirection(const hardware_interface::cancoder::SensorDirection sensor_direction);
 		void setMagnetOffset(const double magnet_offset);
-		void setAbsoluteSensorRange(const hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range);
+		void setAbsoluteSensorDiscontinuityPoint(const double absolute_sensor_range);
 		void setConversionFactor(const double conversion_factor);
 
 	private:

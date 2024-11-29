@@ -292,7 +292,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/MemAlloc.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallPtrSet.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallVector.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringMap.cpp
 	    ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/xxhash.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
