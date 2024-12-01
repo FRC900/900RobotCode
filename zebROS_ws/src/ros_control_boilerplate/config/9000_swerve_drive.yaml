@@ -184,7 +184,7 @@ swerve_angle_phoenix6_controller:
     type: talonfxpro_controllers/TalonFXProMotionMagicExpoVoltageController
     joint: bl_angle
     feedback_sensor_source: RemoteCANcoder
-    remote_feedback_device_id0: 13
+    remote_feedback_device_id0: 11
     close_loop_values:
         - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0}
     motion_magic_cruise_velocity: 0.0
@@ -193,3 +193,5 @@ swerve_angle_phoenix6_controller:
     forward_limit_enable: False
     reverse_limit_enable: False
     dynamic_reconfigure: True
+    rotor_to_sensor_ratio: 12.8
+    sensor_to_mechanism_ratio: 1.0
