@@ -7,7 +7,8 @@
         <param name="tcp_port" type="int" value="$(arg tcp_port)"/>
     </node>
         <!-- Launch the PosRot to TF publisher node -->
-    <node name="pos_rot_to_tf_publisher" pkg="tagslam_viz" type="vis_oculus_msg.py" output="screen" />
+    <node name="pos_rot_to_tf_publisher" pkg="ros_tcp_endpoint" type="vis_oculus_msg.py" output="screen" />
 
     <node name="rviz" pkg="rviz" type="rviz" output="screen" />
 </launch>
+

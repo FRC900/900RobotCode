@@ -3,47 +3,67 @@
 import rospy
 import tf
 from unity_robotics_demo_msgs.msg import PosRot  # Replace with your package name
+from geometry_msgs.msg import PointStamped  # For publishing 3D points
+from geometry_msgs.msg import Point  # For publishing 3D points
+import math
 
 # Variables to store the offset
 initial_pos = None
 initial_rot = None
-def pos_rot_callback(msg):
 
-    global initial_pos, initial_rot
+class Quest3s:
 
-    # Store the first message as the offset
-    if initial_pos is None and initial_rot is None:
-        initial_pos = (msg.pos_x, msg.pos_y, msg.pos_z)
-        initial_rot = (msg.rot_x, msg.rot_y, msg.rot_z, msg.rot_w)
-        rospy.loginfo("Initial offset set: position=%s, orientation=%s", initial_pos, initial_rot)
-        return  # Skip publishing for the first message to avoid unnecessary transform
+    def __init__(self) -> None:
+        self.__yaw_offset = 0
+        self.latest_quest_msg: PosRot = None
+        self.point_pub = rospy.Publisher('quest_position', PointStamped, queue_size=10)
 
-    pos = (
-        msg.pos_x - initial_pos[0],
-        msg.pos_y - initial_pos[1],
-        msg.pos_z - initial_pos[2]
-    )
+        # Subscribe to the PosRot message topic
+        rospy.Subscriber('pos_rot', PosRot, pos_rot_callback)
 
-    # For quaternion subtraction, normalize the result (since quaternions don't subtract directly)
-    rot = tf.transformations.quaternion_multiply(
-        tf.transformations.quaternion_inverse(initial_rot),
-        (msg.rot_x, msg.rot_y, msg.rot_z, msg.rot_w)
-    )
-    # Broadcast the transform
-    br = tf.TransformBroadcaster()
-    br.sendTransform(
-        pos,
-        rot,
-        rospy.Time.now(),
-        "quest",   # Child frame (to be visualized in RViz)
-        "base_link"      # Parent frame (RViz reference frame)
-    )
+    def get_euler_angles(self):
+
+    def zeroHeading():
+        float[] eulerAngles = questEulerAngles.get()
+        yaw_offset = eulerAngles[1]
+
+    def get_oculus_position(self):
+        """
+        Computes a 2D point from Oculus/Quest 3D position.
+
+        Args:
+            quest_position (list): A list or array with [x, y, z] coordinates.
+
+        Returns:
+            Point: A geometry_msgs/Point representing the computed 2D position.
+        """
+        # https://github.com/juchong/swerve-testbed-bot-java/blob/fd0c3a5b40bd2c75c9b1088d68736093e2a7b855/src/main/java/frc/robot/subsystems/DriveSubsystem.java#L278
+        oculus_x = quest_position[0]
+        oculus_z = quest_position[2]
+
+        # this is just a direct copy of what wpilib java does with these numbers to make a translation2d
+        # Calculate radial distance in the XZ plane
+        distance = math.sqrt(oculus_x ** 2 + oculus_z ** 2)
+
+        # Calculate the angle and convert it to a 2D equivalent
+        angle = math.atan2(-oculus_x, oculus_z)  # atan2 handles quadrant information
+
+        # Create a geometry_msgs Point where x is radial distance and y is angle
+        point = Point()
+        point.x = distance * math.cos(angle)
+        point.y = distance * math.sin(angle)
+        point.z = 0.0  # Z is unused for a 2D point
+
+        return point
+
+
+    def pos_rot_callback(self, msg: PosRot):
+        self.latest_quest_msg = msg
 
 def main():
+    global point_pub
+
     rospy.init_node('pos_rot_to_tf_publisher')
-    
-    # Subscribe to the PosRot message topic
-    rospy.Subscriber('pos_rot', PosRot, pos_rot_callback)
     
     rospy.loginfo("Transform broadcaster is running...")
     rospy.spin()

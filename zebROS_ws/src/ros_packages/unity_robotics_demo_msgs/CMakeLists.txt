@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(FILES
     PosRot.msg
     UnityColor.msg
+    QuestPoseStamped.msg
 )
 add_service_files(FILES
     ObjectPoseService.srv
