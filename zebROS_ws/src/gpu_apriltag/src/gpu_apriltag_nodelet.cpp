@@ -36,9 +36,19 @@ public:
         // Publisher for debug image
         image_transport::ImageTransport it(nh_);
         pub_debug_image_ = it.advertise("debug_image", 1);
+
+        // TODO: test
+        // Load config for legal apriltags
+        std::vector<int> _legal_tags_vec;
+        nh_.param<std::vector<int>>("legal_tags", _legal_tags_vec, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16});
+        for (int legal_tag : _legal_tags_vec)
+        {
+            legal_tags_.emplace(legal_tag);
+            std::cout << legal_tag;
+        }
     }
 
-    void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info)
+    void callback(const sensor_msgs::ImageConstPtr &image, const sensor_msgs::CameraInfoConstPtr &camera_info)
     {
         auto cv_frame = cv_bridge::toCvShare(image);
 
@@ -91,6 +101,13 @@ public:
         objdetect_msg.header.frame_id = camera_info->header.frame_id;
         for (const auto &result : results)
         {
+            // if tag id isn't found in legal tags, don't record it
+            if (legal_tags_.count(result.id_) == 0)
+            {
+                ROS_WARN_STREAM("Filtering tag with id " << result.id_);
+                continue;
+            }
+
             apriltag_array.apriltags.emplace_back();
 
             auto &msg = apriltag_array.apriltags.back();
@@ -99,7 +116,7 @@ public:
             msg.family = "36h11";
             msg.center.x = result.center_.x;
             msg.center.y = result.center_.y;
-            
+
             double br_x = -std::numeric_limits<double>::max();
             double br_y = -std::numeric_limits<double>::max();
             double tl_x =  std::numeric_limits<double>::max();
@@ -182,6 +199,8 @@ private:
     ddynamic_reconfigure::DDynamicReconfigure ddr_;
     ros::ServiceServer save_input_image_srv_;
     std::atomic<bool> save_input_image_{false};
+
+    std::set<int> legal_tags_;
 };
 
 } // namespace

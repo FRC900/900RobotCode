@@ -92,6 +92,8 @@
          since the node names will conflict. I don't think we'd want to do this, 
          but keep it in mind -->
     <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="apriltag_detection" if="$(eval run_gpu_apriltag)" output="screen" >
+      <rosparam file="$(find apriltag_ros)/config/detector_config.yaml" command="load"/>
+
       <remap from="image_rect_color" to="/$(arg zed_name)/left_gray/image_rect_gray" />
       <!-- Match tag topic to CPU apriltag detection topic names -->
       <remap from="/apriltag_$(arg zed_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg zed_name)/tag_detection_msg"/>
