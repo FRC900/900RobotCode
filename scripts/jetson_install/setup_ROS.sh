@@ -71,6 +71,7 @@ sudo apt install -y \
 	python3-rosinstall \
 	python3-wstool \
 	ros-noetic-actionlib-tools \
+	ros-noetic-camera-calibration \
 	ros-noetic-controller-manager \
 	ros-noetic-control-msgs \
 	ros-noetic-cv-bridge \
