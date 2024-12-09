@@ -15,6 +15,7 @@
   <arg name="static_image"         default="false" />
   <arg name="run_gpu_apriltag"     default="true" />
   <arg name="run_calibrator"       default="false" />
+  <arg name="image_encoding"       default="mono8" />
 
   <!-- Name of the Nodelet Manager -->
   <arg name="run_nodelet_manager"  default="true" />
@@ -44,11 +45,13 @@
 
   <!-- 
   ========== image reformatter - corrects the image encoding and shape published by cv_camera
+  TODO : looks like the Pi version of the ov2311 camera correctly sets the image rez and encoding so we might be able
+         to skip this step. It'll require the remapping to be done int he camera nodelet above
   -->
   <node pkg="nodelet" type="nodelet" name="$(arg camera_name)_reformatter" args="load image_reformatter/ImageReformatterNodelet /$(arg nodelet_manager_name)" if="$(eval run_camera)" output="screen" >
     <remap from="/image_raw" to="/$(arg camera_name)/image_raw"/>
     <!-- <remap from="/image_reformatted" to="/$(arg camera_name)_reformatted/image_reformatted"/> -->
-    <param name="output_encoding"  value="mono8" />
+    <param name="output_encoding"  value="$(arg image_encoding)" />
     <param name="output_height"  value="1300" />
   </node>
 
@@ -57,6 +60,7 @@
 
   <!-- 
   ========== GPU Apriltag Detector
+  TODO : run as part of nodelet again, now that buffer overflow in gpu detector is fixed
   -->
   <group ns="apriltag_detection_$(arg camera_name)" if="$(eval run_gpu_apriltag)" >
     <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" >

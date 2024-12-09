@@ -57,15 +57,15 @@ public:
             frc971::apriltag::InputFormat input_format;
             if (cv_frame->encoding == sensor_msgs::image_encodings::MONO8)
             {
-                 input_format = frc971::apriltag::InputFormat::Mono8;
+                input_format = frc971::apriltag::InputFormat::Mono8;
             }
             else if (cv_frame->encoding == sensor_msgs::image_encodings::BGR8)
             {
-                 input_format = frc971::apriltag::InputFormat::BGR8;
+                input_format = frc971::apriltag::InputFormat::BGR8;
             }
             else if (cv_frame->encoding == sensor_msgs::image_encodings::BGRA8)
             {
-                 input_format = frc971::apriltag::InputFormat::BGRA8;
+                input_format = frc971::apriltag::InputFormat::BGRA8;
             }
             else
             {
