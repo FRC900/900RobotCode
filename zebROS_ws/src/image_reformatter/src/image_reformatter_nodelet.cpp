@@ -36,9 +36,9 @@ private:
     void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info)
     {
         cv_bridge::CvImage output_image;
-        cv_bridge::CvImageConstPtr cv_image = cv_bridge::toCvShare(image);
+        cv_bridge::CvImageConstPtr cv_image = cv_bridge::toCvShare(image, output_encoding_);
         output_image.header = image->header;
-        output_image.encoding = output_encoding_;
+        output_image.encoding = output_encoding_; // TODO - might be redundant
         output_image.image = cv_image->image.reshape(1, output_height_);
 
         camera_pub_.publish(output_image.toImageMsg(), camera_info);
