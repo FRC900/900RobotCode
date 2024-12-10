@@ -1071,19 +1071,18 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
 
     double stator_current_limit;
     double supply_current_limit;
-    double supply_current_threshold;
     double supply_current_lower_limit;
     double supply_current_lower_time;
     if (command_->currentLimitChanged(stator_current_limit,
                                       config_->CurrentLimits.StatorCurrentLimitEnable,
-                                      stator_current_limit,
+                                      supply_current_limit,
                                       config_->CurrentLimits.SupplyCurrentLimitEnable,
                                       supply_current_lower_limit,
                                       supply_current_lower_time))
     {
         config_->CurrentLimits.StatorCurrentLimit = units::ampere_t{stator_current_limit};
         config_->CurrentLimits.SupplyCurrentLimit = units::ampere_t{supply_current_limit};
-        config_->CurrentLimits.SupplyCurrentLowerLimit = units::ampere_t{supply_current_threshold};
+        config_->CurrentLimits.SupplyCurrentLowerLimit = units::ampere_t{supply_current_lower_limit};
         config_->CurrentLimits.SupplyCurrentLowerTime = units::second_t{supply_current_lower_time};
 
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->CurrentLimits), "GetConfigurator().Apply(config_->CurrentLimits)"))
