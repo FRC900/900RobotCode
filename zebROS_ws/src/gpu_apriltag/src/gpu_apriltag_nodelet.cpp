@@ -50,7 +50,6 @@ public:
 
     void callback(const sensor_msgs::ImageConstPtr &image, const sensor_msgs::CameraInfoConstPtr &camera_info)
     {
-        ROS_ERROR_STREAM("image step = " << image->step);
         auto cv_frame = cv_bridge::toCvShare(image);
 
         if (!detector_)
@@ -151,33 +150,21 @@ public:
 
         if (pub_debug_image_.getNumSubscribers() > 0)
         {
-            debug_image_.header = cv_frame->header;
-            debug_image_.encoding = sensor_msgs::image_encodings::BGR8;
-            debug_image_.image = cv_frame->image.clone();
-            // If the image is not already BGR8, convert it to BGR8 for visualization
-            // with pretty(?) colors
-            if (cv_frame->encoding == sensor_msgs::image_encodings::MONO8)
-            {
-                cv::cvtColor(debug_image_.image, debug_image_.image, cv::COLOR_GRAY2BGR);
-            }
-            else if (cv_frame->encoding == sensor_msgs::image_encodings::BGRA8)
-            {
-                cv::cvtColor(debug_image_.image, debug_image_.image, cv::COLOR_BGRA2BGR);
-            }
+            auto debug_image = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::BGR8);
             for (const auto &corner : rejected_margin_corners)
             {
-                drawCorner(debug_image_.image, corner, cv::Scalar(255, 0, 0));
+                drawCorner(debug_image->image, corner, cv::Scalar(255, 0, 0));
             }
             for (const auto &corner : rejected_noconverge_corners)
             {
-                drawCorner(debug_image_.image, corner, cv::Scalar(255, 166, 0));
+                drawCorner(debug_image->image, corner, cv::Scalar(255, 166, 0));
             }
             for (const auto &result : results)
             {
-                drawCorner(debug_image_.image, result.original_corners_, cv::Scalar(0, 255, 0));
-                drawCorner(debug_image_.image, result.undistorted_corners_, cv::Scalar(255, 255, 0));
+                drawCorner(debug_image->image, result.original_corners_, cv::Scalar(0, 255, 0));
+                drawCorner(debug_image->image, result.undistorted_corners_, cv::Scalar(255, 255, 0));
             }
-            pub_debug_image_.publish(debug_image_.toImageMsg());
+            pub_debug_image_.publish(debug_image->toImageMsg());
         }
     }
 
@@ -197,7 +184,7 @@ private:
     ros::Publisher pub_objdetect_;
 
     image_transport::Publisher pub_debug_image_;
-    cv_bridge::CvImage debug_image_;
+    // cv_bridge::CvImage debug_image_;
 
     std::unique_ptr<frc971_gpu_apriltag::FRC971GpuApriltagDetector> detector_;
 

@@ -17,13 +17,14 @@ rospy.loginfo(f"Publishing image from: {test_image_path}")
 img = cv2.imread(test_image_path)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 if len(img.shape) == 2:
-    encoding="mono8"
+    img = img.astype('uint16') * 256
+    encoding="mono16"
 elif img.shape[2] == 3:
     encoding="bgr8"
 elif img.shape[2] == 4:
     encoding="bgra8"
 else:
-    print("Invalid number of channels in image")
+    print(f"Invalid number of channels in image : shape = {img.shape}")
     sys.exit(1)
 
 camera_name = "ov2311"
