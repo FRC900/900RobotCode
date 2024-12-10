@@ -50,6 +50,7 @@ public:
 
     void callback(const sensor_msgs::ImageConstPtr &image, const sensor_msgs::CameraInfoConstPtr &camera_info)
     {
+        ROS_ERROR_STREAM("image step = " << image->step);
         auto cv_frame = cv_bridge::toCvShare(image);
 
         if (!detector_)
@@ -58,6 +59,10 @@ public:
             if (cv_frame->encoding == sensor_msgs::image_encodings::MONO8)
             {
                 input_format = frc971::apriltag::InputFormat::Mono8;
+            }
+            else if (cv_frame->encoding == sensor_msgs::image_encodings::MONO16)
+            {
+                input_format = frc971::apriltag::InputFormat::Mono16;
             }
             else if (cv_frame->encoding == sensor_msgs::image_encodings::BGR8)
             {

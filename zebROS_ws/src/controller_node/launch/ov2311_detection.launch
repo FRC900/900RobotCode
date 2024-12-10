@@ -36,7 +36,7 @@
     <param name="frame_id"                value="$(arg camera_name)" />
     <param name="camera_name"             value="$(arg camera_name)" />
     <param name="cv_cap_prop_convert_rgb" value="0" />
-    <!-- TODO - move calibration files into a packae so we can do something like $(find calibration_files) as the base rather than hardcoding /home/ubuntu? -->
+    <!-- TODO - move calibration files into a package so we can do something like $(find calibration_files) as the base rather than hardcoding /home/ubuntu? -->
     <param name="camera_info_url"         value="file:///home/ubuntu/900RobotCode/scripts/jetson_install/calibration_files/$(arg camera_name).yaml" />
     <!-- <param name="image_width"             value="1600" /> -->
     <!-- <param name="image_height"            value="1300" /> -->
@@ -55,7 +55,7 @@
     <param name="output_height"  value="1300" />
   </node>
 
-  <node pkg="camera_calibration" name="camera_calibration" type="camera_calibration" args="image:=/$(arg camera_name)_reformatter/image_reformatted camera:=/$(arg camera_name)_reformatter -p acircles -s 8x27 -q=0.1" if="$(eval run_calibrator)" output="screen" />
+  <node pkg="camera_calibration" name="cameracalibrator" type="cameracalibrator.py" args="image:=/$(arg camera_name)_reformatter/image_reformatted camera:=/$(arg camera_name)_reformatter -p acircles -s 8x27 -q 0.1" if="$(eval run_calibrator)" output="screen" />
 
 
   <!-- 
@@ -63,7 +63,7 @@
   TODO : run as part of nodelet again, now that buffer overflow in gpu detector is fixed
   -->
   <group ns="apriltag_detection_$(arg camera_name)" if="$(eval run_gpu_apriltag)" >
-    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" >
+    <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" launch-prefix="gdb -ex run --args" >
      <!-- launch-prefix="compute-sanitizer " > -->
     <!-- launch-prefix="gdb -ex run - -args "> -->
       <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />

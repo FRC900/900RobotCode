@@ -14,6 +14,7 @@ public:
     void callback(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& camera_info);
 };
 }
+
 int main(void)
 {
     frc971_gpu_apriltag::FRC971GpuApriltagNodelet nodelet;
