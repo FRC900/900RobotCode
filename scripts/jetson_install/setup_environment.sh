@@ -131,7 +131,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/4.0/l4t35.4/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/4.2/l4t35.4/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -341,6 +341,7 @@ git fetch origin
 git submodule update --init --recursive
 python3 ./install.py --clang-completer --system-libclang --ninja
 
+sudo pip3 install -U setuptools==70.3.0
 sudo -H bash
 export PATH=$PATH:/usr/local/cuda/bin
 export CUDA_ROOT=/usr/local/cuda
@@ -426,7 +427,6 @@ cd /home/ubuntu &&\
     sudo ninja install &&\
     cd /home/ubuntu && \
     rm -rf abseil-cpp
-
 
 # Jetvariety camera stuff
 sudo pip3 install v4l2-fix jetson-stats
