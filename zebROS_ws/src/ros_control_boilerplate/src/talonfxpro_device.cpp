@@ -1388,6 +1388,8 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
         config_->MotionMagic.MotionMagicCruiseVelocity = units::radians_per_second_t{motion_magic_cruise_velocity};
         config_->MotionMagic.MotionMagicAcceleration = units::radians_per_second_squared_t{motion_magic_acceleration};
         config_->MotionMagic.MotionMagicJerk = units::radians_per_second_cubed_t{motion_magic_jerk};
+        // TODO : to be consistent with ROS units, these should technically be per_radian? But they're basically
+        //        magic values so it might make sense to pass them thru like this as is with no unit conversion.
         config_->MotionMagic.MotionMagicExpo_kV = ctre::unit::volts_per_turn_per_second_t{motion_magic_expo_kV};
         config_->MotionMagic.MotionMagicExpo_kA = ctre::unit::volts_per_turn_per_second_squared_t{motion_magic_expo_kA};
         if (safeCall(talonfxpro_->GetConfigurator().Apply(config_->MotionMagic), "GetConfigurator().Apply(config.MotionMagic)"))
