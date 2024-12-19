@@ -28,7 +28,7 @@ public:
         auto base_nh = getNodeHandle();
 
         image_transport::ImageTransport base_it(base_nh);
-        camera_sub_ = base_it.subscribeCamera("image_rect_color", 1, &FRC971GpuApriltagNodelet::callback, this);
+        camera_sub_ = base_it.subscribeCamera("image_raw", 1, &FRC971GpuApriltagNodelet::callback, this);
         // Publisher for apriltag detections
         pub_apriltag_detections_ = nh_.advertise<apriltag_msgs::ApriltagArrayStamped>("tags", 1);
         // And a publisher to publish to a topic that screen to world can use directly
