@@ -15,6 +15,7 @@
   <arg name="static_image"         default="false" />
   <arg name="run_gpu_apriltag"     default="true" />
   <arg name="run_calibrator"       default="false" />
+  <arg name="image_encoding"       default="mono8" />
 
   <!-- Name of the Nodelet Manager -->
   <arg name="run_nodelet_manager"  default="true" />
@@ -35,53 +36,42 @@
     <param name="frame_id"                value="$(arg camera_name)" />
     <param name="camera_name"             value="$(arg camera_name)" />
     <param name="cv_cap_prop_convert_rgb" value="0" />
-    <!-- TODO - move calibration files into a packae so we can do something like $(find calibration_files) as the base rather than hardcoding /home/ubuntu? -->
+    <!-- TODO - move calibration files into a package so we can do something like $(find calibration_files) as the base rather than hardcoding /home/ubuntu? -->
     <param name="camera_info_url"         value="file:///home/ubuntu/900RobotCode/scripts/jetson_install/calibration_files/$(arg camera_name).yaml" />
     <!-- <param name="image_width"             value="1600" /> -->
     <!-- <param name="image_height"            value="1300" /> -->
     <!-- <param name="cv_cap_prop_fourcc" value="BA81" /> -->
   </node>
 
-  <!-- 
-  ========== image reformatter - corrects the image encoding and shape published by cv_camera
-  -->
-  <node pkg="nodelet" type="nodelet" name="$(arg camera_name)_reformatter" args="load image_reformatter/ImageReformatterNodelet /$(arg nodelet_manager_name)" if="$(eval run_camera)" output="screen" >
-    <remap from="/image_raw" to="/$(arg camera_name)/image_raw"/>
-    <!-- <remap from="/image_reformatted" to="/$(arg camera_name)_reformatted/image_reformatted"/> -->
-    <param name="output_encoding"  value="mono8" />
-    <param name="output_height"  value="1300" />
-  </node>
-
-  <node pkg="camera_calibration" name="camera_calibration" type="camera_calibration" args="image:=/$(arg camera_name)_reformatter/image_reformatted camera:=/$(arg camera_name)_reformatter -p acircles -s 8x27 -q=0.1" if="$(eval run_calibrator)" output="screen" />
-
+  <node pkg="camera_calibration" name="cameracalibrator" type="cameracalibrator.py" args="image:=/$(arg camera_name)_reformatter/image_reformatted camera:=/$(arg camera_name)_reformatted -p acircles -s 8x27 -q 0.1" if="$(eval run_calibrator)" output="screen" />
 
   <!-- 
   ========== GPU Apriltag Detector
+  TODO : run as part of nodelet again, now that buffer overflow in gpu detector is fixed
   -->
+  <!-- launch-prefix="compute-sanitizer " > -->
+  <!-- launch-prefix="gdb -ex run - -args "> -->
+  <!--
   <group ns="apriltag_detection_$(arg camera_name)" if="$(eval run_gpu_apriltag)" >
     <node pkg="gpu_apriltag" type="gpu_apriltag_node" name="gpu_apriltag_node" output="screen" >
-     <!-- launch-prefix="compute-sanitizer " > -->
-    <!-- launch-prefix="gdb -ex run - -args "> -->
-      <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
-      <!-- Match tag topic to CPU apriltag detection topic names -->
+      <remap from="image_raw" to="/$(arg camera_name)/image_raw" />
+      <!- - Match tag topic to CPU apriltag detection topic names - ->
       <remap from="/apriltag_$(arg camera_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg camera_name)/tag_detection_msg"/>
     </node>
   </group>
-  <!--
+  -->
   <node pkg="nodelet" type="nodelet" name="apriltag_detection_$(arg camera_name)" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" launch-prefix="$(arg launch_prefix)" output="screen" >
-    <remap from="image_rect_color" to="/$(arg camera_name)_reformatter/image_reformatted" />
+    <remap from="image_raw" to="/$(arg camera_name)/image_raw" />
     <remap from="/apriltag_$(arg camera_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg camera_name)/tag_detection_msg"/>
   </node>
-  -->
   <!--
     To collect profile info from the Jetson :
   sudo nsys profile -t cuda,nvtx -s cpu -f true ~/900RobotCode/zebROS_ws/ROSJetsonMaster.sh rosrun gpu_apriltag gpu_apriltag_node image_rect_color:=/ov2311_reformatter/image_reformatted /apriltag_ov2311/apriltag_detection/tag_detection_msg:=/apriltag_ov2311/tag_detection_msg __name:=apriltag_detection_ov2311
   -->
-  <group ns="$(arg camera_name)_reformatter" if="$(eval static_image)">
+  <group ns="$(arg camera_name)" if="$(eval static_image)">
     <node pkg="tf_object_detection" type="simple_static_img_pub.py" name="static_img_pub" output="screen" >
       <param name="test_image_path" value="$(find tf_object_detection)/src/raw_0.png" />
       <param name="camera_name" value="$(arg camera_name)" />
-      <remap from="image_raw" to="image_reformatted" />
     </node>
   </group>
 

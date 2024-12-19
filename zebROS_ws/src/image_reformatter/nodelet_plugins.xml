@@ -1,7 +1,0 @@
-<library path="lib/libimage_reformatter">
-	<class name="image_reformatter/ImageReformatterNodelet" type="image_reformatter::ImageReformatterNodelet" base_class_type="nodelet::Nodelet">
-		<description>
-			Nodelet for changing image encoding and shape
-		</description>
-	</class>
-</library>

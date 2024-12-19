@@ -157,9 +157,14 @@ sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-e
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2024.list "https://deb.ctr-electronics.com/ctr2024.list"
 sudo sed -i -e 's/tools stable main/tools jetson main/' /etc/apt/sources.list.d/ctr2024.list
 
+sudo apt remove linux-headers-generic linux-headers-5.4.0-200 linux-headers-5.4.0-200-generic 
 sudo apt update
-sudo apt install -y canivore-usb
-#sudo apt-mark hold canivore-usb
+#sudo apt install -y canivore-usb
+cd /tmp
+unzip /home/ubuntu/900RobotCode/jetson_install/canivore-usb-arm64-Ubuntu-20.04-v3.zip
+sudo dpkg -i canivore-usb-kernel_1.13_arm64.deb
+sudo dpkg -i canivore-usb_1.13_arm64.deb
+sudo apt-mark hold canivore-usb canivore-usb-kernel
 
 # Re-enable if we want to use a canivore usb interface
 # sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"

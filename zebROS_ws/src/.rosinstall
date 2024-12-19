@@ -64,3 +64,7 @@
 - git:
     local-name: camera_info_manager_py
     uri: https://github.com/FRC900/camera_info_manager_py
+- git:
+    local-name: cv_camera
+    uri: https://github.com/FRC900/cv_camera
+	version: mono16
