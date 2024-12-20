@@ -67,4 +67,4 @@
 - git:
     local-name: cv_camera
     uri: https://github.com/FRC900/cv_camera
-	version: mono16
+    version: mono16
