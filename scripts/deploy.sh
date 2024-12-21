@@ -70,6 +70,10 @@ while [[ $# -gt 0 ]] ; do
         JETSON_ADDR=(10.9.0.8)
         shift
     ;;
+	-R|--no-rio)
+		NO_RIO=1
+		shift
+	;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift # past argument
@@ -90,8 +94,10 @@ JETSON_ROS_CODE_LOCATION=$JETSON_ENV_LOCATION/zebROS_ws
 
 update_links() {
     # Update symlinks on the roboRIO and Jetson.
-    ssh $ROBORIO_ADDR "rm $RIO_CLONE_LOCATION && \
-        ln -s $RIO_ENV_LOCATION $RIO_CLONE_LOCATION"
+	if [ -z ${NO_RIO+x} ]; then
+		ssh $ROBORIO_ADDR "rm $RIO_CLONE_LOCATION && \
+			ln -s $RIO_ENV_LOCATION $RIO_CLONE_LOCATION"
+	fi
 
     for i in "${JETSON_ADDR[@]}"
     do
@@ -130,7 +136,9 @@ if [ $UPDATE_LINKS_ONLY -ne 0 ]; then
 fi
 
 echo "Checking time synchronization..."
-check_clockdiff "$ROBORIO_ADDR" "roboRIO"
+if [ -z ${NO_RIO+x} ]; then
+	check_clockdiff "$ROBORIO_ADDR" "roboRIO"
+fi
 for i in "${JETSON_ADDR[@]}"
 do
     check_clockdiff "$i" "Jetson.$i"
@@ -151,8 +159,10 @@ do
     scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $i:$JETSON_ROS_CODE_LOCATION
     scp $ROS_CODE_LOCATION/ROSRioMaster.sh $i:$JETSON_ROS_CODE_LOCATION
 done
-scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
-scp $ROS_CODE_LOCATION/ROSRioMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
+if [ -z ${NO_RIO+x} ]; then
+	scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
+	scp $ROS_CODE_LOCATION/ROSRioMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
+fi
 
 # If two-way syncing is enabled, copy newer files from the Jetson(s)
 # to the dev laptop
@@ -211,8 +221,10 @@ echo "Synchronization to Jetson complete"
 
 # Run local roboRIO cross build as one process.
 # Then synchronize cross build products to roboRIO.
-$LOCAL_CLONE_LOCATION/deploy_rio_build.sh $ROS_CODE_LOCATION $INSTALL_ENV $ROBORIO_ADDR $RIO_INSTALL_LOCATION &
-RIO_BUILD_PROCESS=$!
+if [ -z ${NO_RIO+x} ]; then
+	$LOCAL_CLONE_LOCATION/deploy_rio_build.sh $ROS_CODE_LOCATION $INSTALL_ENV $ROBORIO_ADDR $RIO_INSTALL_LOCATION &
+	RIO_BUILD_PROCESS=$!
+fi
 
 # Run Jetson native build(s) as a separate process(es).
 JETSON_BUILD_PROCESSES=()
@@ -228,10 +240,14 @@ do
 done
 
 # Capture return code from Rio build processes
-echo "Waiting for RIO_BUILD_PROCESS $RIO_BUILD_PROCESS"
-wait $RIO_BUILD_PROCESS
-RIO_RC=$?
-echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
+if [ -z ${NO_RIO+X} ]; then
+	echo "Waiting for RIO_BUILD_PROCESS $RIO_BUILD_PROCESS"
+	wait $RIO_BUILD_PROCESS
+	RIO_RC=$?
+	echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
+else
+	RIO_RC=0
+fi
 
 # Capture return code from Jetson build process(es)
 # TODO - this doesn't actually capture the return code from
