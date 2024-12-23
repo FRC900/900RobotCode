@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 include ("../cmake_modules/CMakeOpt.cmake")
 
 # Only add gazebo to list of required packages on x86 and mac? builds
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
 find_package(catkin REQUIRED COMPONENTS
@@ -194,7 +194,7 @@ include_directories(
 set (WPI_BASE_LIB_DIR ${WPI_SYSROOT}/lib/wpilib/linux)
 
 # Rio-only code
-if ("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
+if ("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/athena/shared)
 	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/athena/shared)
 
@@ -252,7 +252,7 @@ include_directories(${WPI_SYSROOT}/include/wpilib)
 
 # Non-rio builds are more complex - we have to grab appropriate
 # parts of WPIlib source and include it manually
-if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi")
+if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 	# WPIlib code common to both hardware and sim interfaces.
 	# Create it as a library to avoid building all of these twice
 	add_library(frc_common_wpilib STATIC
@@ -361,7 +361,7 @@ endif()
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will
 # never be run
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
     # Sim version of main control executable.  This hooks into

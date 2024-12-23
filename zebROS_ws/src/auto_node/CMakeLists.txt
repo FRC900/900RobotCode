@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-if (NOT ("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi"))
+if (NOT ("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi"))
 catkin_python_setup()
 endif()
 
@@ -222,7 +222,7 @@ include_directories(
 # catkin_add_nosetests(test)
 
 # Add a custom command to run the Python script
-if (NOT ("${ARM_PREFIX}" STREQUAL "arm-frc2024-linux-gnueabi"))
+if (NOT ("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi"))
 add_custom_target(run_my_script ALL
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_choreo_autos.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

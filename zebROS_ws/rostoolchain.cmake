@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_SYSTEM_NAME Linux)
-set(ARM_PREFIX arm-frc2024-linux-gnueabi)
+set(ARM_PREFIX arm-frc2025-linux-gnueabi)
 
 set(CMAKE_C_COMPILER ${ARM_PREFIX}-gcc)
 set(CMAKE_CXX_COMPILER ${ARM_PREFIX}-g++)
