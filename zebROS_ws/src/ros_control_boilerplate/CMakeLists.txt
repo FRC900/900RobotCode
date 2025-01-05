@@ -277,7 +277,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/motorcontrol/MotorController.cpp
 		${ALLWPILIB}/wpimath/src/main/native/cpp/MathShared.cpp
 		${ALLWPILIB}/wpimath/src/main/native/cpp/filter/Debouncer.cpp
-		#${ALLWPILIB}/wpimath/src/main/native/cpp/geometry/Rotation2d.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/StackTraceWrap.cpp
@@ -286,7 +285,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/src/format.cpp
         ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTF.cpp
         ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTFWrapper.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/Hashing.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/raw_ostream.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ErrorHandling.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/MemAlloc.cpp
@@ -317,7 +315,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Tracer.cpp
 	)
 
-	if ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xaver AGX/Xavier NX
+	if ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xaver AGX/Xavier NX/Orin/etc
 		set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
 			src/nano_nx_dio_hal.cpp
 			src/nano_nx_i2c_hal.cpp
