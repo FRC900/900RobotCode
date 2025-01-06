@@ -107,10 +107,7 @@ swerve_drive_controller:
     fl_angle:
         joint: fl_angle
         # invert: clockwise_positive
-
-        # CHANGE BACK ==================
-        # feedback_sensor_source: FusedCANcoder
-        feedback_sensor_source: RemoteCANcoder
+        feedback_sensor_source: FusedCANcoder
         feedback_remote_sensor_id: 12
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -125,12 +122,7 @@ swerve_drive_controller:
     fr_angle:
         joint: fr_angle
         # invert: clockwise_positive
-
-        # CHANGE BACK ==================
-        # feedback_sensor_source: FusedCANcoder
-        
-        feedback_sensor_source: RemoteCANcoder
-
+        feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 14
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -145,10 +137,7 @@ swerve_drive_controller:
     br_angle:
         joint: br_angle
         # invert: clockwise_positive
-        # feedback_sensor_source: FusedCANcoder
-        # CHANGE BACK ==================
-        feedback_sensor_source: RemoteCANcoder
-
+        feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 13
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
@@ -163,10 +152,7 @@ swerve_drive_controller:
     bl_angle:
         joint: bl_angle
         # invert: clockwise_positive
-        #feedback_sensor_source: FusedCANcoder
-        # CHANGE BACK ====================
-        feedback_sensor_source: RemoteCANcoder
-
+        feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 11
         close_loop_values:
             - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
