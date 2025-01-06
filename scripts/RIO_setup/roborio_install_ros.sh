@@ -99,7 +99,7 @@ ssh -p 22 admin@$1 'ln -s /usr/include /include'
 # Create workspace. Do a build in the empty workspace to set
 # up various scripts for later use. TODO : See if this is needed?
 ssh -p 22 admin@$1 'mkdir -p 900RobotCode/zebROS_ws/src'
-ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 900RobotCode/zebROS_ws && PYTHONPATH=/opt/ros/noetic/lib/python3.10/dist-packages catkin_make_isolated --install'
+ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 900RobotCode/zebROS_ws && PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages catkin_make_isolated --install'
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
@@ -139,4 +139,4 @@ ssh -p 22 admin@$1 'mv ~/900RobotCode ~/900RobotCode.orig'
 ssh -p 22 admin@$1 'ln -s ~/900RobotCode.orig ~/900RobotCode'
 ssh -p 22 admin@$1 'mkdir -p ~/900RobotCode.prod/zebROS_ws'
 ssh -p 22 admin@$1 'mkdir -p ~/900RobotCode.dev/zebROS_ws'
-ssh -p 22 admin@$1 'rsync -avz /opt/ros/noetic/lib/python3.10/site-packages/ /opt/ros/noetic/local/lib/python3.10/dist-packages/'
+# ssh -p 22 admin@$1 'rsync -avz /opt/ros/noetic/lib/python3.10/site-packages/ /opt/ros/noetic/local/lib/python3.10/dist-packages/'
