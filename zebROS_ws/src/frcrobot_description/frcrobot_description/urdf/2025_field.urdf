@@ -1,0 +1,38 @@
+
+<robot name="field">
+    <link name="map"></link>
+    <joint name="map_to_base" type="fixed">
+    <parent link="map"/>
+    <child link="water_game_link" />
+    <origin rpy="0.0 0 0" xyz="0 0 0"/>
+    </joint>
+    <link name="water_game_link">
+    <visual>
+    <origin xyz="8.2594196 4.1119552 0" rpy="0 -0 3.1415" />
+    <geometry>
+    <mesh filename="package://frcrobot_description/meshes/REEFSCAPE_FIELD.dae"/>
+    </geometry>
+    <material name="water_game_link">
+    <color rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0"/>
+    </material>
+    </visual>
+    </link>
+
+    <joint name="base_link_to_apollo" type="floating">
+    <parent link="map"/>
+    <child link="apollo_link" />
+    <origin rpy="1.57 3.14 -1.57" xyz="0 0 0"/>
+    </joint>
+    <link name="apollo_link">
+    <visual>
+    <!--good in rviz 3.14 3.14 -1.57"-->
+    <origin xyz="0 0 0" rpy="0 0 0 " />
+    <geometry>
+    <mesh filename="package://frcrobot_description/meshes/2024_compbot.stl"/>
+    </geometry>
+    <material name="apollo_link">
+    <color rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0"/>
+    </material>
+    </visual>
+    </link>
+</robot>

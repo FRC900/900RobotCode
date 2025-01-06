@@ -1,6 +1,7 @@
 <launch>
 
-  <arg name="model" default="'$(find frcrobot_description)/urdf/2024_field.urdf'"/>
+  <!-- <arg name="model" default="'$(find frcrobot_description)/urdf/2024_field.urdf'"/> -->
+  <arg name="model" default="'$(find frcrobot_description)/urdf/2025_field.urdf'"/>
   <arg name="gui" default="false" />
   <arg name="rvizconfig" default="$(find tagslam_launch)/rviz/tagslam_wfield.rviz"/>
 
@@ -18,9 +19,11 @@
   </node>
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
-	<!-- <node pkg="tf" type="static_transform_publisher" name="link_basetomap" args="0 0 0 0 0 0 1 map base_link 10" /> -->
+	<node pkg="tf" type="static_transform_publisher" name="link_basetomap" args="0 0 0 0 0 0 1 map base_link 10" /> 
+  	<!-- <node pkg="tf" type="static_transform_publisher" name="link_frctomap" args="0 0 0 0 0 0 1 map frc_robot 10" />  -->
+
   <include file="$(find tagslam_viz)/launch/visualize_tags.launch">
-    <arg name="tag_id_file" value="/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/frc900/tagslam.yaml" />
+    <arg name="tag_id_file" value="/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2025/tagslam.yaml" />
   </include>
 
 
