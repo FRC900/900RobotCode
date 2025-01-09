@@ -27,6 +27,7 @@
   <depend>tf</depend>
   <depend>trajectory_msgs</depend>
   <depend>urdf</depend>
+  <depend>smooth</depend>
 
   <test_depend>rostest</test_depend>
   <test_depend>std_srvs</test_depend>
