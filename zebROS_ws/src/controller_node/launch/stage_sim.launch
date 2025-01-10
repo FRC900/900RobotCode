@@ -15,7 +15,7 @@
 	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/$(arg world_file)" output="screen">
         <remap from="base_scan" to="scan"/>
         <remap from="odom" to="/frcrobot_jetson/swerve_drive_controller/odom"/>
-        <remap from="cmd_vel" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
+        <remap from="cmd_vel" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"/>
     </node>
 
     <!-- Create an imu message with noise from stage's ground truth, publish into sim interface imu input -->
