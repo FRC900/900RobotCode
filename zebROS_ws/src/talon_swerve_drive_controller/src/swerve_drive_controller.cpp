@@ -525,14 +525,15 @@ void update(const ros::Time &time, const ros::Duration &period) override
 		return;
 	}
 
+	// Discretize velocity, accounting for the fact that we're not controlling continuously
+	// This finds the pose we would travel in one timestep and converts it to a twist to account for the robot rotating during the timestep (if translation + rotation are both commanded)
+	// Tested in sim, it does help a bit
+	curr_cmd = discretize(curr_cmd, std::max(dt, 1./250.));
+
 	// We are not stopped, so reset the time which we were
 	// last not-stopped here. This is used later to give
 	// a delay between stopping and moving into parking config
 	time_before_brake_ = time.toSec();
-
-	// Discretize velocity, accounting for the fact that we're not controlling continuously
-	// This finds the pose we would travel in one timestep and converts it to a twist to account for the robot rotating during the timestep (if translation + rotation are both commanded)
-	curr_cmd = discretize(curr_cmd, dt);
 
 	// Compute wheels velocities:
 	//Parse curr_cmd to get velocity vector and rotation (z axis)
@@ -1031,19 +1032,27 @@ struct Commands
 // Anyway, this is basically WPILib's discretize function.
 // (and now we have a cool library)
 Commands discretize(Commands cmd, double dt) {
+	if (dt < 1e-6) {
+		// ROS_WARN_STREAM("swerve_drive_controller: discretization: dt=0? command was " << cmd.lin.x << "," << cmd.lin.y << "," << cmd.ang);
+		return cmd;
+	}
+	// ROS_INFO_STREAM("In: " << cmd.lin.x << "," << cmd.lin.y << "," << cmd.ang << ", dt=" << dt);
 	smooth::SE2d group_element_aka_pose;
 	// set R2 part (translation)
 	group_element_aka_pose.r2()(0,0) = cmd.lin.x * dt;
 	group_element_aka_pose.r2()(1,0) = cmd.lin.y * dt;
 	// set SO2 part (rotation)
 	group_element_aka_pose.so2() = smooth::SO2d(cmd.ang * dt);
+	// ROS_INFO_STREAM("SE2: " << group_element_aka_pose);
 	// logarithmic map to go from pose to twist
 	Eigen::Vector3d tangent_aka_twist = group_element_aka_pose.log(); // {x, y, rotation}
+	// ROS_INFO_STREAM("Twist (vx,vy,omega): " << tangent_aka_twist);
 	
 	Commands discretized;
 	discretized.lin = swervemath::Point2d{tangent_aka_twist(0,0) / dt, tangent_aka_twist(1,0) / dt};
 	discretized.ang = tangent_aka_twist(2,0) / dt;
 	discretized.stamp = cmd.stamp;
+	// ROS_INFO_STREAM("Discretized: " << discretized.lin.x << "," << discretized.lin.y << "," << discretized.ang);
 
 	return discretized;
 }
