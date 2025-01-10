@@ -1,0 +1,727 @@
+<?xml version="1.0"?>
+
+<launch>
+
+<!-- TODO update with 2025 topics -->
+<!-- rostopic list | grep -E -v '.*image.*|.*disp.*|.*depth_registered.*|.*confidence_map.*|.*point_cloud.*' -->
+  <node name="rosbag_record_node" pkg="rosbag" type="record"
+	  launch-prefix="nice"
+	  args="record --tcpnodelay -o /home/ubuntu/bagfiles/auto_testing
+	  /align/cmd_vel
+	/align_and_shoot/align_and_shoot_2024/cancel
+	/align_and_shoot/align_and_shoot_2024/feedback
+	/align_and_shoot/align_and_shoot_2024/goal
+	/align_and_shoot/align_and_shoot_2024/result
+	/align_and_shoot/align_and_shoot_2024/status
+	/align_to_speaker/align_to_speaker_2024/cancel
+	/align_to_speaker/align_to_speaker_2024/feedback
+	/align_to_speaker/align_to_speaker_2024/goal
+	/align_to_speaker/align_to_speaker_2024/result
+	/align_to_speaker/align_to_speaker_2024/status
+	/align_to_trap/align_to_trap_2024/cancel
+	/align_to_trap/align_to_trap_2024/feedback
+	/align_to_trap/align_to_trap_2024/goal
+	/align_to_trap/align_to_trap_2024/result
+	/align_to_trap/align_to_trap_2024/status
+	/align_to_trap/align_to_trap_pid/swerve_drive_controller/cmd_vel
+
+
+
+
+
+
+
+
+
+
+	/apriltag_zedx_back/apriltag_detection/parameter_descriptions
+	/apriltag_zedx_back/apriltag_detection/parameter_updates
+	/apriltag_zedx_back/apriltag_detection/tags
+	/apriltag_zedx_back/tag_detection_msg
+	/apriltag_zedx_back/tag_detection_world
+
+
+
+
+
+
+
+
+
+
+	/apriltag_zedx_front/apriltag_detection/parameter_descriptions
+	/apriltag_zedx_front/apriltag_detection/parameter_updates
+	/apriltag_zedx_front/apriltag_detection/tags
+	/apriltag_zedx_front/tag_detection_msg
+	/apriltag_zedx_front/tag_detection_world
+	/arm/move_arm_server_2024/cancel
+	/arm/move_arm_server_2024/feedback
+	/arm/move_arm_server_2024/goal
+	/arm/move_arm_server_2024/result
+	/arm/move_arm_server_2024/status
+	/auto/auto_mode
+	/auto/auto_state
+	/auto/cmd_vel
+	/auto/first_point
+	/auto_note_align/cmd_vel
+	/balance_position/balancer_server/swerve_drive_controller/cmd_vel
+	/clawster/clawster_server_2024/cancel
+	/clawster/clawster_server_2024/clawster_dyn_rec/parameter_descriptions
+	/clawster/clawster_server_2024/clawster_dyn_rec/parameter_updates
+	/clawster/clawster_server_2024/feedback
+	/clawster/clawster_server_2024/goal
+	/clawster/clawster_server_2024/result
+	/clawster/clawster_server_2024/status
+	/clicked_point
+	/climbing/climbing_server_2024/cancel
+	/climbing/climbing_server_2024/feedback
+	/climbing/climbing_server_2024/goal
+	/climbing/climbing_server_2024/result
+	/climbing/climbing_server_2024/status
+	/diagnostics
+	/diverter/diverter_server_2024/cancel
+	/diverter/diverter_server_2024/diverter_dyn_rec/parameter_descriptions
+	/diverter/diverter_server_2024/diverter_dyn_rec/parameter_updates
+	/diverter/diverter_server_2024/feedback
+	/diverter/diverter_server_2024/goal
+	/diverter/diverter_server_2024/result
+	/diverter/diverter_server_2024/status
+	/drive_and_score/drive_and_score_2024/cancel
+	/drive_and_score/drive_and_score_2024/feedback
+	/drive_and_score/drive_and_score_2024/goal
+	/drive_and_score/drive_and_score_2024/result
+	/drive_and_score/drive_and_score_2024/status
+	/drive_to_object/drive_to_object/cancel
+	/drive_to_object/drive_to_object/feedback
+	/drive_to_object/drive_to_object/goal
+	/drive_to_object/drive_to_object/result
+	/drive_to_object/drive_to_object/status
+	/drive_to_object/x_position_pid/parameter_descriptions
+	/drive_to_object/x_position_pid/parameter_updates
+	/drive_to_object/x_position_pid/pid_debug
+	/drive_to_object/x_position_pid/pid_enable
+	/drive_to_object/x_position_pid/x_cmd_pub
+	/drive_to_object/x_position_pid/x_command
+	/drive_to_object/x_position_pid/x_state_pub
+	/drive_to_object/y_position_pid/parameter_descriptions
+	/drive_to_object/y_position_pid/parameter_updates
+	/drive_to_object/y_position_pid/pid_debug
+	/drive_to_object/y_position_pid/pid_enable
+	/drive_to_object/y_position_pid/y_cmd_pub
+	/drive_to_object/y_position_pid/y_command
+	/drive_to_object/y_position_pid/y_state_pub
+	/enable_auto_in_teleop
+	/frcrobot_jetson/arm_cancoder_controller/parameter_descriptions
+	/frcrobot_jetson/arm_cancoder_controller/parameter_updates
+	/frcrobot_jetson/arm_controller/arm_joint/parameter_descriptions
+	/frcrobot_jetson/arm_controller/arm_joint/parameter_updates
+	/frcrobot_jetson/arm_controller/command
+	/frcrobot_jetson/arm_controller/parameter_descriptions
+	/frcrobot_jetson/arm_controller/parameter_updates
+	/frcrobot_jetson/bottom_left_shooter_controller/command
+	/frcrobot_jetson/bottom_right_shooter_controller/command
+	/frcrobot_jetson/cancoder_states
+	/frcrobot_jetson/clawster_controller/command
+	/frcrobot_jetson/clawster_controller/parameter_descriptions
+	/frcrobot_jetson/clawster_controller/parameter_updates
+	/frcrobot_jetson/climb_controller/climb_leader/parameter_descriptions
+	/frcrobot_jetson/climb_controller/climb_leader/parameter_updates
+	/frcrobot_jetson/climb_controller/is_zeroed
+	/frcrobot_jetson/cpu_monitor/align_and_shoot/align_and_shoot_2024/cpu
+	/frcrobot_jetson/cpu_monitor/align_and_shoot/align_and_shoot_2024/mem
+	/frcrobot_jetson/cpu_monitor/align_to_speaker/align_to_speaker_2024/cpu
+	/frcrobot_jetson/cpu_monitor/align_to_speaker/align_to_speaker_2024/mem
+	/frcrobot_jetson/cpu_monitor/align_to_speaker/link_maptobluespeaker/cpu
+	/frcrobot_jetson/cpu_monitor/align_to_speaker/link_maptobluespeaker/mem
+	/frcrobot_jetson/cpu_monitor/align_to_speaker/link_maptoredspeaker/cpu
+	/frcrobot_jetson/cpu_monitor/align_to_speaker/link_maptoredspeaker/mem
+	/frcrobot_jetson/cpu_monitor/align_to_trap/align_to_trap_2024/cpu
+	/frcrobot_jetson/cpu_monitor/align_to_trap/align_to_trap_2024/mem
+	/frcrobot_jetson/cpu_monitor/align_to_trap/baselink_to_trap/cpu
+	/frcrobot_jetson/cpu_monitor/align_to_trap/baselink_to_trap/mem
+	/frcrobot_jetson/cpu_monitor/align_to_trap/dyanmic_trap_tf/cpu
+	/frcrobot_jetson/cpu_monitor/align_to_trap/dyanmic_trap_tf/mem
+	/frcrobot_jetson/cpu_monitor/arm/move_arm_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/arm/move_arm_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/auto/auto_node/cpu
+	/frcrobot_jetson/cpu_monitor/auto/auto_node/mem
+	/frcrobot_jetson/cpu_monitor/baselink_to_frontbumper/cpu
+	/frcrobot_jetson/cpu_monitor/baselink_to_frontbumper/mem
+	/frcrobot_jetson/cpu_monitor/baselink_to_intake/cpu
+	/frcrobot_jetson/cpu_monitor/baselink_to_intake/mem
+	/frcrobot_jetson/cpu_monitor/candle_node/candle_node/cpu
+	/frcrobot_jetson/cpu_monitor/candle_node/candle_node/mem
+	/frcrobot_jetson/cpu_monitor/clawster/clawster_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/clawster/clawster_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/climbing/climbing_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/climbing/climbing_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/cpu
+	/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/mem
+	/frcrobot_jetson/cpu_monitor/converter/cpu
+	/frcrobot_jetson/cpu_monitor/converter/mem
+	/frcrobot_jetson/cpu_monitor/diverter/diverter_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/diverter/diverter_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/drive_and_score/drive_and_score_2024/cpu
+	/frcrobot_jetson/cpu_monitor/drive_and_score/drive_and_score_2024/mem
+	/frcrobot_jetson/cpu_monitor/drive_to_object/drive_to_object/cpu
+	/frcrobot_jetson/cpu_monitor/drive_to_object/drive_to_object/mem
+	/frcrobot_jetson/cpu_monitor/drive_to_object/x_position_pid/cpu
+	/frcrobot_jetson/cpu_monitor/drive_to_object/x_position_pid/mem
+	/frcrobot_jetson/cpu_monitor/drive_to_object/y_position_pid/cpu
+	/frcrobot_jetson/cpu_monitor/drive_to_object/y_position_pid/mem
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/cpu_monitor/cpu
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/cpu_monitor/mem
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/dump_offsets_service/cpu
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/dump_offsets_service/mem
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/frcrobot_hw_interface/cpu
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/frcrobot_hw_interface/mem
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/ros_control_controller_manager/cpu
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/ros_control_controller_manager/mem
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/uptime_jetson/cpu
+	/frcrobot_jetson/cpu_monitor/frcrobot_jetson/uptime_jetson/mem
+	/frcrobot_jetson/cpu_monitor/imu/imu_zero/cpu
+	/frcrobot_jetson/cpu_monitor/imu/imu_zero/mem
+	/frcrobot_jetson/cpu_monitor/intaking/drive_object_intake/cpu
+	/frcrobot_jetson/cpu_monitor/intaking/drive_object_intake/mem
+	/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/norfair_ros/cpu
+	/frcrobot_jetson/cpu_monitor/norfair_ros/mem
+	/frcrobot_jetson/cpu_monitor/path_follower/game_piece_path_server/cpu
+	/frcrobot_jetson/cpu_monitor/path_follower/game_piece_path_server/mem
+	/frcrobot_jetson/cpu_monitor/path_follower/map_server/cpu
+	/frcrobot_jetson/cpu_monitor/path_follower/map_server/mem
+	/frcrobot_jetson/cpu_monitor/path_follower/path_follower_publish_pid_cmd_vel_node/cpu
+	/frcrobot_jetson/cpu_monitor/path_follower/path_follower_publish_pid_cmd_vel_node/mem
+	/frcrobot_jetson/cpu_monitor/path_follower/path_follower_server/cpu
+	/frcrobot_jetson/cpu_monitor/path_follower/path_follower_server/mem
+	/frcrobot_jetson/cpu_monitor/path_follower/x_position_pid/cpu
+	/frcrobot_jetson/cpu_monitor/path_follower/x_position_pid/mem
+	/frcrobot_jetson/cpu_monitor/path_follower/y_position_pid/cpu
+	/frcrobot_jetson/cpu_monitor/path_follower/y_position_pid/mem
+	/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/cpu
+	/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/mem
+	/frcrobot_jetson/cpu_monitor/rosbag_record_node/cpu
+	/frcrobot_jetson/cpu_monitor/rosbag_record_node/mem
+	/frcrobot_jetson/cpu_monitor/rosout/cpu
+	/frcrobot_jetson/cpu_monitor/rosout/mem
+	/frcrobot_jetson/cpu_monitor/rumble/rumble_server/cpu
+	/frcrobot_jetson/cpu_monitor/rumble/rumble_server/mem
+	/frcrobot_jetson/cpu_monitor/shooter/shooter_pivot_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/shooter/shooter_pivot_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/shooter/shooter_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/shooter/shooter_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/shooting/shooting_server_2024/cpu
+	/frcrobot_jetson/cpu_monitor/shooting/shooting_server_2024/mem
+	/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_imu/cpu
+	/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_imu/mem
+	/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_pigeon2/cpu
+	/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_pigeon2/mem
+	/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_pid/cpu
+	/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_pid/mem
+	/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2024/cpu
+	/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2024/mem
+	/frcrobot_jetson/cpu_monitor/total_active_mem
+	/frcrobot_jetson/cpu_monitor/total_available_mem
+	/frcrobot_jetson/cpu_monitor/total_buffers_mem
+	/frcrobot_jetson/cpu_monitor/total_cached_mem
+	/frcrobot_jetson/cpu_monitor/total_cpu
+	/frcrobot_jetson/cpu_monitor/total_free_mem
+	/frcrobot_jetson/cpu_monitor/total_inactive_mem
+	/frcrobot_jetson/cpu_monitor/total_shared_mem
+	/frcrobot_jetson/cpu_monitor/total_slab_mem
+	/frcrobot_jetson/cpu_monitor/total_used_mem
+	/frcrobot_jetson/intake_talonfxpro_controller/command
+	/frcrobot_jetson/joint_states
+	/frcrobot_jetson/latency_compensation_states
+	/frcrobot_jetson/note_diverter_controller/command
+	/frcrobot_jetson/pigeon2
+	/frcrobot_jetson/pivot_cancoder_controller/parameter_descriptions
+	/frcrobot_jetson/pivot_cancoder_controller/parameter_updates
+	/frcrobot_jetson/shooter_pivot_controller/parameter_descriptions
+	/frcrobot_jetson/shooter_pivot_controller/parameter_updates
+	/frcrobot_jetson/shooter_pivot_controller/shooter_pivot_motionmagic_joint/parameter_descriptions
+	/frcrobot_jetson/shooter_pivot_controller/shooter_pivot_motionmagic_joint/parameter_updates
+	/frcrobot_jetson/swerve_drive_controller/cmd_vel
+	/frcrobot_jetson/swerve_drive_controller/cmd_vel_out
+	/frcrobot_jetson/swerve_drive_controller/odom
+	/frcrobot_jetson/talon_configs
+	/frcrobot_jetson/talon_states
+	/frcrobot_jetson/talonfxpro_configs
+	/frcrobot_jetson/talonfxpro_states
+	/frcrobot_jetson/top_left_shooter_controller/command
+	/frcrobot_jetson/top_right_shooter_controller/command
+	/frcrobot_jetson/uptime
+	/frcrobot_rio/button_box_states
+	/frcrobot_rio/clawster_controller/command
+	/frcrobot_rio/cpu_monitor/frcrobot_rio/cpu_monitor/cpu
+	/frcrobot_rio/cpu_monitor/frcrobot_rio/cpu_monitor/mem
+	/frcrobot_rio/cpu_monitor/frcrobot_rio/frcrobot_hw_interface/cpu
+	/frcrobot_rio/cpu_monitor/frcrobot_rio/frcrobot_hw_interface/mem
+	/frcrobot_rio/cpu_monitor/frcrobot_rio/uptime_rio/cpu
+	/frcrobot_rio/cpu_monitor/frcrobot_rio/uptime_rio/mem
+	/frcrobot_rio/cpu_monitor/total_active_mem
+	/frcrobot_rio/cpu_monitor/total_available_mem
+	/frcrobot_rio/cpu_monitor/total_buffers_mem
+	/frcrobot_rio/cpu_monitor/total_cached_mem
+	/frcrobot_rio/cpu_monitor/total_cpu
+	/frcrobot_rio/cpu_monitor/total_free_mem
+	/frcrobot_rio/cpu_monitor/total_inactive_mem
+	/frcrobot_rio/cpu_monitor/total_shared_mem
+	/frcrobot_rio/cpu_monitor/total_used_mem
+	/frcrobot_rio/joint_states
+	/frcrobot_rio/joystick_states1
+	/frcrobot_rio/joystick_states2
+	/frcrobot_rio/leafblower_controller/command
+	/frcrobot_rio/leafblower_controller/parameter_descriptions
+	/frcrobot_rio/leafblower_controller/parameter_updates
+	/frcrobot_rio/match_data
+	/frcrobot_rio/robot_controller_states
+	/frcrobot_rio/rumble_states
+	/frcrobot_rio/uptime
+	/hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
+	/hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
+	/imu/zeroed_imu
+	/intaking/drive_object_intake/cancel
+	/intaking/drive_object_intake/feedback
+	/intaking/drive_object_intake/goal
+	/intaking/drive_object_intake/result
+	/intaking/drive_object_intake/status
+	/intaking/intaking_server_2024/cancel
+	/intaking/intaking_server_2024/feedback
+	/intaking/intaking_server_2024/goal
+	/intaking/intaking_server_2024/intaking_dyn_rec/parameter_descriptions
+	/intaking/intaking_server_2024/intaking_dyn_rec/parameter_updates
+	/intaking/intaking_server_2024/result
+	/intaking/intaking_server_2024/status
+	/joint_states
+	/last_relocalize
+	/norfair/input
+	/norfair/output
+	/path_follower/map
+	/path_follower/map_metadata
+	/path_follower/path_follower/swerve_drive_controller/cmd_vel
+	/path_follower/path_follower_pid/pid_enable
+	/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
+	/path_follower/path_follower_server/cancel
+	/path_follower/path_follower_server/feedback
+	/path_follower/path_follower_server/goal
+	/path_follower/path_follower_server/result
+	/path_follower/path_follower_server/status
+	/path_follower/robot_relative_yaw
+	/path_follower/x_position_pid/parameter_descriptions
+	/path_follower/x_position_pid/parameter_updates
+	/path_follower/x_position_pid/pid_debug
+	/path_follower/x_position_pid/pid_enable
+	/path_follower/x_position_pid/x_cmd_pub
+	/path_follower/x_position_pid/x_command
+	/path_follower/x_position_pid/x_state_pub
+	/path_follower/y_position_pid/parameter_descriptions
+	/path_follower/y_position_pid/parameter_updates
+	/path_follower/y_position_pid/pid_debug
+	/path_follower/y_position_pid/pid_enable
+	/path_follower/y_position_pid/y_cmd_pub
+	/path_follower/y_position_pid/y_command
+	/path_follower/y_position_pid/y_state_pub
+	/placing/cmd_vel
+	/record
+	/robot_state/joint_states
+	/rosout
+	/rosout_agg
+	/shooter/set_shooter_pivot/cancel
+	/shooter/set_shooter_pivot/feedback
+	/shooter/set_shooter_pivot/goal
+	/shooter/set_shooter_pivot/result
+	/shooter/set_shooter_pivot/status
+	/shooter/set_shooter_speed/cancel
+	/shooter/set_shooter_speed/feedback
+	/shooter/set_shooter_speed/goal
+	/shooter/set_shooter_speed/result
+	/shooter/set_shooter_speed/status
+	/shooter/shooter_pivot_server_2024/pivot_dyn_rec/parameter_descriptions
+	/shooter/shooter_pivot_server_2024/pivot_dyn_rec/parameter_updates
+	/shooting/shooting_server_2024/cancel
+	/shooting/shooting_server_2024/feedback
+	/shooting/shooting_server_2024/goal
+	/shooting/shooting_server_2024/result
+	/shooting/shooting_server_2024/shooting_dyn_rec/parameter_descriptions
+	/shooting/shooting_server_2024/shooting_dyn_rec/parameter_updates
+	/shooting/shooting_server_2024/status
+	/speaker_align/cmd_vel
+	/speaker_align/dist_and_ang
+	/tagslam/odom/body_frc_robot
+	/teleop/orient_strafing/control_effort
+	/teleop/orient_strafing/orient_strafing_pid/parameter_descriptions
+	/teleop/orient_strafing/orient_strafing_pid/parameter_updates
+	/teleop/orient_strafing/pid_debug
+	/teleop/orient_strafing/pid_enable
+	/teleop/orient_strafing/setpoint
+	/teleop/orient_strafing/state
+	/teleop/orient_strafing/swerve_drive_controller/cmd_vel
+	/teleop/orientation_command
+	/teleop/swerve_drive_controller/cmd_vel
+	/teleop/teleop_params/parameter_descriptions
+	/teleop/teleop_params/parameter_updates
+	/teleop/velocity_orientation_command
+	/tf
+	/tf_object_detection/object_detection_world
+
+	/tf_object_detection_zedx_front/obj_detection_msg
+	/tf_object_detection_zedx_front/object_detection_world
+	/tf_static
+	/trap_x
+	/zed_nodelet/bond
+	/zed_nodelet/parameter_descriptions
+	/zed_nodelet/parameter_updates
+
+	/zedx_back/depth/camera_info
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/imu/data
+	/zedx_back/imu/data_raw
+	/zedx_back/left/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/left_cam_imu_transform
+	/zedx_back/left_raw/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/odom
+	/zedx_back/odom/status
+	/zedx_back/parameter_descriptions
+	/zedx_back/parameter_updates
+	/zedx_back/path_map
+	/zedx_back/path_odom
+	/zedx_back/plane
+	/zedx_back/plane_marker
+
+	/zedx_back/pose
+	/zedx_back/pose/status
+	/zedx_back/pose_with_covariance
+	/zedx_back/rgb/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/rgb_raw/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/right/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/right_raw/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_back/temperature/imu
+
+	/zedx_front/depth/camera_info
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/imu/data
+	/zedx_front/imu/data_raw
+	/zedx_front/left/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/left_cam_imu_transform
+	/zedx_front/left_raw/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/odom
+	/zedx_front/odom/status
+	/zedx_front/parameter_descriptions
+	/zedx_front/parameter_updates
+	/zedx_front/path_map
+	/zedx_front/path_odom
+	/zedx_front/plane
+	/zedx_front/plane_marker
+
+	/zedx_front/pose
+	/zedx_front/pose/status
+	/zedx_front/pose_with_covariance
+	/zedx_front/rgb/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/rgb_raw/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/right/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/right_raw/camera_info
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/zedx_front/temperature/imu
+"/>
+</launch>

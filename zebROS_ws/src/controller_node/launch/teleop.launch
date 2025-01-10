@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="year" default="2022" />
+  <arg name="year" default="2025" />
   <arg name="hw_or_sim" default="hw" />
   <group ns="teleop">
 	<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp_$(arg year).yaml" command="load"/>
