@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import rospy
+import tf2_ros
+import tf2_geometry_msgs
 from frc_msgs.msg import MatchSpecificData
 from std_msgs.msg import Int32
 
@@ -60,24 +62,33 @@ def game_piece_callback(msg):
     has_game_piece = msg.has_game_piece
 
 team_color = "green"
-def team_color_callback(msg):
+def team_color_callback(msg: MatchSpecificData):
     global team_color
     team_color = msg.allianceColor
 
 if __name__ == "__main__":
     rospy.init_node("2025_auto_align")
     angle_pub = rospy.Publisher("/auto_align_angle", Int32, queue_size=1)
-    position_sub = rospy.Subscriber()
-    game_piece_sub = rospy.Subscriber()
+    # game_piece_sub = rospy.Subscriber()
     team_color_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, team_color_callback)
+
+    tf_buffer = tf2_ros.Buffer()
+    listener = tf2_ros.TransformListener(tf_buffer)
 
     if team_color == "red":
         tags = RED_TAGS
     else:
         tags = BLUE_TAGS
+    
+    angle = None
 
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
+
+        trans = tf_buffer.lookup_transform('base_link', 'map', rospy.Time())
+        x = trans.transform.translation.x
+        y = trans.transform.translation.y
+
         closest_tag = (-1, -1)
         closest_dist_sq = 99999
         for (tag_x, tag_y, is_on_reef) in tags:
@@ -88,7 +99,9 @@ if __name__ == "__main__":
                     closest_tag = (tag_x, tag_y)
                     closest_dist_sq = dist_sq
         
-        angle = ANGLE_FROM_TAG[closest_tag]
-        angle_pub.publish(Int32(data=angle))
+        new_angle = ANGLE_FROM_TAG(closest_tag)
+        if new_angle != angle:
+            angle = ANGLE_FROM_TAG[closest_tag]
+            angle_pub.publish(Int32(data=angle))
 
         r.sleep()
