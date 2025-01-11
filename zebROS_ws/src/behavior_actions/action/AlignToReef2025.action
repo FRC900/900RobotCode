@@ -1,0 +1,10 @@
+uint8 LEFT_PIPE=0
+uint8 RIGHT_PIPE=1
+
+uint8 pipe
+---
+bool success
+---
+float64 x_error
+float64 y_error
+float64 angle_error
