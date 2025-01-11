@@ -84,6 +84,13 @@ include_directories(
 	${Eigen3_INCLUDE_DIRS}
 	)
 
+add_executable(teleop_joystick_comp_2025 src/teleop_joystick_comp_2025.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+target_link_libraries(teleop_joystick_comp_2025
+	${catkin_LIBRARIES})
+add_dependencies(teleop_joystick_comp_2025
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS})
+
 add_executable(teleop_joystick_comp_2024 src/teleop_joystick_comp_2024.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
 target_link_libraries(teleop_joystick_comp_2024
 	${catkin_LIBRARIES})
