@@ -52,8 +52,9 @@ class Aligner:
         self.trap_min_y_vel = rospy.get_param("reef_min_y_vel")
         self.trap_fast_zone = rospy.get_param("reef_fast_zone")
 
-        self.left_frame = rospy.get_param("left_frame")
-        self.right_frame = rospy.get_param("right_frame")
+        self.dist = rospy.get_param("reef_left_right_dist")
+        self.left_
+        self.right_frame 
 
         
         self.color = 0
