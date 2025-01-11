@@ -49,6 +49,7 @@ hardware_interface:
        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
        
        # TODO add mechanisms
+       - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
        
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
@@ -76,6 +77,13 @@ hardware_interface:
 # /frcrobot/talon_states
 
 # TODO add mechanisms
+
+intake_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: intake
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Brake
 
 cancoder_state_controller:
     type:     cancoder_state_controller/CANCoderStateController
