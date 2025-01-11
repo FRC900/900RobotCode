@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# CONTROLS Intake
-
 import rospy
 import actionlib
 
@@ -30,7 +28,7 @@ class Intaker2025ActionServer(object):
 
         self.last_touched_diverter = rospy.Time()
 
-        rospy.loginfo(f"Intake: switch name {self.switch_name} intake speed {self.intake_speed}")
+        rospy.loginfo(f"2025_intaker_server: switch name: {self.switch_name}, intake speed: {self.intake_speed}")
 
         self._as = actionlib.SimpleActionServer(self._action_name, Intaker2025Action, execute_cb=self.execute_cb, auto_start = False)
         self._as.start()
@@ -40,13 +38,13 @@ class Intaker2025ActionServer(object):
         success = True
         r = rospy.Rate(250)
 
-        rospy.loginfo("intaker_server: intaking!")
+        rospy.loginfo("2025_intaker_server: intaking!")
         pct_out.data = self.intake_speed
         self.intake_client.call(CommandRequest(pct_out.data))
         while self.switch == 0 and not rospy.is_shutdown():
             if self._as.is_preempt_requested():
                 self._as.set_preempted()
-                rospy.logwarn("intaker_server: Preempted!")
+                rospy.logwarn("2025_intaker_server: Preempted!")
                 pct_out.data = 0
                 self.intake_client.call(CommandRequest(pct_out.data))
                 success = False
