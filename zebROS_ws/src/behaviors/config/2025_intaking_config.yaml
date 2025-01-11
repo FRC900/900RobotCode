@@ -1,0 +1,6 @@
+intaking_speed: 8.0 # change to voltage out by multiplying by 10
+outtaking_speed: 6.0 # change to voltage out, should be positive
+intaking_timeout: 153.0
+current_threshold: 100.0
+outtaking_time: 0.5
+backwards_time: 0.25

@@ -45,6 +45,7 @@ hardware_interface:
        - {name: rumble0, type: rumble, port: 0, local: true}
        # limit switch example:
        # - {name: claw_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
+       - {name: intake_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
 
