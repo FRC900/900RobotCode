@@ -3,6 +3,7 @@
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
+from math import pi
 from frc_msgs.msg import MatchSpecificData
 from std_msgs.msg import Int32
 
@@ -85,7 +86,12 @@ if __name__ == "__main__":
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
 
-        trans = tf_buffer.lookup_transform('base_link', 'map', rospy.Time())
+        try:
+            trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
+        except:
+            rospy.loginfo("Transform tree not up yet")
+            r.sleep()
+            continue
         x = trans.transform.translation.x
         y = trans.transform.translation.y
 
@@ -94,14 +100,17 @@ if __name__ == "__main__":
         for (tag_x, tag_y, is_on_reef) in tags:
             dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
 
-            if is_on_reef == has_game_piece or dist_sq < 0.25 ** 2: # if we're very close to something, we should stay aligned to that
+            if (is_on_reef == has_game_piece) or dist_sq < 0.25 ** 2: # if we're very close to something, we should stay aligned to that
                 if dist_sq < closest_dist_sq:
                     closest_tag = (tag_x, tag_y)
                     closest_dist_sq = dist_sq
         
-        new_angle = ANGLE_FROM_TAG(closest_tag)
-        if new_angle != angle:
-            angle = ANGLE_FROM_TAG[closest_tag]
-            angle_pub.publish(Int32(data=angle))
+        angle = ANGLE_FROM_TAG[closest_tag]
+        angle *= pi/180
+        angle_pub.publish(Int32(data=angle))
+        # new_angle = ANGLE_FROM_TAG[closest_tag]
+        # if new_angle != angle:
+        #     angle = new_angle
+        #     angle_pub.publish(Int32(data=angle))
 
         r.sleep()
