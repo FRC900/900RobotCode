@@ -32,7 +32,6 @@ public:
     SimulatorDevices &operator=(SimulatorDevices &&) noexcept = delete;
 
     // these run in this order
-    hardware_interface::InterfaceManager *registerInterface() override;
     void simInit(ros::NodeHandle &nh) override;
     void simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 

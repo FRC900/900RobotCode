@@ -113,7 +113,7 @@ std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> FRCRobotInt
 			device_ptr->appendDeviceMap(ctrev6_devices);
 		}
 	};
-	append_device_map.template operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
+	append_device_map.template operator()<CANCoderDevices<SIM>>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
 	append_device_map.template operator()<Pigeon2Devices>();  // and apparently even dumber if they're in a templated member function
 	append_device_map.template operator()<TalonFXProDevices<SIM>>();
 	return ctrev6_devices;
