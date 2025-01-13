@@ -126,7 +126,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 set (ALLWPILIB ../../../../allwpilib)
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2024/roborio/arm-frc2024-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2025/roborio/arm-frc2024-linux-gnueabi)
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
@@ -148,6 +148,8 @@ include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/inclu
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/include)
 
 include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/eigen/include/)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/nanopb/include/)
+include_directories(${ALLWPILIB}/wpimath/src/generated/main/native/cpp/)
 
 include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/devel/include)
 include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/src/ros_control_boilerplate/include)
@@ -156,7 +158,6 @@ include_directories(${WPI_SYSROOT}/include/wpilib)
 
 add_library(wpilib_simulation_utils STATIC
   ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/struct/DCMotorStruct.cpp
-  ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/LinearSystemId.cpp
   ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/FlywheelSim.cpp
   ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/SingleJointedArmSim.cpp
 )

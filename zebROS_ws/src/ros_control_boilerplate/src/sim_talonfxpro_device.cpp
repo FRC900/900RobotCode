@@ -25,9 +25,8 @@ void SimTalonFXProDevice::registerSimInterface(hardware_interface::talonfxpro::T
     sim_command_interface.registerHandle(hardware_interface::talonfxpro::TalonFXProSimCommandHandle(state_interface.getHandle(getName()), sim_command_.get()));
 }
 
-void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer, const units::voltage::volt_t battery_voltage)
+void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if, const units::voltage::volt_t battery_voltage)
 {
-    // tracer.start("talonfxpro cancoder check");
     using hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
     using hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
     using hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder;
@@ -84,7 +83,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     {
         gazebo_joint_->SetPosition(0, state_->getRotorPosition()); // always set position
     }
-    // tracer.stop("talonfxpro gz sim");
 
     double cancoder_invert = 1.0;
     double cancoder_offset = 0.0;
@@ -95,11 +93,10 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     }
 
     const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
-    // tracer.stop("talonfxpro cancoder read");
 
     // Set simulation state supply voltages
     sim_state.SetSupplyVoltage(battery_voltage);
-    if (cancoder_) { cancoder_->GetSimState().SetSupplyVoltage(battery_voltage); }
+    if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage.value()); }
 
     // Update our motor state from simulation state
     state_->setMotorVoltage(sim_state.GetMotorVoltage().value());

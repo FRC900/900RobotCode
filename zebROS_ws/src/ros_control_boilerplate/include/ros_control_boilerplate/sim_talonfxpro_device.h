@@ -43,7 +43,7 @@ public:
                               hardware_interface::talonfxpro::TalonFXProSimCommandInterface &sim_command_interface) const;
 
     // Read and write functions which add additional sim features
-    void simRead(const ros::Time& time, const ros::Duration& period, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if);
+    void simRead(const ros::Time& time, const ros::Duration& period, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if, const units::voltage::volt_t battery_voltage);
 
     // Write commands queued in sim_command_ to the simulated TalonFXPro CTRE libs
     void simWrite(const ros::Time& time, const ros::Duration& period);

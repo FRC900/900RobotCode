@@ -3,6 +3,7 @@
 #include "simulator_interface/simulator_base.h"
 #include <frc/simulation/FlywheelSim.h>
 #include <frc/system/plant/DCMotor.h>
+#include <frc/system/plant/LinearSystemId.h>
 #include "wpimath/MathShared.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
@@ -19,8 +20,16 @@ class FlywheelSimulator : public simulator_base::Simulator
     public:
         FlywheelSimulator()
         {
-            ddr_.registerVariable<double>("gearing", [&](){return gearing_;}, [&](double val){gearing_ = val; flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(motor_, gearing_, units::kilogram_square_meter_t{moment_of_inertia_});}, "unitless", 0, 10.0);
-            ddr_.registerVariable<double>("moment_of_inertia", [&](){return moment_of_inertia_;}, [&](double val){moment_of_inertia_ = val; flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(motor_, gearing_, units::kilogram_square_meter_t{moment_of_inertia_});}, "kg m^2", 0, 1.0);
+            ddr_.registerVariable<double>("gearing", [&](){return gearing_;}, [&](double val){
+                gearing_ = val;
+                frc::LinearSystem<1, 1, 1> m_plant{frc::LinearSystemId::FlywheelSystem(motor_, units::kilogram_square_meter_t{moment_of_inertia_}, gearing_)};
+                flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(m_plant, motor_);
+            }, "unitless", 0, 10.0);
+            ddr_.registerVariable<double>("moment_of_inertia", [&](){return moment_of_inertia_;}, [&](double val){
+                moment_of_inertia_ = val;
+                frc::LinearSystem<1, 1, 1> m_plant{frc::LinearSystemId::FlywheelSystem(motor_, units::kilogram_square_meter_t{moment_of_inertia_}, gearing_)};
+                flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(m_plant, motor_);
+            }, "kg m^2", 0, 1.0);
             ddr_.publishServicesTopics();
         }
 
@@ -36,7 +45,8 @@ class FlywheelSimulator : public simulator_base::Simulator
             motor_ = frc::DCMotor::KrakenX60FOC(simulator_info["joints"].size());
 
             // Create a FlywheelSim object
-            flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(motor_, gearing_, units::kilogram_square_meter_t{moment_of_inertia_});
+            frc::LinearSystem<1, 1, 1> m_plant{frc::LinearSystemId::FlywheelSystem(motor_, units::kilogram_square_meter_t{moment_of_inertia_}, gearing_)};
+            flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(m_plant, motor_);
             // ROS_INFO_STREAM("Created flywheel sim");
         }
 
