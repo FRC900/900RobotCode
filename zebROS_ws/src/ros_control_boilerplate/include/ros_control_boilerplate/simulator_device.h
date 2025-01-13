@@ -29,8 +29,7 @@ public:
     SimulatorDevice &operator=(SimulatorDevice &&) noexcept = delete;
 
     void simInit(ros::NodeHandle &nh);
-    void simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer);
-    void registerInterfaces(hardware_interface::talonfxpro::TalonFXProStateInterface *state_interface);
+    void simPostRead(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer);
     
     std::string simulator_name_;
 
@@ -42,9 +41,6 @@ private:
     std::vector<std::string> joints_;
     std::vector<std::string> names_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProStateInterface> state_interface_;
-    std::map<std::string, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX>> talonfxs_;
-    std::map<std::string, std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder>> cancoders_;
-    std::map<std::string, double> cancoder_inverts_;
 };
 
 #endif
