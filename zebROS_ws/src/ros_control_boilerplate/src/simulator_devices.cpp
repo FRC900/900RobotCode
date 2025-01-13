@@ -128,7 +128,7 @@ void SimulatorDevices::simPostRead(const ros::Time& time, const ros::Duration& p
     tracer.start("simulator devices");
     for (const auto &d : devices_)
     {
-        d->simPostRead(time, period, getRobotHW()->get<hardware_interface::talonfxpro::TalonFXProSimCommandInterface>(), tracer);
+        d->simStep(time, period, getRobotHW()->get<hardware_interface::talonfxpro::TalonFXProSimCommandInterface>(), tracer);
     }
     tracer.stop("simulator devices");
 }

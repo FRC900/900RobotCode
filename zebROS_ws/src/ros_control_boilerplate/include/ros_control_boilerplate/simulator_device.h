@@ -29,7 +29,7 @@ public:
     SimulatorDevice &operator=(SimulatorDevice &&) noexcept = delete;
 
     void simInit(ros::NodeHandle &nh);
-    void simPostRead(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer);
+    void simStep(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer);
     
     std::string simulator_name_;
 

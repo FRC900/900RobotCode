@@ -58,7 +58,7 @@ void SimulatorDevice::simInit(ros::NodeHandle &nh)
 
 }
 
-void SimulatorDevice::simPostRead(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer) {
+void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer) {
     // For each TalonFXPro controlled by this simulator:
     // Call update() on the simulator
 
