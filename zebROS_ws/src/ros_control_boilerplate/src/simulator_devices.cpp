@@ -5,7 +5,7 @@
 #include "ros_control_boilerplate/read_config_utils.h"
 #include "ctre_interfaces/talonfxpro_state_interface.h"
 #include "ctre_interfaces/talonfxpro_state_types.h"
-
+#include "ctre_interfaces/talonfxpro_sim_command_interface.h"
 
 SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &devices)
     : state_interface_{std::make_unique<hardware_interface::talonfxpro::TalonFXProStateInterface>()}
@@ -123,23 +123,12 @@ void SimulatorDevices::simInit(ros::NodeHandle &nh)
     }
 }
 
-// hardware_interface::InterfaceManager *SimulatorDevices::registerInterface()
-// {
-//     interface_manager_.registerInterface(state_interface_.get());
-//     for (const auto &d : devices_)
-//     {
-//         ROS_INFO_STREAM("Registering interfaces for " << d->simulator_name_);
-//         d->registerInterfaces(state_interface_.get());
-//     }
-//     return &interface_manager_;
-// }
-
 void SimulatorDevices::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start("simulator devices");
     for (const auto &d : devices_)
     {
-        d->simPostRead(time, period, tracer);
+        d->simPostRead(time, period, getRobotHW()->get<hardware_interface::talonfxpro::TalonFXProSimCommandInterface>(), tracer);
     }
     tracer.stop("simulator devices");
 }

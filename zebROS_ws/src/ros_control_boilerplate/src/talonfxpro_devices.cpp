@@ -174,6 +174,19 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
         {
             ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
         }
+        tracer.start_unique("talonfxpro battery sim");
+        const auto names = state_interface_->getNames();
+        std::vector<units::ampere_t> currents;
+        for (const auto &name : names)
+        {
+            currents.push_back(units::ampere_t{state_interface_->getHandle(name)->getSupplyCurrent()});
+        }
+        units::volt_t battery = frc::sim::BatterySim::Calculate(currents);
+        tracer.start_unique("talonfxpro sim");
+        for (const auto &d : devices_)
+        {
+            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), battery); // should we be running this every loop iteration?
+        }
     }
 }
 
@@ -183,28 +196,10 @@ void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Durat
 {
     if constexpr (SIM)
     {
-        tracer.start_unique("talonfxpro FeedEnable");
-        if (!devices_.empty())
-        {
-            ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
-        }
-        tracer.start_unique("talonfxpro battery sim");
-        const auto names = state_interface_->getNames();
-        std::vector<units::ampere_t> currents;
-        for (const auto &name : names)
-        {
-            currents.push_back(units::ampere_t{state_interface_->getHandle(name)->getSupplyCurrent()});
-        }
-        units::volt_t battery = frc::sim::BatterySim::Calculate(currents);
         tracer.start_unique("talonfxpro simWrite");
         for (const auto &d : devices_)
         {
             d->simWrite(time, period);
-        }
-        tracer.start_unique("talonfxpro sim");
-        for (const auto &d : devices_)
-        {
-            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), battery);
         }
     }
 }
