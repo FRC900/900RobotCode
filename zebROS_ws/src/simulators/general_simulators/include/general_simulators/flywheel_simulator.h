@@ -66,25 +66,25 @@ class FlywheelSimulator : public simulator_base::Simulator
             // it worked before when we passed in the TalonFXPro object and read the sim state ourselves
             // would like to avoid that though since we have command and state interfaces to use
             units::voltage::volt_t motor_voltage{state->getMotorVoltage()};
-            ROS_INFO_STREAM("Motor voltage = " << motor_voltage.value());
+            // ROS_INFO_STREAM("Motor voltage = " << motor_voltage.value());
 
             // ROS_INFO_STREAM("WPILib updates, object is " << flywheel_sim_ << " , motor voltage is " << motor_voltage.value() << "V");
             // Update the flywheel simulation
             flywheel_sim_->SetInputVoltage(motor_voltage);
             flywheel_sim_->Update(units::second_t{period.toSec()});
 
-            ROS_INFO_STREAM("WPILib outputs");
+            // ROS_INFO_STREAM("WPILib outputs");
             // Get output angular velocity
             auto angular_velocity = flywheel_sim_->GetAngularVelocity().value();
 
-            ROS_INFO_STREAM("Write back to state");
+            // ROS_INFO_STREAM("Write back to state");
             // Set the flywheel velocity of the simulated motor
             talonfxpro->setRotorVelocity(angular_velocity * state->getRotorToSensorRatio());
 
             // Add position delta
             talonfxpro->setAddRotorPosition(angular_velocity * state->getRotorToSensorRatio() * period.toSec());
 
-            ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
+            // ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
         }
 
         ~FlywheelSimulator() override
