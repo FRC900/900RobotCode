@@ -4,6 +4,7 @@
 #include "ctre/phoenix6/core/CoreCANcoder.hpp"
 #include "ctre_interfaces/talonfxpro_state_interface.h"
 #include "ros/ros.h"
+#include "ctre_interfaces/talonfxpro_sim_command_interface.h"
 
 namespace simulator_base
 {
@@ -13,7 +14,7 @@ namespace simulator_base
       virtual void init(const XmlRpc::XmlRpcValue &simulator_info) {
 
       };
-      virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) {
+      virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) {
         
       };
       virtual ~Simulator(){}
