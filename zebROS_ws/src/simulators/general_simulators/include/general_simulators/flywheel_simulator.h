@@ -58,6 +58,13 @@ class FlywheelSimulator : public simulator_base::Simulator
 
             // Get the motor voltage from the state
             // Note: we have voltage in the normal state from the read done in sim_talonfxpro_device, which is called in preRead by talonfxpro_devices when SIM=true
+            // ...except I think this somehow doesn't work since voltage is stuck at zero.
+            // previous loop write: flywheel commanded a velocity and it's hopefully written
+            // preRead: sim voltage read
+            // read: read stuff from hardware, likely overwriting simulated voltage
+            // postRead: write sim commands aka our changes to rotor velocity and rotor position
+            // it worked before when we passed in the TalonFXPro object and read the sim state ourselves
+            // would like to avoid that though since we have command and state interfaces to use
             units::voltage::volt_t motor_voltage{state->getMotorVoltage()};
             ROS_INFO_STREAM("Motor voltage = " << motor_voltage.value());
 
