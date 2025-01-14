@@ -94,10 +94,11 @@ class Aligner:
         rate = rospy.Rate(50.0)
         stage_2_trap = False
         tags = self.BLUE_TAGS if self.color == MatchSpecificData.ALLIANCE_COLOR_BLUE else self.RED_TAGS
-        yaw = min(tags.keys(), key=lambda y: abs(angles.shortest_angular_distance(self.current_yaw, math.radians(y) + math.pi)))
+        yaw = min(tags.keys(), key=lambda y: abs(angles.shortest_angular_distance(self.current_yaw, math.radians(y))))
         rospy.loginfo(f"current yaw {self.current_yaw}, selected {yaw}")
         tag = tags[yaw]
-        yaw = math.radians(yaw) + math.pi
+
+        yaw = math.radians(yaw)
         rospy.loginfo(f"Yaw: {yaw}, tag: {tag}")
 
         # transform = self.t_buffer.lookup_transform("pipe", "base_link", rospy.Time())
