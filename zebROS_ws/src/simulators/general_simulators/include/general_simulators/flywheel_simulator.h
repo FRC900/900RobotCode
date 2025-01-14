@@ -7,11 +7,66 @@
 #include "wpimath/MathShared.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
-extern "C" {
-
-}
-
 // #define DEBUG
+
+/*
+The flywheel simulator works fine, these are just comments about the state of this as a whole (especially motion magic)
+
+CURRENT ORDER:
+- preRead TalonFX: handle reading CTRE simulation outputs (updating motor voltage + torque current, feeding rotor pos/vel into CANcoder)
+- read TalonFX: normal things
+- postRead simulator:
+    - runs simulation step
+    - writes motor states directly to TalonFXs
+
+If we want to move writing motor states to TalonFXs to the TalonFX postRead function through command interface, then
+the simulation step must be run before that but after CTRE simulation outputs are read (since we need motor voltage etc).
+
+And this is weird I think, because that would require us to put simulation in preRead. But it needs to go after the CTRE sim reads in preRead.
+So keep it in postRead! But it needs to go before the motor states are written in postRead.
+
+Hmm.
+
+Putting it in preRead didn't work, it did the weird thing where swerve angle motor gets a really high velocity (guessing one loop iter behind?)
+
+OH WAIT MOTION MAGIC NEEDS CLOSED LOOP REFERENCE SLOPE FOR SIMULATION
+
+so if it goes in preRead before those values are read in normal **read**, it'll have stuff from the previous iteration
+
+this also fails when it's in postRead if the talon read thread hasn't started yet which ig makes sense if calling read() is a dependency?
+
+so we can do a little hacky thing and move simulator devices to before talonfx devices
+
+Now order is:
+- preRead TalonFX: handle reading CTRE simulation outputs (updating motor voltage + torque current, feeding rotor pos/vel into CANcoder)
+- read TalonFX: normal things
+- postRead simulator: runs simulation step and sends sim commands
+- postRead TalonFX: writes sim commands directly to TalonFXs
+
+big bug for velocity was setAddRotorPosition didn't set it again if the same value was passed in, RIP constant velocity :(
+
+now, it kinda works using the command interface, but one of the swerve angle motors invariably takes an insanely fast velocity at startup
+
+(and only one)
+
+given that reading is happening in a separate thread and that this new order creates more of a gap between (3) and (4) and that the swerve angle motor affected is random every time...
+
+could this be a threading issue?
+
+Actual order is:
+- preRead TalonFX: handle reading CTRE simulation outputs (updating motor voltage + torque current, feeding rotor pos/vel into CANcoder)
+?? read thread read maybe ?? <-- ideally we read here. we've just gotten the latest sim states including closed loop reference/referenceslope
+- read TalonFX: copy normal values (including closed loop reference/referenceslope) from most recent read thread state
+?? read thread read maybe ?? <-- now our values are outdated and won't be picked up for a while
+- postRead simulator: runs simulation step and sends sim commands
+?? read thread read maybe ?? <-- very bad, we don't have the latest motor position or velocity (i think, but also might be just trying to justify this since it would explain weird behavior, this gap doesn't exist when using TalonFX pointer)
+- postRead TalonFX: writes sim commands directly to TalonFXs
+?? read thread read maybe ?? <-- ok fine
+- write TalonFX: send control commands to motors
+?? read thread read maybe ?? <-- not ideal, don't have latest inputs
+
+I'm not sure if threading is the issue, but it definitely seems like a possible cause given how random the issue is. Something seems to be maybe racing.
+*/
 
 namespace general_simulators
 {
@@ -50,7 +105,7 @@ class FlywheelSimulator : public simulator_base::Simulator
             // ROS_INFO_STREAM("Created flywheel sim");
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
             // The flywheel simulator requires the roboRIO battery voltage
@@ -81,10 +136,10 @@ class FlywheelSimulator : public simulator_base::Simulator
 
             // ROS_INFO_STREAM("Write back to state");
             // Set the flywheel velocity of the simulated motor
-            talonfxpro->GetSimState().SetRotorVelocity(invert * angular_velocity * state->getSensorToMechanismRatio());
+            talonfxpro->setRotorVelocity(invert * angular_velocity.value() * state->getSensorToMechanismRatio());
 
             // Add position delta
-            talonfxpro->GetSimState().AddRotorPosition(invert * angular_velocity * state->getSensorToMechanismRatio() * units::second_t{period.toSec()});
+            talonfxpro->setAddRotorPosition(invert * angular_velocity.value() * state->getSensorToMechanismRatio() * period.toSec());
 
             // ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
         }
