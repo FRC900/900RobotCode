@@ -41,9 +41,10 @@ SimulatorDevice::SimulatorDevice(const std::string &name, const XmlRpc::XmlRpcVa
         };
 
         if (joint_type == "talonfxpro") {
-            const auto talon_fx_ptr = check_for_correct_pointer_entry.operator()<ctre::phoenix6::hardware::core::CoreTalonFX>(); // more wizardry
+            auto talon_fx_ptr = check_for_correct_pointer_entry.operator()<ctre::phoenix6::hardware::core::CoreTalonFX>(); // more wizardry
             ROS_INFO_STREAM(name << ": Got device ID " << talon_fx_ptr->GetDeviceID() << " for joint " << joint_name);
             names_.push_back(joint_name);
+            talonfxs_[joint_name].reset(talon_fx_ptr);
         }
         
     }
@@ -70,6 +71,6 @@ void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period
         // virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) {
         hardware_interface::talonfxpro::TalonFXProSimCommandHandle handle = sim_talonfxpro_if->getHandle(joint);
         // ROS_INFO_STREAM("SimulatorDevice: Updating simulator " << simulator_name_ << " for joint " << joint);
-        simulator_->update(joint, time, period, handle.operator->(), handle.state());
+        simulator_->update(joint, time, period, talonfxs_[joint], handle.state());
     }
 }

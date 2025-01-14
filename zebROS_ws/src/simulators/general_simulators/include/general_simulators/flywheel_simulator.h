@@ -50,8 +50,9 @@ class FlywheelSimulator : public simulator_base::Simulator
             // ROS_INFO_STREAM("Created flywheel sim");
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
+            const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
             // The flywheel simulator requires the roboRIO battery voltage
             // /home/ubuntu/900RobotCode/zebROS_ws/devel/lib/ros_control_boilerplate/frcrobot_sim_main: symbol lookup error: /home/ubuntu/900RobotCode/zebROS_ws/devel/lib//libgeneral_simulators.so: undefined symbol: _ZN3frc15RobotController17GetBatteryVoltageEv
             // So we're going to remove that from WPILib for now so it runs, but probably eventually move this into ros_control_boilerplate so we can link to WPILib sim stuff
@@ -66,6 +67,7 @@ class FlywheelSimulator : public simulator_base::Simulator
             // it worked before when we passed in the TalonFXPro object and read the sim state ourselves
             // would like to avoid that though since we have command and state interfaces to use
             units::voltage::volt_t motor_voltage{state->getMotorVoltage()};
+            // units::voltage::volt_t motor_voltage = talonfxpro->GetSimState().GetMotorVoltage();
             // ROS_INFO_STREAM("Motor voltage = " << motor_voltage.value());
 
             // ROS_INFO_STREAM("WPILib updates, object is " << flywheel_sim_ << " , motor voltage is " << motor_voltage.value() << "V");
@@ -75,14 +77,14 @@ class FlywheelSimulator : public simulator_base::Simulator
 
             // ROS_INFO_STREAM("WPILib outputs");
             // Get output angular velocity
-            auto angular_velocity = flywheel_sim_->GetAngularVelocity().value();
+            auto angular_velocity = flywheel_sim_->GetAngularVelocity();
 
             // ROS_INFO_STREAM("Write back to state");
             // Set the flywheel velocity of the simulated motor
-            talonfxpro->setRotorVelocity(angular_velocity * state->getRotorToSensorRatio());
+            talonfxpro->GetSimState().SetRotorVelocity(invert * angular_velocity * state->getSensorToMechanismRatio());
 
             // Add position delta
-            talonfxpro->setAddRotorPosition(angular_velocity * state->getRotorToSensorRatio() * period.toSec());
+            talonfxpro->GetSimState().AddRotorPosition(invert * angular_velocity * state->getSensorToMechanismRatio() * units::second_t{period.toSec()});
 
             // ROS_INFO_STREAM("FLYWHEEL SIM IS BEING SIMMED YAYYYYYY");
         }
