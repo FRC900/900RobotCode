@@ -108,9 +108,10 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     // This is fine to do here because it's called in preRead, I think
     // So the control flow looks like preRead (update pos/vel here), real read to state, postRead to update sim, preRead before next loop iter
     if (cancoder_id_) {
-        double cancoder_velocity{state_->getRotorVelocity() * cancoder_invert}; // *really* feels like you should need to divide by rotor to sensor ratio, but this works
+        double cancoder_position{(state_->getRotorPosition() / state_->getSensorToMechanismRatio() - cancoder_offset) * cancoder_invert};
+        double cancoder_velocity{state_->getRotorVelocity() / state_->getSensorToMechanismRatio() * cancoder_invert};
         cancoder_->setVelocity(cancoder_velocity);
-        cancoder_->setAddPosition(cancoder_velocity * period.toSec());
+        cancoder_->setRawPosition(cancoder_position);
     }
 }
 
