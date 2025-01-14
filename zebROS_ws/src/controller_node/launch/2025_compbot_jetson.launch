@@ -107,6 +107,10 @@
 	<!-- <include file="$(find controller_node)/launch/hold_position.launch"/> -->
 	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
+	<include file="$(find drive_to_object)/launch/drive_to_object.launch"/>
+
+
+	<include file="$(find norfair_ros)/launch/norfair_node.launch"/>
 	
 	<include file="$(find auto_node)/launch/auto_node.launch"/>
 

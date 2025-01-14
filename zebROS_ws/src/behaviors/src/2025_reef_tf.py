@@ -7,8 +7,8 @@ import tf2_ros
 
 rospy.init_node('reef_transforms', anonymous=True) #Initializes the node
 
-x_offset = 0
-y_offset = 0
+x_offset = 0.55
+y_offset = 0.50
 # x_offset = rospy.get_param("reef_x_transform")
 # y_offset = rospy.get_param("reef_y_transform")
 
@@ -29,7 +29,7 @@ t.transform.rotation.w = 1
 broadcaster.sendTransform(t)
 
 def callback(msg):
-    if msg.pipe == msg.LEFT_PIPE:
+    if msg.goal.pipe == msg.goal.LEFT_PIPE:
         t.transform.translation.y = -y_offset
     else:
         t.transform.translation.y = y_offset
