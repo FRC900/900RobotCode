@@ -20,6 +20,8 @@ class DefaultSimulator : public simulator_base::Simulator
 
         void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
+            // This should run before simRead
+            const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
             // This simulator is the default (non-physics) simulator, so it instantly goes to the setpoint
             switch (state->getControlMode())
             {
@@ -73,7 +75,7 @@ class DefaultSimulator : public simulator_base::Simulator
             {
                 // ROS_INFO_STREAM("DefaultSimulator update, name = " << name << ", mode = MotionMagicDutyCycle/Voltage/ExpoVoltage/ExpoDutyCycle");
                 units::radian_t position{invert * state->getClosedLoopReference() * state->getSensorToMechanismRatio()};
-                const units::angular_velocity::radians_per_second_t velocity{invert * state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
+                const units::angular_velocity::radians_per_second_t velocity{state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
                 talonfxpro->setRawRotorPosition(position.value());
                 // talonfxpro->GetSimState().AddRotorPosition(invert * velocity * units::second_t{period.toSec()} * state->getRotorToSensorRatio());
                 talonfxpro->setRotorVelocity(velocity.value());
@@ -127,8 +129,6 @@ class DefaultSimulator : public simulator_base::Simulator
         {
 
         }
-    private:
-        double invert = 1.0;
 };
 
 };
