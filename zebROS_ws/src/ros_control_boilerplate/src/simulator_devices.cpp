@@ -125,6 +125,7 @@ void SimulatorDevices::simInit(ros::NodeHandle &nh)
 
 void SimulatorDevices::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
+    // ROS_INFO_STREAM("3: postRead Simulator: stepping simulators");
     tracer.start("simulator devices");
     for (const auto &d : devices_)
     {

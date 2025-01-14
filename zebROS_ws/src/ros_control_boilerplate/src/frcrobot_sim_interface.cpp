@@ -69,7 +69,10 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	}
 
 	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices = get_ctrev6_devices();
-	devices_.emplace_back(std::make_unique<SimulatorDevices>(root_nh, ctrev6_devices));
+	// Simulator devices MUST go before TalonFX devices, because they write commands to the sim TalonFX command interface
+	// during postRead, which are also written to motors by the command interface in postRead.
+	// Maybe we should add a postRead2? idk
+	devices_.emplace(devices_.begin(), std::make_unique<SimulatorDevices>(root_nh, ctrev6_devices));
 
 	for (const auto &d : devices_)
 	{

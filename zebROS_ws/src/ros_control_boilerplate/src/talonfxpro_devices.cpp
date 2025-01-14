@@ -82,6 +82,7 @@ hardware_interface::InterfaceManager *TalonFXProDevices<SIM>::registerInterface(
 template <bool SIM>
 void TalonFXProDevices<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
+    // ROS_INFO_STREAM("2: read TalonFX");
     tracer.start_unique("talonfxpro");
     for (const auto &d : devices_)
     {
@@ -169,6 +170,7 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
 {
     if constexpr (SIM)
     {
+        // ROS_INFO_STREAM("1: preRead TalonFX: reading CTRE sim outputs");
         tracer.start_unique("talonfxpro FeedEnable");
         if (!devices_.empty())
         {
@@ -202,14 +204,15 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
 template <bool SIM>
 void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
-    // if constexpr (SIM)
-    // {
-    //     tracer.start_unique("talonfxpro simWrite");
-    //     for (const auto &d : devices_)
-    //     {
-    //         d->simWrite(time, period);
-    //     }
-    // }
+    // ROS_INFO_STREAM("4: postRead TalonFX: writing CTRE sim commands");
+    if constexpr (SIM)
+    {
+        tracer.start_unique("talonfxpro simWrite");
+        for (const auto &d : devices_)
+        {
+            d->simWrite(time, period);
+        }
+    }
 }
 
 template <bool SIM>

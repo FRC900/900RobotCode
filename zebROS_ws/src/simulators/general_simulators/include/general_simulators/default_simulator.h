@@ -18,7 +18,7 @@ class DefaultSimulator : public simulator_base::Simulator
             // do nothing lol
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> &talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
             // This should run before simRead
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
@@ -30,7 +30,7 @@ class DefaultSimulator : public simulator_base::Simulator
                 // Special-case 0V for duty cycle mode
                 if (state->getControlOutput() == 0.0)
                 {
-                    talonfxpro->GetSimState().SetRotorVelocity(units::angular_velocity::radians_per_second_t{0.0});
+                    talonfxpro->setRotorVelocity(0.0);
                 }
                 break;
             case hardware_interface::talonfxpro::TalonMode::TorqueCurrentFOC:
@@ -47,10 +47,10 @@ class DefaultSimulator : public simulator_base::Simulator
                 // Position control mode, set position and velocity to setpoints
                 units::radian_t pos{invert * state->getControlPosition() * state->getSensorToMechanismRatio()};
                 units::angular_velocity::radians_per_second_t vel{invert * state->getControlVelocity() * state->getSensorToMechanismRatio()};
-                talonfxpro->GetSimState().SetRawRotorPosition(pos);
+                talonfxpro->setRawRotorPosition(pos.value());
 
                 // We'll also have a velocity setpoint, so set that here
-                talonfxpro->GetSimState().SetRotorVelocity(vel);
+                talonfxpro->setRotorVelocity(vel.value());
                 break;
             }
             case hardware_interface::talonfxpro::TalonMode::VelocityDutyCycle:
@@ -65,8 +65,8 @@ class DefaultSimulator : public simulator_base::Simulator
                 // ROS_INFO_STREAM("Velocity setpoint: " << velocity_setpoint.value() << " delta position: " << delta_position.value());
 
                 // Velocity control mode, add position delta and set velocity
-                talonfxpro->GetSimState().SetRotorVelocity(velocity_setpoint);
-                talonfxpro->GetSimState().AddRotorPosition(delta_position); // VERY IMPORTANT SO CTRE SIM KNOWS MOTORS MOVE
+                talonfxpro->setRotorVelocity(velocity_setpoint.value());
+                talonfxpro->setAddRotorPosition(delta_position.value()); // VERY IMPORTANT SO CTRE SIM KNOWS MOTORS MOVE
 
                 break;
             }
@@ -75,12 +75,14 @@ class DefaultSimulator : public simulator_base::Simulator
             case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
             case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
             {
-                // ROS_INFO_STREAM("DefaultSimulator update, name = " << name << ", mode = MotionMagicDutyCycle/Voltage/ExpoVoltage/ExpoDutyCycle");
+                // ROS_INFO_STREAM("DefaultSimulator update, name = " << name << ", mode = MotionMagicDutyCycle/Voltage/ExpoVoltage/ExpoDutyCycle" << ", pos = " << state->getClosedLoopReference() << ", vel = " << state->getClosedLoopReferenceSlope());
                 units::radian_t position{invert * state->getClosedLoopReference() * state->getSensorToMechanismRatio()};
                 const units::angular_velocity::radians_per_second_t velocity{invert * state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
-                talonfxpro->GetSimState().SetRawRotorPosition(position);
+                units::radian_t delta_position{velocity * units::second_t{period.toSec()}};
+                talonfxpro->setRawRotorPosition(position.value());
+                talonfxpro->setAddRotorPosition(delta_position.value());
                 // talonfxpro->GetSimState().AddRotorPosition(delta_position);
-                talonfxpro->GetSimState().SetRotorVelocity(velocity);
+                talonfxpro->setRotorVelocity(velocity.value());
                 /*
                 units::radian_t position{state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
                 units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
@@ -109,8 +111,8 @@ class DefaultSimulator : public simulator_base::Simulator
                 units::angular_velocity::radians_per_second_t target_velocity{invert * state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
 
                 // Set rotor position and velocity
-                talonfxpro->GetSimState().AddRotorPosition(target_position);
-                talonfxpro->GetSimState().SetRotorVelocity(target_velocity);
+                talonfxpro->setRawRotorPosition(target_position.value());
+                talonfxpro->setRotorVelocity(target_velocity.value());
 
                 break;
             }
