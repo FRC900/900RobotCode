@@ -82,7 +82,7 @@ class Aligner:
 
     def imu_callback(self, imu_msg):
         q = imu_msg.orientation
-        euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
+        euler = euler_from_quaternion([q.x, q.y, q.z, q.w])
         self.current_yaw = euler[2]
 
     def tracked_objects_callback(self, msg: norfair_ros.msg.Detections):
@@ -94,10 +94,13 @@ class Aligner:
         rate = rospy.Rate(50.0)
         stage_2_trap = False
         tags = self.BLUE_TAGS if self.color == MatchSpecificData.ALLIANCE_COLOR_BLUE else self.RED_TAGS
-        yaw = min(tags.keys(), key=lambda y: abs(angles.shortest_angular_distance(self.current_yaw * 180/math.pi, y)))
+        yaw = min(tags.keys(), key=lambda y: abs(angles.shortest_angular_distance(self.current_yaw, math.radians(y))))
+        rospy.loginfo(f"current yaw {self.current_yaw}, selected {yaw}")
         tag = tags[yaw]
+        yaw = math.radians(yaw)
+        rospy.loginfo(f"Yaw: {yaw}, tag: {tag}")
 
-        transform = self.t_buffer.lookup_transform("pipe", "base_link", rospy.Time())
+        # transform = self.t_buffer.lookup_transform("pipe", "base_link", rospy.Time())
         
         drive_to_object_done = False
 
@@ -110,7 +113,7 @@ class Aligner:
         drive_to_object_goal.id = f"tag_{tag}"
         drive_to_object_goal.x_tolerance = self.x_tolerance
         drive_to_object_goal.y_tolerance = self.y_tolerance
-        drive_to_object_goal.transform_to_drive = transform
+        drive_to_object_goal.transform_to_drive = "pipe"
         drive_to_object_goal.use_y = True
         drive_to_object_goal.min_x_vel = self.min_x_vel
         drive_to_object_goal.min_y_vel = self.min_y_vel
