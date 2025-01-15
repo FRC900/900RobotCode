@@ -108,21 +108,8 @@ class FlywheelSimulator : public simulator_base::Simulator
         void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
-            // The flywheel simulator requires the roboRIO battery voltage
-            // /home/ubuntu/900RobotCode/zebROS_ws/devel/lib/ros_control_boilerplate/frcrobot_sim_main: symbol lookup error: /home/ubuntu/900RobotCode/zebROS_ws/devel/lib//libgeneral_simulators.so: undefined symbol: _ZN3frc15RobotController17GetBatteryVoltageEv
-            // So we're going to remove that from WPILib for now so it runs, but probably eventually move this into ros_control_boilerplate so we can link to WPILib sim stuff
-
-            // Get the motor voltage from the state
-            // Note: we have voltage in the normal state from the read done in sim_talonfxpro_device, which is called in preRead by talonfxpro_devices when SIM=true
-            // ...except I think this somehow doesn't work since voltage is stuck at zero.
-            // previous loop write: flywheel commanded a velocity and it's hopefully written
-            // preRead: sim voltage read
-            // read: read stuff from hardware, likely overwriting simulated voltage
-            // postRead: write sim commands aka our changes to rotor velocity and rotor position
-            // it worked before when we passed in the TalonFXPro object and read the sim state ourselves
-            // would like to avoid that though since we have command and state interfaces to use
+            
             units::voltage::volt_t motor_voltage{state->getMotorVoltage()};
-            // units::voltage::volt_t motor_voltage = talonfxpro->GetSimState().GetMotorVoltage();
             // ROS_INFO_STREAM("Motor voltage = " << motor_voltage.value());
 
             // ROS_INFO_STREAM("WPILib updates, object is " << flywheel_sim_ << " , motor voltage is " << motor_voltage.value() << "V");

@@ -15,6 +15,14 @@
 			Flywheel simulator, using WPILib's flywheel sim
 		</description>
 	</class>
+	<class
+		name="general_simulators/ElevatorSimulator"
+		type="general_simulators::ElevatorSimulator"
+		base_class_type="simulator_base::Simulator">
+		<description>
+			Flywheel simulator, using WPILib's flywheel sim
+		</description>
+	</class>
 	<!-- <class
 		name="general_simulators/SingleJointedArmSimulator"
 		type="general_simulators::SingleJointedArmSimulator"
