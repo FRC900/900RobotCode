@@ -30,7 +30,7 @@
     uri: https://github.com/FRC900/stage_ros
 - git:
     local-name: tagslam
-    uri: https://github.com/berndpfrommer/tagslam.git
+    uri: https://github.com/FRC900/tagslam.git
     version: master
 - git:
     local-name: tagslam_viz

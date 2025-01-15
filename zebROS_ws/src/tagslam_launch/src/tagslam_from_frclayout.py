@@ -7,7 +7,7 @@ tags = [
 #[15.079,0.246,1.356,120.000,1]
 ]
 
-with open("2025tags.csv", "r") as f:
+with open("2025tags_norotate.csv", "r") as f:
     lines = f.read().split("\n")
 
 lines = lines[1:]
@@ -56,9 +56,9 @@ for tag in tags:
     pose = d['pose']
     pose['position'] = dict(x=tag[0], y=tag[1], z=tag[2])
     
-    print(f"using angles X {X_angle_offset} Y {tag[-2]+270} Z {tag[3]}")
+    print(f"using angles X {tag[3]+X_angle_offset} Y {tag[-2]+270} Z 0")
 
-    r = Rotation.from_euler("XYZ", (X_angle_offset, tag[-2]+90, tag[3]), degrees=True)
+    r = Rotation.from_euler("XY", (X_angle_offset, tag[-2]+90), degrees=True)
     vec = r.as_rotvec()
     
     pose['rotation'] = dict(x=float(vec[0]), y=float(vec[1]), z=float(vec[2]))

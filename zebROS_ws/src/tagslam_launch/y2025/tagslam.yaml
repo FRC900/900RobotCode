@@ -116,7 +116,7 @@ bodies:
           y: 0.004
           z: 0.004
       size: 0.1651
-    - id: 4
+    - id: 4 # GOOD 
       pose:
         position:
           x: 9.276079999999999
@@ -127,15 +127,15 @@ bodies:
           y: 0.0005
           z: 0.0005
         rotation:
-          x: 1.583514534264351
-          y: 0.9142425426232081
-          z: 1.583514534264351
+          x: 1.583
+          y: 1.583
+          z: 0.914 
         rotation_noise:
           x: 0.004
           y: 0.004
           z: 0.004
       size: 0.1651
-    - id: 5
+    - id: 5 # GOOD 
       pose:
         position:
           x: 9.276079999999999
@@ -146,9 +146,9 @@ bodies:
           y: 0.0005
           z: 0.0005
         rotation:
-          x: 1.583514534264351
-          y: 0.9142425426232081
-          z: 1.583514534264351
+          x: 1.583 
+          y: 1.583
+          z: 0.914
         rotation_noise:
           x: 0.004
           y: 0.004
@@ -317,9 +317,9 @@ bodies:
           y: 0.0005
           z: 0.0005
         rotation:
-          x: 0.815483518518008
-          y: -1.412458886808226
-          z: -0.8154835185180084
+          x: 1.583
+          y: -1.583
+          z: -0.914 
         rotation_noise:
           x: 0.004
           y: 0.004
@@ -336,9 +336,9 @@ bodies:
           y: 0.0005
           z: 0.0005
         rotation:
-          x: 0.815483518518008
-          y: -1.412458886808226
-          z: -0.8154835185180084
+          x: 1.583
+          y: -1.583
+          z: -0.914 
         rotation_noise:
           x: 0.004
           y: 0.004
@@ -480,22 +480,23 @@ bodies:
 
 
 
+
  - frc_robot:
      is_static: false
      type: simple
-     odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
+     #odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
     #  #odom_topic: "/frcrobot_jetson/swerve_drive_state_controller/odom"
-     odom_frame_id: base_link
+     #odom_frame_id: base_link
      # assumed odom noise in meters(!): the larger this parameter, the less you rely on odom
-     odom_translation_noise: 0.01
+     #odom_translation_noise: 0.01
      # assomed odom noise in radians(!)
-     odom_rotation_noise: 0.001
-     T_body_odom:
-       position:
-         x:  0
-         y:  0
-         z:  0
-       rotation:
-         x:  0
-         y:  0
-         z:  0
+     #odom_rotation_noise: 0.001
+     #T_body_odom:
+     #  position:
+     #    x:  0
+     #    y:  0
+     #    z:  0
+     #  rotation:
+     #    x:  0
+     #    y:  0
+     #    z:  0
