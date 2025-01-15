@@ -158,6 +158,7 @@ include_directories(${WPI_SYSROOT}/include/wpilib)
 
 add_library(wpilib_simulation_utils STATIC
   ${ALLWPILIB}/wpimath/src/main/native/cpp/system/plant/struct/DCMotorStruct.cpp
+  ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/ElevatorSim.cpp
   ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/FlywheelSim.cpp
   ${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/SingleJointedArmSim.cpp
 )
