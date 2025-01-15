@@ -7,8 +7,8 @@ import tf2_ros
 
 rospy.init_node('reef_transforms', anonymous=True) #Initializes the node
 
-x_offset = -0.55
-y_offset = 0.50
+x_offset = 0.55
+y_offset = -0.5
 # x_offset = rospy.get_param("reef_x_transform")
 # y_offset = rospy.get_param("reef_y_transform")
 
