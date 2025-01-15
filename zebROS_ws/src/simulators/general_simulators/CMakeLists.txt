@@ -151,8 +151,8 @@ include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/eigen/includ
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/nanopb/include/)
 include_directories(${ALLWPILIB}/wpimath/src/generated/main/native/cpp/)
 
-include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/devel/include)
-include_directories(/home/ubuntu/2023RobotCode/zebROS_ws/src/ros_control_boilerplate/include)
+# include_directories(/home/ubuntu/900RobotCode/zebROS_ws/devel/include)
+# include_directories(../../ros_control_boilerplate/include)
 
 include_directories(${WPI_SYSROOT}/include/wpilib)
 
@@ -169,6 +169,10 @@ add_dependencies(wpilib_simulation_utils
 
 ## Declare a C++ library
 add_library(general_simulators
+  # ${ALLWPILIB}/hal/src/main/native/athena/HALInitializer.cpp
+  src/dummy_wpilib_hw.cpp
+  ${ALLWPILIB}/hal/src/main/native/sim/HALInitializer.cpp
+  ${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
   src/general_simulators.cpp
 )
 
