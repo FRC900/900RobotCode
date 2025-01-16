@@ -123,6 +123,7 @@ void SimulatorDevices::simInit(ros::NodeHandle &nh)
     }
 }
 
+// preRead for this does not work and breaks flywheel
 void SimulatorDevices::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     // ROS_INFO_STREAM("3: postRead Simulator: stepping simulators");

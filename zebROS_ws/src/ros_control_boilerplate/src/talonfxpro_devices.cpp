@@ -61,10 +61,6 @@ hardware_interface::InterfaceManager *TalonFXProDevices<SIM>::registerInterface(
     for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_);
-        if constexpr (SIM)
-        {
-            d->registerSimInterface(*state_interface_, *sim_fields_.sim_command_interface_);
-        }
     }
     interface_manager_.registerInterface(state_interface_.get());
     interface_manager_.registerInterface(command_interface_.get());
@@ -170,12 +166,27 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
 {
     if constexpr (SIM)
     {
+        tracer.start_unique("talonfxpro simWrite");
+        for (const auto &d : devices_)
+        {
+            d->simWrite(time, period);
+        }
         // ROS_INFO_STREAM("1: preRead TalonFX: reading CTRE sim outputs");
         tracer.start_unique("talonfxpro FeedEnable");
         if (!devices_.empty())
         {
             ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
         }
+    }
+}
+
+// Run after read() and simRead() to write queued updates to the simulated TalonFXPro CTRE libs
+template <bool SIM>
+void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
+{
+    // ROS_INFO_STREAM("4: postRead TalonFX: writing CTRE sim commands");
+    if constexpr (SIM)
+    {
         if constexpr (SIM)
         {
             tracer.start_unique("talonfxpro FeedEnable");
@@ -196,21 +207,6 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
             {
                 d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), battery); // should we be running this every loop iteration?
             }
-        }
-    }
-}
-
-// Run after read() and simRead() to write queued updates to the simulated TalonFXPro CTRE libs
-template <bool SIM>
-void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
-{
-    // ROS_INFO_STREAM("4: postRead TalonFX: writing CTRE sim commands");
-    if constexpr (SIM)
-    {
-        tracer.start_unique("talonfxpro simWrite");
-        for (const auto &d : devices_)
-        {
-            d->simWrite(time, period);
         }
     }
 }
