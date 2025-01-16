@@ -25,6 +25,7 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
     {
         throw std::runtime_error("No joints were specified.");
     }
+
 	for (int i = 0; i < joint_param_list.size(); i++)
 	{
 		const XmlRpc::XmlRpcValue &joint_params = joint_param_list[i];
@@ -39,6 +40,10 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
             readIntRequired(joint_params, "can_id", can_id, joint_name);
             std::string can_bus;
             readStringRequired(joint_params, "can_bus", can_bus, joint_name);
+            std::string simulator;
+            readStringOptional(joint_params, "simulator", simulator, joint_name);
+
+            XmlRpc::XmlRpcValue simulator_info;
 
             devices_.emplace_back(std::make_unique<DEVICE_TYPE>(nh.getNamespace(), i, joint_name, can_id, can_bus, read_hz_));
         }
@@ -56,10 +61,6 @@ hardware_interface::InterfaceManager *TalonFXProDevices<SIM>::registerInterface(
     for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_);
-        if constexpr (SIM)
-        {
-            d->registerSimInterface(*state_interface_, *sim_fields_.sim_command_interface_);
-        }
     }
     interface_manager_.registerInterface(state_interface_.get());
     interface_manager_.registerInterface(command_interface_.get());
@@ -77,6 +78,7 @@ hardware_interface::InterfaceManager *TalonFXProDevices<SIM>::registerInterface(
 template <bool SIM>
 void TalonFXProDevices<SIM>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
+    // ROS_INFO_STREAM("2: read TalonFX");
     tracer.start_unique("talonfxpro");
     for (const auto &d : devices_)
     {
@@ -164,15 +166,16 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
 {
     if constexpr (SIM)
     {
+        tracer.start_unique("talonfxpro simWrite");
+        for (const auto &d : devices_)
+        {
+            d->simWrite(time, period);
+        }
+        // ROS_INFO_STREAM("1: preRead TalonFX: reading CTRE sim outputs");
         tracer.start_unique("talonfxpro FeedEnable");
         if (!devices_.empty())
         {
             ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
-        }
-        tracer.start_unique("talonfxpro sim");
-        for (const auto &d : devices_)
-        {
-            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>());
         }
     }
 }
@@ -181,12 +184,29 @@ void TalonFXProDevices<SIM>::simPreRead(const ros::Time& time, const ros::Durati
 template <bool SIM>
 void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
+    // ROS_INFO_STREAM("4: postRead TalonFX: writing CTRE sim commands");
     if constexpr (SIM)
     {
-        tracer.start_unique("talonfxpro simWrite");
-        for (const auto &d : devices_)
+        if constexpr (SIM)
         {
-            d->simWrite(time, period);
+            tracer.start_unique("talonfxpro FeedEnable");
+            if (!devices_.empty())
+            {
+                ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
+            }
+            tracer.start_unique("talonfxpro battery sim");
+            const auto names = state_interface_->getNames();
+            std::vector<units::ampere_t> currents;
+            for (const auto &name : names)
+            {
+                currents.push_back(units::ampere_t{state_interface_->getHandle(name)->getSupplyCurrent()});
+            }
+            units::volt_t battery = frc::sim::BatterySim::Calculate(currents);
+            tracer.start_unique("talonfxpro sim");
+            for (const auto &d : devices_)
+            {
+                d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), battery); // should we be running this every loop iteration?
+            }
         }
     }
 }

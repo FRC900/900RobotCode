@@ -47,6 +47,7 @@
 #include <urdf/model.h>
 
 #include "ros_control_boilerplate/tracer.h"
+#include <ctre/phoenix6/hardware/ParentDevice.hpp>
 
 class Devices;
 
@@ -116,6 +117,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::unique_ptr<Tracer> write_tracer_;
 
 		std::vector<std::unique_ptr<Devices>> devices_;
+
+		std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> get_ctrev6_devices();
 };  // class
 
 }  // namespace

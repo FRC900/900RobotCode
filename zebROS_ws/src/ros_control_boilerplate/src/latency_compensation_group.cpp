@@ -102,7 +102,7 @@ LatencyCompensationGroup::LatencyCompensationGroup(const XmlRpc::XmlRpcValue &en
             return static_cast<T *>(nullptr);
         };
 
-        if (entry_type == "talonfx")
+        if (entry_type == "talonfxpro")
         {
             const auto talon_fx_ptr = check_for_correct_pointer_entry.operator()<ctre::phoenix6::hardware::core::CoreTalonFX>();
             if (talon_fx_ptr)
