@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="align_to_reef_single_tag">
+        <rosparam command="load" file="$(find behaviors)/config/2025_align_to_reef_single_tag_config.yaml"/>
+        <node name="align_to_reef_single_tag" pkg="behaviors" type="2025_align_to_reef_single_tag.py" output="screen"/>
+        <node name="align_to_reef_tf" pkg="behaviors" type="2025_reef_tf.py" output="screen"/>
+    </group>
+</launch>

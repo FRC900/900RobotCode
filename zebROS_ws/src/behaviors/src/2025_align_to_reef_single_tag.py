@@ -46,12 +46,12 @@ class Aligner:
     def __init__(self, name):   
         self._action_name = name
 
-        self.x_tolerance = 0.1
-        self.y_tolerance = 0.1
-        self.angle_tolerance = 0.1
-        self.min_x_vel = 1
-        self.min_y_vel = 1
-        self.fast_zone = 2
+        self.x_tolerance = rospy.get_param("x_tolerance")
+        self.y_tolerance = rospy.get_param("y_tolerance")
+        self.angle_tolerance = rospy.get_param("angle_tolerance")
+        self.min_x_vel = rospy.get_param("min_x_vel")
+        self.min_y_vel = rospy.get_param("min_y_vel")
+        self.fast_zone = rospy.get_param("fast_zone")
         # self.x_tolerance = rospy.get_param("reef_x_tolerance")
         # self.y_tolerance = rospy.get_param("reef_y_tolerance")
         # self.angle_tolerance = rospy.get_param("reef_angle_tolerance")
