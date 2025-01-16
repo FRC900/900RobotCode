@@ -91,7 +91,7 @@ hardware_interface:
        - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfxpro}, {name: fl_angle, type: talonfxpro}, {name: fr_drive, type: talonfxpro}, {name: fr_angle, type: talonfxpro}, {name: br_drive, type: talonfxpro}, {name: br_angle, type: talonfxpro}, {name: bl_drive, type: talonfxpro}, {name: bl_angle, type: talonfxpro}, {name: pigeon2, type: pigeon2_yaw}] }
 
        - {name: top_left_shooter_simulator, type: simulator, joints: [ {name: top_left_shooter_joint, type: talonfxpro} ]}
-    #    - {name: shooter_pivot_simulator, type: simulator, joints: [ {name: shooter_pivot_motionmagic_joint, type: talonfxpro} ]}
+       - {name: shooter_pivot_simulator, type: simulator, joints: [ {name: shooter_pivot_motionmagic_joint, type: talonfxpro} ]}
     #    - {name: default_simulator, type: simulator} # This should be the last simulator and will do non-physics-accurate simulation (get to control position/velocity immediately)
 
 # Create controllers for each joint
@@ -270,43 +270,43 @@ shooter_pivot_controller:
     type: shooter_pivot_controller_2024/ShooterPivotController_2024
 
     feed_forward_map:
-
-        - [0.49394181369917645, 0.58]
-        - [0.5460971604872883, 0.58]
-        - [0.5951845456996288, 0.54]
-        - [0.6473398924877406, 0.48]
-        - [0.7025632008516236, 0.45]
-        - [0.7547185476397354, 0.41000000000000003]
-        - [0.8068738944278473, 0.38]
-        - [0.8528933180644165, 0.4]
-        - [0.9111845880040709, 0.35000000000000003]
-        - [0.9510680884890975, 0.36]
-        - [1.000155473701438, 0.35000000000000003]
-        - [1.055378782065321, 0.31]
-        - [1.1075341288534328, 0.3]
-        - [1.1566215140657734, 0.3]
-        - [1.1995729761265714, 0.33]
-        - [1.2425244381873692, 0.35000000000000003]
-        - [1.2916118233997098, 0.3]
-        - [1.346835131763593, 0.31]
-        - [1.402058440127476, 0.26]
-        - [1.4480778637640452, 0.28]
-        - [1.4971652489763858, 0.28]
-        - [1.6260196351587797, -0.08]
-        - [1.6996507129772904, -0.2]
-        - [1.761009944492716, -0.26]
-        - [1.8285050991596843, -0.33]
-        - [1.8775924843720249, -0.33]
-        - [1.9297478311601366, -0.34]
-        - [1.9880391010997909, -0.37]
-        - [2.043262409463674, -0.4]
-        - [2.0923497946760143, -0.4]
-        - [2.150641064615669, -0.46]
-        - [2.2120002961310945, -0.5]
-        - [2.2580197197676637, -0.48]
-        - [2.325514874434632, -0.5700000000000001]
-        - [2.371534298071201, -0.55]
-        - [2.414485760131999, -0.52]
+        - [0.0, 0.0]
+        # - [0.49394181369917645, 0.58]
+        # - [0.5460971604872883, 0.58]
+        # - [0.5951845456996288, 0.54]
+        # - [0.6473398924877406, 0.48]
+        # - [0.7025632008516236, 0.45]
+        # - [0.7547185476397354, 0.41000000000000003]
+        # - [0.8068738944278473, 0.38]
+        # - [0.8528933180644165, 0.4]
+        # - [0.9111845880040709, 0.35000000000000003]
+        # - [0.9510680884890975, 0.36]
+        # - [1.000155473701438, 0.35000000000000003]
+        # - [1.055378782065321, 0.31]
+        # - [1.1075341288534328, 0.3]
+        # - [1.1566215140657734, 0.3]
+        # - [1.1995729761265714, 0.33]
+        # - [1.2425244381873692, 0.35000000000000003]
+        # - [1.2916118233997098, 0.3]
+        # - [1.346835131763593, 0.31]
+        # - [1.402058440127476, 0.26]
+        # - [1.4480778637640452, 0.28]
+        # - [1.4971652489763858, 0.28]
+        # - [1.6260196351587797, -0.08]
+        # - [1.6996507129772904, -0.2]
+        # - [1.761009944492716, -0.26]
+        # - [1.8285050991596843, -0.33]
+        # - [1.8775924843720249, -0.33]
+        # - [1.9297478311601366, -0.34]
+        # - [1.9880391010997909, -0.37]
+        # - [2.043262409463674, -0.4]
+        # - [2.0923497946760143, -0.4]
+        # - [2.150641064615669, -0.46]
+        # - [2.2120002961310945, -0.5]
+        # - [2.2580197197676637, -0.48]
+        # - [2.325514874434632, -0.5700000000000001]
+        # - [2.371534298071201, -0.55]
+        # - [2.414485760131999, -0.52]
 
     shooter_pivot_joint: [ 'shooter_pivot_motionmagic_joint' ]
     dynamic_reconfigure: True
@@ -324,8 +324,8 @@ shooter_pivot_controller:
     shooter_pivot_motionmagic_joint:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: shooter_pivot_motionmagic_joint
-        # feedback_sensor_source: RemoteCANcoder
-        # remote_feedback_device_id0: 55
+        feedback_sensor_source: RemoteCANcoder
+        remote_feedback_device_id0: 55
         motion_magic_cruise_velocity: 2.0
         motion_magic_acceleration: 5.0
         motion_magic_jerk: 100.0
