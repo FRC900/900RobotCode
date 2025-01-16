@@ -6,8 +6,8 @@ generic_hw_control_loop:
   canifier_read_hz: 100
   cancoder_read_hz: 100
   #some processes have lower frequencies than the main control loop
-  ctre_mc_read_hz: 100
-  talonfxpro_read_hz: 50
+  ctre_mc_read_hz: 250
+  talonfxpro_read_hz: 250
   pigeon2_read_hz: 100
   pcm_read_hz: 20
   pdh_read_hz: 20
@@ -91,6 +91,7 @@ hardware_interface:
        - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfxpro}, {name: fl_angle, type: talonfxpro}, {name: fr_drive, type: talonfxpro}, {name: fr_angle, type: talonfxpro}, {name: br_drive, type: talonfxpro}, {name: br_angle, type: talonfxpro}, {name: bl_drive, type: talonfxpro}, {name: bl_angle, type: talonfxpro}, {name: pigeon2, type: pigeon2_yaw}] }
 
        - {name: top_left_shooter_simulator, type: simulator, joints: [ {name: top_left_shooter_joint, type: talonfxpro} ]}
+    #    - {name: shooter_pivot_simulator, type: simulator, joints: [ {name: shooter_pivot_motionmagic_joint, type: talonfxpro} ]}
     #    - {name: default_simulator, type: simulator} # This should be the last simulator and will do non-physics-accurate simulation (get to control position/velocity immediately)
 
 # Create controllers for each joint
@@ -110,7 +111,7 @@ top_left_shooter_simulator:
     joints: [top_left_shooter_joint]
     type: general_simulators/FlywheelSimulator
     gearing: 0.6923076923076923
-    moment_of_inertia: 0.00098765883 # kg m^2, 1/2 * (0.5 lb/wheel * 6 wheels) * (1.5 in)^2
+    moment_of_inertia: 0.0098765883 # kg m^2, 1/2 * (0.5 lb/wheel * 6 wheels) * (1.5 in)^2
     # gearing: 0.83
     # moment_of_inertia: 0.003 # kg m^2
 
@@ -323,8 +324,8 @@ shooter_pivot_controller:
     shooter_pivot_motionmagic_joint:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: shooter_pivot_motionmagic_joint
-        feedback_sensor_source: RemoteCANcoder
-        remote_feedback_device_id0: 55
+        # feedback_sensor_source: RemoteCANcoder
+        # remote_feedback_device_id0: 55
         motion_magic_cruise_velocity: 2.0
         motion_magic_acceleration: 5.0
         motion_magic_jerk: 100.0
