@@ -78,6 +78,9 @@ void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*pe
     state_->setDeviceTemp(read_thread_state_->getDeviceTemp());
     state_->setProcessorTemp(read_thread_state_->getProcessorTemp());
 
+    if (talonfxpro_->GetDeviceID() == 55) {
+        ROS_INFO_STREAM("copy from read vel = " << read_thread_state_->getRotorVelocity());
+    }
     state_->setRotorVelocity(read_thread_state_->getRotorVelocity());
     state_->setRotorPosition(read_thread_state_->getRotorPosition());
     state_->setVelocity(read_thread_state_->getVelocity());
@@ -250,6 +253,9 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(device_temp, talonfxpro_->GetDeviceTemp())
         SAFE_READ(processor_temp, talonfxpro_->GetProcessorTemp())
         SAFE_READ(rotor_velocity, talonfxpro_->GetRotorVelocity())
+        if (talonfxpro_->GetDeviceID() == 55) {
+            ROS_INFO_STREAM("read vel = " << units::radians_per_second_t{*rotor_velocity}.value());
+        }
         SAFE_READ(rotor_position, talonfxpro_->GetRotorPosition())
         SAFE_READ(velocity, talonfxpro_->GetVelocity())
         SAFE_READ(position, talonfxpro_->GetPosition())
@@ -551,6 +557,9 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             read_thread_state_->setProcessorTemp(processor_temp->value());
 
             read_thread_state_->setRotorVelocity(units::radians_per_second_t{*rotor_velocity}.value());
+            if (talonfxpro_->GetDeviceID() == 55) {
+                ROS_INFO_STREAM("read thread state vel = " << units::radians_per_second_t{*rotor_velocity}.value());
+            }
             read_thread_state_->setRotorPosition(units::radian_t{*rotor_position}.value());
             read_thread_state_->setVelocity(units::radians_per_second_t{*velocity}.value());
             read_thread_state_->setPosition(units::radian_t{*position}.value());

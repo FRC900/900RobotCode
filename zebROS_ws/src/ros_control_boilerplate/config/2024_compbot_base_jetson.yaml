@@ -91,7 +91,7 @@ hardware_interface:
        - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfxpro}, {name: fl_angle, type: talonfxpro}, {name: fr_drive, type: talonfxpro}, {name: fr_angle, type: talonfxpro}, {name: br_drive, type: talonfxpro}, {name: br_angle, type: talonfxpro}, {name: bl_drive, type: talonfxpro}, {name: bl_angle, type: talonfxpro}, {name: pigeon2, type: pigeon2_yaw}] }
 
        - {name: top_left_shooter_simulator, type: simulator, joints: [ {name: top_left_shooter_joint, type: talonfxpro} ]}
-    #    - {name: shooter_pivot_simulator, type: simulator, joints: [ {name: shooter_pivot_motionmagic_joint, type: talonfxpro} ]}
+       - {name: shooter_pivot_simulator, type: simulator, joints: [ {name: shooter_pivot_motionmagic_joint, type: talonfxpro} ]}
     #    - {name: default_simulator, type: simulator} # This should be the last simulator and will do non-physics-accurate simulation (get to control position/velocity immediately)
 
 # Create controllers for each joint
