@@ -254,10 +254,13 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(processor_temp, talonfxpro_->GetProcessorTemp())
         SAFE_READ(rotor_velocity, talonfxpro_->GetRotorVelocity())
         if (talonfxpro_->GetDeviceID() == 55) {
-            ROS_INFO_STREAM("read vel = " << units::radians_per_second_t{*rotor_velocity}.value());
+            ROS_INFO_STREAM("read rotor vel = " << units::radians_per_second_t{*rotor_velocity}.value());
         }
         SAFE_READ(rotor_position, talonfxpro_->GetRotorPosition())
         SAFE_READ(velocity, talonfxpro_->GetVelocity())
+        if (talonfxpro_->GetDeviceID() == 55) {
+            ROS_INFO_STREAM("read vel = " << units::radians_per_second_t{*velocity}.value());
+        }
         SAFE_READ(position, talonfxpro_->GetPosition())
         SAFE_READ(acceleration, talonfxpro_->GetAcceleration())
         SAFE_READ(device_enable, talonfxpro_->GetDeviceEnable())

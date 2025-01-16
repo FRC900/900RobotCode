@@ -126,11 +126,8 @@ void TalonFXProSimCommand::resetAddRotorPosition(void)
 
 void TalonFXProSimCommand::setRotorVelocity(const double rotor_velocity)
 {
-    if (rotor_velocity != rotor_velocity_)
-    {
-        rotor_velocity_ = rotor_velocity;
-        rotor_velocity_changed_ = true;
-    }
+    rotor_velocity_ = rotor_velocity;
+    rotor_velocity_changed_ = true;
 }
 double TalonFXProSimCommand::getRotorVelocity(void) const
 {

@@ -16,6 +16,69 @@
 // This optimization could be done using a genetic algorithm or something similar (interesting suggestion, Copilot)
 // Maybe gradient descent could work also? I'm not sure how to even find the gradient with noncontinuous data though, should think about it more
 
+/*
+[INFO] [1737045687.322484755]: writing 0.900000 radians to shooter_pivot_controller
+[INFO] [1737045687.326438509]: read vel = 0
+[INFO] [1737045687.326510341]: read thread state vel = 0
+[INFO] [1737045687.350798212]: copy from read vel = 0
+[INFO] [1737045687.350879277]: arm in, 0.355884 desired pos, 0.357 set pos, 0.355884 actual pos, 0 V, 0 desired vel, 0 set velocity, 0 actual vel
+[INFO] [1737045687.351087756]: shooter pivot update, pos = 0.355884, vel = 0, rotor vel = 0
+
+[INFO] [1737045687.426471043]: read vel = 0
+[INFO] [1737045687.426540878]: read thread state vel = 0
+[INFO] [1737045687.450791903]: copy from read vel = 0
+[INFO] [1737045687.450863827]: arm in, 0.361157 desired pos, 0.357 set pos, 0.355884 actual pos, 0.23 V, 0.0981748 desired vel, 0 set velocity, 0 actual vel
+[INFO] [1737045687.451022273]: shooter pivot update, pos = 0.355884, vel = 0, rotor vel = 0
+
+[INFO] [1737045687.526433293]: read vel = 0
+[INFO] [1737045687.526504344]: read thread state vel = 0
+[INFO] [1737045687.550770597]: copy from read vel = 0
+[INFO] [1737045687.550879273]: arm in, 0.408135 desired pos, 0.439699 set pos, 0.355884 actual pos, 1.01 V, 0.687223 desired vel, 1.07344 set velocity, 0 actual vel
+**writing the simulated rotor velocity to TalonFX SimState** [INFO] [1737045687.550925417]: sim write rotor velocity 1.07344
+[INFO] [1737045687.551081034]: shooter pivot update, pos = 0.355884, vel = 0, rotor vel = 0
+
+**the TalonFX rotor velocity is read correctly** [INFO] [1737045687.626444295]: read vel = 1.06765
+[INFO] [1737045687.626516882]: read thread state vel = 1.06765
+[INFO] [1737045687.650790552]: copy from read vel = 1.06765
+[INFO] [1737045687.650865334]: arm in, 0.504967 desired pos, 0.662433 set pos, 0.355884 actual pos, 2.03 V, 1.1781 desired vel, 2.57615 set velocity, 1.06765 actual vel
+[INFO] [1737045687.650905406]: sim write rotor velocity 2.57615
+**but the TalonFX regular velocity is not updated yet** [INFO] [1737045687.651086242]: shooter pivot update, pos = 0.355884, vel = 0, rotor vel = 1.06765
+
+[INFO] [1737045687.726470199]: read vel = 2.57709
+[INFO] [1737045687.726533542]: read thread state vel = 2.57709
+[INFO] [1737045687.750790426]: copy from read vel = 2.57709
+[INFO] [1737045687.750855092]: arm in, 0.649737 desired pos, 0.961119 set pos, 0.355884 actual pos, 2.51 V, 1.5708 desired vel, 3.34752 set velocity, 2.57709 actual vel
+[INFO] [1737045687.750888169]: sim write rotor velocity 3.34752
+[INFO] [1737045687.751021478]: shooter pivot update, pos = 0.355884, vel = 0, rotor vel = 2.57709
+
+[INFO] [1737045687.826472412]: read vel = 3.33794
+[INFO] [1737045687.826536487]: read thread state vel = 3.33794
+[INFO] [1737045687.850789609]: copy from read vel = 3.33794
+[INFO] [1737045687.850865274]: arm in, 0.781084 desired pos, 1.2297 set pos, 0.546097 actual pos, 2.16 V, 1.07992 desired vel, 2.94426 set velocity, 3.33794 actual vel
+[INFO] [1737045687.850908791]: sim write rotor velocity 2.94426
+**it only updates two timesteps later, over here** [INFO] [1737045687.851088458]: shooter pivot update, pos = 0.546097, vel = 1.06765, rotor vel = 3.33794
+
+[INFO] [1737045687.926433276]: read vel = 2.94524
+[INFO] [1737045687.926498462]: read thread state vel = 2.94524
+[INFO] [1737045687.950790579]: copy from read vel = 2.94524
+[INFO] [1737045687.950867922]: arm in, 0.866412 desired pos, 1.2479 set pos, 0.920388 actual pos, 0.1 V, 0.687223 desired vel, 0.0134826 set velocity, 2.94524 actual vel
+[INFO] [1737045687.950916177]: sim write rotor velocity 0.0134826
+[INFO] [1737045687.951100055]: shooter pivot update, pos = 0.920388, vel = 2.57709, rotor vel = 2.94524
+*/
+
+// rotor velocity is out of sync with normal velocity by two timesteps!
+
+/*
+https://v6.docs.ctr-electronics.com/en/2024/docs/api-reference/simulation/simulation-intro.html
+As a part of high-fidelity simulation, the influence of the CAN bus is simulated at a level similar to what happens on a real robot. This means that the timing behavior of control and status signals in simulation will align to the same framing intervals seen on a real CAN bus. In simulation, this may appear as a delay between setting a signal and getting its real value, or between setting its real value and getting it in API.
+
+In unit tests, it may be useful to increase the update rate of status signals to avoid erroneous failures and minimize delays. The update rate can be modified for simulation by wrapping the signal update frequency in a Utils.isSimulation() (Java, C++) condition.
+
+I was running at 10 Hz for these examples though, so the default update rate should be more than fast enough? idk
+
+https://www.chiefdelphi.com/t/ctre-start-of-2024-open-alpha-for-phoenix-6/441193/92?u=benbean18
+*/
+
 namespace general_simulators
 {
 class SingleJointedArmSimulator : public simulator_base::Simulator
@@ -46,7 +109,7 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
 
         void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
-            single_jointed_arm_sim_->SetState(units::radian_t{state->getRotorPosition() / state->getSensorToMechanismRatio() / state->getRotorToSensorRatio()}, units::radians_per_second_t{state->getRotorVelocity() / state->getSensorToMechanismRatio() / state->getRotorToSensorRatio()});
+            // single_jointed_arm_sim_->SetState(units::radian_t{state->getRotorPosition() / state->getSensorToMechanismRatio()}, units::radians_per_second_t{state->getRotorVelocity() / state->getSensorToMechanismRatio()});
 
             units::voltage::volt_t motor_voltage{state->getMotorVoltage()};
 
@@ -55,12 +118,13 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             single_jointed_arm_sim_->Update(units::second_t{period.toSec()});
 
             // ROS_INFO_STREAM("WPILib outputs");
-            auto angular_velocity = single_jointed_arm_sim_->GetVelocity() * state->getSensorToMechanismRatio() * state->getRotorToSensorRatio();
+            auto angular_velocity = single_jointed_arm_sim_->GetVelocity() * state->getSensorToMechanismRatio();
 
             auto angle = single_jointed_arm_sim_->GetAngle();
 
             // ROS_INFO_STREAM("Write back to state");
             ROS_INFO_STREAM("arm in, " << state->getClosedLoopReference() << " desired pos, "
+                            << angle.value() << " set pos, "
                             << state->getPosition() << " actual pos, " 
                             << state->getMotorVoltage() << " V, "  
                             << state->getClosedLoopReferenceSlope() << " desired vel, " 
