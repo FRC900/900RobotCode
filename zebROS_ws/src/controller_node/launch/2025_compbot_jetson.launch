@@ -16,6 +16,7 @@
 		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2025_compbot_swerve_cancoder_hw.yaml" command="load" if="$(eval arg('hw_or_sim') == 'hw')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" unless="$(eval arg('hw_or_sim') == 'hw')"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2025_elevator_params.yaml" command="load"/>
 
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
@@ -35,6 +36,9 @@
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
+			 elevator_controller_2025
+
+
 			 latency_compensation_state_controller
 			 bl_cancoder_controller
 			 fl_cancoder_controller
