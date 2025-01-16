@@ -75,7 +75,9 @@ class DefaultSimulator : public simulator_base::Simulator
             case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
             case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
             {
-                // ROS_INFO_STREAM("DefaultSimulator update, name = " << name << ", mode = MotionMagicDutyCycle/Voltage/ExpoVoltage/ExpoDutyCycle" << ", pos = " << state->getClosedLoopReference() << ", vel = " << state->getClosedLoopReferenceSlope());
+                if (name == "shooter_pivot_motionmagic_joint") {
+                    ROS_INFO_STREAM("DefaultSimulator update, name = " << name << ", mode = MotionMagicDutyCycle/Voltage/ExpoVoltage/ExpoDutyCycle" << ", pos = " << state->getClosedLoopReference() << ", vel = " << state->getClosedLoopReferenceSlope());
+                }
                 units::radian_t position{invert * state->getClosedLoopReference() * state->getSensorToMechanismRatio()};
                 const units::angular_velocity::radians_per_second_t velocity{invert * state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
                 units::radian_t delta_position{velocity * units::second_t{period.toSec()}};
