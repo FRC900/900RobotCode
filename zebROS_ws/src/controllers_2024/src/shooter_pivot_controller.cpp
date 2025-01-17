@@ -195,7 +195,6 @@ class ShooterPivotController_2024 : public controller_interface::MultiInterfaceC
 
         void update(const ros::Time &time, const ros::Duration & /*duration*/) override
         {
-            ROS_INFO_STREAM("shooter pivot update, pos = " << shooter_pivot_joint_.getPosition() << ", vel = " << shooter_pivot_joint_.getVelocity() << ", rotor vel = " << shooter_pivot_joint_.getRotorVelocity());
             shooter_pivot_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage);
             if (shooter_pivot_joint_.getControlMode() == hardware_interface::talonfxpro::TalonMode::Disabled)
             {
