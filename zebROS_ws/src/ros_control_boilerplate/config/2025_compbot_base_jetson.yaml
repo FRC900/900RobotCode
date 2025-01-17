@@ -49,8 +49,8 @@ hardware_interface:
        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
        
 
-       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
-       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
+       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 40, local: true}
+       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
        # TODO add mechanisms
        - {name: outtake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
         # elevator 31. 32

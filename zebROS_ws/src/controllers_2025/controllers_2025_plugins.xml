@@ -1,5 +1,5 @@
 <library path="lib/libcontrollers_2025">
-	<class name="elevator_controller_2025/ElevatorController_2025" type="elevator_controller_2025::ElevatorController_2025<hardware_interface::talonfxpro::TalonFXProCommandInterface>" base_class_type="controller_interface::ControllerBase">
+	<class name="elevator_controller_2025/ElevatorController_2025" type="elevator_controller_2025::ElevatorController_2025" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Library file. Does stuff to make Phoneix6 elevator_controller exist.
 		</description>
