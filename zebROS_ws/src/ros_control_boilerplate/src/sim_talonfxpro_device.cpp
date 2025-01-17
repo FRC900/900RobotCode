@@ -187,9 +187,6 @@ void SimTalonFXProDevice::simWrite(const ros::Time &time, const ros::Duration &p
     {
         if (safeCall(sim_collection.SetRotorVelocity(units::radians_per_second_t{rotor_velocity}), "talonfxpro sim->SetRotorVelocity"))
         {
-            if (talonfxpro_->GetDeviceID() == 55) {
-                ROS_INFO_STREAM("sim write rotor velocity " << rotor_velocity);
-            }
             // ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set position to " << position);
             // Don't set state - it will be updated in next read() loop
         }

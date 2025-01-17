@@ -14,10 +14,23 @@ TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh)
     , command_interface_{std::make_unique<hardware_interface::talonfxpro::TalonFXProCommandInterface>()}
 {
 	ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop");
-	if(!param_nh.param("talonfxpro_read_hz", read_hz_, read_hz_)) 
+    if constexpr (SIM)
     {
-		ROS_WARN("Failed to read talonfxpro_read_hz in frc_robot_interface");
-	}
+        // turns out if simulator timesteps are different from motor controller read timesteps (which sim uses) you get problems...
+        // that took hours to find out :'(
+        ROS_INFO_STREAM("We are running in simulation. Setting talonfxpro_read_hz to loop_hz to avoid simulator issues.");
+        if(!param_nh.param("loop_hz", read_hz_, read_hz_)) 
+        {
+            ROS_WARN("Failed to read loop_hz in frc_robot_interface");
+        }
+    }
+    else
+    {
+        if(!param_nh.param("talonfxpro_read_hz", read_hz_, read_hz_)) 
+        {
+            ROS_WARN("Failed to read talonfxpro_read_hz in frc_robot_interface");
+        }
+    }
 	// TODO : this shouldn't be hard-coded?
 	ros::NodeHandle nh(root_nh, "hardware_interface");
     XmlRpc::XmlRpcValue joint_param_list;

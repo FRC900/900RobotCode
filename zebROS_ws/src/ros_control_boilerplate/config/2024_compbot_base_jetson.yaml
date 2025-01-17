@@ -1,13 +1,13 @@
 # ros_control_boilerplate Settings -----------------------
 # Settings for ros_control control loop
 generic_hw_control_loop:
-  loop_hz: 10
+  loop_hz: 250
   cycle_time_error_threshold: 0.01
   canifier_read_hz: 100
   cancoder_read_hz: 100
   #some processes have lower frequencies than the main control loop
-  ctre_mc_read_hz: 10
-  talonfxpro_read_hz: 10
+  ctre_mc_read_hz: 100
+  talonfxpro_read_hz: 100
   pigeon2_read_hz: 100
   pcm_read_hz: 20
   pdh_read_hz: 20
