@@ -79,6 +79,9 @@ I was running at 10 Hz for these examples though, so the default update rate sho
 https://www.chiefdelphi.com/t/ctre-start-of-2024-open-alpha-for-phoenix-6/441193/92?u=benbean18
 */
 
+// soooooo it works when loop_hz == talonfxpro_read_hz and is decently fast (i.e. >10 Hz)
+// :( that took a long time to figure out
+
 namespace general_simulators
 {
 class SingleJointedArmSimulator : public simulator_base::Simulator
@@ -109,6 +112,11 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
 
         void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
         {
+            if (!set_initial_position_) {
+                ROS_INFO_STREAM(name << ": position unset, setting to " << state->getPosition() << " rad");
+                single_jointed_arm_sim_->SetState(units::radian_t{state->getPosition()}, units::radians_per_second_t{0.0});
+                set_initial_position_ = true;
+            }
             // single_jointed_arm_sim_->SetState(units::radian_t{state->getRotorPosition() / state->getSensorToMechanismRatio()}, units::radians_per_second_t{state->getRotorVelocity() / state->getSensorToMechanismRatio()});
 
             units::voltage::volt_t motor_voltage{state->getMotorVoltage()};
@@ -123,13 +131,13 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             auto angle = single_jointed_arm_sim_->GetAngle();
 
             // ROS_INFO_STREAM("Write back to state");
-            ROS_INFO_STREAM("arm in, " << state->getClosedLoopReference() << " desired pos, "
-                            << angle.value() << " set pos, "
-                            << state->getPosition() << " actual pos, " 
-                            << state->getMotorVoltage() << " V, "  
-                            << state->getClosedLoopReferenceSlope() << " desired vel, " 
-                            << angular_velocity.value() << " set velocity, "
-                            << state->getRotorVelocity() << " actual vel");
+            // ROS_INFO_STREAM("arm in, " << state->getClosedLoopReference() << " desired pos, "
+            //                 << angle.value() << " set pos, "
+            //                 << state->getPosition() << " actual pos, " 
+            //                 << state->getMotorVoltage() << " V, "  
+            //                 << state->getClosedLoopReferenceSlope() << " desired vel, " 
+            //                 << angular_velocity.value() << " set velocity, "
+            //                 << state->getRotorVelocity() << " actual vel");
             talonfxpro->setRawRotorPosition(angle.value());
             talonfxpro->setAddRotorPosition(angular_velocity.value() * period.toSec());
             talonfxpro->setRotorVelocity(angular_velocity.value());
