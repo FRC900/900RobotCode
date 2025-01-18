@@ -424,9 +424,11 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 sudo pip3 install pyserial
 sudo pip3 install cupy-cuda11x
 
+# TODO - figure out a real fix for the build error in newer commits
 cd /home/ubuntu &&\
     git clone https://github.com/abseil/abseil-cpp.git &&\
     cd abseil-cpp &&\
+    git checkout a3f7e9866c67ca090995aa638276b8fd8938c6f3 &&\
     mkdir build &&\
     cd build &&\
     cmake -DABSL_BUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DABSL_USE_GOOGLETEST_HEAD=ON -DCMAKE_CXX_STANDARD=17 -GNinja .. &&\
