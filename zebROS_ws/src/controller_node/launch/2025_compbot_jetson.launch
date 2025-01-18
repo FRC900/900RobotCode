@@ -50,6 +50,7 @@
 			 candle_controller
 			 candle_state_controller
 			 cancoder_state_controller
+			 roller_controller
 			 robot_code_ready_controller" />
 			 <!-- Add 2025 controllers -->
 			 <!--
