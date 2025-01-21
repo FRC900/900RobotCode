@@ -1,0 +1,62 @@
+elevator_controller:
+    type: elevator_controller_2025/ElevatorController_2025
+
+    # min height (m), ff (V)
+    feed_forward_map:
+      - [0.0, 0.0]
+      - [0.5, 0.2]
+      - [1.0, 0.4]
+      - [1.5, 0.6]
+
+    elevator_joint: [ 'elevator_leader', 'elevator_follower' ]
+    dynamic_reconfigure: True
+
+    max_height_val: 1.412 # TODO replace with actual value
+
+    # How quickly the elevator moves down when zeroing itself
+    elevator_zeroing_percent_output: -0.1 # TODO : tune me
+
+    # If there are no negative velocity readings while zeroing
+    # for this amount of time, assume the elevator is stuck
+    # or has hit bottom and the limit switch is broken.  Stop
+    # trying to drive down to prevent killing the motor
+    elevator_zeroing_timeout:  2.0
+
+    elevator_leader:
+        type: talonfxpro_controllers/TalonFXProControllerInterface
+        joint: elevator_leader
+        
+        # TODO tune
+        motion_magic_expo_kV: 0.4
+        motion_magic_expo_kA: 0.4
+
+        # TODO enter actual values
+        rotor_to_sensor_ratio: 5.0
+        sensor_to_mechanism_ratio: 1.0
+
+        neutral_mode: Brake
+        invert: counterclockwise_positive
+
+        # TODO replace with actual value
+        softlimit_forward_threshold: 1.412 
+        softlimit_forward_enable: True
+
+        # TODO tune
+        close_loop_values:
+            - {kP: 50.0, kI: 0.0, kD: 0.0, kV: 4.0, kS: 0.0}
+        
+        reverse_limit_switch_type: "NormallyOpen"
+        reverse_limit_enable: True
+        forward_limit_enable: False
+        
+        dynamic_reconfigure: True
+
+    elevator_follower: 
+        joint: elevator_follower
+
+        # TODO enter actual values
+        sensor_to_mechanism_ratio: 1.0
+        control_oppose_master_direction: False
+
+        neutral_mode: Brake
+        dynamic_reconfigure: False

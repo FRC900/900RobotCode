@@ -48,6 +48,9 @@ hardware_interface:
        - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
        
+
+       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 40, local: true}
+       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
        # TODO add mechanisms
        - {name: outtake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
         # elevator 31. 32
@@ -97,12 +100,6 @@ cancoder_state_controller:
 # encoder state used by the hw manager and publishes it as
 # a ROS topic.  This is generic ROS stuff, so we'll have
 # to figure out what to map e.g. effort to in the Talon world
-talon_state_controller_jetson:
-   type:         talon_state_controller/TalonStateController
-   publish_rate: 100
-talon_config_controller:
-   type:         talon_config_controller/TalonConfigController
-   publish_rate: 5
 
 talonfxpro_state_controller:
    type:         talonfxpro_state_controller/TalonFXProStateController
@@ -124,10 +121,6 @@ joint_state_controller_jetson:
 joint_state_listener_controller_jetson:
     type:      state_listener_controller/JointStateListenerController
     topic:     /frcrobot_rio/joint_states
-
-pcm_state_controller:
-   type:         pcm_state_controller/PCMStateController
-   publish_rate: 20
 
 match_state_listener_controller:
     type:      state_listener_controller/MatchStateListenerController

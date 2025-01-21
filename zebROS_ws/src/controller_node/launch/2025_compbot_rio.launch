@@ -27,7 +27,6 @@
 			 rumble_state_controller
 			 rumble_controller
 			 match_state_controller
-			 leafblower_controller
 			 robot_controller_state_controller
 			 robot_code_ready_controller" />
 			<!-- pdh_state_controller -->

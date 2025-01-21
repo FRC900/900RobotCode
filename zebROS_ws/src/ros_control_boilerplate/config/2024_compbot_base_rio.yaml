@@ -160,14 +160,3 @@ pdh_state_controller:
          "", #id 23
          ""  #id 24
         ]
-
-leafblower_controller:
-    type: talon_controllers/TalonPercentOutputController
-    joint: leafblower
-    invert_output: False
-    voltage_compensation_Enable: True
-    voltage_compensation_saturation: 10
-    neutral_mode: Coast
-    open_loop_ramp: 0.5
-    dynamic_reconfigure: True
-    enable_read_thread: False
