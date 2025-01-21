@@ -49,8 +49,10 @@ hardware_interface:
        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
        
        # TODO add mechanisms
-       - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
-       
+       - {name: outtake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+        # elevator 31. 32
+        # intake 51
+    
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
