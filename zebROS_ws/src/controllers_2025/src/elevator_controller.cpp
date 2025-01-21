@@ -70,11 +70,6 @@ public:
         // sorts by highest to lowest height to activate (reverse order), so we can iterate through this until the first value is less than or equal to current pos
         std::sort(feed_forward_map_.begin(), feed_forward_map_.end(), [](const FeedForwardMapEntry &a, const FeedForwardMapEntry &b) { return a.position_ > b.position_; });
 
-        for (const auto &f : feed_forward_map_)
-        {
-            ROS_INFO_STREAM("Sorted : " << f.position_);
-        }
-
         if (!readIntoScalar(controller_nh, "elevator_zeroing_percent_output", elevator_zeroing_percent_output_))
         {
             ROS_ERROR("Could not find elevator_zeroing_percent_output");

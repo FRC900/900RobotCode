@@ -11,7 +11,7 @@
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2025_compbot_base_jetson.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2.yaml" command="load"/>
+		<!--<rosparam file="$(find ros_control_boilerplate)/config/2.yaml" command="load"/> -->
 		<!-- For sim, stage simulation is responsible for odometry -->
 		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2025_compbot_swerve_cancoder_hw.yaml" command="load" if="$(eval arg('hw_or_sim') == 'hw')"/>
