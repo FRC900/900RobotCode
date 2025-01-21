@@ -11,8 +11,7 @@ namespace elevator_controller_2025
 
 template<typename T>
 bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar){
-    T val;
-	if (n.getParam(name, val)){
+	if (T val; n.getParam(name, val)){
         scalar = val;
         return true;
     }
@@ -23,6 +22,7 @@ double readFloatParam(const XmlRpc::XmlRpcValue &param)
 {
 	if (!param.valid())
     {
+        ROS_ERROR("2025_elevator_controller: readFloatParam : param was not a valid type");
 		throw std::runtime_error("2025_elevator_controller: readFloatParam : param was not a valid type");
     }
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
@@ -33,6 +33,7 @@ double readFloatParam(const XmlRpc::XmlRpcValue &param)
 	{
 		return static_cast<int>(param);
 	}
+    ROS_ERROR("2025_elevator_controller: readFloatParam : A non-double value was read for param");
     throw std::runtime_error("2025_elevator_controller: readFloatParam : A non-double value was read for param");
 }
 
@@ -58,24 +59,29 @@ public:
             return false;
         }
 
-        for (size_t i = 0; i < feed_forward_map_xml_.size(); i++)
+        for (int i = 0; i < feed_forward_map_xml_.size(); i++)
         {
-            auto s = feed_forward_map_xml_[i];
-            feed_forward_map.push_back({readFloatParam(s[0]), readFloatParam(s[1])});
-            ROS_INFO_STREAM("2025_elevator_controller: Inserted " << s[0] << " " << s[1] << " " << s[2]);
+            const auto s = feed_forward_map_xml_[i];
+            feed_forward_map_.emplace_back(readFloatParam(s[0]), readFloatParam(s[1]));
+            ROS_INFO_STREAM("2025_elevator_controller: Inserted " << s[0] << " " << s[1]);
         }
 
         // there has to be some cool function combinator to do first < first
         // sorts by highest to lowest height to activate (reverse order), so we can iterate through this until the first value is less than or equal to current pos
-        std::sort(feed_forward_map.begin(), feed_forward_map.end(), [](std::pair<double,double> a, std::pair<double,double> b) { return a > b; });
+        std::sort(feed_forward_map_.begin(), feed_forward_map_.end(), [](const FeedForwardMapEntry &a, const FeedForwardMapEntry &b) { return a.position_ > b.position_; });
 
-        if (!readIntoScalar(controller_nh, "elevator_zeroing_percent_output", elevator_zeroing_percent_output))
+        for (const auto &f : feed_forward_map_)
+        {
+            ROS_INFO_STREAM("Sorted : " << f.position_);
+        }
+
+        if (!readIntoScalar(controller_nh, "elevator_zeroing_percent_output", elevator_zeroing_percent_output_))
         {
             ROS_ERROR("Could not find elevator_zeroing_percent_output");
             return false;
         }
 
-        if (!readIntoScalar(controller_nh, "elevator_zeroing_timeout", elevator_zeroing_timeout))
+        if (!readIntoScalar(controller_nh, "elevator_zeroing_timeout", elevator_zeroing_timeout_))
         {
             ROS_ERROR("Could not find elevator_zeroing_timeout");
             return false;
@@ -111,29 +117,20 @@ public:
             ddr_->registerVariable<double>(
                 "elevator_zeroing_percent_output",
                 [this]()
-                { return elevator_zeroing_percent_output.load(); },
+                { return elevator_zeroing_percent_output_.load(); },
                 [this](double b)
-                { elevator_zeroing_percent_output.store(b); },
+                { elevator_zeroing_percent_output_.store(b); },
                 "Elevator Zeroing Percent Output",
                 -0.2, 0.0);
 
             ddr_->registerVariable<double>(
                 "elevator_zeroing_timeout",
                 [this]()
-                { return elevator_zeroing_timeout.load(); },
+                { return elevator_zeroing_timeout_.load(); },
                 [this](double b)
-                { elevator_zeroing_timeout.store(b); },
+                { elevator_zeroing_timeout_.store(b); },
                 "Elevator Zeroing Timeout",
                 0.0, 15.0);
-
-            ddr_->registerVariable<double>(
-                "motion_magic_cruise_velocity",
-                [this]()
-                { return motion_magic_cruise_velocity.load(); },
-                [this](double b)
-                { motion_magic_cruise_velocity.store(b); },
-                "Motion Magic cruise velocity",
-                0.0, 10);
 
             ddr_->publishServicesTopics();
         }
@@ -189,12 +186,12 @@ public:
         else
         {
             elevator_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::DutyCycleOut);
-            if ((time - last_time_down_).toSec() < elevator_zeroing_timeout)
+            if ((time - last_time_down_).toSec() < elevator_zeroing_timeout_)
             {
                 // Not yet zeroed. Run the elevator down slowly until the limit switch is set.
                 ROS_INFO_STREAM_THROTTLE(0.1, "Zeroing elevator with percent output: "
-                                                   << elevator_zeroing_percent_output);
-                elevator_joint_.setCommand(elevator_zeroing_percent_output);
+                                                   << elevator_zeroing_percent_output_);
+                elevator_joint_.setCommand(elevator_zeroing_percent_output_);
             }
             else
             {
@@ -245,9 +242,9 @@ private:
     // list MUST be sorted highest height to lowest height
     // (...binary search is faster, which is what C++'s upper_bound does, but whatever, we only have a few stages)
     double find_feedforward() {
-        for (std::pair<double, double> ff : feed_forward_map) {
-            if (ff.first <= elevator_joint_.getPosition()) {
-                return ff.second;
+        for (const auto &ff : feed_forward_map_) {
+            if (ff.position_ <= elevator_joint_.getPosition()) {
+                return ff.feed_forward_;
             }
         }
         ROS_ERROR("2025_elevator_controller: no feed forward low enough? returning zero");
@@ -256,9 +253,6 @@ private:
 
     ros::Time last_time_down_;
 
-    // This generates (at compile time) the typename for the joint interface depending on the COMMAND_INTERFACE_TYPE defined for this particular joint.
-    // For the TalonCommandInterface, the joint type is TalonControllerInterface.
-    // For TalonFXProCommandInterface, use the corresponding TalonFXProControllerInterface instead
     talonfxpro_controllers::TalonFXProControllerInterface elevator_joint_;
 
     std::atomic<double> position_command_;
@@ -269,11 +263,20 @@ private:
 
     double MAX_HEIGHT_VAL{1.2};
 
-    std::vector<std::pair<double, double>> feed_forward_map;
+    struct FeedForwardMapEntry
+    {
+        double position_;
+        double feed_forward_;
+        FeedForwardMapEntry(const double position, const double feed_forward)
+        : position_{position}
+        , feed_forward_{feed_forward}
+        {
+        }
+    };
+    std::vector<FeedForwardMapEntry> feed_forward_map_;
 
-    std::atomic<double> elevator_zeroing_percent_output;
-    std::atomic<double> elevator_zeroing_timeout;
-    std::atomic<double> motion_magic_cruise_velocity;
+    std::atomic<double> elevator_zeroing_percent_output_;
+    std::atomic<double> elevator_zeroing_timeout_;
 
     std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
