@@ -56,6 +56,7 @@ hardware_interface:
         # elevator 31. 32
         # intake 51
     
+       - {name: roller, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
@@ -160,3 +161,11 @@ candle_state_controller:
 latency_compensation_state_controller:
   type: latency_compensation_state_controller/LatencyCompensationStateController
   publish_rate: 250
+
+
+roller_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: roller
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Brake
