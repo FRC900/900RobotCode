@@ -10,7 +10,7 @@ from behavior_actions.msg import AlignToReef2025Action, AlignToReef2025Goal, Ali
 
 from talon_controller_msgs.srv import Command, CommandRequest
 
-class Intaker2025ActionServer(object):
+class AlignAndPlaceServer(object):
     # create messages that are used to publish feedback/result
     _result = AlignAndPlace2025Result()
     _feedback = AlignAndPlace2025Feedback()
@@ -80,16 +80,8 @@ class Intaker2025ActionServer(object):
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
 
-    def callback(self, data):
-        if self.switch_name in data.name:
-            self.switch = data.position[data.name.index(self.switch_name)]
-            #rospy.loginfo(f"Found {self.switch_name} with value {self.switch}")
-        else:
-            rospy.logwarn_throttle(1.0, f'2025_intaker_server: {self.switch_name} not found')
-            pass
-
 if __name__ == '__main__':
-    rospy.init_node('intaker_server_2025')
+    rospy.init_node('alignandplaceing_server_2025')
     
-    server = Intaker2025ActionServer(rospy.get_name())
+    server = AlignAndPlaceServer(rospy.get_name())
     rospy.spin()
