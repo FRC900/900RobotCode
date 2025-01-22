@@ -1,0 +1,9 @@
+#goal
+uint8 INTAKE=0
+uint8 OUTTAKE=1
+uint8 mode
+---
+#result
+bool success
+---
+#feedback

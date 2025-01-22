@@ -1,0 +1,12 @@
+#goal
+uint8 L4=0
+uint8 L3=1
+uint8 L2=2
+uint8 L1=3
+bool setup_only
+---
+#result
+bool success
+---
+#feedback
+double percent_finished
