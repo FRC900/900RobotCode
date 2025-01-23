@@ -3,7 +3,11 @@
 import rospy
 import actionlib
 
+<<<<<<< Updated upstream
 from behavior_actions.msg import Placing2025Goal, Placing2025Feedback, Placing2025Result, Placing2025Action
+=======
+from behavior_actions.msg import Placing2025Goal, Placing2025Feedback, Placing2025Result, Placig2025Action
+>>>>>>> Stashed changes
 from behavior_actions.msg import Elevater2025Goal, Elevater2025Feedback, Elevater2025Result, Elevater2025Action
 from behavior_actions.msg import Roller2025Goal, Roller2025Feedback, Roller2025Result, Roller2025Action
 
@@ -11,7 +15,10 @@ class PlacingServer(object):
     def __init__(self, name):
         self.__action_name = name
         self.result = Placing2025Result()
+<<<<<<< Updated upstream
         self.goal = Placing2025Goal()
+=======
+>>>>>>> Stashed changes
         self.feedback = Placing2025Feedback()
         self.elevater_client = actionlib.SimpleActionClient('Elevater', Elevater2025Action)
         rospy.loginfo('Waiting for Elevater action server')
@@ -20,6 +27,7 @@ class PlacingServer(object):
         rospy.loginfo('Waiting for Roller action server')
         self.roller_client.wait_for_server()
 
+<<<<<<< Updated upstream
 
     def execute_cb(self, goal : Placing2025Goal):
         if placing_goal.setup_only: rospy.loginfo('Setup Mode') # Tell the user that the robot is in setup mode
@@ -57,3 +65,7 @@ if __name__ == '__main__':
     rospy.init_node('2025_placing_server')
     server = PlacingServer(rospy.get_name())
     rospy.spin()
+=======
+    def execute_cb(self, goal):
+        pass
+>>>>>>> Stashed changes

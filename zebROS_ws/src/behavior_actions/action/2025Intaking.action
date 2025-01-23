@@ -1,0 +1,7 @@
+---
+bool success
+---
+uint8 state
+# State 1 - Not Acquired
+# State 2 - In Intake
+# State 3 - In Roller
