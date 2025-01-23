@@ -124,6 +124,7 @@ add_action_files(
 		DriveAndScore2024.action
 		Climb2024.action
 		# 2025
+		AlignToReef2025.action
 		Elevater2025.action
 		Intaker2025.action
 		Roller2025.action
