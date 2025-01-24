@@ -1,7 +1,10 @@
+#Goal
 ---
+#Result
 bool success
 ---
+#Feedback
+uint8 NOT_ACQUIRED=0
+uint8 IN_INTAKE=1
+uint8 IN_ROLLER=2
 uint8 state
-# State 1 - Not Acquired
-# State 2 - In Intake
-# State 3 - In Roller
