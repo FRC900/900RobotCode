@@ -7,6 +7,7 @@
 #include "ctre_interfaces/talonfxpro_command_interface.h"
 #include "ctre_interfaces/talonfxpro_sim_command_interface.h"
 #include "ctre_interfaces/cancoder_sim_command_interface.h"
+#include "frc/simulation/BatterySim.h"
 
 template <bool SIM>
 TalonFXProDevices<SIM>::TalonFXProDevices(ros::NodeHandle &root_nh) 
@@ -216,7 +217,7 @@ void TalonFXProDevices<SIM>::simPostRead(const ros::Time& time, const ros::Durat
         tracer.start_unique("talonfxpro sim");
         for (const auto &d : devices_)
         {
-            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), battery); // should we be running this every loop iteration?
+            d->simRead(time, period, getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), battery.value()); // should we be running this every loop iteration?
         }
     }
 }

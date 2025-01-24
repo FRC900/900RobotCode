@@ -25,7 +25,7 @@ void SimTalonFXProDevice::registerSimInterface(hardware_interface::talonfxpro::T
     sim_command_interface.registerHandle(hardware_interface::talonfxpro::TalonFXProSimCommandHandle(state_interface.getHandle(getName()), sim_command_.get()));
 }
 
-void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if, const units::voltage::volt_t battery_voltage)
+void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &period, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if, const double battery_voltage)
 {
     using hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
     using hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
@@ -93,12 +93,12 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     }
 
     // Set simulation state supply voltages
-    sim_state.SetSupplyVoltage(battery_voltage);
-    if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage.value()); }
+    sim_state.SetSupplyVoltage(units::voltage::volt_t{battery_voltage});
+    if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage); }
 
     // Update our motor state from simulation state
     state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-    state_->setDutyCycle(sim_state.GetMotorVoltage() / battery_voltage);
+    state_->setDutyCycle(sim_state.GetMotorVoltage().value() / battery_voltage);
     state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
     state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
 
