@@ -102,11 +102,11 @@ void TalonFXProSimCommand::resetRawRotorPosition(void)
 
 void TalonFXProSimCommand::setAddRotorPosition(const double add_rotor_position)
 {
-    if (add_rotor_position != add_rotor_position_)
-    {
-        add_rotor_position_ = add_rotor_position;
-        add_rotor_position_changed_ = true;
-    }
+    // This was the main bug I think
+    // This was wrapped in an if statement to see if add_rotor_position differed from the previous added position
+    // But we don't care and should mark it changed every time, because for a constant velocity, we add the same position many times
+    add_rotor_position_ = add_rotor_position;
+    add_rotor_position_changed_ = true;
 }
 double TalonFXProSimCommand::getAddRotorPosition(void) const
 {
@@ -126,11 +126,8 @@ void TalonFXProSimCommand::resetAddRotorPosition(void)
 
 void TalonFXProSimCommand::setRotorVelocity(const double rotor_velocity)
 {
-    if (rotor_velocity != rotor_velocity_)
-    {
-        rotor_velocity_ = rotor_velocity;
-        rotor_velocity_changed_ = true;
-    }
+    rotor_velocity_ = rotor_velocity;
+    rotor_velocity_changed_ = true;
 }
 double TalonFXProSimCommand::getRotorVelocity(void) const
 {

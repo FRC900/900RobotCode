@@ -44,6 +44,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include "ros_control_boilerplate/devices.h"
 #include "ros_control_boilerplate/frcrobot_sim_interface.h"
 #include "ros_control_boilerplate/match_data_devices.h"
+#include "ros_control_boilerplate/simulator_devices.h"
 
 namespace ros_control_boilerplate
 {
@@ -67,11 +68,23 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		return false;
 	}
 
+	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices = get_ctrev6_devices();
+	// Simulator devices MUST go before TalonFX devices, because they write commands to the sim TalonFX command interface
+	// during postRead, which are also written to motors by the command interface in postRead.
+	// Maybe we should add a postRead2? idk
+	devices_.emplace(devices_.begin(), std::make_unique<SimulatorDevices>(root_nh, ctrev6_devices));
+
 	for (const auto &d : devices_)
 	{
 		d->simInit(root_nh);
 	}
-	hal::init::InitializeDriverStationData();
+
+	if (auto i = devices_.back()->registerInterface())
+	{
+		registerInterfaceManager(i);
+	}
+
+	hal::init::InitializeHAL();
 
 	ROS_INFO_STREAM_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready on " << root_nh.getNamespace());
 	return true;

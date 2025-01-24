@@ -59,11 +59,8 @@ namespace hardware_interface::cancoder
     }
     void CANCoderSimCommand::setAddPosition(const double add_position)
     {
-        if (add_position != add_position_)
-        {
-            add_position_ = add_position;
-            add_position_changed_ = true;
-        }
+        add_position_ = add_position;
+        add_position_changed_ = true;
     }
     bool CANCoderSimCommand::addPositionChanged(double &add_position)
     {
