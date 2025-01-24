@@ -92,8 +92,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         cancoder_offset = cancoder_.state()->getMagnetOffset();
     }
 
-    const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
-
     // Set simulation state supply voltages
     sim_state.SetSupplyVoltage(battery_voltage);
     if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage.value()); }
