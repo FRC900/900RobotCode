@@ -3,11 +3,7 @@
 
 #include <optional>
 #include "ros_control_boilerplate/talonfxpro_device.h"
-#include "simulator_interface/simulator_base.h"
-#include "pluginlib/class_loader.h"
-#include "ros_control_boilerplate/tracer.h"
 
-#include "ros_control_boilerplate/talonfxpro_device.h"
 #include "ctre_interfaces/cancoder_sim_command_interface.h"
 
 namespace gazebo::physics
