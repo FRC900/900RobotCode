@@ -79,9 +79,10 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		d->simInit(root_nh);
 	}
 
-	auto i = devices_.back()->registerInterface();
-	if (i)
+	if (auto i = devices_.back()->registerInterface())
+	{
 		registerInterfaceManager(i);
+	}
 
 	hal::init::InitializeHAL();
 
