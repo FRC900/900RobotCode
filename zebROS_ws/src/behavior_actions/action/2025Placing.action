@@ -10,4 +10,4 @@ bool setup_only
 bool success
 ---
 #feedback
-double percent_finished
+float64 percent_finished
