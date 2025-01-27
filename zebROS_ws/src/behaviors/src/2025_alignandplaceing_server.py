@@ -17,7 +17,7 @@ class AlignAndPlaceServer(object):
     def __init__(self, name):
         self.aligning_client = rospy.SimpleActionClient("/aligner", AlignAndPlace2025Action)
         self.aligning_client.wait_for_server()
-        self.placing_client = rospy.SimpleActionClient("/somewhere", Placing2025Action)
+        self.placing_client = rospy.SimpleActionClient("/2025_placing_server", Placing2025Action)
         self.placing_client.wait_for_server()
 
         self.placing_distance = rospy.get_param("placing_distance")
