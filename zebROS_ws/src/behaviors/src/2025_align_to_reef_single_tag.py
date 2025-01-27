@@ -3,8 +3,12 @@
 import actionlib
 import rospy
 import math
+<<<<<<< HEAD
 import tf2_ros
 import tf2_geometry_msgs
+=======
+# import tf2_ros
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
 import std_msgs.msg
 import sensor_msgs.msg
 import math
@@ -44,6 +48,7 @@ class Aligner:
         120: 22
     }
 
+<<<<<<< HEAD
     TAG_POS = {
     # tag id: (x, y)
         6: (13.474, 3.306), # 6
@@ -79,6 +84,20 @@ class Aligner:
         # self.min_x_vel = rospy.get_param("reef_min_x_vel")
         # self.min_y_vel = rospy.get_param("reef_min_y_vel")
         # self.fast_zone = rospy.get_param("reef_fast_zone")
+=======
+    def __init__(self, name):   
+        self._action_name = name
+        self.trap_x_tolerance = rospy.get_param("reef_x_tolerance")
+        self.trap_y_tolerance = rospy.get_param("reef_y_tolerance")
+        self.trap_angle_tolerance = rospy.get_param("reef_angle_tolerance")
+        self.trap_min_x_vel = rospy.get_param("reef_min_x_vel")
+        self.trap_min_y_vel = rospy.get_param("reef_min_y_vel")
+        self.trap_fast_zone = rospy.get_param("reef_fast_zone")
+
+        self.left_frame = rospy.get_param("left_frame")
+        self.right_frame = rospy.get_param("right_frame")
+
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
         
         self.color = 0
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.AlignToReef2025Action, execute_cb=self.aligner_callback, auto_start = False)
@@ -87,9 +106,12 @@ class Aligner:
         self.drive_to_object_client = actionlib.SimpleActionClient("/drive_to_object/drive_to_object", behavior_actions.msg.DriveToObjectAction)
         self.norfair_sub = rospy.Subscriber("/norfair/output", norfair_ros.msg.Detections, self.tracked_objects_callback)
 
+<<<<<<< HEAD
         self.t_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.t_buffer)
 
+=======
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
         self.visible_objects = []
         
         self.current_yaw = 0
@@ -103,7 +125,11 @@ class Aligner:
 
     def imu_callback(self, imu_msg):
         q = imu_msg.orientation
+<<<<<<< HEAD
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w])
+=======
+        euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
         self.current_yaw = euler[2]
 
     def tracked_objects_callback(self, msg: norfair_ros.msg.Detections):
@@ -115,6 +141,7 @@ class Aligner:
         rate = rospy.Rate(50.0)
         stage_2_trap = False
         tags = self.BLUE_TAGS if self.color == MatchSpecificData.ALLIANCE_COLOR_BLUE else self.RED_TAGS
+<<<<<<< HEAD
         yaw = min(tags.keys(), key=lambda y: abs(angles.shortest_angular_distance(self.current_yaw, math.radians(y))))
         rospy.loginfo(f"current yaw {self.current_yaw}, selected {yaw}")
         tag = tags[yaw]
@@ -123,6 +150,11 @@ class Aligner:
         rospy.loginfo(f"Yaw: {yaw}, tag: {tag}")
 
         # transform = self.t_buffer.lookup_transform("pipe", "base_link", rospy.Time())
+=======
+        yaw = min(tags.keys(), key=lambda y: abs(angles.shortest_angular_distance(self.current_yaw * 180/math.pi, y)))
+        tag = tags[yaw]
+
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
         
         drive_to_object_done = False
 
@@ -135,7 +167,11 @@ class Aligner:
         drive_to_object_goal.id = f"tag_{tag}"
         drive_to_object_goal.x_tolerance = self.x_tolerance
         drive_to_object_goal.y_tolerance = self.y_tolerance
+<<<<<<< HEAD
         drive_to_object_goal.transform_to_drive = "pipe"
+=======
+        drive_to_object_goal.transform_to_drive = self.left_frame if goal.pipe == goal.LEFT_PIPE else self.right_frame
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
         drive_to_object_goal.use_y = True
         drive_to_object_goal.min_x_vel = self.min_x_vel
         drive_to_object_goal.min_y_vel = self.min_y_vel
@@ -143,6 +179,7 @@ class Aligner:
         drive_to_object_goal.field_relative_angle = yaw
         drive_to_object_goal.fast_zone = self.fast_zone
         self.drive_to_object_client.send_goal(drive_to_object_goal, done_cb=done_callback)
+<<<<<<< HEAD
         rospy.loginfo("drive_to_object goal sent")
 
         while not rospy.is_shutdown():
@@ -163,6 +200,10 @@ class Aligner:
             self._feedback.angle_error = abs(angles.shortest_angular_distance(self.current_yaw, yaw))
 
 
+=======
+
+        while not rospy.is_shutdown():
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
             # check that preempt has not been requested by the client
             if self._as.is_preempt_requested():
                 rospy.loginfo('%s: Preempted' % self._action_name)
@@ -174,13 +215,19 @@ class Aligner:
             if drive_to_object_done:
                 success = self.drive_to_object_client.get_result().success
                 break
+<<<<<<< HEAD
             self._as.publish_feedback(self._feedback)
+=======
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
             rate.sleep()
         if success:
             self._result.success = True
             rospy.loginfo('%s: Succeeded' % self._action_name)
             self._as.set_succeeded(self._result)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 630984ee (add action file, rewrite align_to_trap)
         
 if __name__ == '__main__':
     rospy.init_node('aligner')
