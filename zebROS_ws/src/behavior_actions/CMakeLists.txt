@@ -123,7 +123,8 @@ add_action_files(
 		AlignToTrap2024.action
 		DriveAndScore2024.action
 		Climb2024.action
-		# 2025
+   	# 2025
+		Placing2025.action
 		AlignToReef2025.action
 		Elevater2025.action
 		Intaker2025.action
