@@ -24,6 +24,7 @@ rosserial
 flex_sync
 rplidar_ros
 sick_tim
+smooth
 stage_ros
 steered_wheel_base_controller
 tagslam*/

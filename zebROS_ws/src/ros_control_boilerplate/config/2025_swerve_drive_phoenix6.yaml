@@ -11,7 +11,7 @@ swerve_drive_controller:
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
-    wheel_radius: 0.048 # m
+    wheel_radius: 0.0508 # meters
     cmd_vel_timout: 0.5
     max_speed: 7 # Potentially raise, otherwise swerve math will limit max motor speed
 
@@ -31,7 +31,7 @@ swerve_drive_controller:
     f_v: 0.0379
 
     # TODO : move this into sensor_to_mechanism_ratio for Falcons
-    ratio_encoder_to_rotations: 0.148148148 # Test me, will show up in odom results
+    ratio_encoder_to_rotations: 0.148148148 # this is 1/6.75 aka L2
 
     encoder_drive_get_V_units: 1
     encoder_drive_set_V_units: 1
@@ -40,144 +40,173 @@ swerve_drive_controller:
     encoder_steering_get_units: 1
     encoder_steering_set_units: 1
 
-    # 17.5 in (0.4445 m) long, 15.5 in (0.3937) wide
     # fl : +x, +y
     # fr : +x, -y
     # bl : -x, +y
     # br : -x, -y
-    wheel_coords: [[0.19685, 0.22225], [0.19685, -0.22225], [-0.19685, 0.22225], [-0.19685, -0.22225]]
+    # this assumes 23.75 inches = 0.60325m between wheels --> the values here are half that (center to wheel) = 0.301625m
+    wheel_coords: [[0.301625, 0.301625], [0.301625, -0.301625], [-0.301625, 0.301625], [-0.301625, -0.301625]]
     parking_config_time_delay: 0.75
     drive_speed_time_delay: 0.125
+    cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     use_cos_scaling: True # scale motor speed by how close angle motors are to setpoints
+
+    # TODO tune PID
     fl_drive:
         joint: fl_drive
         close_loop_values:
-            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.10
-        dynamic_reconfigure: True
+        voltage_closed_loop_ramp_period: 0.25
+        # dynamic_reconfigure: True
         neutral_mode: Brake
         forward_limit_enable: False
         reverse_limit_enable: False
+        #neutral_deadband: 0.01
+        stator_current_limit: 60
+        stator_current_limit_enable: True
+        enable_read_thread: True
     fr_drive:
         joint: fr_drive
         close_loop_values:
-            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.10
-        dynamic_reconfigure: True
+        voltage_closed_loop_ramp_period: 0.25
+        # dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
+        #neutral_deadband: 0.01
+        stator_current_limit: 60
+        stator_current_limit_enable: True
+        enable_read_thread: True
     bl_drive:
         joint: bl_drive
         close_loop_values:
-            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
         #feedback_type: IntegratedSensor
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.10
-        dynamic_reconfigure: True
+        voltage_closed_loop_ramp_period: 0.25
+        # dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
+        #neutral_deadband: 0.01
+        stator_current_limit: 60
+        stator_current_limit_enable: True
+        enable_read_thread: True
     br_drive:
         joint: br_drive
         close_loop_values:
-            - {kP: 0.50, kI: 0.0, kD: 0.0, kV: 0.118, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
         #feedback_type: IntegratedSensor
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.10
-        dynamic_reconfigure: True
+        voltage_closed_loop_ramp_period: 0.25
+        # dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
-
+        #neutral_deadband: 0.01
+        stator_current_limit: 60
+        stator_current_limit_enable: True
+        enable_read_thread: True
     fl_angle:
         joint: fl_angle
-        # invert: clockwise_positive
         feedback_sensor_source: FusedCANcoder
-        feedback_remote_sensor_id: 12
+        feedback_remote_sensor_id: 11
         close_loop_values:
-            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0
-        motion_magic_expo_kV: 0.5
-        motion_magic_expo_kA: 0.5
+        motion_magic_expo_kV: 0.4
+        motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
         rotor_to_sensor_ratio: 12.8
         sensor_to_mechanism_ratio: 1.0
-        dynamic_reconfigure: True
+        # dynamic_reconfigure: True
+        invert: clockwise_positive
+        stator_current_limit: 40
+        stator_current_limit_enable: True
+        enable_read_thread: True
     fr_angle:
         joint: fr_angle
-        # invert: clockwise_positive
+        feedback_sensor_source: FusedCANcoder
+        remote_feedback_device_id0: 12
+        close_loop_values:
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
+        motion_magic_cruise_velocity: 0.0
+        motion_magic_expo_kV: 0.4
+        motion_magic_expo_kA: 0.4
+        forward_limit_enable: False
+        reverse_limit_enable: False
+        rotor_to_sensor_ratio: 12.8
+        sensor_to_mechanism_ratio: 1.0
+        # dynamic_reconfigure: True
+        invert: clockwise_positive
+        stator_current_limit: 40
+        stator_current_limit_enable: True
+        enable_read_thread: True
+    br_angle:
+        joint: br_angle
         feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 14
         close_loop_values:
-            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0
-        motion_magic_expo_kV: 0.5
-        motion_magic_expo_kA: 0.5
+        motion_magic_expo_kV: 0.4
+        motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
         rotor_to_sensor_ratio: 12.8
         sensor_to_mechanism_ratio: 1.0
-        dynamic_reconfigure: True
-    br_angle:
-        joint: br_angle
-        # invert: clockwise_positive
+        # dynamic_reconfigure: True
+        invert: clockwise_positive
+        stator_current_limit: 40
+        stator_current_limit_enable: True
+        enable_read_thread: True
+    bl_angle:
+        joint: bl_angle
         feedback_sensor_source: FusedCANcoder
         remote_feedback_device_id0: 13
         close_loop_values:
-            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
+            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
         motion_magic_cruise_velocity: 0.0
-        motion_magic_expo_kV: 0.5
-        motion_magic_expo_kA: 0.5
+        motion_magic_expo_kV: 0.4
+        motion_magic_expo_kA: 0.4
         forward_limit_enable: False
         reverse_limit_enable: False
         rotor_to_sensor_ratio: 12.8
         sensor_to_mechanism_ratio: 1.0
-        dynamic_reconfigure: True
-    bl_angle:
-        joint: bl_angle
-        # invert: clockwise_positive
-        feedback_sensor_source: FusedCANcoder
-        remote_feedback_device_id0: 11
-        close_loop_values:
-            - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0.0}
-        motion_magic_cruise_velocity: 0.0
-        motion_magic_expo_kV: 0.5
-        motion_magic_expo_kA: 0.5
-        forward_limit_enable: False
-        reverse_limit_enable: False
-        rotor_to_sensor_ratio: 12.8
-        sensor_to_mechanism_ratio: 1.0
-        dynamic_reconfigure: True
+        # dynamic_reconfigure: True
+        invert: clockwise_positive
+        stator_current_limit: 40
+        stator_current_limit_enable: True
+        enable_read_thread: True
 
 # Stand-alone controller used to tune PID constants
 swerve_angle_phoenix6_controller:
     type: talonfxpro_controllers/TalonFXProMotionMagicExpoVoltageController
     joint: bl_angle
-    feedback_sensor_source: RemoteCANcoder
-    remote_feedback_device_id0: 11
+    feedback_sensor_source: FusedCANcoder
+    remote_feedback_device_id0: 13
     close_loop_values:
-        - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 1.5, kS: 0}
+        - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
     motion_magic_cruise_velocity: 0.0
-    motion_magic_expo_kV: 0.5
-    motion_magic_expo_kA: 0.5
+    motion_magic_expo_kV: 0.4
+    motion_magic_expo_kA: 0.4
     forward_limit_enable: False
     reverse_limit_enable: False
     dynamic_reconfigure: True
-    rotor_to_sensor_ratio: 12.8
-    sensor_to_mechanism_ratio: 1.0
+    invert: clockwise_positive

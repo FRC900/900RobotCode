@@ -26,8 +26,6 @@ generic_hw_control_loop:
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
    joints:
-       # 2024 joints
-       #
        # Solenoids which are updated from controllers on the Jetson need
        # to be configured here so they can write to hardware attached
        # to the Rio
@@ -45,13 +43,12 @@ hardware_interface:
        - {name: button_box, type: joystick, id: 1, local: true}
          #- {name: joystick2, type: joystick, id: 2, local: true}
        - {name: rumble0, type: rumble, port: 0, local: true}
-       - {name: leafblower, type: can_talon_srx, can_id: 16, local: true}
-       #- {name: joystick_rumble2, type: rumble, rumble_port: 2}
-       - {name: diverter_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
-       #- {name: claw_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
-       - {name: preshooter_limit_switch, type: digital_input, dio_channel: 9, invert: true, local: true}
+       # limit switch example:
+       # - {name: claw_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
+       - {name: intake_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
+       - {name: roller_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
 
 # Create controllers for each joint
 #
@@ -77,13 +74,6 @@ rumble_state_controller:
 rumble_controller:
     type: rumble_controller/RumbleController
     joint: rumble0
-
-talon_state_controller_rio:
-   type:         talon_state_controller/TalonStateController
-   publish_rate: 100
-talon_config_controller:
-   type:         talon_config_controller/TalonConfigController
-   publish_rate: 5
 
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
@@ -114,16 +104,6 @@ robot_controller_state_controller:
 joystick_controller:
     type: joystick_state_controller/JoystickStateController
     name: joystick0
-    publish_rate: 50
-
-spacemouse_controller:
-    type: spacemouse_state_controller/SpacemouseStateController
-    name: joystick0
-    publish_rate: 50
-
-joystick2_controller:
-    type: joystick_state_controller/JoystickStateController
-    name: joystick2
     publish_rate: 50
 
 button_box_controller:

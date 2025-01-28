@@ -1,0 +1,97 @@
+# Top-level world file for the rapid react field stage simulation
+include "robots/2023FRC_robot.inc"
+
+# Object detection model - used as a base for each target
+# we can detect using tensorflow object detection
+# TODO - maybe also retro targets?
+define objdet_target model
+(
+ size [ 0.200 0.200 0.050 ]
+ gui_move 0
+ gui_nose 0
+ gripper_return 1
+ ranger_return -1.000
+)
+
+# Model for the basic floorplan - walls, and field obstacles
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return 1
+  fiducial_return -1
+  ranger_return 1.000
+)
+
+resolution 0.02
+interval_sim 15 # simulation timestep in milliseconds, was 5
+interval_real 15 # was 5
+threads 4
+
+window
+(
+  size [ 931  1016 ]
+  center [ 0.000 0.000 ]
+  rotate [ 0.000 0.000 ]
+  scale 60.000
+)
+
+# Size determines how pixels map to meters
+# Pose fixes the center of the field
+# PNG is black and white image
+floorplan
+(
+  name "reefscape_field"
+  bitmap "../maps/2025_reefscape_field.png"
+  size [17.550 8.050 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  pose [ 8.775  4.025  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
+)
+
+# throw in a robot
+omnidir_robot
+(
+  # Everything but slalom
+  pose [ 1.880 4.989 0.000 180.000 ]
+  # Slalom pose [ 1.0414 .762 0.0 0.0 ]
+  name "robot"
+)
+
+# Copied from 2023_charged_up.world and I changed the numbers and added 8 more --Elias
+# https://github.com/wpilibsuite/allwpilib/blob/main/apriltag/src/main/native/resources/edu/wpi/first/apriltag/2025-reefscape.json
+objdet_target ( pose [ 16.697198 0.65532 1.4859 126.000 ] fiducial_return 101 color "red") # Red left coral station
+objdet_target ( pose [ 16.697198 7.39648 1.4859 234.000 ] fiducial_return 102 color "red") # Red right coral station
+
+objdet_target ( pose [ 11.560809999999998 8.05561 1.30175 270.000 ] fiducial_return 103 color "red") # Red processor (blue HP)
+
+objdet_target ( pose [ 9.276079999999999 6.137656 1.8679160000000001 0.000 ] fiducial_return 104 color "blue") # Blue barge, red side
+objdet_target ( pose [ 9.276079999999999 1.914906 1.8679160000000001 0.000 ] fiducial_return 105 color "red") # Red barge, red side
+
+objdet_target ( pose [ 13.474446 3.3063179999999996 0.308102 300.000 ] fiducial_return 106 color "red") # Red reef
+objdet_target ( pose [ 13.890498 4.0259 0.308102 0.000 ] fiducial_return 107 color "red") # Red reef
+objdet_target ( pose [ 13.474446 4.745482 0.308102 60.000 ] fiducial_return 108 color "red") # Red reef
+objdet_target ( pose [ 12.643358 4.745482 0.308102 120.000 ] fiducial_return 109 color "red") # Red reef
+objdet_target ( pose [ 12.227305999999999 4.0259 0.308102 180.000 ] fiducial_return 110 color "red") # Red reef
+objdet_target ( pose [ 12.643358 3.3063179999999996 0.308102 240.000 ] fiducial_return 111 color "red") # Red reef
+
+objdet_target ( pose [ 0.851154 0.65532 1.4859 54.000 ] fiducial_return 112 color "blue") # Blue right coral station
+objdet_target ( pose [ 0.851154 7.3964799999999995 1.4859 306.000 ] fiducial_return 113 color "blue") # Blue left coral station
+
+objdet_target ( pose [ 8.272272 6.137656 1.8679160000000001 180.000 ] fiducial_return 114 color "blue") # Blue barge, blue side
+objdet_target ( pose [ 8.272272 1.914906 1.8679160000000001 180.000 ] fiducial_return 115 color "red") # Red barge, blue side
+
+objdet_target ( pose [ 5.9875419999999995 -0.0038099999999999996 1.30175 90.000 ] fiducial_return 116 color "blue") # Blue processor (red HP)
+
+objdet_target ( pose [ 4.073905999999999 3.3063179999999996 0.308102 240.000 ] fiducial_return 117 color "blue") # Blue reef
+objdet_target ( pose [ 3.6576 4.0259 0.308102 180.000 ] fiducial_return 118 color "blue") # Blue reef
+objdet_target ( pose [ 4.073905999999999 4.745482 0.308102 120.000 ] fiducial_return 119 color "blue") # Blue reef
+objdet_target ( pose [ 4.904739999999999 4.745482 0.308102 60.000 ] fiducial_return 120 color "blue") # Blue reef
+objdet_target ( pose [ 5.321046 4.0259 0.308102 0.000 ] fiducial_return 121 color "blue") # Blue reef
+objdet_target ( pose [ 4.904739999999999 3.3063179999999996 0.308102 300.000 ] fiducial_return 122 color "blue") # Blue reef

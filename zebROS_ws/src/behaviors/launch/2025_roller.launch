@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="roller">
+		<rosparam command="load" file="$(find behaviors)/config/2025_roller_config.yaml"/>
+		<node name="roller_server_2025" pkg="behaviors" type="2025_roller_server.py" output="screen"/>
+	</group>
+</launch>

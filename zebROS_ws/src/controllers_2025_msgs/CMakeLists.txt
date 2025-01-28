@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(behavior_actions)
+project(controllers_2025_msgs)
 
 include("../cmake_modules/CMakeOpt.cmake")
 
@@ -7,13 +7,9 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  actionlib
-  actionlib_msgs
   message_generation
-  roscpp
-  nav_msgs
-  geometry_msgs
-  
+  std_msgs
+  std_srvs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,89 +46,28 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  AutoMode.msg
-  AutoState.msg
-  ShooterOffset.msg
-  GamePieceState2023.msg
-  IntakeState2023.msg
-  AutoAlignSpeaker.msg
-)
+#add_message_files(
+  #FILES
+#)
 
 ## Generate services in the 'srv' folder
 add_service_files(
-  FILES
-  #resetBallSrv.srv
-  DynamicPath.srv
-  GamePiecePickup.srv
-  RelocalizePoint.srv
+   FILES
+   ElevatorSrv.srv
 )
 
 ## Generate actions in the 'action' folder
-add_action_files(
-	DIRECTORY
-		action
-	FILES
-		Path.action
-		#Climb.action
-		#Intake.action
-		#Place.action
-		#Climb2022.action
-		#Shooter2022.action
-		#Shooting2022.action
-		#AlignedShooting2022.action
-		#Intake2022.action
-		#Intaking2022.action
-		#Ejecting2022.action
-		#Elevator.action
-		#Align.action
-		#AlignToShoot.action
-		#Shooter.action
-		#Indexer.action
-		#Index2022.action
-		#Eject.action
-		#Balancer2023.action
-		#Balancing2023.action
-		#Elevater2023.action
-		#AlignToGrid2023.action
-		#AlignToGridPID2023.action
-		AlignAndPlaceGrid2023.action
-		#Fourber2023.action
-		#PathToAprilTag.action
-		#Intake2023.action
-		Placing2023.action
-		Intaking2023.action
-		FourbarElevatorPath2023.action
-		#AlignToSubstation2023.action
-		AlignToSpeaker2024.action
-		AlignAndShoot2024.action
-		NoteDiverter.action
-		Shooter2024.action
-		ShooterPivot2024.action
-		Clawster2024.action
-		Intaking2024.action
-		DriveObjectIntake2024.action
-		#GoToColor.action
-		#RotatePanel.action
-		DriveToObject.action
-		Arm2024.action
-		Shooter2024.action
-		ShooterPivot2024.action
-		Shooting2024.action
-		AlignToTrap2024.action
-		DriveAndScore2024.action
-		Climb2024.action
-   	# 2025
-		Placing2025.action
-		AlignToReef2025.action
-		Elevater2025.action
-		Intaker2025.action
-		AlignAndPlace2025.action
-		Roller2025.action
-)
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
-generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs)
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -164,9 +99,9 @@ generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES behavior_actions
-#  CATKIN_DEPENDS actionlib actionlib_msgs roscpp
+#  INCLUDE_DIRS include
+#  LIBRARIES controllers_2019_msgs
+  CATKIN_DEPENDS message_runtime std_msgs std_srvs
 #  DEPENDS system_lib
 )
 
@@ -176,14 +111,14 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
+# include_directories(
 # include
-  ${catkin_INCLUDE_DIRS}
-)
+# ${catkin_INCLUDE_DIRS}
+# )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/behavior_actions.cpp
+#   src/${PROJECT_NAME}/controllers_2019_msgs.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -194,7 +129,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/behavior_actions_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/controllers_2019_msgs_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -240,10 +175,11 @@ include_directories(
 # )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-)
+# install(DIRECTORY include/${PROJECT_NAME}/
+#  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#  FILES_MATCHING PATTERN "*.h"
+#  PATTERN ".svn" EXCLUDE
+#)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -257,7 +193,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_behavior_actions.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_controllers_2019_msgs.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

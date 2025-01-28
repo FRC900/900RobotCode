@@ -1,0 +1,3 @@
+roller_speed: 0.4
+controller_name: "roller_controller"
+switch_name: "roller_limit_switch"

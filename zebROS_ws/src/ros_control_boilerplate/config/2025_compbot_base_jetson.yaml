@@ -1,0 +1,171 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 250
+  cycle_time_error_threshold: 0.01
+  canifier_read_hz: 100
+  cancoder_read_hz: 100
+  #some processes have lower frequencies than the main control loop
+  ctre_mc_read_hz: 100
+  talonfxpro_read_hz: 50
+  pigeon2_read_hz: 100
+  pcm_read_hz: 20
+  pdh_read_hz: 20
+  pdp_read_hz: 20
+  ph_read_hz: 20
+  robot_iteration_hz: 20
+  spark_max_read_hz: 100
+  joystick_read_hz: 50
+  match_data_read_hz: 2
+  robot_controller_read_hz: 20
+  as726x_read_hz: 7
+
+  talon_config_count_limit: 10
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   # Identify this as a non-Rio controller using Linux
+   # socketCan device can0 to communicate
+   run_hal_robot: false
+   can_interface: can0
+
+   joints:
+       # Swerve drive
+       - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
+       - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
+       - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
+       - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
+       - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
+       - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
+       - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
+       - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
+     
+       - {name: fl_cancoder, type: cancoder, can_bus: CANivore, can_id: 11, local: true}
+       - {name: fr_cancoder, type: cancoder, can_bus: CANivore, can_id: 12, local: true}
+       - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
+       - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
+       
+
+       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 40, local: true}
+       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+       # TODO add mechanisms
+       - {name: outtake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+        # elevator 31. 32
+        # intake 51
+    
+       - {name: roller, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+       #- {name: pcm, type: pcm, pcm_id: 0}
+       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
+
+       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
+
+       #- {name: babys_first_orchestra, type: orchestra, id: 1}
+
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+
+        #  taken out
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw}] }
+
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+
+# TODO add mechanisms
+
+intake_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: intake
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Brake
+
+cancoder_state_controller:
+    type:     cancoder_state_controller/CANCoderStateController
+    publish_rate: 100
+
+
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+
+talonfxpro_state_controller:
+   type:         talonfxpro_state_controller/TalonFXProStateController
+   publish_rate: 100
+talonfxpro_config_controller:
+   type:         talonfxpro_config_controller/TalonFXProConfigController
+   publish_rate: 5
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+# speed/effort paradigm)
+joint_state_controller_jetson:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+
+# Used to listen for remote joint states published from the given topic
+# (in this case the Rio) and copy them to internal copies of
+# joint data
+joint_state_listener_controller_jetson:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_rio/joint_states
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+
+orchestra_controller:
+    type:      orchestra_controller/OrchestraController
+
+orchestra_state_controller:
+    type:   orchestra_state_controller/OrchestraStateController
+    publish_rate: 10
+
+pigeon2_state_controller:
+    type: pigeon2_state_controller/Pigeon2StateController
+    publish_rate: 100
+    joint_name: pigeon2
+    compass_enable: false
+
+pigeon2_controller:
+    type: pigeon2_controller/Pigeon2Controller
+    publish_rate: 20
+    joint_name: pigeon2
+
+pigeon2_imu_state_controller:
+    type: imu_sensor_controller/ImuSensorController
+    joint_name: pigeon2
+    publish_rate: 100
+
+candle_controller:
+    type: candle_controller/CANdleController
+    name: candle1
+
+candle_state_controller:
+    type: candle_state_controller/CANdleStateController
+    publish_rate: 20
+
+latency_compensation_state_controller:
+  type: latency_compensation_state_controller/LatencyCompensationStateController
+  publish_rate: 250
+
+
+roller_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: roller
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Brake
