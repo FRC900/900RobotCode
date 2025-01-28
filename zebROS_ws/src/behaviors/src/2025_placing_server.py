@@ -16,7 +16,7 @@ class PlacingServer(object):
         self.elevater_client = actionlib.SimpleActionClient('Elevater', Elevater2025Action)
         rospy.loginfo('Waiting for Elevater action server')
         self.elevater_client.wait_for_server()
-        self.roller_client = actionlib.SimpleActionClient('Roller', Roller2025Action)
+        self.roller_client = actionlib.SimpleActionClient('roller_server_2025', Roller2025Action)
         rospy.loginfo('Waiting for Roller action server')
         self.roller_client.wait_for_server()
 
