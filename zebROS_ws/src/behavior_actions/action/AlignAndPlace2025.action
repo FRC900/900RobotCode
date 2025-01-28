@@ -1,0 +1,21 @@
+# goal
+uint8 LEFT_PIPE=0
+uint8 RIGHT_PIPE=1
+uint8 pipe
+
+uint8 L4=0
+uint8 L3=1
+uint8 L2=2
+uint8 L1=3
+uint8 level
+---
+# result
+bool success
+---
+# feedback
+uint8 ALIGNING=0
+uint8 ALIGNING_PLACING=1
+uint8 PLACING=2
+uint8 PLACED=3
+
+uint8 stage
