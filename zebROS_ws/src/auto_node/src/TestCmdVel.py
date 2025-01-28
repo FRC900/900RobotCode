@@ -15,8 +15,7 @@ class TestCmdVel(AutoBase):
                          expected_trajectory_count=0) # how many segments of the path there are (split at waypoints)
 
     def get_action(self) -> SeriesAction:   
-        return SeriesAction([
-            IntakeAction(off=False),
-            WaitAction(2),
-            IntakeAction(off=True)
-        ])
+        tw = Twist()        
+        tw.linear.x = 1     
+        tw.linear.y = 1     
+        return SeriesAction([CmdVelAction(tw, 2)])

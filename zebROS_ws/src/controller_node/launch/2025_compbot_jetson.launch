@@ -11,11 +11,12 @@
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2025_compbot_base_jetson.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2025_swerve_drive_phoenix6.yaml" command="load"/>
+		<!--<rosparam file="$(find ros_control_boilerplate)/config/2.yaml" command="load"/> -->
 		<!-- For sim, stage simulation is responsible for odometry -->
 		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2025_compbot_swerve_cancoder_hw.yaml" command="load" if="$(eval arg('hw_or_sim') == 'hw')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" unless="$(eval arg('hw_or_sim') == 'hw')"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2025_elevator_params.yaml" command="load"/>
 
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
@@ -43,8 +44,6 @@
 			 swerve_drive_controller
 			 joint_state_controller_jetson
 			 joint_state_listener_controller_jetson
-			 talon_state_controller_jetson
-			 talon_config_controller
 			 match_state_listener_controller
 			 talonfxpro_state_controller
 			 talonfxpro_config_controller
@@ -52,10 +51,10 @@
 			 candle_controller
 			 candle_state_controller
 			 cancoder_state_controller
-			 intake_controller
+			 roller_controller
 			 robot_code_ready_controller" />
-			 <!-- Add 2025 controllers -->
 			 <!--
+			 intake_controller
 			 orchestra_controller
 			 orchestra_state_controller
 			 swerve_drive_state_controller
@@ -107,6 +106,10 @@
 	<!-- <include file="$(find controller_node)/launch/hold_position.launch"/> -->
 	<!-- <include file="$(find controller_node)/launch/distance_to_pose.launch"/> -->
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
+	<include file="$(find drive_to_object)/launch/drive_to_object.launch"/>
+
+
+	<include file="$(find norfair_ros)/launch/norfair_node.launch"/>
 	
 	<include file="$(find auto_node)/launch/auto_node.launch"/>
 
