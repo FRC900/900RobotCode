@@ -2,6 +2,7 @@
 
 import rospy
 from frc_msgs.msg import MatchSpecificData
+from behavior_actions.msg import Intaking2025Action, Intaking2025Goal, Intaking2025Result, Intaking2025Feedback
 from std_msgs.msg import Int32
 
 BLUE_TAGS = [
@@ -48,13 +49,18 @@ ANGLE_FROM_TAG = {
 
 x = 0
 y = 0
+
+#name is probably wrong bc it starts with a number rn and needs to be changed
+intaking_client = rospy.SimpleActionClient("/2025_intaking_server", Intaking2025Action)
+intaking_client.wait_for_server()
+
 def position_callback(msg):
     global x
     global y
     x = msg.x
     y = msg.y
 
-has_game_piece = True
+has_game_piece = True#need to get feedback for if we have game piece
 def game_piece_callback(msg):
     global has_game_piece
     has_game_piece = msg.has_game_piece
@@ -63,6 +69,7 @@ team_color = "green"
 def team_color_callback(msg):
     global team_color
     team_color = msg.allianceColor
+
 
 if __name__ == "__main__":
     rospy.init_node("2025_auto_align")
@@ -77,11 +84,26 @@ if __name__ == "__main__":
         tags = BLUE_TAGS
 
     r = rospy.Rate(10)
+
+    intaking_on = False
+
     while not rospy.is_shutdown():
         closest_tag = (-1, -1)
         closest_dist_sq = 99999
         for (tag_x, tag_y, is_on_reef) in tags:
+            #also need to add something here to check for gamepiece
             dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
+
+            if is_on_reef == has_game_piece == False and dist_sq < 1 and not intaking_on:
+                    intaking_success = True
+                    intaking_done = False
+                    intaking_goal = Intaking2025Goal()
+                    intaking_client.send_goal(intaking_goal)
+                    intaking_on = True
+
+            if dist_sq > 1 and intaking_on:
+               intaking_on = False 
+               intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
             if is_on_reef == has_game_piece or dist_sq < 0.25 ** 2: # if we're very close to something, we should stay aligned to that
                 if dist_sq < closest_dist_sq:
