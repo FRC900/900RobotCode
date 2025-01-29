@@ -36,7 +36,7 @@ class Intaker2025ActionServer(object):
     def execute_cb(self, goal):
         pct_out = Float64()
         success = True
-        r = rospy.Rate(250)
+        r = rospy.Rate(50)
 
         rospy.loginfo("2025_intaker_server: intaking!")
         pct_out.data = self.intake_speed

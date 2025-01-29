@@ -38,7 +38,7 @@ bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Res
 			ROS_INFO_STREAM("JOINT: " << joint_name << " OFFSET: " << offset);
 			offsets_file << joint_name[0] << joint_name[1] << "_cancoder_controller:" << std::endl;
 			offsets_file << "    type:       cancoder_controller/CANCoderController" << std::endl;
-			offsets_file << "    joint_name: bl_cancoder" << std::endl;
+			offsets_file << "    joint_name: bl_cancoder" << std::endl; // WRONG SHOULD NOT BE BL_CANCODER 
 			offsets_file << "    magnet_offset: " << offset << std::endl;
 			offsets_file << "    dynamic_reconfigure: False" << std::endl;
 			offsets_file << "    enable_read_thread: False" << std::endl;

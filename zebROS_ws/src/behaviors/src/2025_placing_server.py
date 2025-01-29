@@ -24,7 +24,7 @@ class PlacingServer(object):
 
     def execute_cb(self, goal : Placing2025Goal):
 
-        if placing_goal.setup_only: rospy.loginfo('Setup Mode') # Tell the user that the robot is in setup mode
+        if placing_goal.setup_only: rospy.loginfo('Placing Server - Setup Mode') # Tell the user that the robot is in setup mode
         
         placing_goal = Placing2025Goal()
         # elevater_result = Elevater2025Result()
