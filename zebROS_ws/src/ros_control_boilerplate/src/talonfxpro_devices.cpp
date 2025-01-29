@@ -145,24 +145,6 @@ bool TalonFXProDevices<SIM>::setlimit(ros_control_boilerplate::set_limit_switch:
 }
 
 template <bool SIM>
-bool TalonFXProDevices<SIM>::setcurrent(ros_control_boilerplate::set_current::Request &req,
-                                        ros_control_boilerplate::set_current::Response & /*res*/)
-{
-    if constexpr (SIM)
-    {
-        for (const auto &d : devices_)
-        {
-            if (((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
-                (req.target_joint_name == d->getName()))
-            {
-                return d->setSimCurrent(req.current, req.current);
-            }
-        }
-    }
-    return true;
-}
-
-template <bool SIM>
 void TalonFXProDevices<SIM>::simInit(ros::NodeHandle &nh)
 {
     if constexpr (SIM)
@@ -170,7 +152,6 @@ void TalonFXProDevices<SIM>::simInit(ros::NodeHandle &nh)
         if (!devices_.empty())
         {
             sim_fields_.sim_limit_switch_srv_ = nh.advertiseService("set_talonfxpro_limit_switch", &TalonFXProDevices::setlimit, this);
-            sim_fields_.sim_current_srv_ = nh.advertiseService("set_talonfxpro_current", &TalonFXProDevices::setcurrent, this);
         }
     }
 }

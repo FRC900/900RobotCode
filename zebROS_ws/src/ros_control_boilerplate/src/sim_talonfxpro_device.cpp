@@ -72,8 +72,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
 
     // TODO DO NOT UPDATE SIMULATION STATE IF UNDER A SIMULATOR DEVICE
     // the writes will occasionally conflict
-
-    auto &sim_state = talonfxpro_->GetSimState();
     // Note - since all of these are setting raw rotor positions but setpoints
     // are relative to mechanism positions, need to multiply the values written
     // to the raw positions/velocities by the sensor to mechanism ratio
@@ -84,15 +82,8 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
         gazebo_joint_->SetPosition(0, state_->getRotorPosition()); // always set position
     }
 
-    double cancoder_invert = 1.0;
-    double cancoder_offset = 0.0;
-    if (cancoder_id_)
-    {
-        cancoder_invert = cancoder_.state()->getSensorDirection() == hardware_interface::cancoder::SensorDirection::Clockwise_Positive ? -1.0 : 1.0;
-        cancoder_offset = cancoder_.state()->getMagnetOffset();
-    }
-
     // Set simulation state supply voltages
+    auto &sim_state = talonfxpro_->GetSimState();
     sim_state.SetSupplyVoltage(units::voltage::volt_t{battery_voltage});
     if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage); }
 
@@ -102,15 +93,24 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
     state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
 
+#if 0
     // Update CANcoder, if one exists
     // This is fine to do here because it's called in preRead, I think
     // So the control flow looks like preRead (update pos/vel here), real read to state, postRead to update sim, preRead before next loop iter
-    if (cancoder_id_) {
+    if (cancoder_id_)
+    {
+    // Note - since all of these are setting raw rotor positions but setpoints
+    // are relative to mechanism positions, need to multiply the values written
+    // to the raw positions/velocities by the sensor to mechanism ratio
+    // TODO - maybe also rotor to sensor ratio?
+        const double cancoder_invert = cancoder_.state()->getSensorDirection() == hardware_interface::cancoder::SensorDirection::Clockwise_Positive ? -1.0 : 1.0;
+        const double cancoder_offset = cancoder_.state()->getMagnetOffset();
         double cancoder_position{(state_->getRotorPosition() / state_->getSensorToMechanismRatio() - cancoder_offset) * cancoder_invert};
         double cancoder_velocity{state_->getRotorVelocity() / state_->getSensorToMechanismRatio() * cancoder_invert};
         cancoder_->setVelocity(cancoder_velocity);
         cancoder_->setRawPosition(cancoder_position);
     }
+#endif
 }
 
 void SimTalonFXProDevice::simWrite(const ros::Time &time, const ros::Duration &period)
@@ -214,12 +214,6 @@ bool SimTalonFXProDevice::setSimLimitSwitches(const bool forward_limit, const bo
     sim_command_->setForwardLimit(forward_limit);
     sim_command_->setReverseLimit(reverse_limit);
     return true;
-}
-
-bool SimTalonFXProDevice::setSimCurrent(const double /*stator_current*/, const double /*supply_current*/)
-{
-    ROS_ERROR_STREAM("Error settings sim current on TalonFXPro device " << getName() << " : Not supported");
-    return false;
 }
 
 bool SimTalonFXProDevice::gazeboInit(boost::shared_ptr<gazebo::physics::Model> parent_model)
