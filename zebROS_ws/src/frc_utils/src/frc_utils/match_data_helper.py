@@ -20,7 +20,12 @@ class RobotStatusHelper:
         rospy.loginfo("Waiting 3 seconds for match data")
         self.__match_data_msg: MatchSpecificData = None
         rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.__update, tcp_nodelay=True)
-        rospy.sleep(rospy.Duration(3)) # wait for some match data
+        while True:
+            rospy.wait_for_message("/frcrobot_rio/match_data", MatchSpecificData, rospy.Duration(3)) # wait for some match data
+            if self.__match_data_msg is None:
+                rospy.loginfo("match_data_helper: no match data received")
+            else:
+                break
 
     def __update(self, msg: MatchSpecificData):
         self.__match_data_msg = msg

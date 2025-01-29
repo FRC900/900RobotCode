@@ -36,5 +36,5 @@ def callback(msg):
 
     broadcaster.sendTransform(t)
 
-rospy.Subscriber('/aligner/goal', AlignToReef2025ActionGoal, callback) #subscribes to MatchSpecificData
+rospy.Subscriber('/align_to_reef_single_tag/align_to_reef_single_tag/goal', AlignToReef2025ActionGoal, callback) #subscribes to MatchSpecificData
 rospy.spin()

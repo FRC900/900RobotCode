@@ -73,12 +73,12 @@ class Aligner:
         self.min_x_vel = rospy.get_param("min_x_vel")
         self.min_y_vel = rospy.get_param("min_y_vel")
         self.fast_zone = rospy.get_param("fast_zone")
-        # self.x_tolerance = rospy.get_param("reef_x_tolerance")
-        # self.y_tolerance = rospy.get_param("reef_y_tolerance")
-        # self.angle_tolerance = rospy.get_param("reef_angle_tolerance")
-        # self.min_x_vel = rospy.get_param("reef_min_x_vel")
-        # self.min_y_vel = rospy.get_param("reef_min_y_vel")
-        # self.fast_zone = rospy.get_param("reef_fast_zone")
+        # self.x_tolerance = 0.1
+        # self.y_tolerance = 0.1
+        # self.angle_tolerance = 0.1
+        # self.min_x_vel = 1
+        # self.min_y_vel = 1
+        # self.fast_zone = 2
         
         self.color = 0
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.AlignToReef2025Action, execute_cb=self.aligner_callback, auto_start = False)
@@ -146,23 +146,6 @@ class Aligner:
         rospy.loginfo("drive_to_object goal sent")
 
         while not rospy.is_shutdown():
-
-            tf_buffer = tf2_ros.Buffer()
-            listener = tf2_ros.TransformListener(tf_buffer)
-
-            try:
-                trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
-            except:
-                rospy.loginfo("2025_auto_rotating: Transform tree not up yet, skipping this cycle")
-                rate.sleep()
-                continue
-            x_dist = trans.transform.translation.x
-            y_dist = trans.transform.translation.y 
-            self._feedback.x_error = abs(x_dist-TAG_POS[tag][0])
-            self._feedback.y_error = abs(y_dist-TAG_POS[tag][1])
-            self._feedback.angle_error = abs(angles.shortest_angular_distance(self.current_yaw, yaw))
-
-
             # check that preempt has not been requested by the client
             if self._as.is_preempt_requested():
                 rospy.loginfo('%s: Preempted' % self._action_name)
@@ -174,7 +157,23 @@ class Aligner:
             if drive_to_object_done:
                 success = self.drive_to_object_client.get_result().success
                 break
+
+            tf_buffer = tf2_ros.Buffer()
+            listener = tf2_ros.TransformListener(tf_buffer)
+
+            try:
+                trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
+            except:
+                rospy.loginfo("2025_align_to_reef_single_tag: Transform tree not up, no feedback this cycle")
+                rate.sleep()
+                continue
+            x_dist = trans.transform.translation.x
+            y_dist = trans.transform.translation.y 
+            self._feedback.x_error = abs(x_dist-TAG_POS[tag][0])
+            self._feedback.y_error = abs(y_dist-TAG_POS[tag][1])
+            self._feedback.angle_error = abs(angles.shortest_angular_distance(self.current_yaw, yaw))
             self._as.publish_feedback(self._feedback)
+
             rate.sleep()
         if success:
             self._result.success = True
@@ -183,6 +182,6 @@ class Aligner:
 
         
 if __name__ == '__main__':
-    rospy.init_node('aligner')
+    rospy.init_node('align_to_reef_single_tag')
     server = Aligner(rospy.get_name())
     rospy.spin()

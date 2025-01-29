@@ -15,10 +15,10 @@ class AlignAndPlaceServer(object):
     _feedback = AlignAndPlace2025Feedback()
 
     def __init__(self, name):
-        self.aligning_client = rospy.SimpleActionClient("/aligner", AlignAndPlace2025Action)
+        self.aligning_client = actionlib.SimpleActionClient("/align_to_reef_single_tag/align_to_reef_single_tag", AlignToReef2025Action)
         self.aligning_client.wait_for_server()
-        self.placing_client = rospy.SimpleActionClient("/2025_placing_server", Placing2025Action)
-        self.placing_client.wait_for_server()
+        # self.placing_client = rospy.SimpleActionClient("/2025_placing_server", Placing2025Action)
+        # self.placing_client.wait_for_server()
 
         self.placing_distance = rospy.get_param("placing_distance")
 
@@ -37,7 +37,7 @@ class AlignAndPlaceServer(object):
             nonlocal distance
             distance = math.sqrt(feedback.x_error ** 2 + feedback.y_error ** 2)
         
-        def aligning_done_cb(result: AlignToReef2025Result):
+        def aligning_done_cb(state, result: AlignToReef2025Result):
             nonlocal aligning_success
             nonlocal aligning_done
             aligning_success = result.success
@@ -71,7 +71,7 @@ class AlignAndPlaceServer(object):
             self._feedback.stage = self._feedback.ALIGNING_PLACING
             self._as.publish_feedback(self._feedback)
         
-        def placing_done_cb(result: Placing2025Result):
+        def placing_done_cb(state, result: Placing2025Result):
             nonlocal placing_success
             nonlocal placing_done
             placing_success = result.success

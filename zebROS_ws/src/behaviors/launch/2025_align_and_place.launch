@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="align_and_place">
+        <rosparam command="load" file="$(find behaviors)/config/2025_align_and_place_config.yaml"/>
+        <node name="alignandplaceing_server" pkg="behaviors" type="2025_alignandplaceing_server.py" output="screen"/>
+    </group>
+</launch>
