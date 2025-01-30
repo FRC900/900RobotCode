@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="elevater">
+		<rosparam command="load" file="$(find behaviors)/config/2025_elevater_config.yaml"/>
+		<node name="elevater_server_2025" pkg="behaviors" type="2025_elevater_server.py" output="screen"/>
+	</group>
+</launch>
