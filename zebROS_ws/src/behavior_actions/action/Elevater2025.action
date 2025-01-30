@@ -9,4 +9,5 @@ uint8 mode
 bool success # if we got there
 ---
 #feedback
-bool target_height # allows other code to see for themselves what % we are
+float64 current_height
+float64 target_height
