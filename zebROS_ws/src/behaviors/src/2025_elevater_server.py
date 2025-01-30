@@ -27,8 +27,6 @@ class Elevater2025ActionServer(object):
 
         self.tolerance = rospy.get_param("tolerance")
 
-        self.last_touched_diverter = rospy.Time()
-
         self.server = actionlib.SimpleActionServer(name, Elevater2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
