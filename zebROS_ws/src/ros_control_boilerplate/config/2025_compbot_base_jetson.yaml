@@ -48,15 +48,14 @@ hardware_interface:
        - {name: br_cancoder, type: cancoder, can_bus: CANivore, can_id: 14, local: true}
        - {name: bl_cancoder, type: cancoder, can_bus: CANivore, can_id: 13, local: true}
        
+       # 2025 mechanisms
+       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
+       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
 
-       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 40, local: true}
-       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
-       # TODO add mechanisms
-       - {name: outtake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
-        # elevator 31. 32
-        # intake 51
+       - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
     
        - {name: roller, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
@@ -66,7 +65,7 @@ hardware_interface:
 
        - {name: intake_far_limit_switch, type: digital_input, local: false} # closest to the coral station, earliest detection
        - {name: intake_close_limit_switch, type: digital_input, local: false} # closest to outtake, later but 100% detection
-       - {name: outtake_limit_switch, type: digital_input, local: false} # on the outtake, use for determinig if we have shot a piece
+       - {name: roller_limit_switch, type: digital_input, local: false} # on the outtake, use for determinig if we have shot a piece
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
