@@ -102,6 +102,6 @@ void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period
 
         // Note: if CANcoder ID changes or is detached during simulation, cancoder_handles_[joint] will not be cleared and we'll still be updating the old CANcoder
         // This shouldn't be an issue in simulation, but just something to remember
-        simulator_->update(joint, time, period, tfxpro_sim_handle.operator->(), tfxpro_sim_handle.state(), cancoder_handles_.contains(joint) ? std::make_optional<hardware_interface::cancoder::CANCoderSimCommand*>(cancoder_handles_[joint].operator->()) : std::nullopt);
+        simulator_->update(joint, time, period, tfxpro_sim_handle.operator->(), tfxpro_sim_handle.state(), cancoder_handles_.contains(joint) ? std::make_optional<hardware_interface::cancoder::CANCoderSimCommandHandle>(cancoder_handles_[joint]) : std::nullopt);
     }
 }
