@@ -6,6 +6,7 @@
 #include "ctre_interfaces/talonfxpro_state_interface.h"
 #include "ctre_interfaces/talonfxpro_state_types.h"
 #include "ctre_interfaces/talonfxpro_sim_command_interface.h"
+#include "ctre_interfaces/cancoder_sim_command_interface.h"
 
 SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &devices)
     : state_interface_{std::make_unique<hardware_interface::talonfxpro::TalonFXProStateInterface>()}
@@ -130,7 +131,7 @@ void SimulatorDevices::simPostRead(const ros::Time& time, const ros::Duration& p
     tracer.start("simulator devices");
     for (const auto &d : devices_)
     {
-        d->simStep(time, period, getRobotHW()->get<hardware_interface::talonfxpro::TalonFXProSimCommandInterface>(), tracer);
+        d->simStep(time, period, getRobotHW()->get<hardware_interface::talonfxpro::TalonFXProSimCommandInterface>(), getRobotHW()->get<hardware_interface::cancoder::CANCoderSimCommandInterface>(), tracer);
     }
     tracer.stop("simulator devices");
 }

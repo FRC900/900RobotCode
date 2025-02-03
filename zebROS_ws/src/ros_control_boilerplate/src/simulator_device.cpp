@@ -58,7 +58,7 @@ void SimulatorDevice::simInit(ros::NodeHandle &nh)
 
 }
 
-void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer) {
+void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if, Tracer &tracer) {
     // For each TalonFXPro controlled by this simulator:
     // Call update() on the simulator
 
@@ -68,8 +68,40 @@ void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period
     for (std::string joint : names_)
     {
         // virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) {
-        hardware_interface::talonfxpro::TalonFXProSimCommandHandle handle = sim_talonfxpro_if->getHandle(joint);
+        hardware_interface::talonfxpro::TalonFXProSimCommandHandle tfxpro_sim_handle = sim_talonfxpro_if->getHandle(joint);
         // ROS_INFO_STREAM("SimulatorDevice: Updating simulator " << simulator_name_ << " for joint " << joint);
-        simulator_->update(joint, time, period, handle.operator->(), handle.state());
+
+        using hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
+        using hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
+        using hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder;
+        if (tfxpro_sim_handle.state()->getFeedbackSensorSource() == FusedCANcoder || tfxpro_sim_handle.state()->getFeedbackSensorSource() == RemoteCANcoder || tfxpro_sim_handle.state()->getFeedbackSensorSource() == SyncCANcoder)
+        {
+            if (!cancoder_ids_.contains(joint) || (tfxpro_sim_handle.state()->getFeedbackRemoteSensorID() != cancoder_ids_[joint]))
+            {
+                bool found_cancoder = false;
+                // We have the cancoder id from Talon states, but handles are looked up by name
+                // so we need to find the name of the cancoder with the given id
+                const auto names = sim_cancoder_if->getNames();
+                for (const auto &name : names)
+                {
+                    auto handle = sim_cancoder_if->getHandle(name);
+                    if (handle.state()->getDeviceNumber() == tfxpro_sim_handle.state()->getFeedbackRemoteSensorID())
+                    {
+                        cancoder_handles_[joint] = handle;
+                        cancoder_ids_[joint] = tfxpro_sim_handle.state()->getFeedbackRemoteSensorID();
+                        found_cancoder = true;
+                        break;
+                    }
+                }
+                if (!found_cancoder)
+                {
+                    ROS_ERROR_STREAM_THROTTLE(1.0, "SimulatorDevice for " << joint << " : Could not find cancoder with id " << tfxpro_sim_handle.state()->getFeedbackRemoteSensorID());
+                }
+            }
+        }
+
+        // Note: if CANcoder ID changes or is detached during simulation, cancoder_handles_[joint] will not be cleared and we'll still be updating the old CANcoder
+        // This shouldn't be an issue in simulation, but just something to remember
+        simulator_->update(joint, time, period, tfxpro_sim_handle.operator->(), tfxpro_sim_handle.state(), cancoder_handles_.contains(joint) ? std::make_optional<hardware_interface::cancoder::CANCoderSimCommand*>(cancoder_handles_[joint].operator->()) : std::nullopt);
     }
 }

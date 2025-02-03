@@ -48,7 +48,7 @@ class ElevatorSimulator : public simulator_base::Simulator
             elevator_sim_ = std::make_unique<frc::sim::ElevatorSim>(motor_, gearing_, units::kilogram_t{carraige_mass_}, units::meter_t{drum_radius_}, units::meter_t{min_height_}, units::meter_t{max_height_}, simulate_gravity_, units::meter_t{starting_height_});
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommand*> cancoder) override
         {
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
             

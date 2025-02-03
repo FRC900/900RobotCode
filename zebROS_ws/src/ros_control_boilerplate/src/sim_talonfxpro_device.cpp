@@ -87,11 +87,11 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     sim_state.SetSupplyVoltage(units::voltage::volt_t{battery_voltage});
     if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage); }
 
-    // Update our motor state from simulation state
-    state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-    state_->setDutyCycle(sim_state.GetMotorVoltage().value() / battery_voltage);
-    state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
-    state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
+    // // Update our motor state from simulation state
+    // state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
+    // state_->setDutyCycle(sim_state.GetMotorVoltage().value() / battery_voltage);
+    // state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
+    // state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
 
 #if 0
     // Update CANcoder, if one exists
