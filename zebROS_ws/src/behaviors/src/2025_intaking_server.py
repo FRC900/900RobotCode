@@ -15,15 +15,17 @@ class IntakingServer(object):
         self.result = Intaking2025Result()
         self.goal = Intaking2025Goal()
         self.feedback = Intaking2025Feedback()
-        self.elevater_client = actionlib.SimpleActionClient('ADD_CORRECT_PATH', Elevater2025Action)
+        self.elevater_client = actionlib.SimpleActionClient('/elevater/elevater_server_2025', Elevater2025Action)
         rospy.loginfo('Waiting for Elevater action server')
         self.elevater_client.wait_for_server()
-        self.roller_client = actionlib.SimpleActionClient('ADD_CORRECT_PATH', Roller2025Action)
-        rospy.loginfo('Waiting for Roller action server')
+        self.roller_client = actionlib.SimpleActionClient('/roller/roller_server_2025', Roller2025Action)
+        rospy.loginfo("Found elevater server")
 
-        self.intake_service = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
-        
-        self.server = actionlib.SimpleActionServer(self.action_name, Intaking2025Goal, execute_cb=self.execute_cb, auto_start = False)
+        self.intake_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
+        rospy.loginfo(f"Waiting for intaking service at /frcrobot_jetson/{rospy.get_param('controller_name')}/command")
+        self.intake_client.wait_for_service()
+
+        self.server = actionlib.SimpleActionServer(name, Intaking2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
         rospy.loginfo("Intaking actionlib server")
 

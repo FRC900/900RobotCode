@@ -117,7 +117,7 @@
 
 	<!-- Add 2025 actionlib servers here -->
 	<include file="$(find behaviors)/launch/2025_roller.launch"/>
-	<include file="$(find behaviors)/launch/2025_intaker.launch"/>
+	<include file="$(find behaviors)/launch/2025_intaking.launch"/>
 	<include file="$(find behaviors)/launch/2025_elevater.launch"/>
 	
 	<include file="$(find controller_node)/launch/record_2025_compbot.launch" if="$(arg record)" />
