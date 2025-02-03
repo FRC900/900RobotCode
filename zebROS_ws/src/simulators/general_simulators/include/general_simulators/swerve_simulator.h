@@ -315,7 +315,7 @@ class SwerveSimulator : public simulator_base::Simulator
 
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommand*> cancoder) override
         {
             // Find which motor we have here (see if it's in the drive motors list or turn motors list and what index)
             size_t motor_index = std::find(drive_joints_.begin(), drive_joints_.end(), name) - drive_joints_.begin();

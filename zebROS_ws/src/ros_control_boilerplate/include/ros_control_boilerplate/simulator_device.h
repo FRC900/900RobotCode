@@ -10,7 +10,7 @@
 #include "simulator_interface/simulator_base.h"
 #include "pluginlib/class_loader.h"
 #include "ros_control_boilerplate/tracer.h"
-
+#include "ctre_interfaces/cancoder_sim_command_interface.h"
 
 namespace hardware_interface::talonfxpro
 {
@@ -29,7 +29,7 @@ public:
     SimulatorDevice &operator=(SimulatorDevice &&) noexcept = delete;
 
     void simInit(ros::NodeHandle &nh);
-    void simStep(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, Tracer &tracer);
+    void simStep(const ros::Time& time, const ros::Duration& period, hardware_interface::talonfxpro::TalonFXProSimCommandInterface *sim_talonfxpro_if, hardware_interface::cancoder::CANCoderSimCommandInterface *sim_cancoder_if, Tracer &tracer);
     
     std::string simulator_name_;
 
@@ -40,6 +40,8 @@ private:
 
     std::vector<std::string> joints_;
     std::vector<std::string> names_;
+    std::map<std::string, int> cancoder_ids_;
+    std::map<std::string, hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder_handles_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProStateInterface> state_interface_;
 };
 
