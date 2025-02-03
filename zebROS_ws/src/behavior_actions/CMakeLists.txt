@@ -55,8 +55,8 @@ add_message_files(
   AutoMode.msg
   AutoState.msg
   ShooterOffset.msg
-  GamePieceState2023.msg
-  IntakeState2023.msg
+#   GamePieceState2023.msg
+#   IntakeState2023.msg
   AutoAlignSpeaker.msg
 )
 
@@ -97,13 +97,13 @@ add_action_files(
 		#Elevater2023.action
 		#AlignToGrid2023.action
 		#AlignToGridPID2023.action
-		AlignAndPlaceGrid2023.action
+		# AlignAndPlaceGrid2023.action
 		#Fourber2023.action
 		#PathToAprilTag.action
 		#Intake2023.action
-		Placing2023.action
-		Intaking2023.action
-		FourbarElevatorPath2023.action
+		# Placing2023.action
+		# Intaking2023.action
+		# FourbarElevatorPath2023.action
 		#AlignToSubstation2023.action
 		AlignToSpeaker2024.action
 		AlignAndShoot2024.action

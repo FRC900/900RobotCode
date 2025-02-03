@@ -33,6 +33,8 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	controllers_2020_msgs \
 	controllers_2022 \
 	controllers_2022_msgs \
+	controllers_2023 \
+	controllers_2023_msgs \
 	cv_camera \
 	cuda_apriltag_ros \
 	cv_camera \

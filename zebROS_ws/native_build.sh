@@ -43,17 +43,20 @@ if [ $? -eq 1 ]; then
 	EXTRA_CMD_LINE="--limit-status-rate 5"
 fi
 
+# Xavier NX is id 25, we only want to build the gpu apriltag code
+# for those devices since that's all they'll run
+# Don't use --buildlist, since that doesn't auto-build the dependencies
+# of the packages listed
+cat /sys/devices/soc0/soc_id 2> /dev/null | grep -q 25 
+if [ $? -eq 0 ]; then
+	EXPLICIT_PACKAGE_LIST="cv_camera gpu_apriltag"
+fi
 catkin config --skiplist \
-    moveit_ros_robot_interaction \
-    moveit_ros_benchmarks \
-    moveit_ros_manipulation \
-	moveit_chomp_optimizer_adapter \
-    moveit_planners_chomp \
-    chomp_motion_planner \
 	ackermann_steering_controller \
 	adi_driver \
 	adi_pico_driver \
-	ar_track_alvar \
+	base_trajectory \
+	chomp_motion_planner \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
@@ -61,6 +64,9 @@ catkin config --skiplist \
 	controllers_2020_msgs \
 	controllers_2022 \
 	controllers_2022_msgs \
+	controllers_2023 \
+	controllers_2023_msgs \
+	cuda_apriltag_ros \
 	deeptag_ros \
 	diff_drive_controller \
 	effort_controllers \
@@ -68,7 +74,13 @@ catkin config --skiplist \
 	four_wheel_steering_controller \
 	goal_detection \
 	gripper_action_controller \
+	moveit_chomp_optimizer_adapter \
+	moveit_planners_chomp \
+	moveit_ros_benchmarks \
+	moveit_ros_manipulation \
+	moveit_ros_robot_interaction \
 	navx_publisher \
+	pf_localization \
 	robot_characterization \
 	realsense2_camera \
 	realsense2_description \
@@ -88,6 +100,7 @@ catkin config --skiplist \
 	teraranger_array \
 	teraranger_array_converter \
 	turing_smart_screen \
+	turret_2023 \
 	velocity_controllers \
 	zed_ros \
 	wpilib_swerve_odom \
@@ -98,7 +111,7 @@ export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/site-packages
 export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
 export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/site-packages
 
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -DNON_POLLING" $EXTRA_CMD_LINE "$@"
+catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -DNON_POLLING" $EXTRA_CMD_LINE $EXPLICIT_PACKAGE_LIST "$@"
 
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status
