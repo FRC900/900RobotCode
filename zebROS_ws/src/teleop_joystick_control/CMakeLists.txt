@@ -98,19 +98,21 @@ add_dependencies(teleop_joystick_comp_2024
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
-add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
-target_link_libraries(teleop_joystick_comp_2023
-	${catkin_LIBRARIES})
-add_dependencies(teleop_joystick_comp_2023
-	${${PROJECT_NAME}_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS})
-
 add_executable(teleop_joystick_comp_9000 src/teleop_joystick_comp_9000.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
 target_link_libraries(teleop_joystick_comp_9000
 	${catkin_LIBRARIES})
 add_dependencies(teleop_joystick_comp_9000
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
+
+if(0)
+add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+target_link_libraries(teleop_joystick_comp_2023
+	${catkin_LIBRARIES})
+add_dependencies(teleop_joystick_comp_2023
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS})
+endif()
 
 if(0)
 add_executable(teleop_joystick_comp_2022 src/teleop_joystick_comp_2022.cpp src/robot_orientation_driver.cpp)
@@ -132,6 +134,7 @@ if (0) # 2019 code, left for reference if needed
 		)
 endif()
 
+if(0)
 add_executable(snap_to_nearest_goal src/snap_to_nearest_goal.cpp)
 set_target_properties(snap_to_nearest_goal PROPERTIES OUTPUT_NAME
 	snap_to_nearest_goal PREFIX "")
@@ -142,6 +145,7 @@ add_dependencies(snap_to_nearest_goal
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
+endif()
 
 if (0) # 2020 code, left for reference if needed
 add_executable(teleop_joystick_comp_2020 src/teleop_joystick_comp_2020.cpp src/robot_orientation_driver.cpp)
@@ -190,7 +194,6 @@ add_dependencies(snap_to_cargo_node_2022
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
-endif()
 
 add_executable(snap_to_conecube_node_2023 src/2023_snap_to_nearest_conecube.cpp)
 target_link_libraries(snap_to_conecube_node_2023
@@ -200,6 +203,7 @@ add_dependencies(snap_to_conecube_node_2023
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
+endif()
 
 #add_executable(test_interpolated_map src/test_interpolated_map.cpp)
 #target_link_libraries(test_interpolated_map
@@ -212,7 +216,7 @@ add_dependencies(snap_to_conecube_node_2023
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp_2023 teleop_joints_keyboard snap_to_conecube_node_2023
+install(TARGETS teleop_joystick_comp_2024 teleop_joystick_comp_2025 teleop_joystick_comp_9000 teleop_joints_keyboard
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

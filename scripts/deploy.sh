@@ -70,10 +70,14 @@ while [[ $# -gt 0 ]] ; do
         JETSON_ADDR=(10.9.0.8)
         shift
     ;;
-	-R|--no-rio)
-		NO_RIO=1
-		shift
-	;;
+    -R|--no-rio)
+	NO_RIO=1
+	shift
+    ;;
+    -x|--xavier)
+        JETSON_ADDR=(10.9.0.9)
+        shift
+    ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift # past argument

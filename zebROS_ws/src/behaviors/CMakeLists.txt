@@ -116,9 +116,9 @@ include_directories(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
- cfg/GamePieceState2023.cfg
-)
+# generate_dynamic_reconfigure_options(
+#  cfg/GamePieceState2023.cfg
+# )
 
 ###################################
 ## catkin specific configuration ##
