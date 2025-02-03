@@ -3,6 +3,9 @@ project(talon_swerve_drive_controller)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
+unset(CMAKE_CXX_STANDARD CACHE)
+set(CMAKE_CXX_STANDARD 20)
+
 find_package(catkin REQUIRED COMPONENTS
     angles
     cmake_modules
@@ -21,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf
     trajectory_msgs
     urdf
+    smooth
 )
 
 find_package(Eigen3 REQUIRED)
@@ -69,7 +73,7 @@ add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} smooth::smooth)
 
 add_executable(zero_wheel_service src/zero_wheel_angle.cpp)
 target_link_libraries(zero_wheel_service ${catkin_LIBRARIES})
@@ -103,14 +107,14 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi") OR
 	# )
 
   add_executable(swervebot test/swervebot.cpp src/Swerve.cpp src/SwerveMath.cpp)
-	target_link_libraries(swervebot ${catkin_LIBRARIES})
+	target_link_libraries(swervebot ${catkin_LIBRARIES} smooth::smooth)
 	add_dependencies(swervebot
 		${${PROJECT_NAME}_EXPORTED_TARGETS}
 		${catkin_EXPORTED_TARGETS}
 	)
 
   add_executable(swervebot_from_bag test/swervebot_from_bag.cpp src/Swerve.cpp src/SwerveMath.cpp)
-  target_link_libraries(swervebot_from_bag ${catkin_LIBRARIES})
+  target_link_libraries(swervebot_from_bag ${catkin_LIBRARIES} smooth::smooth)
   add_dependencies(swervebot_from_bag
     ${${PROJECT_NAME}_EXPORTED_TARGETS}
     ${catkin_EXPORTED_TARGETS}
