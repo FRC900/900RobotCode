@@ -110,7 +110,7 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             single_jointed_arm_sim_ = std::make_unique<frc::sim::SingleJointedArmSim>(motor, gearing, units::kilogram_square_meter_t{moment_of_inertia}, units::meter_t{arm_length}, units::radian_t{min_angle_}, units::radian_t{max_angle_}, simulate_gravity, units::radian_t{starting_angle_});
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommand*> cancoder) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
         {
             if (!set_initial_position_) {
                 ROS_INFO_STREAM(name << ": position unset, setting to " << state->getPosition() << " rad");
@@ -139,8 +139,9 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
             //                 << angular_velocity.value() << " set velocity, "
             //                 << state->getRotorVelocity() << " actual vel");
             talonfxpro->setRawRotorPosition(angle.value());
-            talonfxpro->setAddRotorPosition(angular_velocity.value() * period.toSec());
             talonfxpro->setRotorVelocity(angular_velocity.value());
+
+            this->update_cancoder(talonfxpro, state, cancoder);
         }
 
         ~SingleJointedArmSimulator() override

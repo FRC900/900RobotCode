@@ -18,7 +18,7 @@ class DefaultSimulator : public simulator_base::Simulator
             // do nothing lol
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommand*> cancoder) override
+        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
         {
             // This should run before simRead
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
@@ -75,25 +75,11 @@ class DefaultSimulator : public simulator_base::Simulator
             case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage:
             case hardware_interface::talonfxpro::TalonMode::MotionMagicExpoDutyCycle:
             {
-                if (name == "shooter_pivot_motionmagic_joint") {
-                    ROS_INFO_STREAM("DefaultSimulator update, name = " << name << ", mode = MotionMagicDutyCycle/Voltage/ExpoVoltage/ExpoDutyCycle" << ", pos = " << state->getClosedLoopReference() << ", vel = " << state->getClosedLoopReferenceSlope());
-                }
                 units::radian_t position{invert * state->getClosedLoopReference() * state->getSensorToMechanismRatio()};
                 const units::angular_velocity::radians_per_second_t velocity{invert * state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
                 units::radian_t delta_position{velocity * units::second_t{period.toSec()}};
                 talonfxpro->setRawRotorPosition(position.value());
-                talonfxpro->setAddRotorPosition(delta_position.value());
-                // talonfxpro->GetSimState().AddRotorPosition(delta_position);
                 talonfxpro->setRotorVelocity(velocity.value());
-                /*
-                units::radian_t position{state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
-                units::radian_t cancoder_position{(state_->getClosedLoopReference() - cancoder_offset - M_PI / 2) * cancoder_invert};
-                units::angular_velocity::radians_per_second_t velocity{state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
-                sim_state.SetRawRotorPosition(position);
-                if (cancoder_) { cancoder_->GetSimState().SetRawPosition(cancoder_position); }
-                sim_state.SetRotorVelocity(velocity);
-                sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
-                */
                 break;
             }
             case hardware_interface::talonfxpro::TalonMode::MotionMagicTorqueCurrentFOC:
@@ -138,6 +124,7 @@ class DefaultSimulator : public simulator_base::Simulator
                 break;
             // TODO : support differential modes, somehow
             }
+            this->update_cancoder(talonfxpro, state, cancoder);
         }
 
         ~DefaultSimulator() override

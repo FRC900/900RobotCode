@@ -87,30 +87,6 @@ void SimTalonFXProDevice::simRead(const ros::Time &time, const ros::Duration &pe
     sim_state.SetSupplyVoltage(units::voltage::volt_t{battery_voltage});
     if (cancoder_id_) { cancoder_->setSupplyVoltage(battery_voltage); }
 
-    // // Update our motor state from simulation state
-    // state_->setMotorVoltage(sim_state.GetMotorVoltage().value());
-    // state_->setDutyCycle(sim_state.GetMotorVoltage().value() / battery_voltage);
-    // state_->setSupplyCurrent(sim_state.GetSupplyCurrent().value());
-    // state_->setTorqueCurrent(sim_state.GetTorqueCurrent().value());
-
-#if 0
-    // Update CANcoder, if one exists
-    // This is fine to do here because it's called in preRead, I think
-    // So the control flow looks like preRead (update pos/vel here), real read to state, postRead to update sim, preRead before next loop iter
-    if (cancoder_id_)
-    {
-    // Note - since all of these are setting raw rotor positions but setpoints
-    // are relative to mechanism positions, need to multiply the values written
-    // to the raw positions/velocities by the sensor to mechanism ratio
-    // TODO - maybe also rotor to sensor ratio?
-        const double cancoder_invert = cancoder_.state()->getSensorDirection() == hardware_interface::cancoder::SensorDirection::Clockwise_Positive ? -1.0 : 1.0;
-        const double cancoder_offset = cancoder_.state()->getMagnetOffset();
-        double cancoder_position{(state_->getRotorPosition() / state_->getSensorToMechanismRatio() - cancoder_offset) * cancoder_invert};
-        double cancoder_velocity{state_->getRotorVelocity() / state_->getSensorToMechanismRatio() * cancoder_invert};
-        cancoder_->setVelocity(cancoder_velocity);
-        cancoder_->setRawPosition(cancoder_position);
-    }
-#endif
 }
 
 void SimTalonFXProDevice::simWrite(const ros::Time &time, const ros::Duration &period)
