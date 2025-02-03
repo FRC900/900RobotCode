@@ -2,6 +2,6 @@
 <launch>
 	<group ns="intaker">
 		<rosparam command="load" file="$(find behaviors)/config/2025_intaker_config.yaml"/>
-		<node name="intaker_server_2025" pkg="behaviors" type="2025_intaker_server.py" output="screen"/>
+		<node name="intaker_server_2025" pkg="behaviors" type="2025_intaking_server.py" output="screen"/>
 	</group>
 </launch>
