@@ -17,8 +17,8 @@ class AlignAndPlaceServer(object):
     def __init__(self, name):
         self.aligning_client = actionlib.SimpleActionClient("/align_to_reef_single_tag/align_to_reef_single_tag", AlignToReef2025Action)
         self.aligning_client.wait_for_server()
-        # self.placing_client = rospy.SimpleActionClient("/2025_placing_server", Placing2025Action)
-        # self.placing_client.wait_for_server()
+        self.placing_client = actionlib.SimpleActionClient("/placing_server_2025", Placing2025Action)
+        self.placing_client.wait_for_server()
 
         self.placing_distance = rospy.get_param("placing_distance")
 
@@ -55,7 +55,7 @@ class AlignAndPlaceServer(object):
         self.aligning_client.send_goal(aligning_goal, feedback_cb=aligning_feedback_cb, done_cb=aligning_done_cb)
         rospy.loginfo("2025_alignandplaceing_server: aligning")
 
-        while distance > self.placing_distance and (not rospy.is_shutdown()):
+        while distance > self.placing_distance and not aligning_done and (not rospy.is_shutdown()):
             if self._as.is_preempt_requested():
                 self.aligning_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self._as.set_preempted()
@@ -64,7 +64,9 @@ class AlignAndPlaceServer(object):
             if not aligning_success:
                 rospy.logerr("2025_alignandplaceing_server: error in aligning server")
                 self._result.success = False
+                self._as.set_aborted(self._result)
                 return
+            rospy.loginfo(distance)
             r.sleep()
         
         if self._feedback.stage == self._feedback.ALIGNING:
@@ -97,20 +99,24 @@ class AlignAndPlaceServer(object):
             if not aligning_success:
                 rospy.logerr("2025_alignandplaceing_server: error in aligning server")
                 self._result.success = False
+                self._as.set_aborted(self._result)
                 return
             if not placing_success:
                 rospy.logerr("2025_alignandplaceing_server: error in placing server (setup_only = True)")
                 self._result.success = False
+                self._as.set_aborted(self._result)
                 return
             r.sleep()
         
         if not aligning_success:
             rospy.logerr("2025_alignandplaceing_server: error in aligning server")
             self._result.success = False
+            self._as.set_aborted(self._result)
             return
         if not placing_success:
             rospy.logerr("2025_alignandplaceing_server: error in placing server (setup_only = True)")
             self._result.success = False
+            self._as.set_aborted(self._result)
             return
         
         # Once aligning is finished, call placing server w/ setup_only = False
@@ -135,6 +141,7 @@ class AlignAndPlaceServer(object):
         if not placing_success:
             rospy.logerr("2025_alignandplaceing_server: error in placing server (setup_only = False)")
             self._result.success = False
+            self._as.set_aborted(self._result)
             return
 
         self.aligning_client.cancel_goals_at_and_before_time(rospy.Time.now())
