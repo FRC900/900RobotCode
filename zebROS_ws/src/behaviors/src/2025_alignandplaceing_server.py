@@ -66,7 +66,6 @@ class AlignAndPlaceServer(object):
                 self._result.success = False
                 self._as.set_aborted(self._result)
                 return
-            rospy.loginfo(distance)
             r.sleep()
         
         if self._feedback.stage == self._feedback.ALIGNING:
