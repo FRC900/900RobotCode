@@ -5,8 +5,11 @@
   <arg name="run_gpu_apriltag"     default="true" />
   <arg name="run_calibrator"       default="false" />
 
+  <arg name="cam0_name"            default="ov2311_0" />
+  <arg name="cam1_name"            default="ov2311_1" />
+
   <include file="$(find controller_node)/launch/ov2311_detection.launch" >
-    <arg name="camera_name" value="ov2311_0" />
+    <arg name="camera_name" value="$(arg cam0_name)" />
     <arg name="camera_id"   value="0" />
     <arg name="run_camera"  value="$(arg run_camera)" />
     <arg name="static_image" value="$(arg static_image)" />
@@ -15,7 +18,7 @@
   </include>
 
   <include file="$(find controller_node)/launch/ov2311_detection.launch" >
-    <arg name="camera_name" value="ov2311_1" />
+    <arg name="camera_name" value="$(arg cam1_name)" />
     <arg name="camera_id"   value="1" />
     <arg name="run_camera"  value="$(arg run_camera)" />
     <arg name="static_image" value="$(arg static_image)" />

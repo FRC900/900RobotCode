@@ -49,7 +49,7 @@ fi
 # of the packages listed
 cat /sys/devices/soc0/soc_id 2> /dev/null | grep -q 25 
 if [ $? -eq 0 ]; then
-	EXPLICIT_PACKAGE_LIST="cv_camera gpu_apriltag"
+	EXPLICIT_PACKAGE_LIST="cv_camera gpu_apriltag controller_node"
 fi
 catkin config --skiplist \
 	ackermann_steering_controller \
