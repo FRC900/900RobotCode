@@ -154,14 +154,14 @@ cd ~/900RobotCode
 #echo "  down /sbin/ifconfig can0 down" >> can0
 #sudo mv can0 /etc/network/interfaces.d
 
-sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
-sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
-sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2024.list "https://deb.ctr-electronics.com/ctr2024.list"
-sudo sed -i -e 's/tools stable main/tools jetson main/' /etc/apt/sources.list.d/ctr2024.list
+# sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
+# sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
+# sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2024.list "https://deb.ctr-electronics.com/ctr2024.list"
+# sudo sed -i -e 's/tools stable main/tools jetson main/' /etc/apt/sources.list.d/ctr2024.list
 
-sudo apt remove linux-headers-generic linux-headers-5.4.0-200 linux-headers-5.4.0-200-generic 
+sudo apt remove linux-headers-generic linux-headers-5.4.0-* linux-headers-5.4.0-*-generic 
 sudo apt update
-sudo apt install dkms
+sudo apt install -y dkms
 #sudo apt install -y canivore-usb
 cd /tmp
 unzip /home/ubuntu/900RobotCode/scripts/jetson_install/canivore-usb-arm64-Ubuntu-20.04-v3.zip
@@ -440,3 +440,8 @@ cd /home/ubuntu &&\
 
 # Jetvariety camera stuff
 sudo pip3 install v4l2-fix jetson-stats
+
+cd ~
+wget https://github.com/ArduCAM/MIPI_Camera/releases/download/v0.0.3/install_full.sh
+chmod +x install_full.sh
+./install_full.sh -m arducam
