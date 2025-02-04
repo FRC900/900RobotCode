@@ -123,6 +123,10 @@ class PathAction
 
 		void executeCB(const path_follower_msgs::PathGoalConstPtr &goal)
 		{
+			if (goal->position_path.poses.size() < 1) {
+				ROS_ERROR_STREAM("path_follower: no poses were given, please provide path :(");
+				return;
+			}
 			path_follower_msgs::PathFeedback initial_feedback;
 			initial_feedback.percent_complete = 0;
 			initial_feedback.percent_next_waypoint = 0;
@@ -231,6 +235,12 @@ class PathAction
 					ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
 					continue;
 				}
+
+				initial_feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - goal->position_path.poses[0].pose.position.x);
+				initial_feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - goal->position_path.poses[0].pose.position.y);
+				initial_feedback.angle_error = std::fabs(path_follower_.getYaw(map_to_baselink_.transform.rotation) - path_follower_.getYaw(goal->position_path.poses[0].pose.orientation));
+				as_.publishFeedback(initial_feedback);
+
 				enable_msg.data = true;
 				combine_cmd_vel_pub_.publish(enable_msg);
 				x_axis.setEnable(true);
@@ -366,6 +376,11 @@ class PathAction
 				const auto highidx = high - waypointsIdx.begin();
 				const auto waypoint_size = highidx - lowidx;
 				feedback.percent_next_waypoint = double(current_index - lowidx) / waypoint_size;
+
+				feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - next_waypoint.position.position.x);
+				feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - next_waypoint.position.position.y);
+				feedback.angle_error = std::fabs(path_follower_.getYaw(map_to_baselink_.transform.rotation) - path_follower_.getYaw(next_waypoint.position.orientation));
+
 				as_.publishFeedback(feedback);
 #ifdef DEBUG
 				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.position.x << ", " << next_waypoint.position.position.y << ", " << path_follower_.getYaw(next_waypoint.position.orientation) << ")");
