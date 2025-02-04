@@ -163,10 +163,11 @@ class Aligner:
                 success = self.drive_to_object_client.get_result().success
                 break
 
-            self._feedback.x_error = drive_to_object_feedback.x_error
-            self._feedback.y_error = drive_to_object_feedback.y_error
-            self._feedback.angle_error = drive_to_object_feedback.angle_error
-            self._as.publish_feedback(self._feedback)
+            if drive_to_object_feedback:
+                self._feedback.x_error = drive_to_object_feedback.x_error
+                self._feedback.y_error = drive_to_object_feedback.y_error
+                self._feedback.angle_error = drive_to_object_feedback.angle_error
+                self._as.publish_feedback(self._feedback)
 
             rate.sleep()
         if success:

@@ -201,14 +201,6 @@ class Aligner:
                 success = self.path_client.get_result().success
                 break
 
-            # try:
-                # trans = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
-            # except:
-                # rospy.loginfo("2025_align_to_reef_single_tag: Transform tree not up, no feedback this cycle")
-                # rate.sleep()
-                # continue
-            # x_dist = trans.transform.translation.x
-            # y_dist = trans.transform.translation.y
             if path_feedback:
                 self._feedback.x_error = path_feedback.x_error
                 self._feedback.y_error = path_feedback.y_error

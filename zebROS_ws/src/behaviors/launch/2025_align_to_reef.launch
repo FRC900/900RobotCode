@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="type" default="tagslam"/>
+    <arg name="type" default="tagslam"/> <!-- tagslam or single_tag -->
     <group ns="align_to_reef">
         <rosparam command="load" file="$(find behaviors)/config/2025_align_to_reef_config.yaml"/>
         <node name="align_to_reef" pkg="behaviors" type="2025_align_to_reef_$(arg type).py" output="screen"/>
