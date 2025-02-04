@@ -121,6 +121,9 @@
 	<include file="$(find behaviors)/launch/2025_roller.launch"/>
 	<include file="$(find behaviors)/launch/2025_intaking.launch"/>
 	<include file="$(find behaviors)/launch/2025_elevater.launch"/>
+	<include file="$(find behaviors)/launch/2025_placing.launch"/>
+	<include file="$(find behaviors)/launch/2025_align_and_place.launch"/>
+
 	
 	<include file="$(find controller_node)/launch/record_2025_compbot.launch" if="$(arg record)" />
 	

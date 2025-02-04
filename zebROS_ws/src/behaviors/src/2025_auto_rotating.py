@@ -54,7 +54,7 @@ def game_piece_callback(msg):
     global has_game_piece
     has_game_piece = msg.has_game_piece
 
-team_color = "green"
+team_color = -1 #green!
 def team_color_callback(msg: MatchSpecificData):
     global team_color
     team_color = msg.allianceColor
@@ -80,13 +80,15 @@ if __name__ == "__main__":
     #     else:
     #         rospy.logerr("2025_auto_rotating: Can't find team color, skipping this cycle")
     #     r.sleep()
-    if team_color == "red":
-        tags = RED_TAGS
-    else:
-        tags = BLUE_TAGS
     
     angle = None
     while not rospy.is_shutdown():
+
+        if team_color == MatchSpecificData.ALLIANCE_COLOR_RED:
+            tags = RED_TAGS
+        else:
+            tags = BLUE_TAGS
+            
         try:
             trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
         except:

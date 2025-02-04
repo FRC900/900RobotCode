@@ -15,10 +15,13 @@ class AlignAndPlaceServer(object):
     _feedback = AlignAndPlace2025Feedback()
 
     def __init__(self, name):
-        self.aligning_client = actionlib.SimpleActionClient("/align_to_reef_single_tag/align_to_reef_single_tag", AlignToReef2025Action)
+        self.aligning_client = actionlib.SimpleActionClient("/align_to_reef/align_to_reef", AlignToReef2025Action)
+        rospy.loginfo("Waiting for align to reef")
         self.aligning_client.wait_for_server()
-        self.placing_client = actionlib.SimpleActionClient("/placing_server_2025", Placing2025Action)
+        self.placing_client = actionlib.SimpleActionClient("/placing/placing_server_2025", Placing2025Action)
+        rospy.loginfo("Waiting for placing")
         self.placing_client.wait_for_server()
+        rospy.loginfo("found servers")
 
         self.placing_distance = rospy.get_param("placing_distance")
 

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="placing">
+		<node name="placing_server_2025" pkg="behaviors" type="2025_placing_server.py" output="screen"/>
+	</group>
+</launch>
