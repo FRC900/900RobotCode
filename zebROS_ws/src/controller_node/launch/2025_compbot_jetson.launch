@@ -54,9 +54,10 @@
 			 cancoder_state_controller
 			 roller_controller
 			 elevator_controller
+			 intake_controller
 			 robot_code_ready_controller" />
 			 <!--
-			 intake_controller
+			 
 			 orchestra_controller
 			 orchestra_state_controller
 			 swerve_drive_state_controller

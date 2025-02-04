@@ -19,7 +19,8 @@ from frc_utils.match_data_helper import RobotStatusHelper, Alliance, RobotMode
 from std_msgs.msg import String
 
 # number to str of auto name, what /auto/auto_mode needs to send to run a given auto
-IDS_TO_AUTO_NAME: dict[int, str] = {1: AutonomousNames.TestCmdVel, 
+IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.TestCmdVel,
+                                    1: AutonomousNames.TestCmdVel, 
                                     2: AutonomousNames.Test4Note,
                                     3: AutonomousNames.TestCmdVelCircle}
 

@@ -20,14 +20,18 @@ class IntakingServer(object):
         self.elevater_client.wait_for_server()
         self.roller_client = actionlib.SimpleActionClient('/roller/roller_server_2025', Roller2025Action)
         rospy.loginfo("Found elevater server")
-
+        
         self.intake_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
         rospy.loginfo(f"Waiting for intaking service at /frcrobot_jetson/{rospy.get_param('controller_name')}/command")
         self.intake_client.wait_for_service()
 
         self.server = actionlib.SimpleActionServer(name, Intaking2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
-        rospy.loginfo("Intaking actionlib server")
+        rospy.loginfo("Strated Intaking actionlib server")
+
+    def preempt_all(self):
+        rospy.log
+        self.roller_client.cancel_goals_at_and_before_time(rospy.Time.now()) 
 
     def execute_cb(self, goal : Intaking2025Goal):
         self.feedback.state = self.feedback.NOT_ACQUIRED
@@ -65,7 +69,9 @@ class IntakingServer(object):
             rospy.loginfo('Intaking - Roller action finished')
         
         self.roller_client.send_goal(roller_goal, roller_done_cb)
-        self.intake_service.call(Command(1.0))
+        
+        if not self.intake_client.call(CommandRequest(1.0)):
+            rospy.loginfo("Intake client service call failed")
 
         while not roller_done:
             if self.server.is_preempt_requested():
