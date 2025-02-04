@@ -17,3 +17,7 @@ bool success
 float32 percent_complete
 float32 percent_next_waypoint
 int32 current_waypoint
+# progress towards current target
+float64 x_error
+float64 y_error
+float64 angle_error

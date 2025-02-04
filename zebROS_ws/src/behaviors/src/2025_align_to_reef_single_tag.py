@@ -93,7 +93,6 @@ class Aligner:
         self.visible_objects = []
         
         self.current_yaw = 0
-        self.orientation_command_pub = rospy.Publisher("/teleop/orientation_command", std_msgs.msg.Float64, queue_size=1)
         self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback)
 
         self.team_subscribe = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_callback)
@@ -131,18 +130,24 @@ class Aligner:
             rospy.loginfo(f"Drive to object actionlib finished with state {state} and result {result}")
             drive_to_object_done = True
 
+        drive_to_object_feedback: behavior_actions.msg.DriveToObjectFeedback = None
+
+        def feedback_callback(msg: behavior_actions.msg.DriveToObjectFeedback):
+            nonlocal drive_to_object_feedback
+            drive_to_object_feedback = msg
+
         drive_to_object_goal = behavior_actions.msg.DriveToObjectGoal()
         drive_to_object_goal.id = f"tag_{tag}"
         drive_to_object_goal.x_tolerance = self.x_tolerance
         drive_to_object_goal.y_tolerance = self.y_tolerance
-        drive_to_object_goal.transform_to_drive = "pipe"
+        drive_to_object_goal.transform_to_drive = "left_pipe" if goal.pipe == goal.LEFT_PIPE else "right_pipe"
         drive_to_object_goal.use_y = True
         drive_to_object_goal.min_x_vel = self.min_x_vel
         drive_to_object_goal.min_y_vel = self.min_y_vel
         drive_to_object_goal.override_goal_angle = False
         drive_to_object_goal.field_relative_angle = yaw
         drive_to_object_goal.fast_zone = self.fast_zone
-        self.drive_to_object_client.send_goal(drive_to_object_goal, done_cb=done_callback)
+        self.drive_to_object_client.send_goal(drive_to_object_goal, done_cb=done_callback, feedback_cb=feedback_callback)
         rospy.loginfo("drive_to_object goal sent")
 
         while not rospy.is_shutdown():
@@ -158,21 +163,11 @@ class Aligner:
                 success = self.drive_to_object_client.get_result().success
                 break
 
-            tf_buffer = tf2_ros.Buffer()
-            listener = tf2_ros.TransformListener(tf_buffer)
-
-            try:
-                trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
-            except:
-                rospy.loginfo("2025_align_to_reef_single_tag: Transform tree not up, no feedback this cycle")
-                rate.sleep()
-                continue
-            x_dist = trans.transform.translation.x
-            y_dist = trans.transform.translation.y 
-            self._feedback.x_error = abs(x_dist-TAG_POS[tag][0])
-            self._feedback.y_error = abs(y_dist-TAG_POS[tag][1])
-            self._feedback.angle_error = abs(angles.shortest_angular_distance(self.current_yaw, yaw))
-            self._as.publish_feedback(self._feedback)
+            if drive_to_object_feedback:
+                self._feedback.x_error = drive_to_object_feedback.x_error
+                self._feedback.y_error = drive_to_object_feedback.y_error
+                self._feedback.angle_error = drive_to_object_feedback.angle_error
+                self._as.publish_feedback(self._feedback)
 
             rate.sleep()
         if success:

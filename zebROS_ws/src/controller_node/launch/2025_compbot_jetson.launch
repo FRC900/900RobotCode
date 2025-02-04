@@ -117,6 +117,7 @@
 	<include file="$(find auto_node)/launch/auto_node.launch"/>
 
 	<!-- Add 2025 actionlib servers here -->
+	<include file="$(find behaviors)/launch/2025_align_to_reef.launch"/>
 	<include file="$(find behaviors)/launch/2025_roller.launch"/>
 	<include file="$(find behaviors)/launch/2025_intaking.launch"/>
 	<include file="$(find behaviors)/launch/2025_elevater.launch"/>

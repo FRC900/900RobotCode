@@ -4,5 +4,5 @@ angle_tolerance: 0.1
 min_x_vel: 1
 min_y_vel: 1
 fast_zone: 2
-reef_x_transform: 0.55
+reef_x_transform: 1.0
 reef_y_transform: -0.5
