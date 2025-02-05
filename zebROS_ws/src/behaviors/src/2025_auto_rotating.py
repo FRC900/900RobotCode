@@ -5,6 +5,7 @@ import tf2_ros
 import tf2_geometry_msgs
 from math import pi
 from frc_msgs.msg import MatchSpecificData
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 from std_srvs.srv import SetBool, SetBoolResponse
 
@@ -51,9 +52,13 @@ ANGLE_FROM_TAG = {
 }
 
 has_game_piece = True
-def game_piece_callback(msg):
+def game_piece_callback(data):
     global has_game_piece
-    has_game_piece = msg.has_game_piece
+    if switch_name in data.name:
+        has_game_piece = data.position[data.name.index(switch_name)] != 0
+    else:
+        rospy.logwarn_throttle(1.0, f'2025_intaking_server: {switch_name} not found')
+        pass
 
 team_color = -1 #green!
 def team_color_callback(msg: MatchSpecificData):
@@ -68,8 +73,13 @@ def handle_service(req):
 
 
 if __name__ == "__main__":
-    rospy.init_node("auto_aligning_2025")
+    rospy.init_node("auto_rotating_2025")
     angle_pub = rospy.Publisher("/teleop/orientation_command", Float64, queue_size=1)
+
+    switch_name = rospy.get_param("switch_name")
+    too_close_zone = rospy.get_param("too_close_zone")
+
+    game_piece_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, game_piece_callback)
     team_color_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, team_color_callback)
 
     service = rospy.Service(rospy.get_name(), SetBool, handle_service)
@@ -102,7 +112,7 @@ if __name__ == "__main__":
             for (tag_x, tag_y, is_on_reef) in tags:
                 dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
 
-                if (is_on_reef == has_game_piece) or dist_sq < 1: # if we're very close to something, we should stay aligned to that
+                if (is_on_reef == has_game_piece) or dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
                     if dist_sq < closest_dist_sq:
                         closest_tag = (tag_x, tag_y)
                         closest_dist_sq = dist_sq

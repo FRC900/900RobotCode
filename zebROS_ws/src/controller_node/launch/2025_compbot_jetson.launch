@@ -123,7 +123,7 @@
 	<include file="$(find behaviors)/launch/2025_elevater.launch"/>
 	<include file="$(find behaviors)/launch/2025_placing.launch"/>
 	<include file="$(find behaviors)/launch/2025_align_and_place.launch"/>
-	<node name="auto_rotating_2025" pkg="behaviors" type="2025_auto_rotating.py"/>
+	<include file="$(find behaviors)/launch/2025_auto_rotating.launch"/>
 	
 	<include file="$(find controller_node)/launch/record_2025_compbot.launch" if="$(arg record)" />
 	

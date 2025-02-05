@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="auto_rotating">
+		<rosparam command="load" file="$(find behaviors)/config/2025_auto_rotating_config.yaml"/>
+		<node name="auto_rotating_2025" pkg="behaviors" type="2025_auto_rotating.py" output="screen"/>
+	</group>
+</launch>
