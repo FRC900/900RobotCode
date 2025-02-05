@@ -6,6 +6,7 @@ import tf2_geometry_msgs
 from math import pi
 from frc_msgs.msg import MatchSpecificData
 from std_msgs.msg import Float64
+from std_srvs.srv import SetBool, SetBoolResponse
 
 RED_TAGS = [
     # (x, y, is_on_reef)
@@ -59,61 +60,55 @@ def team_color_callback(msg: MatchSpecificData):
     global team_color
     team_color = msg.allianceColor
 
+enabled = False
+def handle_service(req):
+    global enabled
+    enabled = req.data
+    return SetBoolResponse(success=True)
+
+
 if __name__ == "__main__":
     rospy.init_node("auto_aligning_2025")
     angle_pub = rospy.Publisher("/teleop/orientation_command", Float64, queue_size=1)
-    # game_piece_sub = rospy.Subscriber()
     team_color_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, team_color_callback)
+
+    service = rospy.Service(rospy.get_name(), SetBool, handle_service)
 
     tf_buffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tf_buffer)
 
-    r = rospy.Rate(10)
+    r = rospy.Rate(60)
 
-    # If we can't get our team color, should this still work? idk, here's two versions to choose from
     tags = None
-    # while tags is None:
-    #     if team_color == "red":
-    #         tags = RED_TAGS
-    #     elif team_color == "blue":
-    #         tags = BLUE_TAGS
-    #     else:
-    #         rospy.logerr("2025_auto_rotating: Can't find team color, skipping this cycle")
-    #     r.sleep()
-    
     angle = None
     while not rospy.is_shutdown():
+        if enabled:
+            if team_color == MatchSpecificData.ALLIANCE_COLOR_RED:
+                tags = RED_TAGS
+            else:
+                tags = BLUE_TAGS
+                
+            try:
+                trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
+            except:
+                rospy.loginfo("2025_auto_rotating: Transform tree not up yet, skipping this cycle")
+                r.sleep()
+                continue
+            x = trans.transform.translation.x
+            y = trans.transform.translation.y
 
-        if team_color == MatchSpecificData.ALLIANCE_COLOR_RED:
-            tags = RED_TAGS
-        else:
-            tags = BLUE_TAGS
+            closest_tag = (-1, -1)
+            closest_dist_sq = 99999
+            for (tag_x, tag_y, is_on_reef) in tags:
+                dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
+
+                if (is_on_reef == has_game_piece) or dist_sq < 1: # if we're very close to something, we should stay aligned to that
+                    if dist_sq < closest_dist_sq:
+                        closest_tag = (tag_x, tag_y)
+                        closest_dist_sq = dist_sq
             
-        try:
-            trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
-        except:
-            rospy.loginfo("2025_auto_rotating: Transform tree not up yet, skipping this cycle")
-            r.sleep()
-            continue
-        x = trans.transform.translation.x
-        y = trans.transform.translation.y
-
-        closest_tag = (-1, -1)
-        closest_dist_sq = 99999
-        for (tag_x, tag_y, is_on_reef) in tags:
-            dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
-
-            if (is_on_reef == has_game_piece) or dist_sq < 1: # if we're very close to something, we should stay aligned to that
-                if dist_sq < closest_dist_sq:
-                    closest_tag = (tag_x, tag_y)
-                    closest_dist_sq = dist_sq
-        
-        angle = ANGLE_FROM_TAG[closest_tag]
-        angle *= pi/180
-        angle_pub.publish(Float64(data=angle))
-        # new_angle = ANGLE_FROM_TAG[closest_tag]
-        # if new_angle != angle:
-        #     angle = new_angle
-        #     angle_pub.publish(Float64(data=angle))
+            angle = ANGLE_FROM_TAG[closest_tag]
+            angle *= pi/180
+            angle_pub.publish(Float64(data=angle))
 
         r.sleep()
