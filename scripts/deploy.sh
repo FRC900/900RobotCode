@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ -z $ROS_ROOT ]; then
+	true
+elif [[ ! $ROS_ROOT = "$HOME/wpilib/2025/roborio/arm-nilrt-linux-gnueabi/sysroot/opt/ros/noetic/share/ros" ]]; then
+	echo -e "\e[1m\e[31mROS is not configured for a cross build (maybe set up for a native build instead?)\e[0m"
+	echo -e "\e[1m\e[31mRun deploy in a new terminal window\e[0m"
+	exit 1
+fi
 #set -e
 set -o pipefail
 
