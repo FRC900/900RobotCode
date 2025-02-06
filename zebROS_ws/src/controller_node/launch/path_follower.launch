@@ -25,9 +25,9 @@
 			</node>
             -->
 
-			<rosparam file="$(find base_trajectory)/config/$(arg year)_robot_base_trajectory.yaml" command="load"/>
+			<!-- <rosparam file="$(find base_trajectory)/config/$(arg year)_robot_base_trajectory.yaml" command="load"/>
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
-		   	</node>
+		   	</node> -->
 
             <node name="path_follower_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
                 <param name="orient_topic" value="/teleop/orient_strafing/control_effort" />
