@@ -61,10 +61,10 @@ for file in files:
         # add each trajectory waypoint to the csv
         pose = tf2_geometry_msgs.PoseStamped()
         pose.header.frame_id = "field"
-        pose.pose.position.x = 16.54 - t['x']
+        pose.pose.position.x = 17.55 - t['x']
         pose.pose.position.y = t['y']
 
-        csv_red += f"{t['t']-time_offset},{16.54 - t['x']},{t['y']},{math.pi - t['heading']},{-t['omega']},{-t['vx']},{t['vy']},{current_segment}\n"
+        csv_red += f"{t['t']-time_offset},{17.55 - t['x']},{t['y']},{math.pi - t['heading']},{-t['omega']},{-t['vx']},{t['vy']},{current_segment}\n"
         csv_blue += f"{t['t']-time_offset},{t['x']},{t['y']},{t['heading']},{t['omega']},{t['vx']},{t['vy']},{current_segment}\n"
 
 ''' 

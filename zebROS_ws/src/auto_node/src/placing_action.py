@@ -28,7 +28,7 @@ class PlacingAction(Action):
     def start(self):
         rospy.loginfo("Running placing step for auto")
         placing_goal: Placing2025Goal = Placing2025Goal()
-        placing_goal.mode = 0 #level 4 coral placing 
+        placing_goal.level = placing_goal.L4 #level 4 coral placingt
         
         self.__placing_client.send_goal(placing_goal, done_cb=self.done_cb)
 

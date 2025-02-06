@@ -23,7 +23,6 @@ class PathLoader:
         self.__robot_status = RobotStatusHelper() 
 
         self.auto_name: str = None
-        self.__first_point_pub = rospy.Publisher('/first_point', PoseStamped, queue_size=10)
         self.__latched_path_pub = rospy.Publisher("/auto/current_auto_path", PathGoalArray, tcp_nodelay=True, latch=True, queue_size=1)
         self.old_alliance: Alliance = Alliance.UNKNOWN
         self.old_auto_name: str = ""
