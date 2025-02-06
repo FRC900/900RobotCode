@@ -20,10 +20,7 @@ from std_msgs.msg import String
 
 # number to str of auto name, what /auto/auto_mode needs to send to run a given auto
 IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.TestCmdVel,
-                                    1: AutonomousNames.TestCmdVel, 
-                                    2: AutonomousNames.Test4Note,
-                                    3: AutonomousNames.TestCmdVelCircle,
-                                    4: AutonomousNames.Test2Coral}
+                                    1: AutonomousNames.Test2Coral}
 
 
 class AutoNode():

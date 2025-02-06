@@ -13,7 +13,7 @@ class PlacingAction(Action):
     def __init__(self):
         # do need to check how potentially having multiple action clients on the same topic works
         # conflicting goals could be bad, but seems the same as one client sending two goals
-        self.__placing_client = actionlib.SimpleActionClient("placing/2025_placing_server", Placing2025Action)
+        self.__placing_client = actionlib.SimpleActionClient("/placing/placing_server_2025", Placing2025Action)
         if not self.__placing_client.wait_for_server(rospy.Duration(5)):
             rospy.logerr("placing client  not up after 5 seconds, exiting")
             exit(1)
