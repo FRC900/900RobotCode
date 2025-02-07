@@ -9,7 +9,7 @@ from placing_action import PlacingAction
 #from wait_trajectory_action import WaitTrajectoryAction
 from wait_for_intake_action import WaitForIntakeAction
 
-class Test2Coral(AutoBase):
+class TwoCoralNonProcessor(AutoBase):
     def __init__(self) -> None:
         super().__init__(display_name="2025_2_Coral", # must match choreo path name
                          expected_trajectory_count=3) # how many segments of the path there are (split at waypoints)
