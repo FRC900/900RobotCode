@@ -18,8 +18,6 @@ class PlacingAction(Action):
             rospy.logerr("placing client  not up after 5 seconds, exiting")
             exit(1)
         self.__done = False
-     
-    
 
     def done_cb(self, status: Placing2025Feedback, result: Placing2025Result):
         rospy.loginfo("Placing done")
@@ -27,8 +25,9 @@ class PlacingAction(Action):
 
     def start(self):
         rospy.loginfo("Running placing step for auto")
+        self.__done = False
         placing_goal: Placing2025Goal = Placing2025Goal()
-        placing_goal.level = placing_goal.L4 #level 4 coral placingt
+        placing_goal.level = placing_goal.L4 #level 4 coral placing
         
         self.__placing_client.send_goal(placing_goal, done_cb=self.done_cb)
 

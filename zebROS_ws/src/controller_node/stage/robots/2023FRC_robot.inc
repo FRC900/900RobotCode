@@ -49,7 +49,7 @@ define omnidir_robot position
   localization "gps"
   odom_error [ 0.02 0.02 0.0 0.0 ]
 
-  size [ 0.889 0.889 0.60 ]
+  size [ 0.9144 0.9144 0.10 ]
   origin [ 0.0 0.0 0.0 0.0 ]
   gui_nose 1
   color "red"

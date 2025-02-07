@@ -64,7 +64,7 @@ for file in files:
         pose.pose.position.x = 17.55 - t['x']
         pose.pose.position.y = t['y']
 
-        csv_red += f"{t['t']-time_offset},{17.55 - t['x']},{t['y']},{math.pi - t['heading']},{-t['omega']},{-t['vx']},{t['vy']},{current_segment}\n"
+        csv_red += f"{t['t']-time_offset},{17.55 - t['x']},{8.05 - t['y']},{math.pi + t['heading']},{t['omega']},{-t['vx']},{-t['vy']},{current_segment}\n"
         csv_blue += f"{t['t']-time_offset},{t['x']},{t['y']},{t['heading']},{t['omega']},{t['vx']},{t['vy']},{current_segment}\n"
 
 ''' 
