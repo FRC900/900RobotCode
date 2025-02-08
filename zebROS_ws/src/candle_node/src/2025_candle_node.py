@@ -6,13 +6,10 @@ import time
 from candle_controller_msgs.srv import Colour, ColourRequest, Animation, AnimationRequest
 from frc_msgs.msg import MatchSpecificData
 from behavior_actions.msg import AutoMode
-from behavior_actions.msg import AutoAlign
 from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
-from behavior_actions.msg import intaking
-from behavior_actions.msg import scored
-from behavior_actions.msg import not_aligning
+from talon_state_msgs.msg import TalonFXProState
 #Check this one depending on name of action file
 
 # We want a list of priorities for what LED stuff to do
@@ -54,7 +51,6 @@ def is_drive_objet():
     else:
         return False
 
-
 states = [
     State("drive_to_object", is_drive_objet, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
     State("autonomous", lambda: is_auto, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
@@ -85,9 +81,9 @@ def align_and_place_callback(msg):
         scored = True
 #Check code
 
-def intaking_callback(msg):
+def talon_state_callback(msg: TalonFXProState):
     global intaking
-    intaking = msg.intaking
+    intaking = abs(msg.control_output[msg.name.index("intake")]) > 0
 #Check this one for more specific code if applicable
 #Probably subscribes to roller so it know when intake is happening
 
@@ -117,15 +113,6 @@ def drive_object_callback(msg):
 def auto_mode_callback(msg):
     global auto_mode
     auto_mode = msg.auto_mode
-
-def distance_callback(msg):
-    global in_range
-    shooting_distance = 4.5
-    #Replace with distance for autoaligining
-    if (msg.distance < shooting_distance):
-        in_range = True
-    else:
-        in_range = False
 
 def send_colour(r_col, g_col, b_col):
     colour = ColourRequest()
@@ -193,11 +180,10 @@ if __name__ == '__main__':
 
     rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, match_data_callback)
     rospy.Subscriber("/auto/auto_mode", AutoMode, auto_mode_callback)
-    rospy.Subscriber("/auto_align/dist_and_ang", AutoAlign, distance_callback)
     rospy.Subscriber("/frcrobot_rio/joint_states", JointState, limit_switch_callback)
     rospy.Subscriber("/auto_align/cmd_vel", Twist, drive_object_callback)
     #rospy.Subscriber("/auto_align/dist_and_ang", AutoAlign, intake_callback)
-    rospy.Subscriber("/intaker/limit_switch", intaking, intaking_callback)
+    rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, talon_state_callback)
     rospy.Subscriber("/AlignAndPlace2025Feedback", scored, not_aligning, align_and_place_callback)
     #Change last two based on name
     #One should be to roller, other should be to autoalign
