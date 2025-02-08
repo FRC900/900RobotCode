@@ -10,6 +10,11 @@ topics:
   timeout : 0.2
   priority: 899
 -
+  name    : intaking_cmd_vel
+  topic   : /intaking/cmd_vel
+  timeout: 0.2
+  priority: 700
+-
   name    : combine orient strafing
   topic   : /teleop/orient_strafing/swerve_drive_controller/cmd_vel
   timeout : 0.2

@@ -1,3 +1,4 @@
 controller_name: "intake_controller"
 intake_speed: 0.4 
 switch_name: "intake_close_limit_switch"
+cmd_vel_run_time: 5.0
