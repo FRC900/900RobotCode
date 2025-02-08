@@ -68,10 +68,10 @@ def team_color_callback(msg: MatchSpecificData):
     global team_color
     team_color = msg.allianceColor
 
-enabled = False
+should_run = True
 def handle_service(req):
-    global enabled
-    enabled = req.data
+    global should_run
+    should_run = req.data
     return SetBoolResponse(success=True)
 
 
@@ -98,37 +98,54 @@ if __name__ == "__main__":
     tags = None
     angle = None
     while not rospy.is_shutdown():
-        if enabled:
-            if team_color == MatchSpecificData.ALLIANCE_COLOR_RED:
-                tags = RED_TAGS
-            else:
-                tags = BLUE_TAGS
-                
-            try:
-                trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
-            except:
-                rospy.loginfo("2025_auto_rotating: Transform tree not up yet, skipping this cycle")
-                r.sleep()
-                continue
-            x = trans.transform.translation.x
-            y = trans.transform.translation.y
-
-            closest_tag = (-1, -1)
-            closest_dist_sq = 99999
-            distances = []
-            for (tag_x, tag_y, is_on_reef) in tags:
-                dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
-                distances.append((dist_sq, is_on_reef))
-            
-            self.clawster_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
-            
-            if (is_on_reef == has_game_piece) or dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
-                if dist_sq < closest_dist_sq:
-                    closest_tag = (tag_x, tag_y)
-                    closest_dist_sq = dist_sq
-            
-            angle = ANGLE_FROM_TAG[closest_tag]
-            angle *= pi/180
-            angle_pub.publish(Float64(data=angle))
-
         r.sleep()
+        if not should_run:
+            continue 
+
+
+        if team_color == MatchSpecificData.ALLIANCE_COLOR_RED:
+            tags = RED_TAGS
+        else:
+            tags = BLUE_TAGS
+            
+
+
+        try:
+            trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
+        except:
+            rospy.loginfo("2025_auto_rotating: Transform tree not up yet, skipping this cycle")
+            r.sleep()
+            continue
+        x = trans.transform.translation.x
+        y = trans.transform.translation.y
+
+        closest_dist_sq = 99999
+        reef_distances = []
+        coral_distances = []
+        
+        for (tag_x, tag_y, is_on_reef) in tags:
+            dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
+            if is_on_reef:
+                reef_distances.append((dist_sq, tag_x, tag_y))
+            else:
+                coral_distances.append((dist_sq, tag_x, tag_y))
+
+        closest_reef = min(reef_distances, key=lambda x: x[0])
+        closest_coral =  min(coral_distances, key=lambda x: x[0])
+        if has_game_piece:
+            closest_reef_dist, tag_x, tag_y = closest_reef
+            closest_tag = (tag_x, tag_y)
+        else: 
+            closest_coral_dist, tag_x, tag_y = closest_coral
+            closest_tag = (tag_x, tag_y)
+        rospy.loginfo(f"{tag_x, tag_y}") 
+        dist_sq = min(closest_coral[0], closest_reef[0])
+
+        if dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
+            closest_tag = (tag_x, tag_y)
+            closest_dist_sq = dist_sq
+        
+        angle = ANGLE_FROM_TAG[closest_tag]
+        angle *= pi/180
+        angle_pub.publish(Float64(data=angle))
+
