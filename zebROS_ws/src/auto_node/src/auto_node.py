@@ -93,6 +93,7 @@ class AutoNode():
                 self.runner.reset_action_list()
 
             if self.__selected_auto != self.__prev_selected_auto:
+                self.__prev_selected_auto = self.__selected_auto
                 if self.__selected_auto != None:
                     rospy.loginfo(f"Recreating actions for {self.__selected_auto.display_name}")
                     self.__selected_auto_action = self.__selected_auto.get_action()
@@ -106,7 +107,6 @@ class AutoNode():
                 self.__selected_auto.reset()
 
         self.__prev_robot_mode = robot_mode
-        self.__prev_selected_auto = self.__selected_auto
 
         if self.__prev_robot_mode == RobotMode.AUTONOMOUS:
             # Only loop in auto
