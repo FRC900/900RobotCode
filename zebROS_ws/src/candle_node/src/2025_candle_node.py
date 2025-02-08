@@ -5,7 +5,7 @@ import sys
 import time
 from candle_controller_msgs.srv import Colour, ColourRequest, Animation, AnimationRequest
 from frc_msgs.msg import MatchSpecificData
-from behavior_actions.msg import AutoMode
+from behavior_actions.msg import AutoMode, AlignAndPlace2025ActionFeedback
 from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     rospy.Subscriber("/auto_align/cmd_vel", Twist, drive_object_callback)
     #rospy.Subscriber("/auto_align/dist_and_ang", AutoAlign, intake_callback)
     rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, talon_state_callback)
-    rospy.Subscriber("/AlignAndPlace2025Feedback", scored, not_aligning, align_and_place_callback)
+    rospy.Subscriber("/align_and_place/alignandplaceing_server/feedback", AlignAndPlace2025ActionFeedback, align_and_place_callback)
     #Change last two based on name
     #One should be to roller, other should be to autoalign
 
