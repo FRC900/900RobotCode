@@ -8,6 +8,7 @@ from placing_action import PlacingAction
 #from wait_intake_action import WaitIntakeAction
 #from wait_trajectory_action import WaitTrajectoryAction
 from wait_for_intake_action import WaitForIntakeAction
+from wait_trajectory_action import WaitTrajectoryAction
 
 class TwoCoralNonProcessor(AutoBase):
     def __init__(self) -> None:
@@ -18,10 +19,20 @@ class TwoCoralNonProcessor(AutoBase):
         drive_traj_iter = DriveTrajectoryActionIterator(self.get_display_name(), self.expected_trajectory_count)
         
         return SeriesAction([
-            drive_traj_iter.get_next_trajectory_action(),
+            ParallelAction([
+                drive_traj_iter.get_next_trajectory_action(),
+                SeriesAction([WaitTrajectoryAction(0.8),
+                              PlacingAction(True)
+                              ])
+            ]),
             PlacingAction(),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
-            drive_traj_iter.get_next_trajectory_action(),
+            ParallelAction([
+                drive_traj_iter.get_next_trajectory_action(),
+                SeriesAction([WaitTrajectoryAction(0.8),
+                              PlacingAction(True)
+                              ])
+            ]),
             PlacingAction()
             ])

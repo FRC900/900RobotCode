@@ -10,10 +10,11 @@ import actionlib
 class PlacingAction(Action):
     """An action that places"""
 
-    def __init__(self):
+    def __init__(self, SetupBool = False):
         # do need to check how potentially having multiple action clients on the same topic works
         # conflicting goals could be bad, but seems the same as one client sending two goals
         self.__placing_client = actionlib.SimpleActionClient("/placing/placing_server_2025", Placing2025Action)
+        self.__SetupBool = SetupBool
         if not self.__placing_client.wait_for_server(rospy.Duration(5)):
             rospy.logerr("placing client  not up after 5 seconds, exiting")
             exit(1)
@@ -28,6 +29,7 @@ class PlacingAction(Action):
         self.__done = False
         placing_goal: Placing2025Goal = Placing2025Goal()
         placing_goal.level = placing_goal.L4 #level 4 coral placing
+        placing_goal.setup_only = self.__SetupBool
         
         self.__placing_client.send_goal(placing_goal, done_cb=self.done_cb)
 
