@@ -12,9 +12,11 @@ elevator_controller:
     dynamic_reconfigure: True
 
     max_height_val: 1.412 # TODO replace with actual value
+    
+    stator_current_for_zero: 10.0 # amps
 
     # How quickly the elevator moves down when zeroing itself
-    elevator_zeroing_percent_output: -0.1 # TODO : tune me
+    elevator_zeroing_percent_output: -0.05 # TODO : tune me
 
     # If there are no negative velocity readings while zeroing
     # for this amount of time, assume the elevator is stuck

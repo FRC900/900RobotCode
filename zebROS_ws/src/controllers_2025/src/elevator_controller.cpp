@@ -81,6 +81,12 @@ public:
             ROS_ERROR("Could not find elevator_zeroing_timeout");
             return false;
         }
+    
+        if (!readIntoScalar(controller_nh, "current_limit_for_zero_", current_limit_for_zero_))
+        {
+            ROS_ERROR("Could not find current_limit_for_zero_");
+            return false;
+        }
 
         // get config values for the elevator talon
         XmlRpc::XmlRpcValue elevator_params;
@@ -119,6 +125,15 @@ public:
                 -0.2, 0.0);
 
             ddr_->registerVariable<double>(
+                "current_limit_for_zero",
+                [this]()
+                { return current_limit_for_zero_.load(); },
+                [this](double b)
+                { current_limit_for_zero_.store(b); },
+                "Current threshold for zeroing the elevator",
+                50, 0.0);
+
+            ddr_->registerVariable<double>(
                 "elevator_zeroing_timeout",
                 [this]()
                 { return elevator_zeroing_timeout_.load(); },
@@ -141,10 +156,6 @@ public:
         zeroed_ = false;
         last_zeroed_ = false;
         position_command_ = 0;
-    }
-
-    double getCurrent() {
-        return elevator_joint.
     }
 
     void update(const ros::Time &time, const ros::Duration & /*duration*/) override
@@ -276,6 +287,7 @@ private:
 
     std::atomic<double> elevator_zeroing_percent_output_;
     std::atomic<double> elevator_zeroing_timeout_;
+    std::atomic<double> current_limit_for_zero_;
 
     std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
