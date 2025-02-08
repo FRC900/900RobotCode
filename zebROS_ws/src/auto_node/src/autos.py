@@ -7,11 +7,17 @@ from auto_base import AutoBase
 from Test4Note import Test4Note
 from TestCmdVel import TestCmdVel
 from TestCmdVelCircle import TestCmdVelCircle
+from TwoCoralNonProcessor import TwoCoralNonProcessor
+from FourCoralNonProcessor import FourCoralNonProcessor
+from ThreeCoralNonProcessor import ThreeCoralNonProcessor
 
 class AutonomousNames(str, Enum):
     Test4Note = "2025_4_Note"
     TestCmdVel = "2025_cmd_vel_test"
     TestCmdVelCircle = "2024_cmd_vel_circle_test"
+    TwoCoralNonProcessor = "2025_2_Coral"
+    ThreeCoralNonProcessor = "2025_3_Coral"
+    FourCoralNonProcessor = "2025_4_Coral"
 
     def __str__(self) -> str:
         return str.__str__(self)
@@ -24,5 +30,8 @@ def init_auto_selection_map() -> dict[AutonomousNames, AutoBase]:
     return {
         AutonomousNames.TestCmdVel: TestCmdVel(),
         AutonomousNames.Test4Note: Test4Note(),
-        AutonomousNames.TestCmdVelCircle: TestCmdVelCircle()
+        AutonomousNames.TestCmdVelCircle: TestCmdVelCircle(),
+        AutonomousNames.TwoCoralNonProcessor: TwoCoralNonProcessor(),
+        AutonomousNames.FourCoralNonProcessor: FourCoralNonProcessor(),
+        AutonomousNames.ThreeCoralNonProcessor: ThreeCoralNonProcessor()
     }

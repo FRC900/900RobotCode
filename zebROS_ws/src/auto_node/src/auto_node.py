@@ -20,9 +20,9 @@ from std_msgs.msg import String
 
 # number to str of auto name, what /auto/auto_mode needs to send to run a given auto
 IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.TestCmdVel,
-                                    1: AutonomousNames.TestCmdVel, 
-                                    2: AutonomousNames.Test4Note,
-                                    3: AutonomousNames.TestCmdVelCircle}
+                                    1: AutonomousNames.TwoCoralNonProcessor,
+                                    2: AutonomousNames.ThreeCoralNonProcessor,
+                                    3: AutonomousNames.FourCoralNonProcessor}
 
 
 class AutoNode():
@@ -94,6 +94,7 @@ class AutoNode():
                 self.runner.reset_action_list()
 
             if self.__selected_auto != self.__prev_selected_auto:
+                self.__prev_selected_auto = self.__selected_auto
                 if self.__selected_auto != None:
                     rospy.loginfo(f"Recreating actions for {self.__selected_auto.display_name}")
                     self.__selected_auto_action = self.__selected_auto.get_action()
@@ -101,13 +102,12 @@ class AutoNode():
                 elif self.__prev_robot_mode == RobotMode.AUTONOMOUS:
                     pass
                 else:
-                    rospy.logerr(f"Selected auto is none!", throttle_duration_sec=10)
+                    rospy.logerr_throttle(10, f"Selected auto is none!")
                     
             if self.__selected_auto is not None:
                 self.__selected_auto.reset()
 
         self.__prev_robot_mode = robot_mode
-        self.__prev_selected_auto = self.__selected_auto
 
         if self.__prev_robot_mode == RobotMode.AUTONOMOUS:
             # Only loop in auto

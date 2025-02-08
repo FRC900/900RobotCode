@@ -14,10 +14,6 @@ class DriveTrajectoryActionIterator():
         self.__current_path: PathGoalArray = None
 
         self.__path_sub = rospy.Subscriber("/auto/current_auto_path", PathGoalArray, self.path_sub, tcp_nodelay=True)
-        # block until have an auto selected
-        while self.__current_path is None:
-            rospy.sleep(rospy.Duration(0.2))
-            rospy.logwarn_throttle(2, "Blocking in DriveTrajectoryActionIterator until a path is loaded!")
 
     def path_sub(self, path_array: PathGoalArray):
         self.__trajectory_count = len(path_array.path_segments)
@@ -37,11 +33,11 @@ class DriveTrajectoryActionIterator():
         curr_iterator = self.__trajectory_index_iterator
         self.__trajectory_index_iterator = self.__trajectory_index_iterator + 1
 
-        if curr_iterator >= self.__trajectory_count:
-            rospy.logerr(f"Index out of range for trajectory {curr_iterator} in auto {self.__autonomous_name}")
-            return None
-
-        return DriveTrajectoryAction(self.__autonomous_name, curr_iterator)
+        # if curr_iterator >= self.__trajectory_count:
+        #     rospy.logerr(f"Index out of range for trajectory {curr_iterator} in auto {self.__autonomous_name}")
+        #     return None
+        
+        return DriveTrajectoryAction(self.__autonomous_name, curr_iterator, self.__expected_trajectory_count)
     
     def reset_iterator(self):
         self.__trajectory_index_iterator = 0

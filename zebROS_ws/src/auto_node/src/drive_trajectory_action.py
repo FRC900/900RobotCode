@@ -11,7 +11,7 @@ import actionlib
 class DriveTrajectoryAction(Action):
     """An action that drives a trajectory and waits for completion before ending"""
     #TODO: Make these possibly class variables
-    def __init__(self, autonomous_name : str, trajectory_index : int):
+    def __init__(self, autonomous_name : str, trajectory_index : int, expected_trajectory_count : int):
 
         self.__path_follower_client = actionlib.SimpleActionClient("/path_follower/path_follower_server", PathAction)
         if not self.__path_follower_client.wait_for_server(rospy.Duration(5)):
@@ -20,14 +20,21 @@ class DriveTrajectoryAction(Action):
         self.__current_path: PathGoalArray = None
         self.__autonomous_name = autonomous_name
         self.__trajectory_index = trajectory_index
+        self.__expected_trajectory_count = expected_trajectory_count
         self.__latest_feedback: PathFeedback = None
         self.__path_sub = rospy.Subscriber("/auto/current_auto_path", PathGoalArray, self.path_sub, tcp_nodelay=True)
         self.__finished = False
 
     def path_sub(self, path_array: PathGoalArray):
+        trajectory_count = len(path_array.path_segments)
         rospy.loginfo(f"Current path updated to path for {path_array.auto_name}")
         if self.__current_path is not None:
             rospy.logwarn("DriveTrajectoryAction - path updated when path was already set? Alliance color change?")
+        
+        if self.__expected_trajectory_count != trajectory_count:
+            rospy.logerr(f"Expected trajectory count for {self.__autonomous_name} is not correct. Expecting {self.__expected_trajectory_count} but got {trajectory_count}. Not setting path")
+            self.__current_path = None
+            return 
 
         self.__current_path = path_array
 
@@ -40,6 +47,11 @@ class DriveTrajectoryAction(Action):
         self.__finished = True
 
     def start(self):
+        # block until have an auto selected
+        while self.__current_path is None:
+            rospy.sleep(rospy.Duration(0.2))
+            rospy.logwarn_throttle(2, "Blocking in DriveTrajectoryAction start until a path is loaded!")
+
         rospy.loginfo(f"Running path step {self.__trajectory_index} for auto {self.__autonomous_name}")
         path_follower_goal: PathGoal = PathGoal()
         # get the path segment to run and use it to fill in the path follower goal
