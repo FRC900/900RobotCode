@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import actionlib.simple_action_client
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
@@ -8,6 +9,8 @@ from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 from std_srvs.srv import SetBool, SetBoolResponse
+import actionlib 
+from behavior_actions.msg import Intaking2025Action
 
 RED_TAGS = [
     # (x, y, is_on_reef)
@@ -81,7 +84,10 @@ if __name__ == "__main__":
 
     game_piece_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, game_piece_callback)
     team_color_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, team_color_callback)
-
+    intaking_client = actionlib.SimpleActionClient("/intaking/intaking_server_2025", Intaking2025Action)
+    rospy.loginfo("waiting for intaking server")
+    intaking_client.wait_for_server()
+    rospy.loginfo("Intake client created")
     service = rospy.Service(rospy.get_name(), SetBool, handle_service)
 
     tf_buffer = tf2_ros.Buffer()
@@ -109,13 +115,17 @@ if __name__ == "__main__":
 
             closest_tag = (-1, -1)
             closest_dist_sq = 99999
+            distances = []
             for (tag_x, tag_y, is_on_reef) in tags:
                 dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
-
-                if (is_on_reef == has_game_piece) or dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
-                    if dist_sq < closest_dist_sq:
-                        closest_tag = (tag_x, tag_y)
-                        closest_dist_sq = dist_sq
+                distances.append((dist_sq, is_on_reef))
+            
+            self.clawster_client = actionlib.SimpleActionClient('/clawster/clawster_server_2024', Clawster2024Action)
+            
+            if (is_on_reef == has_game_piece) or dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
+                if dist_sq < closest_dist_sq:
+                    closest_tag = (tag_x, tag_y)
+                    closest_dist_sq = dist_sq
             
             angle = ANGLE_FROM_TAG[closest_tag]
             angle *= pi/180
