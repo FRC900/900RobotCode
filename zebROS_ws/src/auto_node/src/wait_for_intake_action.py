@@ -8,7 +8,7 @@ import actionlib
 from sensor_msgs.msg import JointState
 
 class WaitForIntakeAction(Action):
-    """An action that places"""
+    """An action that waits for the intake"""
 
     def callback(self, msg: JointState):
         if self.__switch_name in msg.name:
