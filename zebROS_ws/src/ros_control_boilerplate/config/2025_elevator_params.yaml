@@ -56,7 +56,7 @@ elevator_controller:
 
         # TODO enter actual values
         sensor_to_mechanism_ratio: 1.0
-        control_oppose_master_direction: False
+        control_oppose_master_direction: True
 
         neutral_mode: Brake
         dynamic_reconfigure: False
