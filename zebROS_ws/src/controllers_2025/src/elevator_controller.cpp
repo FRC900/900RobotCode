@@ -143,12 +143,16 @@ public:
         position_command_ = 0;
     }
 
+    double getCurrent() {
+        return elevator_joint.
+    }
+
     void update(const ros::Time &time, const ros::Duration & /*duration*/) override
     {
         // If we hit the limit switch, (re)zero the position.
-        if (elevator_joint_.getReverseLimit())
+        if (elevator_joint_.getStatorCurrent() > 10.0)
         {
-            ROS_INFO_THROTTLE(2, "ElevatorController_2025 : hit limit switch");
+            ROS_INFO_THROTTLE(2, "ElevatorController_2025 : hit current spike");
             if (!last_zeroed_)
             {
                 zeroed_ = true;

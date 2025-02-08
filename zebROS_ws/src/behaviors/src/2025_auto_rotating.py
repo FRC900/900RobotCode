@@ -10,7 +10,7 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 from std_srvs.srv import SetBool, SetBoolResponse
 import actionlib 
-from behavior_actions.msg import Intaking2025Action
+from behavior_actions.msg import Intaking2025Action, Intaking2025Goal
 
 RED_TAGS = [
     # (x, y, is_on_reef)
@@ -54,14 +54,15 @@ ANGLE_FROM_TAG = {
     (0.851, 7.396): 306, # 13
 }
 
-has_game_piece = True
+has_game_piece = False
 def game_piece_callback(data):
     global has_game_piece
     if switch_name in data.name:
-        has_game_piece = data.position[data.name.index(switch_name)] != 0
+        has_game_piece = data.position[data.name.index(switch_name)]
     else:
         rospy.logwarn_throttle(1.0, f'2025_intaking_server: {switch_name} not found')
         pass
+    print(f"Has game piece {has_game_piece}")
 
 team_color = -1 #green!
 def team_color_callback(msg: MatchSpecificData):
@@ -97,6 +98,7 @@ if __name__ == "__main__":
 
     tags = None
     angle = None
+    intake_running = False
     while not rospy.is_shutdown():
         r.sleep()
         if not should_run:
@@ -135,10 +137,20 @@ if __name__ == "__main__":
         if has_game_piece:
             closest_reef_dist, tag_x, tag_y = closest_reef
             closest_tag = (tag_x, tag_y)
+            if intake_running:
+                rospy.loginfo("Running intake")
+                intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                intake_running = False
         else: 
             closest_coral_dist, tag_x, tag_y = closest_coral
             closest_tag = (tag_x, tag_y)
-        rospy.loginfo(f"{tag_x, tag_y}") 
+            #rospy.loginfo(f"closest coral dist {closest_coral_dist}")
+            if closest_coral_dist < 2.0 and not intake_running:
+                rospy.loginfo_throttle(1, "Running intake automatically")
+                intake_running = True
+                intake_goal = Intaking2025Goal()
+                intaking_client.send_goal(intake_goal)
+        #rospy.loginfo(f"{tag_x, tag_y}") 
         dist_sq = min(closest_coral[0], closest_reef[0])
 
         if dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
@@ -149,3 +161,4 @@ if __name__ == "__main__":
         angle *= pi/180
         angle_pub.publish(Float64(data=angle))
 
+1
