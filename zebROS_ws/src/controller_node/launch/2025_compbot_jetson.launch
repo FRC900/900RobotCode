@@ -126,5 +126,7 @@
 	<include file="$(find behaviors)/launch/2025_auto_rotating.launch"/>
 	
 	<include file="$(find controller_node)/launch/record_2025_compbot.launch" if="$(arg record)" />
+
+	<node pkg="behaviors" type="2025_fake_sim.py" name="fake_sim_2025" if="$(eval hw_or_sim=='sim')"/>
 	
 </launch>

@@ -428,7 +428,7 @@ void CANCoderDevice<SIM>::simWrite(const ros::Time &time, Tracer &tracer)
         {
             if (safeCall(sim_collection.SetSupplyVoltage(units::volt_t{supply_voltage}), "cancoder sim->SetSupplyVoltage"))
             {
-                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set supply voltage to " << supply_voltage);
+                // ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set supply voltage to " << supply_voltage);
                 // Don't set state - it will be updated in next read() loop
             }
             else
@@ -439,10 +439,10 @@ void CANCoderDevice<SIM>::simWrite(const ros::Time &time, Tracer &tracer)
         }
         if (double raw_position; sim_fields_.command_sim_->rawPositionChanged(raw_position))
         {
-            ROS_INFO_STREAM("CANCoderDevice::simWrite raw_position: " << raw_position);
+            // ROS_INFO_STREAM("CANCoderDevice::simWrite raw_position: " << raw_position);
             if (safeCall(sim_collection.SetRawPosition(units::radian_t{raw_position}), "cancoder sim->SetRawPosition"))
             {
-                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set raw position to " << raw_position);
+                // ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set raw position to " << raw_position);
                 // Don't set state - it will be updated in next read() loop
             }
             else
@@ -455,7 +455,7 @@ void CANCoderDevice<SIM>::simWrite(const ros::Time &time, Tracer &tracer)
         {
             if (safeCall(sim_collection.AddPosition(units::radian_t{add_position}), "cancoder sim->AddPosition"))
             {
-                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Adding position " << add_position);
+                // ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Adding position " << add_position);
                 // Don't set state - it will be updated in next read() loop
             }
             else
@@ -468,7 +468,7 @@ void CANCoderDevice<SIM>::simWrite(const ros::Time &time, Tracer &tracer)
         {
             if (safeCall(sim_collection.SetVelocity(units::radians_per_second_t{velocity}), "cancoder sim->SetVelocity"))
             {
-                ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set velocity to " << velocity);
+                // ROS_INFO_STREAM("CANcoder id = " << getId() << " = " << getName() << " : Set velocity to " << velocity);
                 // Don't set state - it will be updated in next read() loop
             }
             else

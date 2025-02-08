@@ -119,7 +119,7 @@ if __name__ == "__main__":
                 location = None
 
         if state != 0:
-            if state == 1:
+            if state == 1 and enter_time is not None:
                 while rospy.Time.now() - enter_time < time_req:
                     try:
                         trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
