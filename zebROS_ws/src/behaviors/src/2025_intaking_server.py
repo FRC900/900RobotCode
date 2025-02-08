@@ -7,12 +7,13 @@ from behavior_actions.msg import Intaking2025Goal, Intaking2025Feedback, Intakin
 from behavior_actions.msg import Elevater2025Goal, Elevater2025Feedback, Elevater2025Result, Elevater2025Action
 from behavior_actions.msg import Roller2025Goal, Roller2025Feedback, Roller2025Result, Roller2025Action
 from talon_controller_msgs.srv import Command, CommandRequest
-
+from geometry_msgs.msg import Twist
 
 class IntakingServer(object):
     def __init__(self, name):
         self.result = Intaking2025Result()
         self.feedback = Intaking2025Feedback()
+
         self.elevater_client = actionlib.SimpleActionClient('/elevater/elevater_server_2025', Elevater2025Action)
         rospy.loginfo('Waiting for Elevater action server')
         self.elevater_client.wait_for_server()
@@ -23,6 +24,13 @@ class IntakingServer(object):
         rospy.loginfo(f"Waiting for intaking service at /frcrobot_jetson/{rospy.get_param('controller_name')}/command")
         self.intake_client.wait_for_service()
 
+        self.__cmd_vel_pub_ = rospy.Publisher("/intaking/cmd_vel", Twist, queue_size=1, tcp_nodelay=False)
+        self.__cmd_vel_finished = False
+        self.cmd_vel_run_time: float = rospy.get_param("cmd_vel_run_time")
+        self.__twist: Twist = Twist()
+        self.__twist.linear.x = -1
+        self.cmd_vel_start_time: rospy.Time = rospy.Time(0)
+
         self.server = actionlib.SimpleActionServer(name, Intaking2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.intake_speed = rospy.get_param("intake_speed")
         self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback, tcp_nodelay=True)
@@ -30,9 +38,21 @@ class IntakingServer(object):
         self.switch = 0.0
         self.server.start()
         rospy.loginfo("Started Intaking actionlib server")
+    
+    def preempt_cmd_vel(self):
+        rospy.logwarn("Preempt called for /intaker/cmd_vel action, publishing a zero")
+        twist_msg = Twist()
+        # may be unneeded but like just to make sure
+        twist_msg.linear.x = 0
+        twist_msg.linear.y = 0
+        twist_msg.angular.z = 0 
+        self.__cmd_vel_pub_.publish(twist_msg)
+        self.cmd_vel_start_time = None # force calling start again before resuming
+        self.__cmd_vel_finished = True
 
     def preempt_all(self):
         rospy.logwarn("Intaking Server Preempting")
+        self.preempt_cmd_vel()
         self.roller_client.cancel_goals_at_and_before_time(rospy.Time.now()) 
         self.elevater_client.cancel_goals_at_and_before_time(rospy.Time.now())
         self.intake_client.call(CommandRequest(0))
@@ -72,7 +92,6 @@ class IntakingServer(object):
 
         rospy.loginfo('Elevater action passed check, now intaking')
 
-
         roller_goal = Roller2025Goal()
         roller_goal.mode = Roller2025Goal.INTAKE
 
@@ -102,13 +121,22 @@ class IntakingServer(object):
                 return
             r.sleep()
 
-        
         self.feedback.state = self.feedback.IN_ROLLER
         self.server.publish_feedback(self.feedback)
         self.intake_client.call(CommandRequest(0))
         self.result.success = True
         rospy.loginfo("2025_intaking_server: succeeded")
         self.server.set_succeeded(self.result) 
+
+        rospy.loginfo(f"Starting /intaker/cmd_vel action with twist {self.__twist}")
+        self.cmd_vel_start_time = rospy.Time.now()
+        self.__cmd_vel_pub_.publish(self.__twist)
+
+        while rospy.Time.now() - self.cmd_vel_start_time <= rospy.Duration(self.cmd_vel_run_time):
+            self.__cmd_vel_pub_.publish(self.__twist)
+            rospy.loginfo_throttle(1, "Still running /intaker/cmd_vel action!")
+        rospy.loginfo_throttle(1, "/intaker/cmd_vel action finished")
+        self.preempt_cmd_vel()            
         
 
 if __name__ == '__main__':
