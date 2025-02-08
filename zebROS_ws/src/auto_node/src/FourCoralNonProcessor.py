@@ -48,7 +48,7 @@ class FourCoralNonProcessor(AutoBase):
             PlacingAction(),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
-            
+
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
                 SeriesAction([WaitTrajectoryAction(0.8),

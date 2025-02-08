@@ -102,7 +102,7 @@ class AutoNode():
                 elif self.__prev_robot_mode == RobotMode.AUTONOMOUS:
                     pass
                 else:
-                    rospy.logerr(f"Selected auto is none!", throttle_duration_sec=10)
+                    rospy.logerr_throttle(10, f"Selected auto is none!")
                     
             if self.__selected_auto is not None:
                 self.__selected_auto.reset()
