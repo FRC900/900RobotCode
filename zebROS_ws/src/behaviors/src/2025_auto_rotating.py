@@ -62,8 +62,7 @@ def game_piece_callback(data):
     else:
         rospy.logwarn_throttle(1.0, f'2025_intaking_server: {switch_name} not found')
         pass
-    print(f"Has game piece {has_game_piece}")
-
+    
 team_color = -1 #green!
 def team_color_callback(msg: MatchSpecificData):
     global team_color

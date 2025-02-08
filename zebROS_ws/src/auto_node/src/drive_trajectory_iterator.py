@@ -33,9 +33,9 @@ class DriveTrajectoryActionIterator():
         curr_iterator = self.__trajectory_index_iterator
         self.__trajectory_index_iterator = self.__trajectory_index_iterator + 1
 
-        if curr_iterator >= self.__trajectory_count:
-            rospy.logerr(f"Index out of range for trajectory {curr_iterator} in auto {self.__autonomous_name}")
-            return None
+        # if curr_iterator >= self.__trajectory_count:
+        #     rospy.logerr(f"Index out of range for trajectory {curr_iterator} in auto {self.__autonomous_name}")
+        #     return None
         
         return DriveTrajectoryAction(self.__autonomous_name, curr_iterator, self.__expected_trajectory_count)
     
