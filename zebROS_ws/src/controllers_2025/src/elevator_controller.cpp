@@ -82,7 +82,7 @@ public:
             return false;
         }
     
-        if (!readIntoScalar(controller_nh, "current_limit_for_zero_", current_limit_for_zero_))
+        if (!readIntoScalar(controller_nh, "current_limit_for_zero", current_limit_for_zero_))
         {
             ROS_ERROR("Could not find current_limit_for_zero_");
             return false;
@@ -161,7 +161,7 @@ public:
     void update(const ros::Time &time, const ros::Duration & /*duration*/) override
     {
         // If we hit the limit switch, (re)zero the position.
-        if (elevator_joint_.getStatorCurrent() > 10.0)
+        if (elevator_joint_.getStatorCurrent() > current_limit_for_zero_)
         {
             ROS_INFO_THROTTLE(2, "ElevatorController_2025 : hit current spike");
             if (!last_zeroed_)

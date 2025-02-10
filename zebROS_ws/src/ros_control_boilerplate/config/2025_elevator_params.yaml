@@ -13,7 +13,7 @@ elevator_controller:
 
     max_height_val: 1.412 # TODO replace with actual value
     
-    stator_current_for_zero: 10.0 # amps
+    current_limit_for_zero: 10.0 # amps (stator)
 
     # How quickly the elevator moves down when zeroing itself
     elevator_zeroing_percent_output: -0.05 # TODO : tune me
@@ -45,10 +45,11 @@ elevator_controller:
 
         # TODO tune
         close_loop_values:
-            - {kP: 50.0, kI: 0.0, kD: 0.0, kV: 4.0, kS: 0.0}
+            # - {kP: 50.0, kI: 0.0, kD: 0.0, kV: 4.0, kS: 0.0}
+            - {kP: 0.0, kI: 0.0, kD: 0.0, kV: 0.0, kS: 0.0}
         
         reverse_limit_switch_type: "NormallyOpen"
-        reverse_limit_enable: True
+        reverse_limit_enable: False
         forward_limit_enable: False
         
         dynamic_reconfigure: True

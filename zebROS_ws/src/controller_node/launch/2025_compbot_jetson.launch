@@ -17,7 +17,7 @@
 		<param name="swerve_drive_controller/odometry_publishing_frequency" value="-1.0" if="$(eval hw_or_sim=='sim')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2025_compbot_swerve_cancoder_hw.yaml" command="load" if="$(eval arg('hw_or_sim') == 'hw')"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/swerve_cancoder_sim.yaml" command="load" unless="$(eval arg('hw_or_sim') == 'hw')"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2025_elevator_params.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2025_elevator_voltageout_params.yaml" command="load"/>
 
 		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
@@ -54,10 +54,11 @@
 			 cancoder_state_controller
 			 roller_controller
 			 elevator_controller
+			 elevator_follower_controller
 			 intake_controller
 			 robot_code_ready_controller" />
 			 <!--
-			 
+			 Add elevator_follower_controller when testing, remove it when actually using real controller
 			 orchestra_controller
 			 orchestra_state_controller
 			 swerve_drive_state_controller

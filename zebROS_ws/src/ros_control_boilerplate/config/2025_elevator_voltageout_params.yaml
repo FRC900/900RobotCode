@@ -1,0 +1,15 @@
+elevator_controller:
+    type: talonfxpro_controllers/TalonFXProVoltageOutputController
+    joint: elevator_leader
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
+    neutral_mode: Brake
+
+elevator_follower_controller:
+    type: talonfxpro_controllers/TalonFXProFollowerController
+    joint: elevator_follower
+    follow_joint: elevator_leader
+    control_oppose_master_direction: True
+
+    neutral_mode: Brake
+    dynamic_reconfigure: False
