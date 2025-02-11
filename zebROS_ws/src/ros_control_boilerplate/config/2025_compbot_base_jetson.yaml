@@ -52,9 +52,9 @@ hardware_interface:
        - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
        - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
 
-       - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+    #    - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
     
-       - {name: roller, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
+    #    - {name: roller, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
 
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}

@@ -11,7 +11,7 @@ elevator_controller:
     elevator_joint: [ 'elevator_leader', 'elevator_follower' ]
     dynamic_reconfigure: True
 
-    max_height_val: 1.412 # TODO replace with actual value
+    max_height_val: 3.0 # TODO replace with actual value
     
     current_limit_for_zero: 10.0 # amps (stator)
 
@@ -33,14 +33,19 @@ elevator_controller:
         motion_magic_expo_kA: 0.4
 
         # TODO enter actual values
-        rotor_to_sensor_ratio: 5.0
-        sensor_to_mechanism_ratio: 1.0
+        rotor_to_sensor_ratio: 1.0
+
+        # pulley diameter 1.6291in --> 0.129996402186m circumference
+        # reduction is 3.33333333333 turns of the motor for 1 turn of the pulley
+
+        # 6.28 rad * 3.3333333333 * (1 / 0.129996402186m) = 161.030098 rad / m
+        sensor_to_mechanism_ratio: 161.030098 # radians per meter
 
         neutral_mode: Brake
-        invert: counterclockwise_positive
+        invert: clockwise_positive
 
         # TODO replace with actual value
-        softlimit_forward_threshold: 1.412 
+        softlimit_forward_threshold: 3.0
         softlimit_forward_enable: True
 
         # TODO tune
@@ -58,7 +63,7 @@ elevator_controller:
         joint: elevator_follower
 
         # TODO enter actual values
-        sensor_to_mechanism_ratio: 1.0
+        sensor_to_mechanism_ratio: 161.030098
         control_oppose_master_direction: True
 
         neutral_mode: Brake

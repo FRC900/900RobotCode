@@ -42,7 +42,7 @@
 			 fl_cancoder_controller
 			 br_cancoder_controller
 			 fr_cancoder_controller
-			 swerve_drive_controller
+			 
 			 joint_state_controller_jetson
 			 joint_state_listener_controller_jetson
 			 match_state_listener_controller
@@ -52,13 +52,16 @@
 			 candle_controller
 			 candle_state_controller
 			 cancoder_state_controller
-			 roller_controller
+			 
 			 elevator_controller
 			 elevator_follower_controller
-			 intake_controller
+			 
 			 robot_code_ready_controller" />
 			 <!--
 			 Add elevator_follower_controller when testing, remove it when actually using real controller
+			 swerve_drive_controller
+			 roller_controller
+			 intake_controller
 			 orchestra_controller
 			 orchestra_state_controller
 			 swerve_drive_state_controller

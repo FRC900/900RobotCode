@@ -1,7 +1,9 @@
 elevator_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController
     joint: elevator_leader
-    invert: counterclockwise_positive
+    invert: clockwise_positive
+
+    sensor_to_mechanism_ratio: 161.030098 # radians per meter
     dynamic_reconfigure: True
     neutral_mode: Brake
 
@@ -11,5 +13,6 @@ elevator_follower_controller:
     follow_joint: elevator_leader
     control_oppose_master_direction: True
 
+    sensor_to_mechanism_ratio: 161.030098 # radians per meter
     neutral_mode: Brake
-    dynamic_reconfigure: False
+    dynamic_reconfigure: True
