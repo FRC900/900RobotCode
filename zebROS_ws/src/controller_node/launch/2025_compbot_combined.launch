@@ -42,11 +42,11 @@
 	<!-- StageSim related code 
 		TODO : make this an additional option on top of hw_or_sim?
 	-->
-    <!-- <include file="$(find controller_node)/launch/stage_sim.launch" if="$(eval hw_or_sim=='sim' and arg('stage_sim'))">
+    <include file="$(find controller_node)/launch/stage_sim.launch" if="$(eval hw_or_sim=='sim' and arg('stage_sim'))">
 		<arg name="world_file" value="2025_reefscape.world" />
 		<arg name="sim_joystick" value="$(arg sim_joystick)" />
 		<arg name="sim_button_box" value="$(arg sim_button_box)"/>
 		<arg name="joy1_device" value="$(arg joy1_device)" />
 		<arg name="button_box_device" value="$(arg button_box_device)" />
-	</include> -->
+	</include>
 </launch>
