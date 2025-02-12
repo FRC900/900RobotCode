@@ -164,17 +164,12 @@ public:
         if (elevator_joint_.getStatorCurrent() > current_limit_for_zero_)
         {
             ROS_INFO_THROTTLE(2, "ElevatorController_2025 : hit current spike");
-            if (!last_zeroed_)
+            if (!zeroed_) // only do this once
             {
                 zeroed_ = true;
-                // last_zeroed_ = true;
                 elevator_joint_.setRotorPosition(0);
                 elevator_joint_.setControlFeedforward(find_feedforward());
             }
-        }
-        else
-        {
-            last_zeroed_ = false;
         }
 
         if (zeroed_) // run normally, seeking to various positions
