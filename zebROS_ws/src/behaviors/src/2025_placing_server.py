@@ -32,7 +32,6 @@ class PlacingServer(object):
         elevater_goal.mode = goal.level
         roller_goal = Roller2025Goal()
         roller_goal.mode = roller_goal.OUTTAKE # Set the roller goal to OUTTAKE
-        elevator_success = False
        
         def elevater_done_cb(state, result):
             nonlocal elevator_done
@@ -41,9 +40,11 @@ class PlacingServer(object):
             elevator_done = True
             elevator_success = result.success
 
+        # Raise elevator
         self.elevater_client.send_goal(elevater_goal, done_cb=elevater_done_cb)
 
         elevator_done = False
+        elevator_success = False
         rospy.loginfo('Elevater action sent')
 
         while not elevator_done and not rospy.is_shutdown():
@@ -54,17 +55,19 @@ class PlacingServer(object):
             r.sleep()
 
         if not elevator_success:
-            rospy.loginfo('Failure in elevater server')
+            rospy.loginfo('Failure in elevater server (raising)')
             self.result.success = False
             self.server.set_aborted(self.result)
             return
         
+        # If we're setting up, we're done
         if goal.setup_only:
             rospy.loginfo('Setup Complete')
             self.result.success = True
             self.server.set_succeeded(self.result)
             return
         
+        # Place
         roller_done = False
         roller_success = False
         def roller_done_cb(state, result):
@@ -90,11 +93,30 @@ class PlacingServer(object):
             self.result.success = False
             self.server.set_aborted(self.result)
             return
+        
+        # Lower elevator
+        self.elevater_client.send_goal(Elevater2025Goal(mode=Elevater2025Goal.L1), done_cb=elevater_done_cb)
+        
+        elevator_done = False
+        elevator_success = False
+        rospy.loginfo('Elevater lowering action sent')
+
+        while not elevator_done and not rospy.is_shutdown():
+            if self.server.is_preempt_requested():
+                self.elevater_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                self.server.set_preempted()
+                return
+            r.sleep()
+        
+        if not elevator_success:
+            rospy.loginfo('Failure in elevater server (lowering)')
+            self.result.success = False
+            self.server.set_aborted(self.result)
+            return
 
         self.result.success = True
         rospy.loginfo("placing_server_2025: succeeded")
         self.server.set_succeeded(self.result)
-
 
 
 if __name__ == '__main__':
