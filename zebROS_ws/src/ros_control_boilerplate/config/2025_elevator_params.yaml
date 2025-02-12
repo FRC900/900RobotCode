@@ -27,9 +27,12 @@ elevator_controller:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: elevator_leader
         
-        # TODO tune
         motion_magic_expo_kV: 4.0
         motion_magic_expo_kA: 8.0
+
+        motion_magic_cruise_velocity: 3.6
+        motion_magic_acceleration: 10.0
+        motion_s_curve_strength: 100.0
 
         rotor_to_sensor_ratio: 1.0
 
@@ -49,7 +52,7 @@ elevator_controller:
         # TODO tune
         close_loop_values:
             # - {kP: 50.0, kI: 0.0, kD: 0.0, kV: 4.0, kS: 0.0}
-            - {kP: 450.0, kI: 0.0, kD: 0.0, kV: 19.5, kS: 0.0}
+            - {kP: 450.0, kI: 0.0, kD: 0.0, kV: 21.0, kS: 0.0}
         
         reverse_limit_switch_type: "NormallyOpen"
         reverse_limit_enable: False

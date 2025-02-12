@@ -174,7 +174,7 @@ public:
 
         if (zeroed_) // run normally, seeking to various positions
         {
-            elevator_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicExpoVoltage);
+            elevator_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::MotionMagicVoltage);
             if (elevator_joint_.getControlMode() == hardware_interface::talonfxpro::TalonMode::Disabled)
             {
                 position_command_ = elevator_joint_.getPosition();
