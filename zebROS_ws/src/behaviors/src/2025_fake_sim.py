@@ -24,6 +24,7 @@ def team_color_callback(msg: MatchSpecificData):
 
 def talon_states_callback(states: TalonFXProState):
     global state
+    global roller_output
     for idx in range(len(states.name)):
         if states.name[idx] == "intake":
             intake_output = states.control_output[idx]
