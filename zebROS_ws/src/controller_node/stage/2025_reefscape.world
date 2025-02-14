@@ -66,6 +66,7 @@ omnidir_robot
 
 # Copied from 2023_charged_up.world and I changed the numbers and added 8 more --Elias
 # https://github.com/wpilibsuite/allwpilib/blob/main/apriltag/src/main/native/resources/edu/wpi/first/apriltag/2025-reefscape.json
+# Note: this is for a welded field not an AndyMark field, should be good enough for sim though and even more accurate in April :)
 objdet_target ( pose [ 16.697198 0.65532 1.4859 126.000 ] fiducial_return 101 color "red") # Red left coral station
 objdet_target ( pose [ 16.697198 7.39648 1.4859 234.000 ] fiducial_return 102 color "red") # Red right coral station
 

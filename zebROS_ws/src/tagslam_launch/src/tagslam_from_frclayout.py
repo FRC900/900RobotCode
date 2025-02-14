@@ -7,7 +7,7 @@ tags = [
 #[15.079,0.246,1.356,120.000,1]
 ]
 
-with open("2025tags_norotate.csv", "r") as f:
+with open("2025tags_andymark.csv", "r") as f:
     lines = f.read().split("\n")
 
 lines = lines[1:]
