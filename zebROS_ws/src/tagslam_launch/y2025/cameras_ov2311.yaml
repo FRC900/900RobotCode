@@ -3,9 +3,16 @@
 
 cam0:
   infotopic: /ov2311_10_9_0_9_video0/camera_info # /{cam_name}/camera_info
-  rostopic: /DONTUSETHIS_back
+  rostopic: /ov2311_10_9_0_9_video0_ignore
   # CHECK THIS
   tagtopic: /apriltag_detection_ov2311_10_9_0_9_video0/tags # /apriltag_detection_{cam_name}/tags
+  rig_body: frc_robot
+
+cam1:
+  infotopic: /ov2311_10_9_0_9_video1/camera_info # /{cam_name}/camera_info
+  rostopic: /ov2311_10_9_0_9_video1_ignore
+  # CHECK THIS
+  tagtopic: /apriltag_detection_ov2311_10_9_0_9_video1/tags # /apriltag_detection_{cam_name}/tags
   rig_body: frc_robot
 
 # ov2311_10_9_0_9_video1:
