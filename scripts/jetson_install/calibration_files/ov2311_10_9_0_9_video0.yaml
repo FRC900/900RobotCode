@@ -1,0 +1,26 @@
+image_width: 1600
+image_height: 1300
+camera_name: ov2311_10_9_0_9_video0
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [910.33609,   0.     , 787.82826,
+           0.     , 910.6272 , 627.1906 ,
+           0.     ,   0.     ,   1.     ]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.039866, -0.054857, 0.000471, 0.000253, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [908.45407,   0.     , 787.52409,   0.     ,
+           0.     , 916.2389 , 627.50002,   0.     ,
+           0.     ,   0.     ,   1.     ,   0.     ]
