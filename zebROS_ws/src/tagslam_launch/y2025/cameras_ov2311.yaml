@@ -2,35 +2,15 @@
 # BACK CAM
 
 cam0:
-  infotopic: /ov2311/camera_info # /{cam_name}/camera_info
+  infotopic: /ov2311_10_9_0_9_video0/camera_info # /{cam_name}/camera_info
   rostopic: /DONTUSETHIS_back
   # CHECK THIS
-  tagtopic: /apriltag_detection_ov2311/tags # /apriltag_detection_{cam_name}/tags
+  tagtopic: /apriltag_detection_ov2311_10_9_0_9_video0/tags # /apriltag_detection_{cam_name}/tags
   rig_body: frc_robot
 
-#image_width: 1600
-#image_height: 1300
-#camera_name: ov2311
-#camera_matrix:
-#  rows: 3
-#  cols: 3
-#  data: [906.70094,   0.     , 813.38645,
-#           0.     , 906.05068, 646.68191,
-#           0.     ,   0.     ,   1.     ]
-#distortion_model: plumb_bob
-#distortion_coefficients:
-#  rows: 1
-#  cols: 5
-#  data: [0.036720, -0.047291, -0.001302, -0.000170, 0.000000]
-#rectification_matrix:
-#  rows: 3
-#  cols: 3
-#  data: [1., 0., 0.,
-#         0., 1., 0.,
-#         0., 0., 1.]
-#projection_matrix:
-#  rows: 3
-#  cols: 4
-#  data: [906.60642,   0.     , 813.85017,   0.     ,
-#           0.     , 911.8641 , 644.83252,   0.     ,
-#           0.     ,   0.     ,   1.     ,   0.     ]
+# ov2311_10_9_0_9_video1:
+#   infotopic: /ov2311_10_9_0_9_video1/camera_info # /{cam_name}/camera_info
+#   rostopic: /DONTUSETHIS_back
+#   # CHECK THIS
+#   tagtopic: /apriltag_detection_ov2311_10_9_0_9_video1/tags # /apriltag_detection_{cam_name}/tags
+#   rig_body: frc_robot
