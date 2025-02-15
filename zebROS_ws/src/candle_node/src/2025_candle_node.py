@@ -6,20 +6,17 @@ import time
 from candle_controller_msgs.srv import Colour, ColourRequest, Animation, AnimationRequest
 from frc_msgs.msg import MatchSpecificData
 from behavior_actions.msg import AutoMode, AlignAndPlace2025ActionFeedback
-from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
 from talon_state_msgs.msg import TalonFXProState
-#Check this one depending on name of action file
 
 # We want a list of priorities for what LED stuff to do
-# 1. If we're in autonomous, we want to turn the LEDs rainbow
-# 1.5 Drive to object is running (also essentially autonmous), we want to turn the LEDs rainbow
-# 2. If we're autoaligning to score, we want to turn the LEDs white
-# 3. If we are ready to intake, we want to turn the LEDs orange
-# 4. If we are intaking, we want to turn the LEDs yellow
-# 5. If we have received coral, we want to flash the LEDs green
-# 6. If we're in teleop and none of the above apply, make the LEDs our alliance color
+# 1. If we're in autonomous, we want to turn the LEDs rainbow (works)
+# 2. Drive to object is running, we want to turn the LEDs rainbow (server problem)
+# 3. If we're autoaligning, we want to turn the LEDs white (works)
+# 4. If we are intaking, we want to turn the LEDs yellow (works)
+# 5. If we have received coral, we want to flash the LEDs green (works)
+# 6. If we're in teleop and none of the above apply, make the LEDs our alliance color (works)
 # Maybe add one for error?
 
 team_color = [0, 0, 0]
@@ -54,46 +51,21 @@ def is_drive_objet():
 states = [
     State("drive_to_object", is_drive_objet, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
     State("autonomous", lambda: is_auto, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
-    State("placing", lambda: has_coral and in_range and not_aligning, lambda: send_colour(255, 255, 255)),
-    State("alinging_and_placing", lambda: has_coral and in_range, lambda: send_colour(255,0,255)),
-    State("done", lambda: scored, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_STROBE, 0, 255, 0, 0, 0)),
+    State("alinging_and_placing", lambda: aligning, lambda: send_colour(255,255,255)),
     State("has_coral", lambda: has_coral, lambda: send_colour(0,255,0)),
-    State("intaking_coral", lambda: intaking, lambda: send_colour(255,255,0)),
-    #State("ready_for_coral", lambda: ready_to_intake, lambda: send_colour(255, 164, 0)),
+    State("intaking_coral", lambda: intaking, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_STROBE, 255, 255, 0, 0, 0)),
     State("teleop", lambda: True, lambda: send_colour(*team_color))
 ]
-#Change first check based on new names assigned for constants
 
 def align_and_place_callback(msg):
-    global scored
-    global not_aligning
-    if msg == 0:
-        not_aligning = False
-        scored = False
-    elif msg == 1:
-        not_aligning = False
-        scored = False
-    elif msg == 2:
-        not_aligning = True
-        scored = False
-    elif msg == 3:
-        not_aligning = True
-        scored = True
-#Check code
+    global aligning
+    aligning = True
 
 def talon_state_callback(msg: TalonFXProState):
     global intaking
+    global roller
     intaking = abs(msg.control_output[msg.name.index("intake")]) > 0
-#Check this one for more specific code if applicable
-#Probably subscribes to roller so it know when intake is happening
-
-"""
-def intake_callback(msg):
-    global ready_to_intake
-    ready_to_intake = msg.ready_to_intake
-#Check this one again
-#Subscribes to autoalign to know when robot has aligned to tkae coral
-"""
+    roller = abs(msg.control_output[msg.name.index("roller")]) > 0
 
 def match_data_callback(msg: MatchSpecificData):
     global is_disabled
@@ -123,7 +95,7 @@ def send_colour(r_col, g_col, b_col):
     colour.green = g_col
     colour.blue = b_col
     colour.white = 0
-    rospy.loginfo(f"Sending colour to candle controller with red {r_col}, green {g_col}, blue {b_col}")
+    rospy.loginfo(f"Sending color to candle controller with red {r_col}, green {g_col}, blue {b_col}")
     rospy.wait_for_service('/frcrobot_jetson/candle_controller/colour')
     try:
         colour_client = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/colour', Colour)
@@ -172,21 +144,17 @@ if __name__ == '__main__':
     auto_mode = 1
     has_coral = False
     in_range = False
-    #ready_to_intake = False
+    ready_to_intake = False
     intaking = False
-    scored = False
-    not_aligning = True
-    #shooting_distance = rospy.get_param("effective_shooting_range")
+    aligning = False
+    roller = False
 
     rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, match_data_callback)
     rospy.Subscriber("/auto/auto_mode", AutoMode, auto_mode_callback)
     rospy.Subscriber("/frcrobot_rio/joint_states", JointState, limit_switch_callback)
     rospy.Subscriber("/auto_align/cmd_vel", Twist, drive_object_callback)
-    #rospy.Subscriber("/auto_align/dist_and_ang", AutoAlign, intake_callback)
     rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, talon_state_callback)
     rospy.Subscriber("/align_and_place/alignandplaceing_server/feedback", AlignAndPlace2025ActionFeedback, align_and_place_callback)
-    #Change last two based on name
-    #One should be to roller, other should be to autoalign
 
     while not rospy.is_shutdown():
         got_valid_state = False
