@@ -23,6 +23,8 @@
 
 #include <path_follower_msgs/PathAction.h>
 
+#include <behavior_actions/AlignAndPlace2025Action.h>
+
 class AutoModeCalculator2025 : public AutoModeCalculator {
 public:
 	explicit AutoModeCalculator2025(ros::NodeHandle &n)
@@ -39,10 +41,13 @@ private:
 	uint8_t auto_mode_{1};
 };
 
+auto current_level = behavior_actions::AlignAndPlace2025Goal::L4;
+
 std::unique_ptr<AutoModeCalculator2025> auto_calculator;
 
 // TODO: Add 2025 versions, initialize in main before calling generic inititalizer
 std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> path_follower_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>> align_and_place_ac;
 
 // void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 // {    
@@ -203,6 +208,11 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
+					ROS_INFO_STREAM("Sending align and place goal LEFT");
+					behavior_actions::AlignAndPlace2025Goal align_goal_;
+					align_goal_.pipe = align_goal_.LEFT_PIPE;
+					align_goal_.level = align_goal_.L4;
+					align_and_place_ac->sendGoal(align_goal_);
 				}
 
 				joystick1_left_trigger_pressed = true;
