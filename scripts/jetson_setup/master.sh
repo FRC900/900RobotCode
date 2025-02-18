@@ -33,7 +33,7 @@ do
     JETSON_PROCESSES+=($!)
 done
 
-/home/ubuntu/900RobotCode/scripts/jetson_setup/wait_for_ssh.sh 10.9.0.2 5801 >> /home/ubuntu/bagfiles/mounted.txt
+/home/ubuntu/900RobotCode/scripts/jetson_setup/wait_for_ssh.sh 10.9.0.2 22 >> /home/ubuntu/bagfiles/mounted.txt
 #ssh 10.9.0.2 /etc/init.d/ntpd stop
 #ssh 10.9.0.2 date -s @$(date -u +"%s")
 #ssh 10.9.0.2 /etc/init.d/ntpd start
