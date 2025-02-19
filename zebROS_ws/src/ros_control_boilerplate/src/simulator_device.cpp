@@ -1,7 +1,5 @@
 #include "ros/ros.h"
 
-#include "ctre/phoenix6/StatusSignal.hpp"
-#include "ctre/phoenix6/core/CoreCANcoder.hpp"
 #include "ctre/phoenix6/core/CoreTalonFX.hpp"
 
 #include "ctre_interfaces/talonfxpro_state_interface.h"

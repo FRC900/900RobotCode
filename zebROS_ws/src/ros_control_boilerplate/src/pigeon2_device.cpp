@@ -1,6 +1,5 @@
 #include <thread>
 #include <ros/node_handle.h>
-#include <angles/angles.h>
 #include "tf2/LinearMath/Matrix3x3.h"                         // for Matrix3x3
 #include "tf2/LinearMath/Quaternion.h"                        // for Quaternion
 

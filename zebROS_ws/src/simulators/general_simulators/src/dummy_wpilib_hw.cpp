@@ -1,8 +1,7 @@
 // Functions referenced by various WPILIB code used on non-Rio targets but not actually
 // called. These functions let us build wpilib-dependent code on x86 and Jetson targets
 // by stubbing out functions which aren't actually used
-#include <hal/Types.h>
-#include <HALInitializer.h>
+#include <cstdint>
 extern "C" {
 
 double HAL_GetVinVoltage(int32_t* status)

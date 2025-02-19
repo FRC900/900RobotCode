@@ -1,8 +1,7 @@
-#include <hardware_interface/joint_command_interface.h>
-
-#include "remote_joint_interface/remote_joint_interface.h"
+#include "frc/PWM.h"
+#include "ros/console.h"
+#include "ros_control_boilerplate/pwm_device.h"
 #include "ros_control_boilerplate/servo_device.h"
-#include "frc/Servo.h"
 
 ServoDevice::ServoDevice(const int joint_index,
                          const std::string &joint_name,
