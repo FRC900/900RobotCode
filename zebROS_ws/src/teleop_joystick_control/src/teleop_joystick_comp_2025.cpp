@@ -211,7 +211,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 					ROS_INFO_STREAM("Sending align and place goal LEFT");
 					behavior_actions::AlignAndPlace2025Goal align_goal_;
 					align_goal_.pipe = align_goal_.LEFT_PIPE;
-					align_goal_.level = align_goal_.L4;
+					align_goal_.level = current_level;
 					align_and_place_ac->sendGoal(align_goal_);
 				}
 
@@ -231,6 +231,11 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_right_trigger_pressed)
 				{
+					ROS_INFO_STREAM("Sending align and place goal RIGHT");
+					behavior_actions::AlignAndPlace2025Goal align_goal_;
+					align_goal_.pipe = align_goal_.RIGHT_PIPE;
+					align_goal_.level = current_level;
+					align_and_place_ac->sendGoal(align_goal_);
 				}
 
 				joystick1_right_trigger_pressed = true;
@@ -295,6 +300,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1 Diagnostics: buttonA
 			if(joystick_state->buttonAPress)
 			{
+				current_level = behavior_actions::AlignAndPlace2025Goal::L2;
 			}
 			if(joystick_state->buttonAButton)
 			{
@@ -317,6 +323,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1 Diagnostics: buttonX
 			if(joystick_state->buttonXPress)
 			{
+				current_level = behavior_actions::AlignAndPlace2025Goal::L3;
 			}
 			if(joystick_state->buttonXButton)
 			{
@@ -328,6 +335,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1 Diagnostics: buttonY
 			if(joystick_state->buttonYPress)
 			{
+				current_level = behavior_actions::AlignAndPlace2025Goal::L4;
 			}
 			if(joystick_state->buttonYButton)
 			{
