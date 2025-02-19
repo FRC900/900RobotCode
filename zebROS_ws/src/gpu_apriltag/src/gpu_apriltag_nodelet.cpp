@@ -7,7 +7,7 @@
 
 #include "gpu_apriltag/gpu_apriltag.h"
 #include "apriltag_msgs/ApriltagArrayStamped.h"
-#include "apriltag_msgs/ApriltagPoseStamped.h"
+// #include "apriltag_msgs/ApriltagPoseStamped.h"
 #include "field_obj/TFDetection.h"
 
 namespace frc971_gpu_apriltag
@@ -46,6 +46,8 @@ public:
             legal_tags_.emplace(legal_tag);
             std::cout << legal_tag;
         }
+        nh_.param<int>("min_white_black_diff", min_white_black_diff_, min_white_black_diff_);
+        ROS_INFO_STREAM("Setting min_white_black_diff to " << min_white_black_diff_);
     }
 
     void callback(const sensor_msgs::ImageConstPtr &image, const sensor_msgs::CameraInfoConstPtr &camera_info)
@@ -82,7 +84,7 @@ public:
                 return;
             }
 
-            detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector>(camera_info, input_format);
+            detector_ = std::make_unique<frc971_gpu_apriltag::FRC971GpuApriltagDetector>(camera_info, input_format, min_white_black_diff_);
         }
 
         std::vector<GpuApriltagResult> results;
@@ -193,6 +195,7 @@ private:
     std::atomic<bool> save_input_image_{false};
 
     std::set<int> legal_tags_;
+    int min_white_black_diff_{5};
 };
 
 } // namespace

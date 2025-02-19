@@ -14,7 +14,8 @@ class FRC971GpuApriltagDetectorImpl
 {
 public:
     FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info,
-                                  const frc971::apriltag::InputFormat input_format);
+                                  const frc971::apriltag::InputFormat input_format,
+                                  const int min_white_black_diff = 5);
     virtual ~FRC971GpuApriltagDetectorImpl();
     void Detect(std::vector<GpuApriltagResult> &results,
                 std::vector<std::array<cv::Point2d, 4>> &rejected_margin_corners,

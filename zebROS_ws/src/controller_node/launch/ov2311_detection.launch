@@ -63,6 +63,7 @@
   <node pkg="nodelet" type="nodelet" name="apriltag_detection_$(arg camera_name)" args="load frc971_gpu_apriltag/FRC971GpuApriltagNodelet /$(arg nodelet_manager_name)" if="$(eval run_gpu_apriltag)" launch-prefix="$(arg launch_prefix)" output="screen" >
     <remap from="image_raw" to="/$(arg camera_name)/image_raw" />
     <remap from="/apriltag_$(arg camera_name)/apriltag_detection/tag_detection_msg" to="/apriltag_$(arg camera_name)/tag_detection_msg"/>
+    <rosparam file="$(find apriltag_launch)/config/detector_config.yaml" command="load"/>
   </node>
   <!--
     To collect profile info from the Jetson :

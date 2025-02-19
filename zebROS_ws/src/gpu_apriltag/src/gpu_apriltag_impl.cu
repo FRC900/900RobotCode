@@ -37,15 +37,15 @@ static frc971::apriltag::DistCoeffs getDistCoeffs(const sensor_msgs::CameraInfo:
   };
 }
 
-static apriltag_detector_t *makeTagDetector(apriltag_family_t *tag_family, const size_t num_threads, const bool debug = false)
+static apriltag_detector_t *makeTagDetector(apriltag_family_t *tag_family, const size_t num_threads, const int min_white_black_diff, const bool debug = false)
 {
     auto tag_detector = apriltag_detector_create();
 
     apriltag_detector_add_family_bits(tag_detector, tag_family, 1);
 
-    tag_detector->nthreads = 2;
+    tag_detector->nthreads = num_threads;
     tag_detector->wp = workerpool_create(tag_detector->nthreads);
-    tag_detector->qtp.min_white_black_diff = 5;
+    tag_detector->qtp.min_white_black_diff = min_white_black_diff;
     tag_detector->debug = debug;
 
     return tag_detector;
@@ -78,9 +78,10 @@ static void DestroyPose(apriltag_pose_t *pose)
 #endif
 
 FRC971GpuApriltagDetectorImpl::FRC971GpuApriltagDetectorImpl(const sensor_msgs::CameraInfo::ConstPtr &camera_info,
-                                                             const frc971::apriltag::InputFormat input_format)
+                                                             const frc971::apriltag::InputFormat input_format,
+                                                             const int min_white_black_diff)
     : tag_family_{tag36h11_create()}
-    , tag_detector_{makeTagDetector(tag_family_, 2, false)}
+    , tag_detector_{makeTagDetector(tag_family_, 2, min_white_black_diff, false)}
     , intrinsics_{cv::Mat(3, 3, CV_64F, const_cast<double *>(camera_info->K.data()))}
     , distortion_camera_matrix_{getCameraMatrix(camera_info)}
     , distortion_coefficients_{getDistCoeffs(camera_info)}

@@ -15,4 +15,16 @@ legal_tags:
     - 14
     - 15
     - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
 
+# Default is 5, which tends to detect a lot of false positives in the
+# first stage of detection.  Increasing this value will reduce the number
+# of false positives, but may also reduce detection rate a bit.
+# Since we already run at 60FPS x2 cameras we can afford to
+# leave it at the default for now.
+min_white_black_diff: 5

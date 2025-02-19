@@ -12,8 +12,8 @@
 
 namespace frc971_gpu_apriltag
 {
-    FRC971GpuApriltagDetector::FRC971GpuApriltagDetector(const sensor_msgs::CameraInfo::ConstPtr &camera_info, frc971::apriltag::InputFormat input_format)
-        : impl_{std::make_unique<FRC971GpuApriltagDetectorImpl>(camera_info, input_format)}
+    FRC971GpuApriltagDetector::FRC971GpuApriltagDetector(const sensor_msgs::CameraInfo::ConstPtr &camera_info, frc971::apriltag::InputFormat input_format, const int min_white_black_diff)
+        : impl_{std::make_unique<FRC971GpuApriltagDetectorImpl>(camera_info, input_format, min_white_black_diff)}
     {
     }
     FRC971GpuApriltagDetector::~FRC971GpuApriltagDetector() = default;
