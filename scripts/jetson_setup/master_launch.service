@@ -1,8 +1,8 @@
-# zebROS 2023
+# zebROS 2025
 # Copy this to /etc/systemd/system/ 
 
 [Unit]
-Description=2023 ROS Master Startup Script
+Description=2025 ROS Master Startup Script
 After=ntp.service
 
 [Service]

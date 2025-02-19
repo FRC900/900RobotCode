@@ -6,7 +6,9 @@ echo ubuntu | ssh -tt ${ADDRESS} sudo -kS systemctl stop ntp.service
 #echo ubuntu | ssh -tt ${ADDRESS} sudo -kS date -s @$(date -u +"%s")
 echo ubuntu | ssh -tt ${ADDRESS} sudo -kS ntpd -gqd >> /home/ubuntu/bagfiles/mounted.txt
 echo ubuntu | ssh -tt ${ADDRESS} sudo -kS systemctl start ntp.service
+echo ubuntu | ssh -tt ${ADDRESS} sudo -kS jetson_clocks
 echo ubuntu | ssh -tt ${ADDRESS} sudo -kS jetson_clocks --fan
 sleep 1
+echo ubuntu | ssh -tt ${ADDRESS} sudo -kS jetson_clocks
 echo ubuntu | ssh -tt ${ADDRESS} sudo -kS jetson_clocks --fan
 /bin/true
