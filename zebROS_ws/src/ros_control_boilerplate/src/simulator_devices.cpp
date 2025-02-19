@@ -4,7 +4,6 @@
 #include "ros_control_boilerplate/simulator_devices.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 #include "ctre_interfaces/talonfxpro_state_interface.h"
-#include "ctre_interfaces/talonfxpro_state_types.h"
 #include "ctre_interfaces/talonfxpro_sim_command_interface.h"
 #include "ctre_interfaces/cancoder_sim_command_interface.h"
 
