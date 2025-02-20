@@ -84,25 +84,7 @@ class Elevater2025ActionServer(object):
             self.result.success = False
             self.server.set_aborted(self.result)
             return
-        a = '''
-    
-            start = rospy.Time.now()
 
-            while goal.run_until_preempt or (not (rospy.is_shutdown() or (rospy.Time.now() - start).to_sec() > self.outtaking_time)):
-                rospy.loginfo_throttle(0.5, f"2024_intaking_server: outtaking")
-                    
-                if self.server.is_preempt_requested():
-                    rospy.loginfo("2024_intaking_server: preempted")
-
-                    # stop intake
-                    intake_srv = CommandRequest()
-                    intake_srv.command = 0.0
-                    self.intake_client.call(intake_srv)
-
-                    self.server.set_preempted()
-                    return
-                r.sleep()
-    '''
         # means we are going up, so limit switches must be in correct configuration (i.e off on avoid elevator and on roller)
         rospy.loginfo(f"Roller limit switch state {self.roller_limit_switch_val} avoid state {self.avoid_elevator_switch_val}")
         rospy.loginfo(f"Safe to run elevator {self.safe_to_send_elevator()}")
