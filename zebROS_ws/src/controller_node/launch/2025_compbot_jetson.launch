@@ -132,7 +132,7 @@
 	<include file="$(find tagslam_launch)/launch/2025_compbot_tagslam.launch" unless="$(eval hw_or_sim=='sim')"/>
 	
 	<include file="$(find controller_node)/launch/record_2025_compbot.launch" if="$(arg record)" />
-	<!-- Add me back! -->
-	<!-- <node pkg="behaviors" type="2025_fake_sim.py" name="fake_sim_2025" if="$(eval hw_or_sim=='sim')"/> -->
+	
+	<node pkg="behaviors" type="2025_fake_sim.py" name="fake_sim_2025" if="$(eval hw_or_sim=='sim')"/> 
 	
 </launch>
