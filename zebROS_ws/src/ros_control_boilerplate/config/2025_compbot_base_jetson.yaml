@@ -65,6 +65,7 @@ hardware_interface:
 
        - {name: intake_far_limit_switch, type: digital_input, local: false} # closest to the coral station, earliest detection
        - {name: intake_close_limit_switch, type: digital_input, local: false} # closest to outtake, later but 100% detection
+       - {name: elevator_avoid_limit_switch, type: digital_input, local: false} # also on outtake, must be past here not to run into elevator with a coral
        - {name: roller_limit_switch, type: digital_input, local: false} # on the outtake, use for determinig if we have shot a piece
 
        - {name: robot_code_ready_jetson, local: true, type: ready}

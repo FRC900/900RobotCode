@@ -39,16 +39,18 @@ hardware_interface:
 
        #- {name: pdh, type: pdh, module: 1}
 
+       # DIO ports are zero indexed.
+
        - {name: joystick0, type: joystick, id: 0, local: true}
        - {name: button_box, type: joystick, id: 1, local: true}
          #- {name: joystick2, type: joystick, id: 2, local: true}
        - {name: rumble0, type: rumble, port: 0, local: true}
        # limit switch example:
        # - {name: claw_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true} 
-       - {name: intake_far_limit_switch, type: digital_input, dio_channel: 7, invert: false, local: true} # closest to the coral station, earliest detection
-       - {name: intake_close_limit_switch, type: digital_input, dio_channel: 8, invert: false, local: true} # closest to outtake, later but 100% detection
-       - {name: elevator_avoid_limit_switch, type: digital_input, dio_channel: 10, invert: false, local: true} # also on outtake, must be past here not to run into elevator with a coral
-       - {name: roller_limit_switch, type: digital_input, dio_channel: 9, invert: false, local: true} # on the outtake, use for determinig if we have shot a piece
+       - {name: intake_far_limit_switch, type: digital_input, dio_channel: 7, invert: true, local: true} # closest to the coral station, earliest detection
+       - {name: intake_close_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true} # closest to outtake, later but 100% detection
+       - {name: elevator_avoid_limit_switch, type: digital_input, dio_channel: 0, invert: true, local: true} # also on outtake, must be past here not to run into elevator with a coral
+       - {name: roller_limit_switch, type: digital_input, dio_channel: 1, invert: true, local: true} # on the outtake, use for determinig if we have shot a piece
 
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}

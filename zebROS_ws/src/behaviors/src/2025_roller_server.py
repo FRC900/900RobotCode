@@ -21,14 +21,17 @@ class Roller2025ActionServer(object):
             switch_name: "roller_limit_switch"
         '''
         self.switch = 0
+        self.avoid_elevator_switch = 0
         self.switch_name = rospy.get_param('switch_name')
+        self.avoid_elevator_switch_name = rospy.get_param('avoid_elevator_switch_name')
         self.roller_speed = rospy.get_param('roller_speed')
+        self.slow_roller_speed = rospy.get_param('slow_roller_speed')
 
         self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback, tcp_nodelay=True)
 
         self.last_touched_diverter = rospy.Time()
 
-        rospy.loginfo(f"2025_roller_server: switch name: {self.switch_name}, roller speed: {self.roller_speed}")
+        rospy.loginfo(f"2025_roller_server: switch name: {self.switch_name}, avoid elevator switch name: {self.avoid_elevator_switch_name}, roller speed: {self.roller_speed}")
 
         self._as = actionlib.SimpleActionServer(self._action_name, Roller2025Action, execute_cb=self.execute_cb, auto_start = False)
         self._as.start()
@@ -42,7 +45,36 @@ class Roller2025ActionServer(object):
             rospy.loginfo("2025_roller_server: Roller intaking!")
             pct_out.data = self.roller_speed
             self.roller_client.call(CommandRequest(pct_out.data))
+
+            # wait for first switch, then slow down speed
+            while self.avoid_elevator_switch == 0 and not rospy.is_shutdown():
+                if self._as.is_preempt_requested():
+                    self._as.set_preempted()
+                    rospy.logwarn("2025_roller_server: Preempted!")
+                    pct_out.data = 0
+                    self.roller_client.call(CommandRequest(pct_out.data))
+                    success = False
+                    return
+                r.sleep()
+            
+            rospy.loginfo(f"2025_roller_server: first switch hit, slowing down to {self.slow_roller_speed}")
+
+            pct_out.data = self.slow_roller_speed
+            self.roller_client.call(CommandRequest(pct_out.data))
+
+            # make sure we get it
             while self.switch == 0 and not rospy.is_shutdown():
+                if self._as.is_preempt_requested():
+                    self._as.set_preempted()
+                    rospy.logwarn("2025_roller_server: Preempted!")
+                    pct_out.data = 0
+                    self.roller_client.call(CommandRequest(pct_out.data))
+                    success = False
+                    return
+                r.sleep()
+
+            # wait for first switch to be off so we don't intersect elevator
+            while self.avoid_elevator_switch == 1 and not rospy.is_shutdown():
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
                     rospy.logwarn("2025_roller_server: Preempted!")
@@ -88,8 +120,13 @@ class Roller2025ActionServer(object):
             self.switch = data.position[data.name.index(self.switch_name)]
             #rospy.loginfo(f"Found {self.switch_name} with value {self.switch}")
         else:
-            rospy.logwarn_throttle(1.0, f'2025_roller_server: {self.switch_name} not found')
+            rospy.logwarn_throttle(1.0, f"2025_roller_server: {self.switch_name} not found")
             pass
+
+        if self.avoid_elevator_switch_name in data.name:
+            self.avoid_elevator_switch = data.position[data.name.index(self.avoid_elevator_switch_name)]
+        else:
+            rospy.logwarn_throttle(1.0, f"2025_roller_server: {self.avoid_elevator_switch_name} not found")
 
 if __name__ == '__main__':
     rospy.init_node('roller_server_2025')

@@ -114,7 +114,7 @@ if __name__ == "__main__":
         try:
             trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
         except:
-            rospy.loginfo("2025_auto_rotating: Transform tree not up yet, skipping this cycle")
+            rospy.loginfo_throttle(1, "2025_auto_rotating: Transform tree not up yet, skipping this cycle")
             r.sleep()
             continue
         x = trans.transform.translation.x
