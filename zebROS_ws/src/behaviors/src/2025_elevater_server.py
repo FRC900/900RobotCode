@@ -5,6 +5,7 @@ import actionlib
 from behavior_actions.msg import Elevater2025Action, Elevater2025Goal, Elevater2025Feedback, Elevater2025Result
 from talon_state_msgs.msg import TalonFXProState
 from controllers_2025_msgs.srv import ElevatorSrv, ElevatorSrvRequest
+from sensor_msgs.msg import JointState
 
 class Elevater2025ActionServer(object):
 
@@ -27,8 +28,22 @@ class Elevater2025ActionServer(object):
 
         self.tolerance = rospy.get_param("tolerance")
 
+        self.avoid_elevator_switch_name = rospy.get_param("avoid_elevator_switch")
+        self.roller_limit_switch_name = rospy.get_param("outtake_switch")
+        
+        self.avoid_elevator_switch_val = 0
+        self.roller_limit_switch_val = 0
+        self.joint_state_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, callback=self.rio_callback, tcp_nodelay=True)
+
         self.server = actionlib.SimpleActionServer(name, Elevater2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
+
+    def rio_callback(self, data):
+        if self.avoid_elevator_switch_name in data.name and self.roller_limit_switch_name in data.name:
+            self.avoid_elevator_switch_val = data.position[data.name.index(self.avoid_elevator_switch_name)]
+            self.roller_limit_switch_val = data.position[data.name.index(self.roller_limit_switch_name)]
+        else:
+            rospy.logwarn_throttle(1.0, f'2025_elevater_server: switch not found')
 
     def talonfxpro_states_cb(self, states: TalonFXProState):
         if self.elevator_idx == None:
@@ -39,6 +54,9 @@ class Elevater2025ActionServer(object):
                     break
         else:
             self.current_position = states.position[self.elevator_idx]
+    
+    def safe_to_send_elevator(self) -> bool:
+        return (not self.avoid_elevator_switch_val) and (self.roller_limit_switch_val)
 
     def execute_cb(self, goal: Elevater2025Goal):
         r = rospy.Rate(50)
@@ -66,6 +84,24 @@ class Elevater2025ActionServer(object):
             self.result.success = False
             self.server.set_aborted(self.result)
             return
+
+        # means we are going up, so limit switches must be in correct configuration (i.e off on avoid elevator and on roller)
+        rospy.loginfo(f"Roller limit switch state {self.roller_limit_switch_val} avoid state {self.avoid_elevator_switch_val}")
+        rospy.loginfo(f"Safe to run elevator {self.safe_to_send_elevator()}")
+        if goal.mode != goal.INTAKE:
+            start = rospy.Time.now()
+            while not ((rospy.Time.now() - start).to_sec() > 1.0):
+                if self.safe_to_send_elevator():
+                    rospy.loginfo("Limit switches correct!, Bringing elevator up")
+                    break
+                else:
+                    rospy.logwarn_throttle(0.5, "Not bringing elevator up because limit switches not correct! Waiting up to 1 second")
+                r.sleep()
+            if not self.safe_to_send_elevator():
+                rospy.logerr("Elevator timeout failed, check limit switches, exiting")
+                self.result.success = False
+                self.server.set_aborted(self.result)
+                return
 
         rospy.loginfo(f"2025_elevater_server: going to position {target_pos_str} = {target_pos} m")
         req = ElevatorSrvRequest()
