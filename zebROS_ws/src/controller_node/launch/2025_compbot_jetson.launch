@@ -52,7 +52,7 @@
 			 candle_controller
 			 candle_state_controller
 			 cancoder_state_controller
-			 
+			 swerve_drive_controller
 			 elevator_controller
 			 intake_controller
 			 roller_controller
@@ -60,7 +60,7 @@
 			 robot_code_ready_controller" />
 			 <!--
 			 Add elevator_follower_controller when testing, remove it when actually using real controller
-			 swerve_drive_controller
+			 
 			 roller_controller
 			 orchestra_controller
 			 orchestra_state_controller
