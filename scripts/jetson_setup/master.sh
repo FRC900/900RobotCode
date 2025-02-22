@@ -46,11 +46,14 @@ done
 export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 
+# sudo /home/ubuntu/900RobotCode/scripts/jetson_setup/clocks.sh &
+sudo nvpmodel -m 0
+sudo /usr/bin/jetson_clocks
+sudo /usr/bin/jetson_clocks --fan
+
 echo "mounted / recording" >> /home/ubuntu/bagfiles/mounted.txt
 /home/ubuntu/900RobotCode/zebROS_ws/ROSJetsonMaster.sh roslaunch controller_node 2025_compbot_combined.launch record:=true
 # TODO - enable recording for comp
 #record:=true
 
 top -b > /home/ubuntu/bagfiles/$(date +%Y%m%d%H%M%S)_top_log.txt
-
-/home/ubuntu/900RobotCode/scripts/jetson_setup/clocks.sh &

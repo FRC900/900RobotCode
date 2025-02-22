@@ -7,6 +7,7 @@
 	<arg name="run_calibrator"       default="false" />
 	<arg name="ip_underscore"                        />
 
+
 	<include file="$(find controller_node)/launch/dual_ov2311_detection.launch" >
 		<arg name="run_camera"       value="$(arg run_camera)" />
 		<arg name="static_image"     value="$(arg static_image)" />
