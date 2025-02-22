@@ -1,8 +1,12 @@
-x_tolerance: 0.1
-y_tolerance: 0.1
-angle_tolerance: 0.1
+x_tolerance: 0.03
+y_tolerance: 0.03
+angle_tolerance: 0.05
 min_x_vel: 1
 min_y_vel: 1
 fast_zone: 2
-reef_x_transform: 1.0
-reef_y_transform: -0.5
+
+# To update these from real life:
+# rosrun tf2_tools echo.py base_link tag_8 # (or replace tag 8 with whatever tag you're at)
+# Transform trees are incredibly powerful :)
+reef_x_transform: 0.53
+reef_y_transform: -0.15

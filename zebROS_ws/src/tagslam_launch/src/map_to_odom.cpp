@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace tf2
@@ -44,7 +45,7 @@ std::string tagslam_baselink = "frc_robot";
 
 ros::Time last_published{};
 
-void updateMapOdomTf(const tf2_ros::Buffer &tf_buffer, tf2_ros::TransformBroadcaster &tfbr
+void updateMapOdomTf(const tf2_ros::Buffer &tf_buffer, tf2_ros::StaticTransformBroadcaster &tfbr
 ) {
     // This will only be called from a timer event, meaning that we should
     // already be up to date with the latest tagslam transform
@@ -121,7 +122,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh_;
   tf2_ros::Buffer tf_buffer;
   tf2_ros::TransformListener tf_listener(tf_buffer);
-  tf2_ros::TransformBroadcaster tfbr;
+  tf2_ros::StaticTransformBroadcaster tfbr;
 
   double map_to_odom_rate;
   nh_.param<double>("map_to_odom_rate", map_to_odom_rate, 250.0);
