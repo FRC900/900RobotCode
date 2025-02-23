@@ -34,6 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_frcrobot_control
   gazebo_dev
   pluginlib
+  simulator_interface
 )
 ign_import_target(UUID)
 pkg_check_modules(TBB tbb)
@@ -96,6 +97,7 @@ catkin_package(
 	std_msgs
 	ctre_interfaces
 	trajectory_msgs
+	simulator_interface
   LIBRARIES
 )
 
@@ -465,6 +467,8 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		src/sim_talonfxpro_device.cpp
 		# src/sparkmax_sim_device.cpp
 		src/talonfxpro_sim_devices.cpp
+		src/simulator_device.cpp
+		src/simulator_devices.cpp
 	)
 	# set_source_files_properties(
 	# src/ctre_v5_motor_controller_hw_device.cpp
