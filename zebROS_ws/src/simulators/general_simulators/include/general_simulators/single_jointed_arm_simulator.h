@@ -152,7 +152,9 @@ class SingleJointedArmSimulator : public simulator_base::Simulator
     private:
         std::unique_ptr<frc::sim::SingleJointedArmSim> single_jointed_arm_sim_;
         bool set_initial_position_ = false;
-        double min_angle_, max_angle_, starting_angle_;
+        double min_angle_;
+        double max_angle_;
+        double starting_angle_;
 };
 
 };
