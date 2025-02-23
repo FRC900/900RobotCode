@@ -1,6 +1,6 @@
 #!/bin/bash
 
-log=/mnt/900_2/$(date +%Y%m%d%H%M%S)_gs_usb_log.txt
+log=/home/ubuntu/bagfiles/$(date +%Y%m%d%H%M%S)_gs_usb_log.txt
 
 echo "Running can_up.sh" > $log
 

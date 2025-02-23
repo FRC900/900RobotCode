@@ -34,9 +34,6 @@ do
 done
 
 /home/ubuntu/900RobotCode/scripts/jetson_setup/wait_for_ssh.sh 10.9.0.2 22 >> /home/ubuntu/bagfiles/mounted.txt
-#ssh 10.9.0.2 /etc/init.d/ntpd stop
-#ssh 10.9.0.2 date -s @$(date -u +"%s")
-#ssh 10.9.0.2 /etc/init.d/ntpd start
 
 for i in "${JETSON_PROCESSES[@]}"
 do
@@ -46,10 +43,7 @@ done
 export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 
-# sudo /home/ubuntu/900RobotCode/scripts/jetson_setup/clocks.sh &
-sudo nvpmodel -m 0
-sudo /usr/bin/jetson_clocks
-sudo /usr/bin/jetson_clocks --fan
+/home/ubuntu/900RobotCode/scripts/jetson_setup/clocks.sh
 
 echo "mounted / recording" >> /home/ubuntu/bagfiles/mounted.txt
 /home/ubuntu/900RobotCode/zebROS_ws/ROSJetsonMaster.sh roslaunch controller_node 2025_compbot_combined.launch record:=true
