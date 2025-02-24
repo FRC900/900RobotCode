@@ -50,11 +50,9 @@ def talon_states_callback(states: TalonFXProState):
 def simulate_intaking():
     rospy.loginfo("intake success!")
     try:
-        linebreak_service(0, "intake_far_limit_switch", True)
-        linebreak_service(0, "intake_close_limit_switch", True)
+        linebreak_service(0, "elevator_avoid_limit_switch", True)
         rospy.sleep(0.3)
-        linebreak_service(0, "intake_far_limit_switch", False)
-        linebreak_service(0, "intake_close_limit_switch", False)
+        linebreak_service(0, "elevator_avoid_limit_switch", False)
         linebreak_service(0, "roller_limit_switch", True)
     except rospy.ServiceException as e:
         rospy.logerr(f"linebreak_service call failed: {e}")

@@ -703,6 +703,7 @@ int main(int argc, char **argv)
 
 	auto_calculator = std::make_unique<AutoModeCalculator2025>(n);
 	path_follower_ac = std::make_unique<actionlib::SimpleActionClient<path_follower_msgs::PathAction>>("/path_follower/path_follower_server", true);
+	align_and_place_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>>("/align_and_place/alignandplaceing_server", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 

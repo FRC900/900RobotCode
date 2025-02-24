@@ -136,10 +136,11 @@ if __name__ == "__main__":
         if has_game_piece:
             closest_reef_dist, tag_x, tag_y = closest_reef
             closest_tag = (tag_x, tag_y)
-            if intake_running:
-                rospy.loginfo("Running intake")
-                intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
-                intake_running = False
+            # intake should stop automatically once we get a game piece
+            # if intake_running:
+            #     rospy.loginfo("Running intake")
+            #     intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
+            #     intake_running = False
         else: 
             closest_coral_dist, tag_x, tag_y = closest_coral
             closest_tag = (tag_x, tag_y)

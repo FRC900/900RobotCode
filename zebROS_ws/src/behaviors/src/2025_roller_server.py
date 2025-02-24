@@ -6,7 +6,9 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
 from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse
 from talon_state_msgs.msg import TalonFXProState
+from frc_msgs.srv import RumbleCommand, RumbleCommandRequest
 import actionlib
+import time
 
 class Roller2025ActionServer(object):
     # create messages that are used to publish feedback/result
@@ -14,6 +16,7 @@ class Roller2025ActionServer(object):
 
     def __init__(self, name):
         self.roller_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
+        self.rumble_client = rospy.ServiceProxy(f"/frcrobot_rio/rumble_controller/command", RumbleCommand)
         self._action_name = name
         '''
             roller_speed: 0.4
@@ -114,6 +117,13 @@ class Roller2025ActionServer(object):
 
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
+
+        # haptic feedback on intake/outtake
+        self.rumble_client.call(RumbleCommandRequest(65535, 65535))
+
+        time.sleep(0.25)
+
+        self.rumble_client.call(RumbleCommandRequest(0, 0))
 
     def callback(self, data):
         if self.switch_name in data.name:
