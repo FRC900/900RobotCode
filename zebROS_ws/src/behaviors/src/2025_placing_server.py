@@ -94,8 +94,12 @@ class PlacingServer(object):
             self.server.set_aborted(self.result)
             return
         
+        self.result.success = True
+        rospy.loginfo("placing_server_2025: succeeded")
+        self.server.set_succeeded(self.result)
+        
         # Lower elevator
-        self.elevater_client.send_goal(Elevater2025Goal(mode=Elevater2025Goal.L1), done_cb=elevater_done_cb)
+        self.elevater_client.send_goal(Elevater2025Goal(mode=Elevater2025Goal.INTAKE), done_cb=elevater_done_cb)
         
         elevator_done = False
         elevator_success = False
@@ -113,10 +117,6 @@ class PlacingServer(object):
             self.result.success = False
             self.server.set_aborted(self.result)
             return
-
-        self.result.success = True
-        rospy.loginfo("placing_server_2025: succeeded")
-        self.server.set_succeeded(self.result)
 
 
 if __name__ == '__main__':
