@@ -1,27 +1,28 @@
 bl_cancoder_controller:
     type:       cancoder_controller/CANCoderController
     joint_name: bl_cancoder
-    magnet_offset: 1.20571
-    dynamic_reconfigure: True
+    magnet_offset: 1.21491
+    dynamic_reconfigure: False
     enable_read_thread: False
 
 br_cancoder_controller:
     type:       cancoder_controller/CANCoderController
     joint_name: br_cancoder
-    magnet_offset:  0.441786
-    dynamic_reconfigure: True
+    magnet_offset: 0.454058
+    dynamic_reconfigure: False
     enable_read_thread: False
 
 fl_cancoder_controller:
     type:       cancoder_controller/CANCoderController
     joint_name: fl_cancoder
-    magnet_offset: 1.7334
-    dynamic_reconfigure: True
+    magnet_offset: 1.72113
+    dynamic_reconfigure: False
     enable_read_thread: False
 
 fr_cancoder_controller:
     type:       cancoder_controller/CANCoderController
     joint_name: fr_cancoder
-    magnet_offset: 0.696427
-    dynamic_reconfigure: True
+    magnet_offset: 0.720971
+    dynamic_reconfigure: False
     enable_read_thread: False
+

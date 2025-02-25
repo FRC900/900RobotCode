@@ -107,18 +107,21 @@ class Aligner:
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
     def odometry_callback(self, odom_msg: Odometry):
-        pose_stamped = geometry_msgs.msg.PoseStamped()
-        pose_stamped.header = odom_msg.header
-        pose_stamped.pose = odom_msg.pose.pose
-        self.latest_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped, self.tf_buffer.lookup_transform("odom", "map", rospy.Time()))
+        try:
+            pose_stamped = geometry_msgs.msg.PoseStamped()
+            pose_stamped.header = odom_msg.header
+            pose_stamped.pose = odom_msg.pose.pose
+            self.latest_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped, self.tf_buffer.lookup_transform("odom", "map", rospy.Time()))
 
-        vel_pose = geometry_msgs.msg.PoseStamped()
-        vel_pose.header = odom_msg.header
-        vel_pose.pose.position.x = odom_msg.twist.twist.linear.x
-        vel_pose.pose.position.y = odom_msg.twist.twist.linear.y
-        vel_pose.pose.position.z = odom_msg.twist.twist.linear.z
-        vel_pose.pose.orientation.x, vel_pose.pose.orientation.y, vel_pose.pose.orientation.z, vel_pose.pose.orientation.w = quaternion_from_euler(0, 0, odom_msg.twist.twist.angular.z)
-        self.latest_vel_pose = tf2_geometry_msgs.do_transform_pose(vel_pose, self.tf_buffer.lookup_transform("odom", "map", rospy.Time()))
+            vel_pose = geometry_msgs.msg.PoseStamped()
+            vel_pose.header = odom_msg.header
+            vel_pose.pose.position.x = odom_msg.twist.twist.linear.x
+            vel_pose.pose.position.y = odom_msg.twist.twist.linear.y
+            vel_pose.pose.position.z = odom_msg.twist.twist.linear.z
+            vel_pose.pose.orientation.x, vel_pose.pose.orientation.y, vel_pose.pose.orientation.z, vel_pose.pose.orientation.w = quaternion_from_euler(0, 0, odom_msg.twist.twist.angular.z)
+            self.latest_vel_pose = tf2_geometry_msgs.do_transform_pose(vel_pose, self.tf_buffer.lookup_transform("odom", "map", rospy.Time()))
+        except Exception as e:
+            rospy.logerr_throttle(1.0, f"2025_align_to_reef_tagslam_base_traj: tf tree likely not up yet, exception: {e}")
 
     def match_data_callback(self, data_msg):
         self.color = data_msg.allianceColor
