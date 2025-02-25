@@ -12,6 +12,9 @@ from std_srvs.srv import SetBool, SetBoolResponse
 import actionlib 
 from behavior_actions.msg import Intaking2025Action, Intaking2025Goal
 
+# need to stop intaking when away from coral station
+# could publish orient strafing control effort to a cmd vel topic that has lower priority than teleop so we autorotate when not driving
+
 RED_TAGS = [
     # (x, y, is_on_reef)
     (13.474, 3.306, True), # 6
@@ -137,10 +140,10 @@ if __name__ == "__main__":
             closest_reef_dist, tag_x, tag_y = closest_reef
             closest_tag = (tag_x, tag_y)
             # intake should stop automatically once we get a game piece
-            # if intake_running:
-            #     rospy.loginfo("Running intake")
-            #     intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
-            #     intake_running = False
+            if intake_running:
+                rospy.loginfo("Not running intake anymore")
+                # intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                intake_running = False
         else: 
             closest_coral_dist, tag_x, tag_y = closest_coral
             closest_tag = (tag_x, tag_y)
@@ -150,6 +153,9 @@ if __name__ == "__main__":
                 intake_running = True
                 intake_goal = Intaking2025Goal()
                 intaking_client.send_goal(intake_goal)
+            else:
+                intake_running = False
+                intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
         #rospy.loginfo(f"{tag_x, tag_y}") 
         dist_sq = min(closest_coral[0], closest_reef[0])
 
