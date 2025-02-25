@@ -99,6 +99,7 @@ double driveBaseRadius;
 KinematicConstraints<TrajectoryPointType> kinematicConstraints;
 
 MessageFilter messageFilter(true);
+bool writeMatlabFiles{false};
 
 int optimizationCounterMax;
 
@@ -2031,11 +2032,22 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 
 		geometry_msgs::PoseStamped input_velocity_pose;
 		input_velocity_pose.header = header;
-		input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
-		input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
-		tf2::Quaternion velocity_quaternion;
-		velocity_quaternion.setRPY(0, 0, msg.points[i].velocities[2]);
-		input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		if (msg.points[i].velocities.size() >= 3)
+		{
+			input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
+			input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
+			tf2::Quaternion velocity_quaternion;
+			velocity_quaternion.setRPY(0, 0, msg.points[i].velocities[2]);
+			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		}
+		else
+		{
+			input_velocity_pose.pose.position.x = 0;
+			input_velocity_pose.pose.position.y = 0;
+			tf2::Quaternion velocity_quaternion;
+			velocity_quaternion.setRPY(0, 0, 0);
+			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		}
 		input_velocity_waypoints.poses.push_back(input_velocity_pose);
 
 		if (msg.header.frame_id == "map")
@@ -2262,6 +2274,8 @@ int main(int argc, char **argv)
 	nh.param("path_dist_between_arc_lengths_epsilon", pathDistBetweenArcLengthsEpsilon, 0.01);
 	ddr.registerVariable<double>("path_dist_between_arc_lengths", &pathDistBetweenArcLengths, "spacing of waypoints along final generated path", 0, 2);
 	ddr.registerVariable<double>("path_dist_between_arc_lengths_epsilon", &pathDistBetweenArcLengthsEpsilon, "error tolerance for final path waypoint spacing", 0, 2);
+	nh.param("write_matlab_files", writeMatlabFiles, writeMatlabFiles);
+	ddr.registerVariable<bool>("write_matlab_files", &writeMatlabFiles, "write matlab files for debugging", false, true);
 
 #if 0  // RPROP not used
 	nh.param("initial_delta_cost_epsilon", initialDeltaCostEpsilon, 0.05);
