@@ -22,7 +22,8 @@ from std_msgs.msg import String
 IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.TestCmdVel,
                                     1: AutonomousNames.TwoCoralNonProcessor,
                                     2: AutonomousNames.ThreeCoralNonProcessor,
-                                    3: AutonomousNames.FourCoralNonProcessor}
+                                    3: AutonomousNames.FourCoralNonProcessor,
+                                    4: AutonomousNames.TestDriveForwardBack}
 
 
 class AutoNode():

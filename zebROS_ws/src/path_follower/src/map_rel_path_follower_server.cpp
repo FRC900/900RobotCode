@@ -452,6 +452,7 @@ class PathAction
 
 				// NOTE: this is enforcing zero velocity at the end of a path
 				// If we want to end with a nonzero velocity, need to transform vel to be odom-relative to compare with robot velocity
+				// Right now, there's a bug where pf will think it finished immediately when start == end
 				if ((fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
 					(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) < final_rot_tol) &&

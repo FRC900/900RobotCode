@@ -1,5 +1,5 @@
 # Top-level world file for the rapid react field stage simulation
-include "robots/2023FRC_robot.inc"
+include "robots/2025FRC_robot.inc"
 
 # Object detection model - used as a base for each target
 # we can detect using tensorflow object detection
