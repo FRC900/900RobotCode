@@ -2303,7 +2303,7 @@ int main(int argc, char **argv)
 	nh.param("use_obstacle_cost", useObstacleCost, true);
 	if (useObstacleCost)
 	{
-		costmap = std::make_shared<costmap_2d::Costmap2DROS>("/costmap", *tfBuffer);
+		costmap = std::make_shared<costmap_2d::Costmap2DROS>("costmap", *tfBuffer);
 	}
 
 	int obstacleCostThreshold;
