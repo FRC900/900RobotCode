@@ -1,0 +1,6 @@
+image: 2025_reefscape_field.png
+resolution: 0.01457641196013289
+origin: [0, 0, 0]
+occupied_thresh: 0.65
+free_thresh: 0.196
+negate: 0

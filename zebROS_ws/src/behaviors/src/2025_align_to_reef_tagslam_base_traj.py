@@ -18,6 +18,7 @@ from path_follower_msgs.msg import PathGoal, PathFeedback, PathResult, PathActio
 from base_trajectory_msgs.srv import GenerateSpline, GenerateSplineRequest, GenerateSplineResponse
 from trajectory_msgs.msg import JointTrajectoryPoint
 from nav_msgs.msg import Odometry
+from base_trajectory_msgs.msg import PathOffsetLimit
 
 # Choose closest reef face based on robot angle
 # Then find tag location and drive to it using PID on x, y, angle
@@ -191,6 +192,14 @@ class Aligner:
         pipe_pose.pose.orientation = map_to_pipe.transform.rotation
 
         req = GenerateSplineRequest()
+        req.header.frame_id = "map"
+        pol = PathOffsetLimit()
+        pol.min_x = -1
+        pol.max_x = 1
+        pol.min_y = -1
+        pol.max_y = 1
+        req.path_offset_limit.append(pol)
+        req.path_offset_limit.append(PathOffsetLimit()) # end must be exact
         req.points.append(JointTrajectoryPoint(positions=[self.latest_pose.pose.position.x, self.latest_pose.pose.position.y, euler_from_quaternion([self.latest_pose.pose.orientation.x, self.latest_pose.pose.orientation.y, self.latest_pose.pose.orientation.z, self.latest_pose.pose.orientation.w])[2]], velocities=[self.latest_vel_pose.pose.position.x, self.latest_vel_pose.pose.position.y, euler_from_quaternion([self.latest_vel_pose.pose.orientation.x, self.latest_vel_pose.pose.orientation.y, self.latest_vel_pose.pose.orientation.z, self.latest_vel_pose.pose.orientation.w])[2]])) # insert current robot pose
         req.points.append(JointTrajectoryPoint(positions=[pipe_pose.pose.position.x, pipe_pose.pose.position.y, yaw], velocities=[0, 0, 0]))
         gen_path: GenerateSplineResponse = self.base_trajectory_client.call(req)
