@@ -15,6 +15,7 @@
 #include "pid_velocity_msg/PIDVelocity.h"
 #include <angles/angles.h>
 #include <std_srvs/SetBool.h>
+#include <nav_msgs/Odometry.h>
 
 #define DEBUG
 
@@ -38,9 +39,14 @@ class PathAction
 		ros::Publisher robot_relative_yaw_pub_;
 		ros::Publisher zero_cmd_vel_pub_;
 
+		ros::Subscriber odom_sub_;
+		nav_msgs::Odometry latest_odom_;
+
 		PathFollower path_follower_;
 		double final_pos_tol_;
+		double final_vel_tol_;
 		double final_rot_tol_;
+		double final_angvel_tol_;
 		double server_timeout_;
 
 		bool debug_;
@@ -59,7 +65,9 @@ class PathAction
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
 				   double final_pos_tol,
+				   double final_vel_tol,
 				   double final_rot_tol,
+				   double final_angvel_tol,
 				   double server_timeout,
 				   double ros_rate,
 				   double time_offset,
@@ -72,9 +80,12 @@ class PathAction
 			, orientation_command_pub_(nh_.advertise<pid_velocity_msg::PIDVelocity>("/teleop/velocity_orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
+			, odom_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/odom", 1, &PathAction::odomCallback, this))
 			, path_follower_(time_offset)
 			, final_pos_tol_(final_pos_tol)
+			, final_vel_tol_(final_vel_tol)
 			, final_rot_tol_(final_rot_tol)
+			, final_angvel_tol_(final_angvel_tol)
 			, server_timeout_(server_timeout)
 			, debug_(debug)
 			, ros_rate_(ros_rate)
@@ -94,6 +105,10 @@ class PathAction
 		{
 			paused_ = req.data;
 			return true;
+		}
+
+		void odomCallback(const nav_msgs::Odometry &odom_msg) {
+			latest_odom_ = odom_msg;
 		}
 
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
@@ -155,7 +170,9 @@ class PathAction
 			// ROS_INFO_STREAM("Diff between tf and now " << ros::Time::now() - map_to_baselink_.header.stamp); 
 
 			const double final_pos_tol = (goal->final_pos_tol > 0) ? goal->final_pos_tol : final_pos_tol_;
+			const double final_vel_tol = (goal->final_vel_tol > 0) ? goal->final_vel_tol : final_vel_tol_;
 			const double final_rot_tol = (goal->final_rot_tol > 0) ? goal->final_rot_tol : final_rot_tol_;
+			const double final_angvel_tol = (goal->final_angvel_tol > 0) ? goal->final_angvel_tol : final_angvel_tol_;
 			// ROS_INFO_STREAM("Path following with final_pos_tol = " << final_pos_tol << " final_rot_tol = " << final_rot_tol);
 
 			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
@@ -265,8 +282,13 @@ class PathAction
 					#endif
 				}
 
+				// NOTE: this is enforcing zero velocity at the end of a path
+				// If we want to end with a nonzero velocity, need to transform vel to be odom-relative to compare with robot velocity
 				if ((fabs(goal->position_path.poses[0].pose.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(goal->position_path.poses[0].pose.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
+					(fabs(latest_odom_.twist.twist.linear.x) < final_vel_tol) &&
+					(fabs(latest_odom_.twist.twist.linear.y) < final_vel_tol) &&
+					(fabs(latest_odom_.twist.twist.angular.z) < final_angvel_tol) &&
 					(angles::shortest_angular_distance(command_msg.position, orientation_state) < final_rot_tol))
 				{
 					ROS_INFO_STREAM("path_follower: successfully aligned to initial waypoint");
@@ -427,9 +449,15 @@ class PathAction
 				
 				auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_).count();
 				// ROS_INFO_STREAM("Path follower calculations took " << duration);
+
+				// NOTE: this is enforcing zero velocity at the end of a path
+				// If we want to end with a nonzero velocity, need to transform vel to be odom-relative to compare with robot velocity
 				if ((fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
 					(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) < final_rot_tol) &&
+					(fabs(latest_odom_.twist.twist.linear.x) < final_vel_tol) &&
+					(fabs(latest_odom_.twist.twist.linear.y) < final_vel_tol) &&
+					(fabs(latest_odom_.twist.twist.angular.z) < final_angvel_tol) &&
 					(current_index >= (goal->position_path.poses.size() - 2)))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
@@ -585,7 +613,9 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 
 	double final_pos_tol = 0.01;
+	double final_vel_tol = 0.1;
 	double final_rot_tol = 0.01;
+	double final_angvel_tol = 0.1;
 	double server_timeout = 15.0;
 	double ros_rate = 20;
 	double time_offset = 0;
@@ -594,7 +624,9 @@ int main(int argc, char **argv)
 	std::string map_frame;
 
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
+	nh.getParam("/path_follower/path_follower/final_vel_tol", final_vel_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
+	nh.getParam("/path_follower/path_follower/final_angvel_tol", final_angvel_tol);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
@@ -604,7 +636,9 @@ int main(int argc, char **argv)
 
 	PathAction path_action_server("path_follower_server", nh,
 								  final_pos_tol,
+								  final_vel_tol,
 								  final_rot_tol,
+								  final_angvel_tol,
 								  server_timeout,
 								  ros_rate,
 								  time_offset,
