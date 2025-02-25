@@ -255,7 +255,7 @@ class PathAction
 
 				initial_feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - goal->position_path.poses[0].pose.position.x);
 				initial_feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - goal->position_path.poses[0].pose.position.y);
-				initial_feedback.angle_error = std::fabs(path_follower_.getYaw(map_to_baselink_.transform.rotation) - path_follower_.getYaw(goal->position_path.poses[0].pose.orientation));
+				initial_feedback.angle_error = angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(goal->position_path.poses[0].pose.orientation));
 				as_.publishFeedback(initial_feedback);
 
 				enable_msg.data = true;
@@ -401,7 +401,7 @@ class PathAction
 
 				feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - next_waypoint.position.position.x);
 				feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - next_waypoint.position.position.y);
-				feedback.angle_error = std::fabs(path_follower_.getYaw(map_to_baselink_.transform.rotation) - path_follower_.getYaw(next_waypoint.position.orientation));
+				feedback.angle_error = angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(next_waypoint.position.orientation));
 
 				as_.publishFeedback(feedback);
 #ifdef DEBUG
