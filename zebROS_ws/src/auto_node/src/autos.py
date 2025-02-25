@@ -9,6 +9,7 @@ from TestCmdVel import TestCmdVel
 from TestCmdVelCircle import TestCmdVelCircle
 from TwoCoralNonProcessor import TwoCoralNonProcessor
 from FourCoralNonProcessor import FourCoralNonProcessor
+from FourCoralProcessor import FourCoralProcessor
 from ThreeCoralNonProcessor import ThreeCoralNonProcessor
 from TestDriveForwardBack import TestDriveForwardBack
 
@@ -20,6 +21,7 @@ class AutonomousNames(str, Enum):
     ThreeCoralNonProcessor = "2025_3_Coral"
     FourCoralNonProcessor = "2025_4_Coral"
     TestDriveForwardBack = "test_drive_forward_back"
+    FourCoralProcessor = "2025_4_Coral_Processor_Side"
 
     def __str__(self) -> str:
         return str.__str__(self)
@@ -36,5 +38,6 @@ def init_auto_selection_map() -> dict[AutonomousNames, AutoBase]:
         AutonomousNames.TwoCoralNonProcessor: TwoCoralNonProcessor(),
         AutonomousNames.FourCoralNonProcessor: FourCoralNonProcessor(),
         AutonomousNames.ThreeCoralNonProcessor: ThreeCoralNonProcessor(),
-        AutonomousNames.TestDriveForwardBack: TestDriveForwardBack()
+        AutonomousNames.TestDriveForwardBack: TestDriveForwardBack(),
+        AutonomousNames.FourCoralProcessor: FourCoralProcessor()
     }

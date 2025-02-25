@@ -153,7 +153,7 @@ if __name__ == "__main__":
                 intake_running = True
                 intake_goal = Intaking2025Goal()
                 intaking_client.send_goal(intake_goal)
-            else:
+            elif closest_coral_dist >= 2.0:
                 intake_running = False
                 intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
         #rospy.loginfo(f"{tag_x, tag_y}") 

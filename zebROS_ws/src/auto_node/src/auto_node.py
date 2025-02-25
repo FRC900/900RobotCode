@@ -23,7 +23,8 @@ IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.TestCmdVel,
                                     1: AutonomousNames.TwoCoralNonProcessor,
                                     2: AutonomousNames.ThreeCoralNonProcessor,
                                     3: AutonomousNames.FourCoralNonProcessor,
-                                    4: AutonomousNames.TestDriveForwardBack}
+                                    4: AutonomousNames.TestDriveForwardBack,
+                                    5: AutonomousNames.FourCoralProcessor}
 
 
 class AutoNode():
