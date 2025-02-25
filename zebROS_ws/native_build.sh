@@ -55,7 +55,6 @@ catkin config --skiplist \
 	ackermann_steering_controller \
 	adi_driver \
 	adi_pico_driver \
-	base_trajectory \
 	chomp_motion_planner \
 	color_spin \
 	controllers_2019 \
