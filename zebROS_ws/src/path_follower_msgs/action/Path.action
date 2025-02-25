@@ -7,7 +7,9 @@ int32[] waypointsIdx # waypoints are largely irrelvent with paths being split up
 # Linear and angular tolerances for finishing path
 # Set to non-zero to override config defaults
 float64 final_pos_tol
+float64 final_vel_tol
 float64 final_rot_tol
+float64 final_angvel_tol
 
 bool dont_go_to_start
 ---
