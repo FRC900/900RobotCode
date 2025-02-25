@@ -2020,13 +2020,25 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		input_position_pose.pose.orientation = tf2::toMsg(quaternion);
 		input_position_waypoints.poses.push_back(input_position_pose);
 
+		
 		geometry_msgs::PoseStamped input_velocity_pose;
 		input_velocity_pose.header = header;
-		input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
-		input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
-		tf2::Quaternion velocity_quaternion;
-		velocity_quaternion.setRPY(0,0,msg.points[i].velocities[2]);
-		input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		if (msg.points[i].velocities.size() >= 3)
+		{
+			input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
+			input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
+			tf2::Quaternion velocity_quaternion;
+			velocity_quaternion.setRPY(0, 0, msg.points[i].velocities[2]);
+			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		}
+		else
+		{
+			input_velocity_pose.pose.position.x = 0;
+			input_velocity_pose.pose.position.y = 0;
+			tf2::Quaternion velocity_quaternion;
+			velocity_quaternion.setRPY(0, 0, 0);
+			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+		}
 		input_velocity_waypoints.poses.push_back(input_velocity_pose);
 
 		if (msg.header.frame_id == "map")

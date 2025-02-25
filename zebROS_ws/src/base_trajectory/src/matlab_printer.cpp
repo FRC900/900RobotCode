@@ -225,6 +225,7 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 	str << "title('" << label << "')" << std::endl;
 	str << "plot(path_t_" << figureNum << ", path_x_" << figureNum << ", path_t_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
 	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Position')" << std::endl;
 	str << "subplot(2,3,2)" << std::endl;
 	str << "plot(path_t_" << figureNum << ", path_r_" << figureNum << ", path_t_" << figureNum << ", path_dr_" << figureNum << ")" << std::endl;
 	str << "xlabel('T(seconds)')" << std::endl;
@@ -323,6 +324,7 @@ void writeMatlabPathNew(const std::vector<geometry_msgs::PoseStamped> &poses,
 	str << "title('" << label << "')" << std::endl;
 	str << "plot(path_t_" << figureNum << ", path_x_" << figureNum << ", path_t_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
 	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Position')" << std::endl;
 	str << "subplot(2,3,2)" << std::endl;
 	str << "plot(path_t_" << figureNum << ", path_r_" << figureNum << ", path_t_" << figureNum << ", path_dr_" << figureNum << ")" << std::endl;
 	str << "xlabel('T(seconds)')" << std::endl;
