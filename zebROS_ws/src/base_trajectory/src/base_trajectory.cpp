@@ -358,6 +358,13 @@ bool generateSpline(const std::vector<trajectory_msgs::JointTrajectoryPoint> &po
 		//points[i].positions[1] += optParams[i].posY_;
 	}
 
+	initSplinePoints[0].state[0].velocity = points[0].velocities[0];
+	initSplinePoints[0].state[1].velocity = points[0].velocities[1];
+	initSplinePoints[0].state[2].velocity = points[0].velocities[2];
+
+	initSplinePoints.back().state[0].velocity = points.back().velocities[0];
+	initSplinePoints.back().state[1].velocity = points.back().velocities[1];
+	initSplinePoints.back().state[2].velocity = points.back().velocities[2];
 	// Auto - generate velocities and accelerations for splines
 	// based on a simple heuristic. This is becoming less simple
 	// by the moment.
@@ -1880,8 +1887,10 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 
 	// Splines segments are each 1 arbitrary unit long.
 	// This later gets mapped to actual wall-clock times
-	for (size_t i = 0; i < msg.points.size(); ++i)
+	for (size_t i = 0; i < msg.points.size(); ++i) 
+	{
 		msg.points[i].time_from_start = ros::Duration(static_cast<double>(i));
+	}
 
 	// Operate in two modes
 	// 1 - if velocity and accelerations are empty, run a full optimization
@@ -2020,25 +2029,13 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		input_position_pose.pose.orientation = tf2::toMsg(quaternion);
 		input_position_waypoints.poses.push_back(input_position_pose);
 
-		
 		geometry_msgs::PoseStamped input_velocity_pose;
 		input_velocity_pose.header = header;
-		if (msg.points[i].velocities.size() >= 3)
-		{
-			input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
-			input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
-			tf2::Quaternion velocity_quaternion;
-			velocity_quaternion.setRPY(0, 0, msg.points[i].velocities[2]);
-			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
-		}
-		else
-		{
-			input_velocity_pose.pose.position.x = 0;
-			input_velocity_pose.pose.position.y = 0;
-			tf2::Quaternion velocity_quaternion;
-			velocity_quaternion.setRPY(0, 0, 0);
-			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
-		}
+		input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
+		input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
+		tf2::Quaternion velocity_quaternion;
+		velocity_quaternion.setRPY(0, 0, msg.points[i].velocities[2]);
+		input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
 		input_velocity_waypoints.poses.push_back(input_velocity_pose);
 
 		if (msg.header.frame_id == "map")
