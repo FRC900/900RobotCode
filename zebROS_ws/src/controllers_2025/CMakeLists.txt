@@ -129,6 +129,7 @@ include_directories(
 
 add_library(controllers_2025 
   src/elevator_controller.cpp
+  src/roller_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
