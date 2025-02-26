@@ -15,6 +15,6 @@ teleop_params:
     rotate_rate_limit_time: 100
     trigger_threshold: 0.5
     stick_threshold: 0.5
-    button_move_speed: 0.5
+    button_move_speed: 2.5
     imu_zero_angle: 0.0
     

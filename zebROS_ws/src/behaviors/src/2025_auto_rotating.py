@@ -12,6 +12,7 @@ from std_srvs.srv import SetBool, SetBoolResponse
 import actionlib 
 from behavior_actions.msg import Intaking2025Action, Intaking2025Goal
 
+# needs to NOT RUN DURING PATH FOLLOWING
 # need to stop intaking when away from coral station
 # could publish orient strafing control effort to a cmd vel topic that has lower priority than teleop so we autorotate when not driving
 

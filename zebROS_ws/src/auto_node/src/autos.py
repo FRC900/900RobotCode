@@ -12,6 +12,7 @@ from FourCoralNonProcessor import FourCoralNonProcessor
 from FourCoralProcessor import FourCoralProcessor
 from ThreeCoralNonProcessor import ThreeCoralNonProcessor
 from TestDriveForwardBack import TestDriveForwardBack
+from TestFourCoralProcessor import TestFourCoralProcessor
 
 class AutonomousNames(str, Enum):
     Test4Note = "2025_4_Note"
@@ -22,6 +23,7 @@ class AutonomousNames(str, Enum):
     FourCoralNonProcessor = "2025_4_Coral"
     TestDriveForwardBack = "test_drive_forward_back"
     FourCoralProcessor = "2025_4_Coral_Processor_Side"
+    TestFourCoralProcessor = "Test_2025_4_Coral_Processor_Side"
 
     def __str__(self) -> str:
         return str.__str__(self)
@@ -39,5 +41,6 @@ def init_auto_selection_map() -> dict[AutonomousNames, AutoBase]:
         AutonomousNames.FourCoralNonProcessor: FourCoralNonProcessor(),
         AutonomousNames.ThreeCoralNonProcessor: ThreeCoralNonProcessor(),
         AutonomousNames.TestDriveForwardBack: TestDriveForwardBack(),
-        AutonomousNames.FourCoralProcessor: FourCoralProcessor()
+        AutonomousNames.FourCoralProcessor: FourCoralProcessor(),
+        AutonomousNames.TestFourCoralProcessor: TestFourCoralProcessor()
     }

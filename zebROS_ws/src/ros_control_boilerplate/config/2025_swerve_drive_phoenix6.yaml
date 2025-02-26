@@ -55,13 +55,13 @@ swerve_drive_controller:
     fl_drive:
         joint: fl_drive
         close_loop_values:
-            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.152, kS: 0.0}
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
         voltage_closed_loop_ramp_period: 0.25
-        # dynamic_reconfigure: True
+        dynamic_reconfigure: True
         neutral_mode: Brake
         forward_limit_enable: False
         reverse_limit_enable: False
@@ -72,13 +72,13 @@ swerve_drive_controller:
     fr_drive:
         joint: fr_drive
         close_loop_values:
-            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.152, kS: 0.0}
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
         voltage_closed_loop_ramp_period: 0.25
-        # dynamic_reconfigure: True
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
@@ -89,14 +89,14 @@ swerve_drive_controller:
     bl_drive:
         joint: bl_drive
         close_loop_values:
-            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.152, kS: 0.0}
         #feedback_type: IntegratedSensor
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
         voltage_closed_loop_ramp_period: 0.25
-        # dynamic_reconfigure: True
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
@@ -107,14 +107,14 @@ swerve_drive_controller:
     br_drive:
         joint: br_drive
         close_loop_values:
-            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.13, kS: 0.0}
+            - {kP: 0.5, kI: 0.0, kD: 0.0, kV: 0.152, kS: 0.0}
         #feedback_type: IntegratedSensor
         #current_limit_continuous_amps: 15
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
         voltage_closed_loop_ramp_period: 0.25
-        # dynamic_reconfigure: True
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
         reverse_limit_enable: False
