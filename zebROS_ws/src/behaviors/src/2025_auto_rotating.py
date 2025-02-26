@@ -68,9 +68,11 @@ def game_piece_callback(data):
         pass
     
 team_color = -1 #green!
+is_auto = False
 def team_color_callback(msg: MatchSpecificData):
-    global team_color
+    global team_color, is_auto
     team_color = msg.allianceColor
+    is_auto = msg.Autonomous
 
 should_run = True
 def handle_service(req):
@@ -92,7 +94,7 @@ if __name__ == "__main__":
     rospy.loginfo("waiting for intaking server")
     intaking_client.wait_for_server()
     rospy.loginfo("Intake client created")
-    service = rospy.Service(rospy.get_name(), SetBool, handle_service)
+    service = rospy.Service("toggle_auto_rotate", SetBool, handle_service)
 
     tf_buffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tf_buffer)
@@ -104,9 +106,6 @@ if __name__ == "__main__":
     intake_running = False
     while not rospy.is_shutdown():
         r.sleep()
-        if not should_run:
-            continue 
-
 
         if team_color == MatchSpecificData.ALLIANCE_COLOR_RED:
             tags = RED_TAGS
@@ -150,7 +149,7 @@ if __name__ == "__main__":
             closest_tag = (tag_x, tag_y)
             #rospy.loginfo(f"closest coral dist {closest_coral_dist}")
             if closest_coral_dist < 2.0 and not intake_running:
-                rospy.loginfo_throttle(1, "Running intake automatically")
+                rospy.loginfo("Running intake automatically")
                 intake_running = True
                 intake_goal = Intaking2025Goal()
                 intaking_client.send_goal(intake_goal)
@@ -164,8 +163,9 @@ if __name__ == "__main__":
             closest_tag = (tag_x, tag_y)
             closest_dist_sq = dist_sq
         
+        if is_auto or not should_run:
+            continue
+
         angle = ANGLE_FROM_TAG[closest_tag]
         angle *= pi/180
         angle_pub.publish(Float64(data=angle))
-
-1
