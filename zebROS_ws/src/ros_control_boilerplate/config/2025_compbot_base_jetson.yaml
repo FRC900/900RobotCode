@@ -166,10 +166,14 @@ latency_compensation_state_controller:
   type: latency_compensation_state_controller/LatencyCompensationStateController
   publish_rate: 250
 
-
 roller_controller:
-    type: talonfxpro_controllers/TalonFXProVoltageOutputController
-    joint: roller
-    invert: counterclockwise_positive
-    dynamic_reconfigure: True
-    neutral_mode: Brake
+    type: roller_controller_2025/RollerController_2025   
+    roller_joint: roller
+    roller:
+        type: talonfxpro_controllers/TalonFXProControllerInterface
+        joint: roller
+        invert: counterclockwise_positive
+        dynamic_reconfigure: True
+        neutral_mode: Brake
+        close_loop_values: # TUNE ME
+            - {kP: 0.0, kI: 0.0, kD: 0.0, kV: 0.0, kS: 0.0}

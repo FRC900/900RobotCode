@@ -78,8 +78,7 @@
   <depend>path_follower_msgs</depend>
   <depend>field_obj</depend>
   <depend>base_trajectory_msgs</depend>
-  <depend>controllers_2022_msgs</depend>
-  <depend>controllers_2023_msgs</depend>
+  <depend>controllers_2025_msgs</depend>
   <depend>talon_controller_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
