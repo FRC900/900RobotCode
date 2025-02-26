@@ -21,6 +21,15 @@ find_library(
   NAMES tcmalloc
   HINTS ${Gperftools_ROOT_DIR}/lib)
 
+# GetStackTrace(void**, int, int) was causing a segfault during ros::init --> boost calling tcalloc
+# So, if we don't track stack traces (and use the minimal version) then this segfault doesn't happen
+# Inspiration from https://github.com/gperftools/gperftools/issues/1159
+# Also, a note about where this is being called: https://github.com/gperftools/gperftools/blob/a81b2ebbc2cec046aed5d571cdc783c49b48843a/src/page_heap.cc#L727 locking context --> HandleUnlock --> GrabBacktrace --> GetStackTrace https://github.com/gperftools/gperftools/blob/a81b2ebbc2cec046aed5d571cdc783c49b48843a/src/malloc_backtrace.cc#L78
+find_library(
+  GPERFTOOLS_TCMALLOC_MINIMAL
+  NAMES tcmalloc_minimal
+  HINTS ${Gperftools_ROOT_DIR}/lib)
+
 find_library(
   GPERFTOOLS_PROFILER
   NAMES profiler
@@ -36,7 +45,7 @@ find_path(
   NAMES gperftools/heap-profiler.h
   HINTS ${Gperftools_ROOT_DIR}/include)
 
-set(GPERFTOOLS_LIBRARIES ${GPERFTOOLS_TCMALLOC_AND_PROFILER})
+set(GPERFTOOLS_LIBRARIES ${GPERFTOOLS_TCMALLOC_MINIMAL})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Gperftools DEFAULT_MSG GPERFTOOLS_LIBRARIES
