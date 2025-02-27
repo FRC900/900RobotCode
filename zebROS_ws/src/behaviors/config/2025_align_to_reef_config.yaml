@@ -1,5 +1,5 @@
 x_tolerance: 0.1
-y_tolerance: 0.0254
+y_tolerance: 0.03
 angle_tolerance: 0.05
 min_x_vel: 1
 min_y_vel: 1

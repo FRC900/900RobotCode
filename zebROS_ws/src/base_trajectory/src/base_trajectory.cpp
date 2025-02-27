@@ -2019,16 +2019,19 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		quaternion.setRPY(0,0,msg.points[i].positions[2]);
 		input_position_pose.pose.orientation = tf2::toMsg(quaternion);
 		input_position_waypoints.poses.push_back(input_position_pose);
-
-		geometry_msgs::PoseStamped input_velocity_pose;
-		input_velocity_pose.header = header;
-		input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
-		input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
-		tf2::Quaternion velocity_quaternion;
-		velocity_quaternion.setRPY(0,0,msg.points[i].velocities[2]);
-		input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
-		input_velocity_waypoints.poses.push_back(input_velocity_pose);
-
+		
+		if (msg.points[i].velocities.size() != 3) {
+			input_velocity_waypoints.poses.push_back(geometry_msgs::PoseStamped());	
+		} else {
+			geometry_msgs::PoseStamped input_velocity_pose;
+			input_velocity_pose.header = header;
+			input_velocity_pose.pose.position.x = msg.points[i].velocities[0];
+			input_velocity_pose.pose.position.y = msg.points[i].velocities[1];
+			tf2::Quaternion velocity_quaternion;
+			velocity_quaternion.setRPY(0,0,msg.points[i].velocities[2]);
+			input_velocity_pose.pose.orientation = tf2::toMsg(velocity_quaternion);
+			input_velocity_waypoints.poses.push_back(input_velocity_pose);
+		}
 		if (msg.header.frame_id == "map")
 		{	
 			// If the path is specified in terms of the map, use the transform read above
@@ -2237,7 +2240,14 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 
 	tfBuffer = std::make_unique<tf2_ros::Buffer>(ros::Duration(1000.));
-	tfListener = std::make_unique<tf2_ros::TransformListener>(*tfBuffer);;
+	tfListener = std::make_unique<tf2_ros::TransformListener>(*tfBuffer);
+
+	bool useObstacleCost;
+	nh.param("use_obstacle_cost", useObstacleCost, true);
+	if (useObstacleCost)
+	{
+		costmap = std::make_shared<costmap_2d::Costmap2DROS>("costmap", *tfBuffer);
+	}
 
 	ddynamic_reconfigure::DDynamicReconfigure ddr;
 	nh.param("seg_length_epsilon", segLengthEpsilon, 1.0e-4);
@@ -2298,13 +2308,6 @@ int main(int argc, char **argv)
 
 	nh.param("path_frame_id", pathFrameID, std::string("base_link"));
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
-
-	bool useObstacleCost;
-	nh.param("use_obstacle_cost", useObstacleCost, true);
-	if (useObstacleCost)
-	{
-		costmap = std::make_shared<costmap_2d::Costmap2DROS>("costmap", *tfBuffer);
-	}
 
 	int obstacleCostThreshold;
 	nh.param("obstacle_cost_threshold", obstacleCostThreshold, 50);

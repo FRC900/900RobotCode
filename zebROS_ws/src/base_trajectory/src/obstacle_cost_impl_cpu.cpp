@@ -223,13 +223,13 @@ bool ObstacleCostImplCpu<T>::calculate(std::vector<T> &arcSegCosts,
 	{
 		return true;
 	}
-
+#if 0
 	for (size_t i = 0; i < xStates.size(); i++)
 	{
 		ROS_INFO_STREAM("xStates[" << i << "].position = " << xStates[i].position);
 		ROS_INFO_STREAM("yStates[" << i << "].position = " << yStates[i].position);
 	}
-
+#endif
 
 	// Convert from path coordinates (i.e. robot centric) to map frame coordinates
 	Transform2D pathToMapTransform;
@@ -255,8 +255,8 @@ bool ObstacleCostImplCpu<T>::calculate(std::vector<T> &arcSegCosts,
 		pointIn.setX(xStates[i].position);
 		pointIn.setY(yStates[i].position);
 		pointTransformed = pathToMapTransform * pointIn;
-		ROS_INFO_STREAM("pointStamped path frame = (" << xStates[i].position << ", " << xStates[i].position << ")");
-		ROS_INFO_STREAM("pointStamped map frame = (" << pointTransformed.getX() << ", " << pointTransformed.getY() << ")");
+		//ROS_INFO_STREAM("pointStamped path frame = (" << xStates[i].position << ", " << xStates[i].position << ")");
+		//ROS_INFO_STREAM("pointStamped map frame = (" << pointTransformed.getX() << ", " << pointTransformed.getY() << ")");
 
 		// Then translate from map world coords to map
 		// grid cell coordinates ... The map is a grid of
@@ -296,7 +296,7 @@ bool ObstacleCostImplCpu<T>::calculate(std::vector<T> &arcSegCosts,
 				segCosts += mapCost;
 				thisMapSquaresHit += 1;
 				lineIt.advance();
-				ROS_INFO_STREAM("  Coord " << mapXIndex << ", " << mapYIndex << " mapCost = " << mapCost << " segCosts = " << segCosts << " thisMapSquaresHit = " << thisMapSquaresHit);
+				//ROS_INFO_STREAM("  Coord " << mapXIndex << ", " << mapYIndex << " mapCost = " << mapCost << " segCosts = " << segCosts << " thisMapSquaresHit = " << thisMapSquaresHit);
 			}
 			if (thisMapSquaresHit)
 			{

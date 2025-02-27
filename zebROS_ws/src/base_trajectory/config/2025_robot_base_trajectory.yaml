@@ -46,7 +46,7 @@ optimization_counter_max: 100
 regularization_lambda: 0.0025
 
 # how far robot can diverge from straight-line path between waypoints (meters)
-path_distance_limit: 1.0
+path_distance_limit: 6.0 
 
 # Max robot translational velocity (meters/sec)
 max_vel: 4.0
@@ -70,7 +70,7 @@ path_frame_id: "map"
 use_obstacle_cost: true
 
 # Constmap costs lower than this are ignored in obstacle gradient calculation
-obstacle_cost_threshold: 50
+obstacle_cost_threshold: 5
 
 base_trajectory_node:
     costmap:
@@ -81,6 +81,7 @@ base_trajectory_node:
             - [0.4572, 0.4572]
         global_frame: map
         robot_base_frame: base_link
+        robot_radius: 0.5 # m
         update_frequency: 1.0
         publish_frequency: 0.5
         transform_tolerance: 10.
@@ -102,7 +103,7 @@ base_trajectory_node:
 
         inflation_layer:
             enabled:              true
-            cost_scaling_factor:  100.0  # exponential rate at which the obstacle cost drops off (default: 10)
+            cost_scaling_factor:  10.0  # exponential rate at which the obstacle cost drops off (default: 10)
             inflation_radius:     0.5  # max. distance from an obstacle at which costs are incurred for planning paths.
 
         static_layer:

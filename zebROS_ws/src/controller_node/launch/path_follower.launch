@@ -4,7 +4,7 @@
 		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/> <!-- /frcrobot_jetson/swerve_drive_controller/odom -->
 		<arg name="pose_topic" default="/zed_objdetect/pose"/>
 		<arg name="use_pose_for_odom" default="false"/>
-		<arg name="year" default="2023"/>
+		<arg name="year" default="2025"/>
 
         <group ns="path_follower">
             <rosparam file="$(find path_follower)/config/path_follower_config.yaml" command="load"/>

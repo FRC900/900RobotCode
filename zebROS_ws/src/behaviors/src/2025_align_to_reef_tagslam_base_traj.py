@@ -17,7 +17,7 @@ import angles
 from path_follower_msgs.msg import PathGoal, PathFeedback, PathResult, PathAction
 from base_trajectory_msgs.srv import GenerateSpline, GenerateSplineRequest, GenerateSplineResponse
 from trajectory_msgs.msg import JointTrajectoryPoint
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from base_trajectory_msgs.msg import PathOffsetLimit
 
 # Choose closest reef face based on robot angle
@@ -103,7 +103,7 @@ class Aligner:
 
         self.odom_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/odom", Odometry, self.odometry_callback)
         self.base_trajectory_client = rospy.ServiceProxy("/path_follower/base_trajectory/spline_gen", GenerateSpline)
-
+        self.debug_path_pub = rospy.Publisher("reef_position_path", Path)
         self.tf_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -194,14 +194,21 @@ class Aligner:
         req = GenerateSplineRequest()
         req.header.frame_id = "map"
         pol = PathOffsetLimit()
-        pol.min_x = -1
-        pol.max_x = 1
-        pol.min_y = -1
-        pol.max_y = 1
+        pol.min_x = -4
+        pol.max_x = 4
+        pol.min_y = -4
+        pol.max_y = 4
+        req.path_offset_limit.append(PathOffsetLimit()) # start must be exact
         req.path_offset_limit.append(pol)
         req.path_offset_limit.append(PathOffsetLimit()) # end must be exact
+        req.point_frame_id.append("map")
+        req.point_frame_id.append("map")
+        req.point_frame_id.append("map")
         req.points.append(JointTrajectoryPoint(positions=[self.latest_pose.pose.position.x, self.latest_pose.pose.position.y, euler_from_quaternion([self.latest_pose.pose.orientation.x, self.latest_pose.pose.orientation.y, self.latest_pose.pose.orientation.z, self.latest_pose.pose.orientation.w])[2]], velocities=[self.latest_vel_pose.pose.position.x, self.latest_vel_pose.pose.position.y, euler_from_quaternion([self.latest_vel_pose.pose.orientation.x, self.latest_vel_pose.pose.orientation.y, self.latest_vel_pose.pose.orientation.z, self.latest_vel_pose.pose.orientation.w])[2]])) # insert current robot pose
+        req.points.append(JointTrajectoryPoint(positions=[(self.latest_pose.pose.position.x+pipe_pose.pose.position.x)/2, (self.latest_pose.pose.position.y+pipe_pose.pose.position.y)/2, yaw])) # point in middle to mess with?
         req.points.append(JointTrajectoryPoint(positions=[pipe_pose.pose.position.x, pipe_pose.pose.position.y, yaw], velocities=[0, 0, 0]))
+        req.optimize_final_velocity = True
+        print(req)
         gen_path: GenerateSplineResponse = self.base_trajectory_client.call(req)
 
         path_goal = PathGoal()
@@ -216,6 +223,8 @@ class Aligner:
         path_goal.velocity_path = gen_path.path_velocity
         path_goal.velocity_waypoints = gen_path.velocity_waypoints
         path_goal.waypointsIdx = gen_path.waypointsIdx
+
+        self.debug_path_pub.publish(gen_path.path)
 
         d = geometry_msgs.msg.PoseStamped()
         d.pose.orientation.w = 1 # bruh
