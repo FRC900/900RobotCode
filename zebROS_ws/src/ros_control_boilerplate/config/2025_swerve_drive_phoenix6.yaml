@@ -101,7 +101,7 @@ swerve_drive_controller:
         forward_limit_enable: False
         reverse_limit_enable: False
         #neutral_deadband: 0.01
-        stator_current_limit: 80
+        stator_current_limit: 90
         stator_current_limit_enable: True
         enable_read_thread: True
     br_drive:
