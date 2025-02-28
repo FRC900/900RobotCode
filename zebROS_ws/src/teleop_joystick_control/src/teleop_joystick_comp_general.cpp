@@ -21,12 +21,9 @@
 
 #include "frc_msgs/MatchSpecificData.h"
 
-#include "actionlib/client/simple_action_client.h"
-
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 #include "teleop_joystick_control/RobotOrientationDriver.h"
-#include <std_srvs/SetBool.h>
 
 #include "teleop_joystick_control/teleop_joystick_comp_general.h"
 
@@ -83,8 +80,8 @@ Driver::Driver(ros::NodeHandle n, DynamicReconfigVars config)
 	teleop_cmd_vel_.resetCaps();
 }
 
-bool Driver::orientCallback(teleop_joystick_control::RobotOrient::Request& req,
-		teleop_joystick_control::RobotOrient::Response&/* res*/)
+bool Driver::orientCallback(teleop_joystick_control::RobotOrient::Request &req,
+							teleop_joystick_control::RobotOrient::Response & /* res*/)
 {
 	// Used to switch between robot orient and field orient driving
 	teleop_cmd_vel_.setRobotOrient(req.robot_orient, req.offset_angle);
@@ -131,7 +128,7 @@ void Driver::setJoystickOverride(bool override) {
 	robot_orientation_driver_.setJoystickOverride(override);
 }
 
-ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config) {
+ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config) {
 
 	teleop_cmd_vel_.updateRateLimit(config);
 	// TODO : make swerve invert the yaw so we can deal in ccw-positive angles
