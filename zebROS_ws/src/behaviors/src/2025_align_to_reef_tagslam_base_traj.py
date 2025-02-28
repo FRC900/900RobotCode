@@ -191,23 +191,37 @@ class Aligner:
         pipe_pose.pose.position = map_to_pipe.transform.translation
         pipe_pose.pose.orientation = map_to_pipe.transform.rotation
 
+        INTERMEDIATE_POINTS = 6
+        start = JointTrajectoryPoint(positions=[self.latest_pose.pose.position.x, self.latest_pose.pose.position.y, euler_from_quaternion([self.latest_pose.pose.orientation.x, self.latest_pose.pose.orientation.y, self.latest_pose.pose.orientation.z, self.latest_pose.pose.orientation.w])[2]], velocities=[self.latest_vel_pose.pose.position.x, self.latest_vel_pose.pose.position.y, euler_from_quaternion([self.latest_vel_pose.pose.orientation.x, self.latest_vel_pose.pose.orientation.y, self.latest_vel_pose.pose.orientation.z, self.latest_vel_pose.pose.orientation.w])[2]])
+        end = JointTrajectoryPoint(positions=[pipe_pose.pose.position.x, pipe_pose.pose.position.y, yaw], velocities=[0, 0, 0])
+        
+        def interpolate(start: JointTrajectoryPoint, end: JointTrajectoryPoint, fraction):
+            x0, y0, yaw0 = start.positions
+            x1, y1, yaw1 = end.positions
+            return JointTrajectoryPoint(positions=[x0*(1-fraction) + x1*fraction, y0*(1-fraction) + y1*fraction, yaw1], velocities=[])
+        
         req = GenerateSplineRequest()
         req.header.frame_id = "map"
         pol = PathOffsetLimit()
-        pol.min_x = -4
-        pol.max_x = 4
-        pol.min_y = -4
-        pol.max_y = 4
+        pol.min_x = -2
+        pol.max_x = 2
+        pol.min_y = -2
+        pol.max_y = 2
         req.path_offset_limit.append(PathOffsetLimit()) # start must be exact
-        req.path_offset_limit.append(pol)
+        for i in range(INTERMEDIATE_POINTS):
+            req.path_offset_limit.append(pol)
         req.path_offset_limit.append(PathOffsetLimit()) # end must be exact
         req.point_frame_id.append("map")
-        req.point_frame_id.append("map")
+        for i in range(INTERMEDIATE_POINTS):
+            req.point_frame_id.append("map")
         req.point_frame_id.append("map")
         req.points.append(JointTrajectoryPoint(positions=[self.latest_pose.pose.position.x, self.latest_pose.pose.position.y, euler_from_quaternion([self.latest_pose.pose.orientation.x, self.latest_pose.pose.orientation.y, self.latest_pose.pose.orientation.z, self.latest_pose.pose.orientation.w])[2]], velocities=[self.latest_vel_pose.pose.position.x, self.latest_vel_pose.pose.position.y, euler_from_quaternion([self.latest_vel_pose.pose.orientation.x, self.latest_vel_pose.pose.orientation.y, self.latest_vel_pose.pose.orientation.z, self.latest_vel_pose.pose.orientation.w])[2]])) # insert current robot pose
-        req.points.append(JointTrajectoryPoint(positions=[(self.latest_pose.pose.position.x+pipe_pose.pose.position.x)/2, (self.latest_pose.pose.position.y+pipe_pose.pose.position.y)/2, yaw])) # point in middle to mess with?
+        #req.points.append(JointTrajectoryPoint(positions=[(self.latest_pose.pose.position.x+pipe_pose.pose.position.x)/2, (self.latest_pose.pose.position.y+pipe_pose.pose.position.y)/2, yaw])) # point in middle to mess with?
+        for i in range(INTERMEDIATE_POINTS):
+            print(f"fraction is {(i+1)/(INTERMEDIATE_POINTS+1)} --> {interpolate(start, end, (i+1)/(INTERMEDIATE_POINTS+1))}")
+            req.points.append(interpolate(start, end, (i+1)/(INTERMEDIATE_POINTS+1)))
         req.points.append(JointTrajectoryPoint(positions=[pipe_pose.pose.position.x, pipe_pose.pose.position.y, yaw], velocities=[0, 0, 0]))
-        req.optimize_final_velocity = True
+        req.optimize_final_velocity = False 
         print(req)
         gen_path: GenerateSplineResponse = self.base_trajectory_client.call(req)
 
