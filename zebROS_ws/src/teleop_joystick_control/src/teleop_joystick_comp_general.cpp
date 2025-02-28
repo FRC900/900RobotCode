@@ -21,12 +21,9 @@
 
 #include "frc_msgs/MatchSpecificData.h"
 
-#include "actionlib/client/simple_action_client.h"
-
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 #include "teleop_joystick_control/RobotOrientationDriver.h"
-#include <std_srvs/SetBool.h>
 
 #include "teleop_joystick_control/teleop_joystick_comp_general.h"
 
@@ -83,8 +80,8 @@ Driver::Driver(ros::NodeHandle n, DynamicReconfigVars config)
 	teleop_cmd_vel_.resetCaps();
 }
 
-bool Driver::orientCallback(teleop_joystick_control::RobotOrient::Request& req,
-		teleop_joystick_control::RobotOrient::Response&/* res*/)
+bool Driver::orientCallback(teleop_joystick_control::RobotOrient::Request &req,
+							teleop_joystick_control::RobotOrient::Response & /* res*/)
 {
 	// Used to switch between robot orient and field orient driving
 	teleop_cmd_vel_.setRobotOrient(req.robot_orient, req.offset_angle);
