@@ -481,19 +481,19 @@ bodies:
  - frc_robot:
      is_static: false
      type: simple
-    #  odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
-    # #  #odom_topic: "/frcrobot_jetson/swerve_drive_state_controller/odom"
-    #  odom_frame_id: base_link
-    #  # assumed odom noise in meters(!): the larger this parameter, the less you rely on odom
-    #  odom_translation_noise: 0.01
-    #  # assomed odom noise in radians(!)
-    #  odom_rotation_noise: 0.001
-    #  T_body_odom:
-    #    position:
-    #      x:  0
-    #      y:  0
-    #      z:  0
-    #    rotation:
-    #      x:  0
-    #      y:  0
-    #      z:  0
+     odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
+    #  #odom_topic: "/frcrobot_jetson/swerve_drive_state_controller/odom"
+     odom_frame_id: base_link
+     # assumed odom noise in meters(!): the larger this parameter, the less you rely on odom
+     odom_translation_noise: 0.01
+     # assomed odom noise in radians(!)
+     odom_rotation_noise: 0.001
+     T_body_odom:
+       position:
+         x:  0
+         y:  0
+         z:  0
+       rotation:
+         x:  0
+         y:  0
+         z:  0

@@ -21,39 +21,39 @@ class FourCoralNonProcessor(AutoBase):
         return SeriesAction([
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
-                              PlacingAction(True)
-                              ])
+                # SeriesAction([WaitTrajectoryAction(0.8),
+                #               PlacingAction(True)
+                #               ])
             ]),
-            PlacingAction(),
+            # PlacingAction(),
             drive_traj_iter.get_next_trajectory_action(),
-            WaitForIntakeAction(),
+            # WaitForIntakeAction(),
 
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
-                              PlacingAction(True)
-                              ])
+                # SeriesAction([WaitTrajectoryAction(0.8),
+                #               PlacingAction(True)
+                #               ])
             ]),
-            PlacingAction(),
+            # PlacingAction(),
             drive_traj_iter.get_next_trajectory_action(),
-            WaitForIntakeAction(),
+            # WaitForIntakeAction(),
 
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
-                              PlacingAction(True)
-                              ])
+                # SeriesAction([WaitTrajectoryAction(0.8),
+                #               PlacingAction(True)
+                #               ])
             ]),
-            PlacingAction(),
+            # PlacingAction(),
             drive_traj_iter.get_next_trajectory_action(),
-            WaitForIntakeAction(),
+            # WaitForIntakeAction(),
 
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
-                              PlacingAction(True)
-                              ])
+                # SeriesAction([WaitTrajectoryAction(0.8),
+                #               PlacingAction(True)
+                #               ])
             ]),
-            PlacingAction(),
+            # PlacingAction(),
         ])

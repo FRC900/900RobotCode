@@ -34,14 +34,28 @@ for file in files:
         print(f"Failed on {file} with exception {e}")
 
     samples = trajectory["samples"]
-    splits = trajectory["splits"] 
-    splits.append(0) # include the start and end as a points to start/stop a path
+    splits: list = trajectory["splits"] 
+    # splits.append(0) # include the start and end as a points to start/stop a path
+    splits = list(filter(lambda i: i != 0, splits))
     splits.append(len(samples)-1) # like not perfect but will make sure all the segments of the path are generated
     print(f"Splits {splits} samples ")
     print(samples)
-    current_segment = 0 
+    current_segment = 1
+    csv_blue = ""
+    csv_red = ""
+    time_offset = 0
     for idx, t in enumerate(samples):
         print(idx, t)
+
+        # add each trajectory waypoint to the csv
+        pose = tf2_geometry_msgs.PoseStamped()
+        pose.header.frame_id = "field"
+        pose.pose.position.x = 17.55 - t['x']
+        pose.pose.position.y = t['y']
+
+        csv_red += f"{t['t']-time_offset},{17.55 - t['x']},{8.05 - t['y']},{math.pi + t['heading']},{t['omega']},{-t['vx']},{-t['vy']},{current_segment}\n"
+        csv_blue += f"{t['t']-time_offset},{t['x']},{t['y']},{t['heading']},{t['omega']},{t['vx']},{t['vy']},{current_segment}\n"
+
         if idx in splits:
             print(f"Found {idx} in splits \n\n\n")
             if current_segment > 0:
@@ -57,15 +71,6 @@ for file in files:
             csv_red = ""
             current_segment += 1
             time_offset = t["t"]
-
-        # add each trajectory waypoint to the csv
-        pose = tf2_geometry_msgs.PoseStamped()
-        pose.header.frame_id = "field"
-        pose.pose.position.x = 17.55 - t['x']
-        pose.pose.position.y = t['y']
-
-        csv_red += f"{t['t']-time_offset},{17.55 - t['x']},{8.05 - t['y']},{math.pi + t['heading']},{t['omega']},{-t['vx']},{-t['vy']},{current_segment}\n"
-        csv_blue += f"{t['t']-time_offset},{t['x']},{t['y']},{t['heading']},{t['omega']},{t['vx']},{t['vy']},{current_segment}\n"
 
 ''' 
 if current_segment > 0:

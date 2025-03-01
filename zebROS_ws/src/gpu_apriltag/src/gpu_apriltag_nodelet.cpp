@@ -110,7 +110,7 @@ public:
             // if tag id isn't found in legal tags, don't record it
             if (legal_tags_.count(result.id_) == 0)
             {
-                ROS_WARN_STREAM("Filtering tag with id " << result.id_);
+                ROS_WARN_STREAM_THROTTLE(5, "Filtering tag with id " << result.id_);
                 continue;
             }
 
