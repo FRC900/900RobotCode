@@ -87,7 +87,6 @@ private:
 	bool sendRobotZero_{false};
 	bool no_driver_input_{false};
 	double old_angular_z_{0.0};
-	bool sendSetAngle_{true};
 };
 
 extern bool diagnostics_mode;
