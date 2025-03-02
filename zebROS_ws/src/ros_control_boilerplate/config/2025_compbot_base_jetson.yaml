@@ -169,6 +169,7 @@ latency_compensation_state_controller:
 roller_controller:
     type: roller_controller_2025/RollerController_2025   
     roller_joint: roller
+    roller_stopped_position: 0.0
     roller:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: roller

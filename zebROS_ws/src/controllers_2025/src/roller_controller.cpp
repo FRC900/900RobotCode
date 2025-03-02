@@ -4,8 +4,20 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2025_msgs/RollerSrv.h"
 
+#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 namespace roller_controller_2025
 {
+
+template <typename T>
+bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
+{
+    if (T val; n.getParam(name, val))
+    {
+        scalar = val;
+        return true;
+    }
+    return false;
+}
 
 //this is the actual controller, so it stores all of the update() functions and the actual handle from the joint interface
 class RollerController_2025 : public controller_interface::Controller<hardware_interface::talonfxpro::TalonFXProCommandInterface>
@@ -16,6 +28,11 @@ public:
               ros::NodeHandle &controller_nh) override
     {
         ROS_INFO_STREAM("2025_roller_controller: init");
+
+        if (!readIntoScalar(controller_nh, "roller_stopped_position", roller_stopped_position_))
+        {
+            ROS_WARN("2025_roller_controller: Could not find roller_stopped_position");
+        }
 
         // get config values for the roller talon
         XmlRpc::XmlRpcValue roller_params;
@@ -31,6 +48,22 @@ public:
             return false;
         }
 
+        bool dynamic_reconfigure = true;
+        controller_nh.param("dynamic_reconfigure", dynamic_reconfigure, dynamic_reconfigure);
+
+        if (dynamic_reconfigure)
+        {
+            ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
+
+            ddr_->registerVariable<double>("roller_stopped_position",
+                                           [this]() { return roller_stopped_position_.load(); },
+                                           [this](double d) { roller_stopped_position_.store(d); },
+                                           "Position to hold when roller is stopped",
+                                           -100., 100.);
+
+            ddr_->publishServicesTopics();
+        }
+
         roller_service_ = controller_nh.advertiseService("roller_service", &RollerController_2025::cmd_service, this);
         ROS_INFO_STREAM("2025_roller_controller: init successful");
         return true;
@@ -38,6 +71,7 @@ public:
 
     void starting(const ros::Time &time) override
     {
+        // Force the roller to re-zero and hold position on the first update call
         roller_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::VoltageOut);
         voltage_command_ = 0;
         ROS_INFO_STREAM("2025_roller_controller: starting");
@@ -90,6 +124,9 @@ private:
 
     std::atomic<double> voltage_command_;
     ros::ServiceServer roller_service_; // service for receiving commands
+
+    std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
+    std::atomic<double> roller_stopped_position_{0.0};
 
 }; // class
 
