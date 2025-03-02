@@ -135,29 +135,20 @@ ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_stat
 	// everywhere outside of that code
 	geometry_msgs::Twist cmd_vel = teleop_cmd_vel_.generateCmdVel(joy_state, -robot_orientation_driver_.getCurrentOrientation(), config);
 
+	// ROS_INFO_STREAM("mostRecent = " << (int)robot_orientation_driver_.mostRecentCommandIsFromTeleop() << " CMD_VEL x " << cmd_vel.linear.x << " y " << cmd_vel.linear.y << " z " << cmd_vel.angular.z);
 	if (robot_orientation_driver_.mostRecentCommandIsFromTeleop() || cmd_vel.linear.x != 0.0 || cmd_vel.linear.y != 0.0 || cmd_vel.angular.z != 0.0) {
-		double original_angular_z = cmd_vel.angular.z;
 
-		if (original_angular_z == 0.0 && old_angular_z_ != 0.0) {
-			ROS_WARN_STREAM_THROTTLE(1, "Send set angle = false");
-			sendSetAngle_ = false;
-		}
-
-		if (original_angular_z == 0.0 && !sendSetAngle_) {
-			ROS_INFO_STREAM("Old angular z " << old_angular_z_ << " signbit " << signbit(old_angular_z_));
-			double multiplier = 1;
-			if (signbit(old_angular_z_)) {
-				multiplier = -1;
-			}
-			if (old_angular_z_ == 0.0) {
-				ROS_WARN_STREAM("Old angular z is zero, wierd");
-			}
+		// When transitioning from a commanded rotation to no rotation,
+		// lock the robot's orientation to the current orientation
+		if (cmd_vel.angular.z == 0.0 && old_angular_z_ != 0.0) {
 			ROS_INFO_STREAM("Locking to current orientation!");
 			robot_orientation_driver_.setTargetOrientation(robot_orientation_driver_.getCurrentOrientation(), true /* from telop */);
-			sendSetAngle_ = true;
 		}
 		ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z " << cmd_vel.angular.z);
+		old_angular_z_ = cmd_vel.angular.z;
 
+		// if there's no joystick rotation commanded, use the PID output
+		// to track the most recent orientation setpoint
 		if (cmd_vel.angular.z == 0.0 || robot_orientation_driver_.isJoystickOverridden())
 		{
 			cmd_vel.angular.z = robot_orientation_driver_.getOrientationVelocityPIDOutput();
@@ -168,7 +159,8 @@ ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_stat
 			}
 		}
 
-		/*original_angular_z == 0.0*/ 
+		// If the robot is commanded to stop, call the brake service
+		// Only do it once when the zero cmd_vel is first seen (sendRobotZero_ is false)
 		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && ( cmd_vel.angular.z == 0.0 ) && !sendRobotZero_)
 		{
 			no_driver_input_ = true;
@@ -179,7 +171,7 @@ ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_stat
 			ROS_INFO("BrakeSrv called from teleop");
 
 			JoystickRobotVel_.publish(cmd_vel);
-			sendRobotZero_ = true;
+			sendRobotZero_ = true; // last command to the robot was zero, flag this to prevent repeated calls to the brake service
 		}
 		// 0.002 is slightly more than the 0.001 we set for coast mode
 		else if((fabs(cmd_vel.linear.x) != 0.0) || (fabs(cmd_vel.linear.y) != 0.0) || (fabs(cmd_vel.angular.z) >= 0.002))
@@ -191,12 +183,9 @@ ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_stat
 			}
 
 			JoystickRobotVel_.publish(cmd_vel);
-			sendRobotZero_ = false;
-			no_driver_input_ = false;
-			// if the original command was not zero, then teleop was controlling rotation
-
+			sendRobotZero_ = false; // last command to the robot was not zero
+			no_driver_input_ = false; // if the original command was not zero, then teleop was controlling rotation
 		}
-		old_angular_z_ = original_angular_z;
 	}
 	return joy_state.header.stamp;
 }
