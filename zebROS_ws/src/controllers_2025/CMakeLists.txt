@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   ctre_interfaces
   ddynamic_reconfigure
   hardware_interface
+  periodic_interval_counter
   pluginlib
   realtime_tools
   roscpp
@@ -128,6 +129,7 @@ include_directories(
 )
 
 add_library(controllers_2025 
+  src/camera_trigger_controller.cpp
   src/elevator_controller.cpp
 )
 
