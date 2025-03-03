@@ -124,6 +124,24 @@ void HAL_RemoveNewDataEventHandle(WPI_EventHandle handle)
 	ROS_ERROR_STREAM("HAL_RemoveNewDataEventHandle() called on unspported platform");
 }
 
+#include <frc/simulation/DriverStationSim.h>
+void frc::sim::DriverStationSim::SetEnabled(bool enabled)
+{
+	ROS_ERROR("Called frc::sim::DriverStationSim::SetEnabled(bool) on unsupported platform");
+}
+void frc::sim::DriverStationSim::SetAutonomous(bool autonomous)
+{
+	ROS_ERROR("Called frc::sim::DriverStationSim::SetAutonomous(bool) on unsupported platform");
+}
+void frc::sim::DriverStationSim::SetTest(bool test)
+{
+	ROS_ERROR("Called frc::sim::DriverStationSim::SetTest(bool) on unsupported platform");
+}
+void frc::sim::DriverStationSim::NotifyNewData()
+{
+	ROS_ERROR("Called frc::sim::DriverStationSim::NotifyNewData() on unsupported platform");
+}
+
 
 #include <frc/GenericHID.h>
 frc::GenericHID::GenericHID(int)

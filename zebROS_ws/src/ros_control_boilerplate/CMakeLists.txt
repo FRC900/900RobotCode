@@ -364,7 +364,6 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
     # Sim version of main control executable.  This hooks into
 	# WPIlib sim code, which maintains state for simulated hardware
-
 	add_library(frc_sim_wpilib STATIC
 		${ALLWPILIB}/hal/src/main/native/cpp/Main.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Accelerometer.cpp
@@ -433,6 +432,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/IterativeRobotBase.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotState.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/CallbackStore.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/DriverStationSim.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/RoboRioSim.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Timer.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Watchdog.cpp
@@ -499,6 +499,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		${REV_USER_LIBS}
 		${catkin_LIBRARIES}
 		${TBB_LIBRARIES}
+		frc_sim_wpilib
 	)
 
     # Forces messages to be generated before

@@ -236,3 +236,46 @@ HAL_RadioLEDState HAL_GetRadioLEDState(int32_t */*status*/)
 	return HAL_RadioLED_kOff;
 }
 }
+
+#include "frc/simulation/DCMotorSim.h"
+units::radian_t frc::sim::DCMotorSim::GetAngularPosition() const {
+	ROS_ERROR("Called DCMotorSim::GetAngularPosition() on unsupported platform");
+	return units::radian_t(0);
+}
+
+units::radians_per_second_t frc::sim::DCMotorSim::GetAngularVelocity() const {
+	ROS_ERROR("Called DCMotorSim::GetAngularVelocity() on unsupported platform");
+	return units::radians_per_second_t(0);
+}
+
+frc::sim::DCMotorSim::DCMotorSim(const frc::LinearSystem<2, 1, 2> &plant,
+								 const frc::DCMotor &gearbox,
+								 const std::array<double, 2> &measurementStdDevs)
+    : LinearSystemSim<2, 1, 2>(plant, measurementStdDevs),
+      m_gearbox(gearbox),
+      m_gearing(0),
+      m_j(units::kilogram_square_meter_t(0))
+{
+	ROS_ERROR("Called DCMotorSim::DCMotorSim() on unsupported platform");
+}
+
+void frc::sim::DCMotorSim::SetInputVoltage(units::volt_t voltage)
+{
+	ROS_ERROR("Called DCMotorSim::SetInputVoltage() on unsupported platform");
+}
+
+#include "frc/Notifier.h"
+frc::Notifier::Notifier(std::function<void()> callback) 
+{
+	ROS_ERROR("Called Notifier::Notifier() on unsupported platform");
+}
+
+void frc::Notifier::StartPeriodic(units::second_t period)
+{
+	ROS_ERROR("Called Notifier::StartPeriodic() on unsupported platform");
+}
+
+void frc::Notifier::Stop()
+{
+	ROS_ERROR("Called Notifier::Stop() on unsupported platform");
+}
