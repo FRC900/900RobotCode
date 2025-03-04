@@ -5,6 +5,10 @@ unset(CMAKE_CXX_STANDARD CACHE)
 set(CMAKE_CXX_STANDARD 20)
 include ("../cmake_modules/CMakeOpt.cmake")
 
+# Need to do this first so the wpilib-specific Eigen include dir is picked up vs. the
+# system one in /usr/include
+set (ALLWPILIB ../../../allwpilib)
+include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/eigen/include)
 # Only add gazebo to list of required packages on x86 and mac? builds
 if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
@@ -181,7 +185,6 @@ set (FRCROBOT_HW_MAIN_SRCS
 	src/talonfxpro_hw_devices.cpp
 )
 
-set (ALLWPILIB ../../../allwpilib)
 set (WPI_SYSROOT $ENV{HOME}/wpilib/2025/roborio/arm-frc2024-linux-gnueabi)
 include_directories(
 	include
@@ -282,6 +285,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/StackTraceWrap.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/Synchronization.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/DCMotorSim.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/src/format.cpp
         ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTF.cpp
         ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTFWrapper.cpp
@@ -325,7 +329,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi")
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/I2C.cpp
-			${ALLWPILIB}/wpilibc/src/main/native/cpp/Notifier.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTF.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTFWrapper.cpp
 		)
@@ -499,6 +502,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		${REV_USER_LIBS}
 		${catkin_LIBRARIES}
 		${TBB_LIBRARIES}
+		${FRC_COMMON_WPILIB}
 		frc_sim_wpilib
 	)
 
@@ -546,6 +550,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		${REV_USER_LIBS}
 		${catkin_LIBRARIES}
 		${TBB_LIBRARIES}
+		${FRC_COMMON_WPILIB}
 	)
 
     # Forces messages to be generated before
@@ -586,6 +591,7 @@ target_link_libraries(frcrobot_hw_main
 	${CTRE_LIB_DIR}/libCTRE_PhoenixTools.so
 	${CTRE_LIB_DIR}/libCTRE_Phoenix_WPI.so
 	${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPI.so
+	${FRC_COMMON_WPILIB}
 )
 
 ## Add cmake target dependencies of the executable

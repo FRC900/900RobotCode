@@ -68,3 +68,5 @@ Optimized Splines.m
 *.part
 # Miscellaneous files
 **/.DS_STORE
+
+**/*.nsys-rep
