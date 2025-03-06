@@ -170,6 +170,7 @@ roller_controller:
     type: roller_controller_2025/RollerController_2025   
     roller_joint: roller
     roller_stopped_position: 0.0
+    dynamic_reconfigure: True
     roller:
         type: talonfxpro_controllers/TalonFXProControllerInterface
         joint: roller
