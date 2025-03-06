@@ -4,4 +4,9 @@
 			Library file. Does stuff to make Phoneix6 elevator_controller exist.
 		</description>
 	</class>
+	<class name="camera_trigger_controller_2025/CameraTriggerController_2025" type="camera_trigger_controller_2025::CameraTriggerController_2025" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make Phoneix6 camera_trigger_controller exist.
+		</description>
+	</class>
 </library>
