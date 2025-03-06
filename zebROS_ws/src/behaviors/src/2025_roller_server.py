@@ -4,8 +4,9 @@ import rospy
 from behavior_actions.msg import Roller2025Action, Roller2025Goal, Roller2025Feedback, Roller2025Result
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
-from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse
-from talon_state_msgs.msg import TalonFXProState
+# from talon_controller_msgs.srv import Command, CommandRequest, CommandResponse
+from controllers_2025_msgs.srv import RollerSrv, RollerSrvRequest
+# from talon_state_msgs.msg import TalonFXProState
 from frc_msgs.srv import RumbleCommand, RumbleCommandRequest
 import actionlib
 import time
@@ -15,8 +16,8 @@ class Roller2025ActionServer(object):
     _result = Roller2025Result()
 
     def __init__(self, name):
-        self.roller_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/command", Command)
-        self.rumble_client = rospy.ServiceProxy(f"/frcrobot_rio/rumble_controller/command", RumbleCommand)
+        self.roller_client = rospy.ServiceProxy(f"/frcrobot_jetson/{rospy.get_param('controller_name')}/roller_service", RollerSrv)
+        self.rumble_client = rospy.ServiceProxy( "/frcrobot_rio/rumble_controller/command", RumbleCommand)
         self._action_name = name
         '''
             roller_speed: 0.4
@@ -47,7 +48,7 @@ class Roller2025ActionServer(object):
         if goal.mode == goal.INTAKE:
             rospy.loginfo("2025_roller_server: Roller intaking!")
             pct_out.data = self.roller_speed
-            self.roller_client.call(CommandRequest(pct_out.data))
+            self.roller_client.call(RollerSrvRequest(pct_out.data))
 
             # wait for first switch, then slow down speed
             while self.avoid_elevator_switch == 0 and not rospy.is_shutdown():
@@ -55,7 +56,7 @@ class Roller2025ActionServer(object):
                     self._as.set_preempted()
                     rospy.logwarn("2025_roller_server: Preempted!")
                     pct_out.data = 0
-                    self.roller_client.call(CommandRequest(pct_out.data))
+                    self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
                 r.sleep()
@@ -63,7 +64,7 @@ class Roller2025ActionServer(object):
             rospy.loginfo(f"2025_roller_server: first switch hit, slowing down to {self.slow_roller_speed}")
 
             pct_out.data = self.slow_roller_speed
-            self.roller_client.call(CommandRequest(pct_out.data))
+            self.roller_client.call(RollerSrvRequest(pct_out.data))
 
             # make sure we get it
             while self.switch == 0 and not rospy.is_shutdown():
@@ -71,7 +72,7 @@ class Roller2025ActionServer(object):
                     self._as.set_preempted()
                     rospy.logwarn("2025_roller_server: Preempted!")
                     pct_out.data = 0
-                    self.roller_client.call(CommandRequest(pct_out.data))
+                    self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
                 r.sleep()
@@ -82,13 +83,13 @@ class Roller2025ActionServer(object):
                     self._as.set_preempted()
                     rospy.logwarn("2025_roller_server: Preempted!")
                     pct_out.data = 0
-                    self.roller_client.call(CommandRequest(pct_out.data))
+                    self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
                 r.sleep()
 
             pct_out.data = 0
-            self.roller_client.call(CommandRequest(pct_out.data))
+            self.roller_client.call(RollerSrvRequest(pct_out.data))
             if success:
                 self._result.success = True
             else:
@@ -97,19 +98,19 @@ class Roller2025ActionServer(object):
         else:
             rospy.loginfo("2025_roller_server: Roller outtaking!")
             pct_out.data = self.roller_speed
-            self.roller_client.call(CommandRequest(pct_out.data))
+            self.roller_client.call(RollerSrvRequest(pct_out.data))
             while self.switch == 1 and not rospy.is_shutdown():
                 if self._as.is_preempt_requested():
                     self._as.set_preempted()
                     rospy.logwarn("2025_roller_server: Preempted!")
                     pct_out.data = 0
-                    self.roller_client.call(CommandRequest(pct_out.data))
+                    self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
                 r.sleep()
 
             pct_out.data = 0
-            self.roller_client.call(CommandRequest(pct_out.data))
+            self.roller_client.call(RollerSrvRequest(pct_out.data))
             if success:
                 self._result.success = False
             else:

@@ -4,4 +4,9 @@
 			Library file. Does stuff to make Phoneix6 elevator_controller exist.
 		</description>
 	</class>
+	<class name="roller_controller_2025/RollerController_2025" type="roller_controller_2025::RollerController_2025" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make roller_controller exist.
+		</description>
+	</class>
 </library>

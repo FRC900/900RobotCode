@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <controller_interface/controller.h>
 #include <talon_controllers/talonfxpro_controller_interface.h>
-#include <ctre_interfaces/talon_state_interface.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2025_msgs/ElevatorSrv.h"
 

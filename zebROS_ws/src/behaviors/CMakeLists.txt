@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   #controllers_2020_msgs
   #controllers_2022_msgs
   #controllers_2023_msgs
+  controllers_2025_msgs
   # all python so really no controller msgs
   ddynamic_reconfigure
   dynamic_reconfigure
