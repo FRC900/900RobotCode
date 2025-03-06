@@ -72,40 +72,40 @@ use_obstacle_cost: false
 # Constmap costs lower than this are ignored in obstacle gradient calculation
 obstacle_cost_threshold: 50
 
-base_trajectory_node:
-    costmap:
-        footprint:
-            - [-0.56, 0.56]
-            - [-0.56, -0.56]
-            - [0.56, -0.56]
-            - [0.56, 0.56]
-        global_frame: map
-        robot_base_frame: base_link
-        update_frequency: 1.0
-        publish_frequency: 0.5
-        transform_tolerance: 10.
-        rolling_window: false # use absolute position in static map
-      # These should be set when the static layer loads a map
-      # width: 5.0
-      # height: 5.0
-      # resolution: 0.05
-      # origin_x: 2.0
-      # origin_y: 2.0
+# base_trajectory_node:
+#     costmap:
+#         footprint:
+#             - [-0.56, 0.56]
+#             - [-0.56, -0.56]
+#             - [0.56, -0.56]
+#             - [0.56, 0.56]
+#         global_frame: map
+#         robot_base_frame: base_link
+#         update_frequency: 1.0
+#         publish_frequency: 0.5
+#         transform_tolerance: 10.
+#         rolling_window: false # use absolute position in static map
+#       # These should be set when the static layer loads a map
+#       # width: 5.0
+#       # height: 5.0
+#       # resolution: 0.05
+#       # origin_x: 2.0
+#       # origin_y: 2.0
 
-        # Static layer comes from the map topic.  Inflation increases
-        # obstacle sizes by robot footprint to detect collisions based
-        # on robot size
-        plugins:
-           - {name: static_layer,    type: "costmap_2d::StaticLayer"}
-          #- {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"} # For dynamic obstacle detection
-           - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+#         # Static layer comes from the map topic.  Inflation increases
+#         # obstacle sizes by robot footprint to detect collisions based
+#         # on robot size
+#         plugins:
+#            - {name: static_layer,    type: "costmap_2d::StaticLayer"}
+#           #- {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"} # For dynamic obstacle detection
+#            - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
-        inflation_layer:
-            enabled:              true
-            cost_scaling_factor:  10.0  # exponential rate at which the obstacle cost drops off (default: 10)
-            inflation_radius:     1.10  # max. distance from an obstacle at which costs are incurred for planning paths.
+#         inflation_layer:
+#             enabled:              true
+#             cost_scaling_factor:  10.0  # exponential rate at which the obstacle cost drops off (default: 10)
+#             inflation_radius:     1.10  # max. distance from an obstacle at which costs are incurred for planning paths.
 
-        static_layer:
-            enabled: true
-            map_topic: /path_follower/map
+#         static_layer:
+#             enabled: true
+#             map_topic: /path_follower/map
 
