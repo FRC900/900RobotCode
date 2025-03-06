@@ -24,6 +24,8 @@
 #include <path_follower_msgs/PathAction.h>
 
 #include <behavior_actions/AlignAndPlace2025Action.h>
+#include <behavior_actions/Elevater2025Action.h>
+#include <behavior_actions/Intaking2025Action.h>
 
 class AutoModeCalculator2025 : public AutoModeCalculator {
 public:
@@ -48,6 +50,8 @@ std::unique_ptr<AutoModeCalculator2025> auto_calculator;
 // TODO: Add 2025 versions, initialize in main before calling generic inititalizer
 std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> path_follower_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>> align_and_place_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>> elevater_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac;
 
 // void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 // {    
@@ -528,6 +532,8 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	{
 		ROS_WARN_STREAM("teleop_joystick_comp_2025: PREEMPTING all actions");
 		path_follower_ac->cancelAllGoals();
+		elevater_ac->cancelAllGoals();
+		intaking_ac->cancelAllGoals();
 		driver->setJoystickOverride(false);
 	}
 	if (button_box->redRelease)
@@ -559,6 +565,9 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->trapPress)
 	{
+		ROS_INFO_STREAM("Sending intaking manaul goal in teleop");
+		behavior_actions::Intaking2025Goal intaking_goal_;
+		intaking_ac->sendGoal(intaking_goal_);
 	}
 	if (button_box->trapRelease)
 	{
@@ -569,6 +578,10 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->climbPress)
 	{
+		ROS_INFO_STREAM("Sending elevater goal DOWN to INTAKE");
+		behavior_actions::Elevater2025Goal elevater_goal_;
+		elevater_goal_.mode = behavior_actions::Elevater2025Goal::INTAKE;
+		elevater_ac->sendGoal(elevater_goal_);
 	}
 	if (button_box->climbRelease)
 	{
@@ -579,6 +592,10 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->subwooferShootPress)
 	{
+		ROS_INFO_STREAM("Sending elevater goal UP to L2");
+		behavior_actions::Elevater2025Goal elevater_goal_;
+		elevater_goal_.mode = behavior_actions::Elevater2025Goal::L2;
+		elevater_ac->sendGoal(elevater_goal_);
 	}
 	if (button_box->subwooferShootRelease)
 	{
@@ -704,6 +721,8 @@ int main(int argc, char **argv)
 	auto_calculator = std::make_unique<AutoModeCalculator2025>(n);
 	path_follower_ac = std::make_unique<actionlib::SimpleActionClient<path_follower_msgs::PathAction>>("/path_follower/path_follower_server", true);
 	align_and_place_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>>("/align_and_place/alignandplaceing_server", true);
+	elevater_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>>("/elevater/elevater_server_2025", true);
+	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>>("/intaking/intaking_server_2025", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
