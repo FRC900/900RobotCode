@@ -15,7 +15,6 @@
   <arg name="static_image"         default="false" />
   <arg name="run_gpu_apriltag"     default="true" />
   <arg name="run_calibrator"       default="false" />
-  <arg name="image_encoding"       default="mono8" />
 
   <!-- Name of the Nodelet Manager -->
   <arg name="run_nodelet_manager"  default="true" />
@@ -47,7 +46,6 @@
 
   <!-- 
   ========== GPU Apriltag Detector
-  TODO : run as part of nodelet again, now that buffer overflow in gpu detector is fixed
   -->
   <!-- launch-prefix="compute-sanitizer " > -->
   <!-- launch-prefix="gdb -ex run - -args "> -->
