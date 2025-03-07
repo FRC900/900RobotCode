@@ -452,6 +452,7 @@ public:
       // could try to do the math, but i'm not sure how we'd calculate that.
       // also, we'd probably need to control linear acceleration (since linear velocity has to dynamically change :/)
       // seems like the correct way to do it is just based on how far we've turned since the last vision update:
+      // (this is just going from a pose to a twist using a logarithmic map lol)
 
       if (goal->use_y) {
         angle_multipler = requested_to_baselink_angle;
