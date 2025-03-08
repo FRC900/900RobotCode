@@ -19,4 +19,6 @@
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
+  <node name="end_effector_publisher" pkg="y2025_description" type="end_effector_publisher.py"/>
+
 </launch>

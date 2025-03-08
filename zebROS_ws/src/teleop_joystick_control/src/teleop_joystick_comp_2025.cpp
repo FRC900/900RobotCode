@@ -82,6 +82,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: buttonB (actually A on apex controller / bottom button)
 			if(joystick_state->buttonBPress)
 			{
+				current_level = behavior_actions::AlignAndPlace2025Goal::L2;
 			}
 			if(joystick_state->buttonBButton)
 			{	
@@ -94,6 +95,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			// this is the top button on the ABXY set
 			if(joystick_state->buttonXPress)
 			{
+				current_level = behavior_actions::AlignAndPlace2025Goal::L4;
 			}
 			if(joystick_state->buttonXButton)
 			{
@@ -105,6 +107,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: buttonY (X on apex / left button)
 			if(joystick_state->buttonYPress)
 			{
+				current_level = behavior_actions::AlignAndPlace2025Goal::L3;
 			}
 			if(joystick_state->buttonYButton)
 			{
@@ -279,118 +282,115 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			}
 #endif
 
-			//Joystick1 Diagnostics: stickLeft
-			if(joystick_state->stickLeftPress)
-			{
-			}
-			if(joystick_state->stickLeftButton)
-			{
-			}
-			if(joystick_state->stickLeftRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: stickLeft
+			// if(joystick_state->stickLeftPress)
+			// {
+			// }
+			// if(joystick_state->stickLeftButton)
+			// {
+			// }
+			// if(joystick_state->stickLeftRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: stickRight
-			if(joystick_state->stickRightPress)
-			{
-			}
-			if(joystick_state->stickRightButton)
-			{
-			}
-			if(joystick_state->stickRightRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: stickRight
+			// if(joystick_state->stickRightPress)
+			// {
+			// }
+			// if(joystick_state->stickRightButton)
+			// {
+			// }
+			// if(joystick_state->stickRightRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: buttonA
-			if(joystick_state->buttonAPress)
-			{
-				current_level = behavior_actions::AlignAndPlace2025Goal::L2;
-			}
-			if(joystick_state->buttonAButton)
-			{
-			}
-			if(joystick_state->buttonARelease)
-			{
-			}
+			// //Joystick1 Diagnostics: buttonA
+			// if(joystick_state->buttonAPress)
+			// {
+			// }
+			// if(joystick_state->buttonAButton)
+			// {
+			// }
+			// if(joystick_state->buttonARelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: buttonB
-			if(joystick_state->buttonBPress)
-			{
-			}
-			if(joystick_state->buttonBButton)
-			{
-			}
-			if(joystick_state->buttonBRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: buttonB
+			// if(joystick_state->buttonBPress)
+			// {
+			// }
+			// if(joystick_state->buttonBButton)
+			// {
+			// }
+			// if(joystick_state->buttonBRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: buttonX
-			if(joystick_state->buttonXPress)
-			{
-				current_level = behavior_actions::AlignAndPlace2025Goal::L3;
-			}
-			if(joystick_state->buttonXButton)
-			{
-			}
-			if(joystick_state->buttonXRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: buttonX
+			// if(joystick_state->buttonXPress)
+			// {
+			// }
+			// if(joystick_state->buttonXButton)
+			// {
+			// }
+			// if(joystick_state->buttonXRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: buttonY
-			if(joystick_state->buttonYPress)
-			{
-				current_level = behavior_actions::AlignAndPlace2025Goal::L4;
-			}
-			if(joystick_state->buttonYButton)
-			{
-			}
-			if(joystick_state->buttonYRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: buttonY
+			// if(joystick_state->buttonYPress)
+			// {
+			// }
+			// if(joystick_state->buttonYButton)
+			// {
+			// }
+			// if(joystick_state->buttonYRelease)
+			// {
+			// }
 
-			//Joystick1: buttonBack
-			if(joystick_state->buttonBackPress)
-			{
-			}
-			if(joystick_state->buttonBackButton)
-			{
-			}
-			if(joystick_state->buttonBackRelease)
-			{
-			}
+			// //Joystick1: buttonBack
+			// if(joystick_state->buttonBackPress)
+			// {
+			// }
+			// if(joystick_state->buttonBackButton)
+			// {
+			// }
+			// if(joystick_state->buttonBackRelease)
+			// {
+			// }
 
-			//Joystick1: buttonStart
-			if(joystick_state->buttonStartPress)
-			{
-			}
-			if(joystick_state->buttonStartButton)
-			{
-			}
-			if(joystick_state->buttonStartRelease)
-			{
-			}
+			// //Joystick1: buttonStart
+			// if(joystick_state->buttonStartPress)
+			// {
+			// }
+			// if(joystick_state->buttonStartButton)
+			// {
+			// }
+			// if(joystick_state->buttonStartRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: bumperLeft
-			if(joystick_state->bumperLeftPress)
-			{
-			}
-			if(joystick_state->bumperLeftButton)
-			{
-			}
-			if(joystick_state->bumperLeftRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: bumperLeft
+			// if(joystick_state->bumperLeftPress)
+			// {
+			// }
+			// if(joystick_state->bumperLeftButton)
+			// {
+			// }
+			// if(joystick_state->bumperLeftRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: bumperRight
-			if(joystick_state->bumperRightPress)
-			{
-			}
-			if(joystick_state->bumperRightButton)
-			{
-			}
-			if(joystick_state->bumperRightRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: bumperRight
+			// if(joystick_state->bumperRightPress)
+			// {
+			// }
+			// if(joystick_state->bumperRightButton)
+			// {
+			// }
+			// if(joystick_state->bumperRightRelease)
+			// {
+			// }
 
 			//Joystick1 Diagnostics: leftTrigger
 			if(joystick_state->leftTrigger > config.trigger_threshold)
@@ -427,49 +427,49 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 				joystick1_right_trigger_pressed = false;
 			}
 
-			//Joystick1 Diagnostics: directionLeft
-			if(joystick_state->directionLeftPress)
-			{
-			}
-			if(joystick_state->directionLeftButton)
-			{
-			}
-			if(joystick_state->directionLeftRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: directionLeft
+			// if(joystick_state->directionLeftPress)
+			// {
+			// }
+			// if(joystick_state->directionLeftButton)
+			// {
+			// }
+			// if(joystick_state->directionLeftRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: directionRight
-			if(joystick_state->directionRightPress)
-			{
-			}
-			if(joystick_state->directionRightButton)
-			{
-			}
-			if(joystick_state->directionRightRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: directionRight
+			// if(joystick_state->directionRightPress)
+			// {
+			// }
+			// if(joystick_state->directionRightButton)
+			// {
+			// }
+			// if(joystick_state->directionRightRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: directionUp
-			if(joystick_state->directionUpPress)
-			{
-			}
-			if(joystick_state->directionUpButton)
-			{
-			}
-			if(joystick_state->directionUpRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: directionUp
+			// if(joystick_state->directionUpPress)
+			// {
+			// }
+			// if(joystick_state->directionUpButton)
+			// {
+			// }
+			// if(joystick_state->directionUpRelease)
+			// {
+			// }
 
-			//Joystick1 Diagnostics: directionDown
-			if(joystick_state->directionDownPress)
-			{
-			}
-			if(joystick_state->directionDownButton)
-			{
-			}
-			if(joystick_state->directionDownRelease)
-			{
-			}
+			// //Joystick1 Diagnostics: directionDown
+			// if(joystick_state->directionDownPress)
+			// {
+			// }
+			// if(joystick_state->directionDownButton)
+			// {
+			// }
+			// if(joystick_state->directionDownRelease)
+			// {
+			// }
 		}
 
 		last_header_stamp = joystick_state->header.stamp;

@@ -6,6 +6,7 @@ from behavior_actions.msg import Elevater2025Action, Elevater2025Goal, Elevater2
 from talon_state_msgs.msg import TalonFXProState
 from controllers_2025_msgs.srv import ElevatorSrv, ElevatorSrvRequest
 from sensor_msgs.msg import JointState
+from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
 class Elevater2025ActionServer(object):
 
@@ -26,6 +27,14 @@ class Elevater2025ActionServer(object):
         self.L3_pos = rospy.get_param("L3")
         self.L4_pos = rospy.get_param("L4")
 
+        ddynrec = DDynamicReconfigure("elevater_dyn_rec")
+        ddynrec.add_variable("intake_pos", "float/double variable", self.intake_pos, 0.0, 2.0)
+        ddynrec.add_variable("L1_pos", "float/double variable", self.L1_pos, 0.0, 2.0)
+        ddynrec.add_variable("L2_pos", "float/double variable", self.L2_pos, 0.0, 2.0)
+        ddynrec.add_variable("L3_pos", "float/double variable", self.L3_pos, 0.0, 2.0)
+        ddynrec.add_variable("L4_pos", "float/double variable", self.L4_pos, 0.0, 2.0)
+        ddynrec.start(self.dyn_rec_callback)
+
         self.tolerance = rospy.get_param("tolerance")
 
         self.avoid_elevator_switch_name = rospy.get_param("avoid_elevator_switch")
@@ -37,6 +46,16 @@ class Elevater2025ActionServer(object):
 
         self.server = actionlib.SimpleActionServer(name, Elevater2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
+
+    def dyn_rec_callback(self, config, level):
+        rospy.loginfo("Received reconf call: " + str(config))
+        self.intake_pos = config["intake_pos"]
+        self.L1_pos = config["L1_pos"]
+        self.L2_pos = config["L2_pos"]
+        self.L3_pos = config["L3_pos"]
+        self.L4_pos = config["L4_pos"]
+
+        return config
 
     def rio_callback(self, data):
         if self.avoid_elevator_switch_name in data.name and self.roller_limit_switch_name in data.name:
