@@ -1,7 +1,8 @@
+#include <atomic>
+
 #include <ros/ros.h>
 #include <controller_interface/controller.h>
 #include <ctre_interfaces/candle_command_interface.h>
-#include <realtime_tools/realtime_buffer.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <string>
@@ -9,9 +10,10 @@
 #include <variant>
 #include <vector>
 
+#include <candle_controller_msgs/Animation.h>
 #include <candle_controller_msgs/Brightness.h>
 #include <candle_controller_msgs/Colour.h>
-#include <candle_controller_msgs/Animation.h>
+#include <candle_controller_msgs/ColourArray.h>
 
 using namespace hardware_interface::candle;
 
@@ -92,7 +94,7 @@ namespace candle_controller {
 class CANdleController : public controller_interface::Controller<CANdleCommandInterface> {
 public:
     CANdleController() {
-        this->brightness_buffer.writeFromNonRT(1.0);
+        this->brightness_buffer.store(1.0);
     }
 
     bool init(
@@ -109,15 +111,15 @@ public:
         this->candle_handle = candle_command_interface->getHandle(candle_name);
 
         this->colour_service = controller_nh.advertiseService("colour", &CANdleController::colourCallback, this);
+        this->colour_array_service = controller_nh.advertiseService("colour_array", &CANdleController::colourArrayCallback, this);
         this->brightness_service = controller_nh.advertiseService("brightness", &CANdleController::brightnessCallback, this);
         this->animation_service = controller_nh.advertiseService("animation", &CANdleController::animationCallback, this);
         return true;
     }
 
     void update(const ros::Time&, const ros::Duration&) override {
-        const double brightness = *(brightness_buffer.readFromRT());
         // Brightness isn't exclusive to colours/animations, so it gets special treatment
-        this->candle_handle->setBrightness(brightness);
+        this->candle_handle->setBrightness(brightness_buffer.load());
 
         if (!cmd_buf_mutex.try_lock()) { return; }
         std::lock_guard lock(cmd_buf_mutex, std::adopt_lock);
@@ -138,16 +140,17 @@ public:
 private:
     CANdleCommandHandle candle_handle;
     ros::ServiceServer colour_service;
+    ros::ServiceServer colour_array_service;
     ros::ServiceServer brightness_service;
     ros::ServiceServer animation_service;
 
     std::vector<Command> command_buffer;
     std::mutex cmd_buf_mutex;
-    realtime_tools::RealtimeBuffer<double> brightness_buffer;
+    std::atomic<double> brightness_buffer;
 
     bool brightnessCallback(candle_controller_msgs::Brightness::Request& req, candle_controller_msgs::Brightness::Response&) {
         if (this->isRunning()) {
-            this->brightness_buffer.writeFromNonRT(req.brightness);
+            this->brightness_buffer.store(req.brightness);
 
             return true;
         } else {
@@ -161,6 +164,20 @@ private:
             LEDGroup leds{req.start, req.count, Colour(req.red, req.green, req.blue, req.white)};
             std::lock_guard lock(cmd_buf_mutex);
             command_buffer.emplace_back(leds);
+
+            return true;
+        } else {
+            ROS_ERROR_STREAM("Can't accept new commands. CANdleController is not running.");
+            return false;
+        }
+    }
+    bool colourArrayCallback(candle_controller_msgs::ColourArray::Request& req, candle_controller_msgs::ColourArray::Response&) {
+        if (this->isRunning()) { 
+            std::lock_guard lock(cmd_buf_mutex);
+            for (const auto &c: req.colours) {
+                LEDGroup leds{c.start, c.count, Colour(c.red, c.green, c.blue, c.white)};
+                command_buffer.emplace_back(leds);
+            }
 
             return true;
         } else {
