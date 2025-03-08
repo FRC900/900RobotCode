@@ -1,0 +1,69 @@
+<robot name="narwhal">
+    <!-- It really helps loading times/Foxglove not crash to split the robot into multiple DAEs for simplification -->
+    <link name="base_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 -1.570796" />
+            <geometry>
+                <mesh filename="package://y2025_description/meshes/y2025_drivebase.dae" />
+            </geometry>
+            <material name="robot_material">
+                <color
+                    rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0" />
+            </material>
+        </visual>
+    </link>
+
+    <joint name="base_link_to_elevator_link" type="fixed">
+        <parent link="base_link" />
+        <child link="elevator_link" />
+        <origin rpy="0 0 0" xyz="0 0 0" />
+    </joint>
+    <link name="elevator_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 -1.570796" />
+            <geometry>
+                <mesh filename="package://y2025_description/meshes/y2025_elevator.dae" />
+            </geometry>
+            <material name="robot_material">
+                <color
+                    rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0" />
+            </material>
+        </visual>
+    </link>
+
+    <joint name="base_link_to_intake_link" type="fixed">
+        <parent link="base_link" />
+        <child link="intake_link" />
+        <origin rpy="0 0 0" xyz="0 0 0" />
+    </joint>
+    <link name="intake_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 -1.570796" />
+            <geometry>
+                <mesh filename="package://y2025_description/meshes/y2025_intake.dae" />
+            </geometry>
+            <material name="robot_material">
+                <color
+                    rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0" />
+            </material>
+        </visual>
+    </link>
+
+    <joint name="base_link_to_end_effector_link" type="fixed">
+        <parent link="base_link" />
+        <child link="end_effector_link" />
+        <origin rpy="0 0 0" xyz="0 0 1.72" />
+    </joint>
+    <link name="end_effector_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 -1.570796" />
+            <geometry>
+                <mesh filename="package://y2025_description/meshes/y2025_end_effector.dae" />
+            </geometry>
+            <material name="robot_material">
+                <color
+                    rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0" />
+            </material>
+        </visual>
+    </link>
+</robot>
