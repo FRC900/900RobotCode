@@ -27,6 +27,8 @@
 #include <behavior_actions/Elevater2025Action.h>
 #include <behavior_actions/Intaking2025Action.h>
 
+#include "talon_controller_msgs/Command.h"
+
 class AutoModeCalculator2025 : public AutoModeCalculator {
 public:
 	explicit AutoModeCalculator2025(ros::NodeHandle &n)
@@ -52,6 +54,11 @@ std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> p
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>> align_and_place_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>> elevater_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac;
+
+ros::ServiceClient toggle_auto_rotate_client;
+ros::ServiceClient outtaking_client;
+
+bool currently_outtaking = false;
 
 // void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 // {    
@@ -545,6 +552,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->backupButton1Press)
 	{
+		talon_controller_msgs::Command outtake_srv;
+		outtake_srv.request.command = (!currently_outtaking) ? -3.0 : 0.0; // hardcoded voltage yippee
+		outtaking_client.call(outtake_srv);
+
+		currently_outtaking = !currently_outtaking;
 	}
 	if (button_box->backupButton1Release)
 	{
@@ -560,30 +572,32 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	{
 	}
 
-	if (button_box->trapButton)
-	{
-	}
-	if (button_box->trapPress)
-	{
-		ROS_INFO_STREAM("Sending intaking manaul goal in teleop");
-		behavior_actions::Intaking2025Goal intaking_goal_;
-		intaking_ac->sendGoal(intaking_goal_);
-	}
-	if (button_box->trapRelease)
-	{
-	}
-
 	if (button_box->climbButton)
 	{
 	}
 	if (button_box->climbPress)
 	{
+		ROS_INFO_STREAM("Sending elevater goal UP to L2");
+		behavior_actions::Elevater2025Goal elevater_goal_;
+		elevater_goal_.mode = behavior_actions::Elevater2025Goal::L2;
+		elevater_ac->sendGoal(elevater_goal_);
+	}
+	if (button_box->climbRelease)
+	{
+	}
+
+	if (button_box->trapButton)
+	{
+	}
+	if (button_box->trapPress)
+	{
+
 		ROS_INFO_STREAM("Sending elevater goal DOWN to INTAKE");
 		behavior_actions::Elevater2025Goal elevater_goal_;
 		elevater_goal_.mode = behavior_actions::Elevater2025Goal::INTAKE;
 		elevater_ac->sendGoal(elevater_goal_);
 	}
-	if (button_box->climbRelease)
+	if (button_box->trapRelease)
 	{
 	}
 
@@ -592,10 +606,9 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	}
 	if (button_box->subwooferShootPress)
 	{
-		ROS_INFO_STREAM("Sending elevater goal UP to L2");
-		behavior_actions::Elevater2025Goal elevater_goal_;
-		elevater_goal_.mode = behavior_actions::Elevater2025Goal::L2;
-		elevater_ac->sendGoal(elevater_goal_);
+		ROS_INFO_STREAM("Sending intaking manaul goal in teleop");
+		behavior_actions::Intaking2025Goal intaking_goal_;
+		intaking_ac->sendGoal(intaking_goal_);
 	}
 	if (button_box->subwooferShootRelease)
 	{
@@ -725,6 +738,9 @@ int main(int argc, char **argv)
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>>("/intaking/intaking_server_2025", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
+
+	outtaking_client = n.serviceClient<talon_controller_msgs::Command>("/frcrobot_jetson/intake_controller/command", false, {{"tcp_nodelay", "1"}});
+	toggle_auto_rotate_client = n.serviceClient<std_srvs::SetBool>("/auto_rotating/toggle_auto_rotate", false, {{"tcp_nodelay", "1"}});
 
 	TeleopInitializer initializer;
 	initializer.set_n_params(n_params);
