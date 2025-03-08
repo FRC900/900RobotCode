@@ -5,7 +5,7 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
-#include "pid_velocity_msg/PIDVelocity.h"
+#include "teleop_orientation_msgs/TeleopOrientation.h"
 
 class AlignActionAxisConfig
 {
@@ -96,7 +96,7 @@ class AlignActionAxisStatePosition : public AlignActionAxisState<std_msgs::Float
 };
 
 // These messages are sent as (position, velocity)
-class AlignActionAxisStatePositionVelocity : public AlignActionAxisState<pid_velocity_msg::PIDVelocity> {
+class AlignActionAxisStatePositionVelocity : public AlignActionAxisState<teleop_orientation_msgs::TeleopOrientation> {
 	public:
 		AlignActionAxisStatePositionVelocity(ros::NodeHandle &nh,
 							const std::string &enable_pub_topic,
@@ -107,9 +107,10 @@ class AlignActionAxisStatePositionVelocity : public AlignActionAxisState<pid_vel
 			// Set defaults for PID node topics to prevent
 			// spam of "Waiting for first setpoint message."
 
-			pid_velocity_msg::PIDVelocity position_velocity_msg;
+			teleop_orientation_msgs::TeleopOrientation position_velocity_msg;
 			position_velocity_msg.position = 0.0;
 			position_velocity_msg.velocity = 0.0;
+			position_velocity_msg.drive_from_teleop = false;
 			command_pub_.publish(position_velocity_msg);
 
 			std_msgs::Float64 position_msg;
@@ -119,9 +120,10 @@ class AlignActionAxisStatePositionVelocity : public AlignActionAxisState<pid_vel
 
 		void setCommand(double position_command, double velocity_command)
 		{
-			pid_velocity_msg::PIDVelocity command_msg;
+			teleop_orientation_msgs::TeleopOrientation command_msg;
 			command_msg.position = position_command;
 			command_msg.velocity = velocity_command;
+			command_msg.drive_from_teleop = false;
 			command_pub_.publish(command_msg);
 		}
 };
