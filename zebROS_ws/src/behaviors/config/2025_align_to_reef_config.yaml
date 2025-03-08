@@ -8,5 +8,5 @@ fast_zone: 2
 # To update these from real life:
 # rosrun tf2_tools echo.py base_link tag_8 # (or replace tag 8 with whatever tag you're at)
 # Transform trees are incredibly powerful :)
-reef_x_transform: 0.5
+reef_x_transform: 0.6
 reef_y_transform: -0.154

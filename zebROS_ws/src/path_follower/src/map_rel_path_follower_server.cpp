@@ -255,7 +255,7 @@ class PathAction
 
 				initial_feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - goal->position_path.poses[0].pose.position.x);
 				initial_feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - goal->position_path.poses[0].pose.position.y);
-				initial_feedback.angle_error = angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(goal->position_path.poses[0].pose.orientation));
+				initial_feedback.angle_error = std::fabs(angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(goal->position_path.poses[0].pose.orientation)));
 				as_.publishFeedback(initial_feedback);
 
 				enable_msg.data = true;
@@ -278,7 +278,7 @@ class PathAction
 				{
 					orientation_command_pub_.publish(command_msg);
 					#ifdef DEBUG
-					ROS_INFO_STREAM("Orientation: " << command_msg.position << " at angular velocity " << command_msg.velocity);
+					ROS_INFO_STREAM("Orientation: " << command_msg.position << " at angular velocity " << command_msg.velocity << ", target is " << orientation_state << ", shortest distance is (note: we are using absolute value everywhere else) " << angles::shortest_angular_distance(command_msg.position, orientation_state) << ", rot tol is " << final_rot_tol);
 					#endif
 				}
 
@@ -289,7 +289,7 @@ class PathAction
 					(fabs(latest_odom_.twist.twist.linear.x) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.linear.y) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.angular.z) < final_angvel_tol) &&
-					(angles::shortest_angular_distance(command_msg.position, orientation_state) < final_rot_tol))
+					(fabs(angles::shortest_angular_distance(command_msg.position, orientation_state)) < final_rot_tol))
 				{
 					ROS_INFO_STREAM("path_follower: successfully aligned to initial waypoint");
 					break;
@@ -401,7 +401,7 @@ class PathAction
 
 				feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - next_waypoint.position.position.x);
 				feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - next_waypoint.position.position.y);
-				feedback.angle_error = angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(next_waypoint.position.orientation));
+				feedback.angle_error = std::fabs(angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(next_waypoint.position.orientation)));
 
 				as_.publishFeedback(feedback);
 #ifdef DEBUG
@@ -455,7 +455,7 @@ class PathAction
 				// Right now, there's a bug where pf will think it finished immediately when start == end
 				if ((fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
-					(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) < final_rot_tol) &&
+					(fabs(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state)) < final_rot_tol) &&
 					(fabs(latest_odom_.twist.twist.linear.x) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.linear.y) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.angular.z) < final_angvel_tol) &&
@@ -473,7 +473,7 @@ class PathAction
 					#ifdef DEBUG
 					ROS_INFO_STREAM("X ERROR: " << fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) << " tolerance " << final_pos_tol);
 					ROS_INFO_STREAM("Y ERROR: " << fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) << " tolerance " << final_pos_tol);
-					ROS_INFO_STREAM("ROT ERROR: " << angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state) << " tolerance " << final_rot_tol);
+					ROS_INFO_STREAM("ROT ERROR: " << fabs(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state)) << " tolerance " << final_rot_tol);
 					ROS_INFO_STREAM("CURRENT INDEX: " << current_index << " goal poses -2: " << goal->position_path.poses.size() - 2);
 					#endif
 					ros::spinOnce();
