@@ -1,0 +1,21 @@
+<robot name="field">
+    <link name="map"></link>
+    <joint name="map_to_base" type="fixed">
+        <parent link="map" />
+        <child link="water_game_link" />
+        <origin rpy="0.0 0 0" xyz="0 0 0" />
+    </joint>
+    <link name="water_game_link">
+        <visual>
+            <origin xyz="8.775 4.025 0" rpy="0 -0 3.1415" />
+            <geometry>
+                <!-- Note: needed to reexport field in Blender for Foxglove to like it, idk why -->
+                <mesh filename="package://y2025_description/meshes/y2025_field.dae" />
+            </geometry>
+            <material name="water_game_link">
+                <color
+                    rgba="0.59658581071440286436 0.62025664106601541281 0.63761838421033945057 1.0" />
+            </material>
+        </visual>
+    </link>
+</robot>

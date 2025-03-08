@@ -1,0 +1,181 @@
+{
+  "configById": {
+    "3D!18i6zy7": {
+      "layers": {
+        "845139cb-26bc-40b3-8161-8ab60af4baf5": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "845139cb-26bc-40b3-8161-8ab60af4baf5",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "order": 1
+        },
+        "2e01a5fd-afb0-4d6d-93db-48597e9fa1d8": {
+          "displayMode": "auto",
+          "fallbackColor": "#ffffff",
+          "showAxis": false,
+          "axisScale": 1,
+          "visible": true,
+          "frameLocked": true,
+          "instanceId": "2e01a5fd-afb0-4d6d-93db-48597e9fa1d8",
+          "label": "URDF",
+          "layerId": "foxglove.Urdf",
+          "sourceType": "url",
+          "url": "package://y2025_description/urdf/y2025_field.urdf",
+          "filePath": "",
+          "parameter": "",
+          "topic": "",
+          "framePrefix": "",
+          "order": 2,
+          "links": {
+            "water_game_link": {
+              "visible": true
+            }
+          }
+        },
+        "cacbed62-4311-4d6f-9b4f-38c58d7c818e": {
+          "displayMode": "auto",
+          "fallbackColor": "#ffffff",
+          "showAxis": false,
+          "axisScale": 1,
+          "visible": true,
+          "frameLocked": true,
+          "instanceId": "cacbed62-4311-4d6f-9b4f-38c58d7c818e",
+          "label": "URDF",
+          "layerId": "foxglove.Urdf",
+          "sourceType": "url",
+          "url": "package://y2025_description/urdf/y2025_robot.urdf",
+          "filePath": "",
+          "parameter": "",
+          "topic": "",
+          "framePrefix": "",
+          "order": 3
+        }
+      },
+      "cameraState": {
+        "perspective": true,
+        "distance": 10.807201753221156,
+        "phi": 74.84413214240585,
+        "thetaOffset": -126.39293173289538,
+        "targetOffset": [
+          8.139006313749622,
+          -0.5010755844399116,
+          1.887140350594902e-16
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {
+        "transforms": {
+          "labelSize": 0.1
+        }
+      },
+      "transforms": {},
+      "topics": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {},
+      "followTf": "map"
+    },
+    "RawMessages!os6rgs": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "",
+      "fontSize": 12
+    },
+    "Image!3mnp456": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "first": "3D!18i6zy7",
+    "second": {
+      "first": "Image!3mnp456",
+      "second": "RawMessages!os6rgs",
+      "direction": "column",
+      "splitPercentage": 30
+    },
+    "direction": "row",
+    "splitPercentage": 70
+  }
+}
