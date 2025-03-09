@@ -3,7 +3,7 @@ intake: 0.0
 L1: 0.43 # doesn't work
 L2: 0.78
 L3: 1.15
-L4: 1.82
+L4: 1.82 # might need to be lower
 
 avoid_elevator_switch: elevator_avoid_limit_switch
 outtake_switch: roller_limit_switch
