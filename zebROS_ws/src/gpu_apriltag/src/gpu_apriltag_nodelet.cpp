@@ -175,6 +175,7 @@ public:
 private:
     bool cmd_service(gpu_apriltag_msgs::SetAllowedTags::Request &req,
                     gpu_apriltag_msgs::SetAllowedTags::Response & ) {
+        legal_tags_.clear();
         for (int legal_tag : req.allowed_tags)
         {
             legal_tags_.emplace(legal_tag);
