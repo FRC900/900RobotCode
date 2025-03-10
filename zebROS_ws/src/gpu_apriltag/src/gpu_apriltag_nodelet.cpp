@@ -4,6 +4,7 @@
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <image_transport/image_transport.h>
 #include <glog/logging.h>
+#include "gpu_apriltag_msgs/SetAllowedTags.h"
 
 #include "gpu_apriltag/gpu_apriltag.h"
 #include "apriltag_msgs/ApriltagArrayStamped.h"
@@ -37,14 +38,15 @@ public:
         image_transport::ImageTransport it(nh_);
         pub_debug_image_ = it.advertise("debug_image", 1);
 
-        // TODO: test
+        // TODO: test this
+        set_allowed_tags_service_ = base_nh.advertiseService("set_allowed_tags_service", &FRC971GpuApriltagNodelet::cmd_service, this);
         // Load config for legal apriltags
         std::vector<int> _legal_tags_vec;
         nh_.param<std::vector<int>>("legal_tags", _legal_tags_vec, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16});
         for (int legal_tag : _legal_tags_vec)
         {
             legal_tags_.emplace(legal_tag);
-            std::cout << legal_tag;
+            ROS_INFO_STREAM("Allowing tag " << std::to_string(legal_tag));
         }
         nh_.param<int>("min_white_black_diff", min_white_black_diff_, min_white_black_diff_);
         ROS_INFO_STREAM("Setting min_white_black_diff to " << min_white_black_diff_);
@@ -171,6 +173,19 @@ public:
     }
 
 private:
+    bool cmd_service(gpu_apriltag_msgs::SetAllowedTags::Request &req,
+                    gpu_apriltag_msgs::SetAllowedTags::Response & ) {
+        for (int legal_tag : req.allowed_tags)
+        {
+            legal_tags_.emplace(legal_tag);
+        }
+        std::stringstream info_stream;
+        info_stream << "Allowed tags: ";
+        std::copy(legal_tags_.begin(), legal_tags_.end(), std::ostream_iterator<int>(info_stream, " "));
+        info_stream << std::endl;
+        ROS_INFO_STREAM(info_stream.str());
+        return true;
+    } 
     void drawCorner(cv::Mat &image, const std::array<cv::Point2d, 4> &corner, const cv::Scalar &color) const
     {
         for (size_t i = 0; i < corner.size(); i++)
@@ -195,6 +210,7 @@ private:
     std::atomic<bool> save_input_image_{false};
 
     std::set<int> legal_tags_;
+    ros::ServiceServer set_allowed_tags_service_; // service for receiving commands listing allowed apriltags
     int min_white_black_diff_{5};
 };
 
