@@ -13,6 +13,7 @@ from FourCoralProcessor import FourCoralProcessor
 from ThreeCoralNonProcessor import ThreeCoralNonProcessor
 from TestDriveForwardBack import TestDriveForwardBack
 from TestFourCoralProcessor import TestFourCoralProcessor
+from DriveForward import DriveForward
 
 class AutonomousNames(str, Enum):
     Test4Note = "2025_4_Note"
@@ -24,6 +25,7 @@ class AutonomousNames(str, Enum):
     TestDriveForwardBack = "test_drive_forward_back"
     FourCoralProcessor = "2025_4_Coral_Processor_Side"
     TestFourCoralProcessor = "Test_2025_4_Coral_Processor_Side"
+    DriveForward = "DriveForward"
 
     def __str__(self) -> str:
         return str.__str__(self)
@@ -34,7 +36,7 @@ def init_auto_selection_map() -> dict[AutonomousNames, AutoBase]:
     Returns an autonomous selection map, mapping auto names to auto programs.
     """
     return {
-        AutonomousNames.TestCmdVel: TestCmdVel(),
+        AutonomousNames.DriveForward: DriveForward(),
         AutonomousNames.Test4Note: Test4Note(),
         AutonomousNames.TestCmdVelCircle: TestCmdVelCircle(),
         AutonomousNames.TwoCoralNonProcessor: TwoCoralNonProcessor(),
