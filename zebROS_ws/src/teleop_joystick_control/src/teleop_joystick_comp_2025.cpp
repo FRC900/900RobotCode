@@ -5,7 +5,7 @@
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
 
-#include "frc_msgs/ButtonBoxState2024.h"
+#include "frc_msgs/ButtonBoxState2025.h"
 #include "frc_msgs/JoystickState.h"
 #include "imu_zero_msgs/ImuZeroAngle.h"
 
@@ -493,18 +493,18 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 
 bool aligning = false;
 
-void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
+void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 {
-	if (button_box->lockingSwitchButton)
+	if (button_box->notSafeModeLockingSwitchButton)
 	{
 	}
 	else
 	{
 	}
-	if (button_box->lockingSwitchPress)
+	if (button_box->notSafeModeLockingSwitchPress)
 	{
 	}
-	if (button_box->lockingSwitchRelease)
+	if (button_box->notSafeModeLockingSwitchRelease)
 	{
 	}
 
@@ -547,10 +547,10 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	{
 	}
 
-	if (button_box->backupButton1Button)
+	if (button_box->outtakeButton)
 	{
 	}
-	if (button_box->backupButton1Press)
+	if (button_box->outtakePress)
 	{
 		talon_controller_msgs::Command outtake_srv;
 		outtake_srv.request.command = (!currently_outtaking) ? -3.0 : 0.0; // hardcoded voltage yippee
@@ -558,7 +558,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 
 		currently_outtaking = !currently_outtaking;
 	}
-	if (button_box->backupButton1Release)
+	if (button_box->outtakeRelease)
 	{
 	}
 
@@ -572,24 +572,24 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 	{
 	}
 
-	if (button_box->climbButton)
+	if (button_box->elevatorL2Button)
 	{
 	}
-	if (button_box->climbPress)
+	if (button_box->elevatorL2Press)
 	{
 		ROS_INFO_STREAM("Sending elevater goal UP to L2");
 		behavior_actions::Elevater2025Goal elevater_goal_;
 		elevater_goal_.mode = behavior_actions::Elevater2025Goal::L2;
 		elevater_ac->sendGoal(elevater_goal_);
 	}
-	if (button_box->climbRelease)
+	if (button_box->elevatorL2Release)
 	{
 	}
 
-	if (button_box->trapButton)
+	if (button_box->elevatorRetractButton)
 	{
 	}
-	if (button_box->trapPress)
+	if (button_box->elevatorRetractPress)
 	{
 
 		ROS_INFO_STREAM("Sending elevater goal DOWN to INTAKE");
@@ -597,70 +597,70 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2024ConstPtr &button_box)
 		elevater_goal_.mode = behavior_actions::Elevater2025Goal::INTAKE;
 		elevater_ac->sendGoal(elevater_goal_);
 	}
-	if (button_box->trapRelease)
+	if (button_box->elevatorRetractRelease)
 	{
 	}
 
-	if (button_box->subwooferShootButton)
+	if (button_box->intakeButton)
 	{
 	}
-	if (button_box->subwooferShootPress)
+	if (button_box->intakePress)
 	{
-		ROS_INFO_STREAM("Sending intaking manaul goal in teleop");
+		ROS_INFO_STREAM("Sending intaking manual goal in teleop");
 		behavior_actions::Intaking2025Goal intaking_goal_;
 		intaking_ac->sendGoal(intaking_goal_);
 	}
-	if (button_box->subwooferShootRelease)
+	if (button_box->intakeRelease)
 	{
 	}
 
-	if (button_box->speedSwitchUpButton)
+	if (button_box->rightSwitchUpButton)
 	{
 	}
-	if (button_box->speedSwitchUpPress)
+	if (button_box->rightSwitchUpPress)
 	{
 	}
-	if (button_box->speedSwitchUpRelease)
-	{
-	}
-
-	if (button_box->speedSwitchDownButton)
-	{
-	}
-	if (button_box->speedSwitchDownPress)
-	{
-	}
-	if (button_box->speedSwitchDownRelease)
+	if (button_box->rightSwitchUpRelease)
 	{
 	}
 
-	// Switch in middle position
-	if (!(button_box->speedSwitchDownButton || button_box->speedSwitchUpButton))
+	if (button_box->rightSwitchDownButton)
 	{
 	}
-
-	if (button_box->shooterArmUpButton)
+	if (button_box->rightSwitchDownPress)
 	{
 	}
-	if (button_box->shooterArmUpPress)
-	{
-	}
-	if (button_box->shooterArmUpRelease)
-	{
-	}
-
-	if (button_box->shooterArmDownButton)
-	{
-	}
-	if (button_box->shooterArmDownPress)
-	{
-	}
-	if (button_box->shooterArmDownRelease)
+	if (button_box->rightSwitchDownRelease)
 	{
 	}
 
 	// Switch in middle position
-	if (!(button_box->shooterArmDownButton || button_box->shooterArmUpButton))
+	if (!(button_box->rightSwitchDownButton || button_box->rightSwitchUpButton))
+	{
+	}
+
+	if (button_box->leftSwitchUpButton)
+	{
+	}
+	if (button_box->leftSwitchUpPress)
+	{
+	}
+	if (button_box->leftSwitchUpRelease)
+	{
+	}
+
+	if (button_box->leftSwitchDownButton)
+	{
+	}
+	if (button_box->leftSwitchDownPress)
+	{
+	}
+	if (button_box->leftSwitchDownRelease)
+	{
+	}
+
+	// Switch in middle position
+	if (!(button_box->leftSwitchDownButton || button_box->leftSwitchUpButton))
 	{
 	}
 

@@ -50,6 +50,7 @@ add_message_files(
   ButtonBoxState.msg
   ButtonBoxState2023.msg
   ButtonBoxState2024.msg
+  ButtonBoxState2025.msg
   CANBusStatusState.msg
   JointMode.msg
   JoystickState.msg

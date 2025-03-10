@@ -112,7 +112,7 @@ joystick_controller:
     publish_rate: 50
 
 button_box_controller:
-    type: button_box_state_controller_2024/ButtonBoxStateController_2024
+    type: button_box_state_controller_2025/ButtonBoxStateController_2025
     name: button_box
     publish_rate: 50
 
