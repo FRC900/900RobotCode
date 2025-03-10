@@ -58,20 +58,20 @@ class Aligner:
 
     TAG_POS = {
     # tag id: (x, y)
-        6: (13.474, 3.306), # 6
-        7: (13.890, 4.026), # 7
-        8: (13.474, 4.745), # 8
-        9: (12.643, 4.745), # 9
-        10: (12.227, 4.026), # 10
-        11: (12.643, 3.306), # 11
+        6: (13.474, 3.306, math.radians(120)), # 6
+        7: (13.890, 4.026, math.radians(180)), # 7
+        8: (13.474, 4.745, math.radians(240)), # 8
+        9: (12.643, 4.745, math.radians(300)), # 9
+        10: (12.227, 4.026, math.radians(0)), # 10
+        11: (12.643, 3.306, math.radians(60)), # 11
         1: (16.697, 0.655), # 1
         2: (16.697, 7.396), # 2
-        17: (4.047, 3.306), # 17
-        18: (3.658, 4.026), # 18
-        19: (4.074, 4.745), # 19
-        20: (4.908, 4.745), # 20
-        21: (5.321, 4.026), # 21
-        22: (4.908, 3.306), # 22
+        17: (4.047, 3.306, math.radians(60)), # 17
+        18: (3.658, 4.026, math.radians(0)), # 18
+        19: (4.074, 4.745, math.radians(300)), # 19
+        20: (4.908, 4.745, math.radians(240)), # 20
+        21: (5.321, 4.026, math.radians(180)), # 21
+        22: (4.908, 3.306, math.radians(120)), # 22
         12: (0.851, 0.655), # 12
         13: (0.851, 7.396) # 13
     }
@@ -107,6 +107,38 @@ class Aligner:
         q = imu_msg.orientation
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w])
         self.current_yaw = euler[2]
+    
+    def calc_pipe_pose(tag: int, buffer: tf2_ros.Buffer, left_pipe: bool) -> geometry_msgs.msg.PoseStamped:
+        # This is the transform from map to tag (e.g. where tag is relative to map)
+        # We want the transform from map to pipe (e.g. where pipe frame is relative to map)
+        map_to_tag = geometry_msgs.msg.TransformStamped()
+        map_to_tag.transform.translation.x = Aligner.TAG_POS[tag][0]
+        map_to_tag.transform.translation.y = Aligner.TAG_POS[tag][1]
+        map_to_tag.transform.translation.z = 0
+        map_to_tag.transform.rotation.x, map_to_tag.transform.rotation.y, map_to_tag.transform.rotation.z, map_to_tag.transform.rotation.w = quaternion_from_euler(0, 0, Aligner.TAG_POS[tag][2])
+
+        map_to_tag_mat = tf_msg_to_matrix(map_to_tag)
+
+        # So, invert the above transform (so we have where map is relative to tag)
+        tag_to_map_mat = inverse_matrix(map_to_tag_mat)
+
+        # pipe is the offset the robot should be in relative to the tag
+        base_link_to_tag_wrt_pipe: geometry_msgs.msg.TransformStamped = buffer.lookup_transform("base_link", "left_pipe" if left_pipe else "right_pipe", rospy.Time())
+        base_link_to_tag_wrt_pipe_mat = tf_msg_to_matrix(base_link_to_tag_wrt_pipe)
+
+        # and apply the tag to pipe transform (aka just base_link to pipe)
+        # which gives us pipe to map
+        pipe_to_map = concatenate_matrices(base_link_to_tag_wrt_pipe_mat, tag_to_map_mat) # apparently concatenation works but * doesn't
+        # and then invert again to get map to pipe
+        map_to_pipe = matrix_to_tf_msg(inverse_matrix(pipe_to_map))
+
+        # This is also (apply offset) `under` (inversion), effectively
+        pipe_pose = geometry_msgs.msg.PoseStamped()
+        pipe_pose.header.frame_id = "base_link"
+        pipe_pose.pose.position = map_to_pipe.transform.translation
+        pipe_pose.pose.orientation = map_to_pipe.transform.rotation
+
+        return pipe_pose
 
     def aligner_callback(self, goal: behavior_actions.msg.AlignToReef2025Goal):
         success = True
@@ -138,34 +170,7 @@ class Aligner:
         # We have the pose of the tag, but we want the necessary pose to align the robot to the reef
         # Apply the base_link -> {left/right}_pipe transform on top of the tag transform...or some ordering like that
 
-        # This is the transform from map to tag (e.g. where tag is relative to map)
-        # We want the transform from map to pipe (e.g. where pipe frame is relative to map)
-        map_to_tag = geometry_msgs.msg.TransformStamped()
-        map_to_tag.transform.translation.x = self.TAG_POS[tag][0]
-        map_to_tag.transform.translation.y = self.TAG_POS[tag][1]
-        map_to_tag.transform.translation.z = 0
-        map_to_tag.transform.rotation.x, map_to_tag.transform.rotation.y, map_to_tag.transform.rotation.z, map_to_tag.transform.rotation.w = quaternion_from_euler(0, 0, yaw)
-
-        map_to_tag_mat = tf_msg_to_matrix(map_to_tag)
-
-        # So, invert the above transform (so we have where map is relative to tag)
-        tag_to_map_mat = inverse_matrix(map_to_tag_mat)
-
-        # pipe is the offset the robot should be in relative to the tag
-        base_link_to_tag_wrt_pipe: geometry_msgs.msg.TransformStamped = self.tf_buffer.lookup_transform("base_link", "left_pipe" if goal.pipe == goal.LEFT_PIPE else "right_pipe", rospy.Time())
-        base_link_to_tag_wrt_pipe_mat = tf_msg_to_matrix(base_link_to_tag_wrt_pipe)
-
-        # and apply the tag to pipe transform (aka just base_link to pipe)
-        # which gives us pipe to map
-        pipe_to_map = concatenate_matrices(base_link_to_tag_wrt_pipe_mat, tag_to_map_mat) # apparently concatenation works but * doesn't
-        # and then invert again to get map to pipe
-        map_to_pipe = matrix_to_tf_msg(inverse_matrix(pipe_to_map))
-
-        # This is also (apply offset) `under` (inversion), effectively
-        pipe_pose = geometry_msgs.msg.PoseStamped()
-        pipe_pose.header.frame_id = "base_link"
-        pipe_pose.pose.position = map_to_pipe.transform.translation
-        pipe_pose.pose.orientation = map_to_pipe.transform.rotation
+        pipe_pose = Aligner.calc_pipe_pose(tag, self.tf_buffer, goal.pipe == goal.LEFT_PIPE)
 
         path_goal = PathGoal()
         path_goal.final_pos_tol = min(self.x_tolerance, self.y_tolerance)
