@@ -36,7 +36,7 @@
 #include <std_msgs/Float64.h>
 #include <teleop_joystick_control/AlignToOrientation.h>
 #include "frc_msgs/MatchSpecificData.h"
-#include "pid_velocity_msg/PIDVelocity.h"
+#include "teleop_orientation_msgs/TeleopOrientation.h"
 
 constexpr double INITIAL_ROBOT_ORIENTATION = M_PI / 2.0;
 
@@ -77,12 +77,21 @@ public:
 	// Used to generate cmd_vel message in teleop code
 	double getOrientationVelocityPIDOutput(void) const;
 
+	// This class subscribes to the IMU topic to get the current
+	// orientation of the robot and to match data to get robot
+	// enabled/disabled state.  These getters expose the values
+	// to higher level code
 	double getCurrentOrientation(void) const;
 	bool   getRobotEnabled(void) const;
 
 	// Publisher to publish orientation? Or can this be read from PID node?
 	// Timer to publish to PID nodes? Or only in callbacks from odom yaw or in response to set/inc orientation?
 	// match data subscriber
+
+	// See if the last requested orientation was from teleop or
+	// from a non-teleop source which requested that teleop drive
+	// the robot to a specific orientation.  This is used to decide
+	// if teleop rotates the robot even in the absence of joystick inputs
 	bool mostRecentCommandIsFromTeleop(void) const;
 
 	bool isJoystickOverridden() const;
@@ -120,7 +129,7 @@ private:
 	ros::Timer most_recent_teleop_timer_;
 
 	void orientationCmdCallback(const std_msgs::Float64::ConstPtr &orientation_cmd);
-	void velocityOrientationCmdCallback(const pid_velocity_msg::PIDVelocity::ConstPtr &orient_msg);
+	void velocityOrientationCmdCallback(const teleop_orientation_msgs::TeleopOrientation::ConstPtr &orient_msg);
 	void controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort);
 	void imuCallback(const sensor_msgs::Imu &imuState);
 	void matchStateCallback(const frc_msgs::MatchSpecificData &msg);
