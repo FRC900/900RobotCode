@@ -31,13 +31,21 @@ Zero point in degrees is set using service call.
 
 #include <imu_zero_msgs/ImuZeroAngle.h>
 #include <std_srvs/Trigger.h>
+#include <std_srvs/SetBool.h>
 #include <robot_localization/SetPose.h>
 #include <zed_interfaces/reset_tracking.h>
 #include <zed_interfaces/reset_odometry.h>
 
+#include <nav_msgs/Odometry.h>
+#include <frc_msgs/MatchSpecificData.h>
+
 const std::string sub_topic = "imu/data";
 const std::string pub_topic = "zeroed_imu";
+const std::string tagslam_odometry_topic = "/tagslam/odom/body_frc_robot";
+const std::string match_data_topic = "/frcrobot_rio/match_data"; // for enabled/disabled
+
 const std::string service_name = "set_imu_zero";
+const std::string enable_tagslam_service_name = "enable_tagslam_zeroing";
 const std::string bias_service_name = "imu/bias_estimate";
 const std::string ukf_set_pose_name = "/swerve_imu_ukf/set_pose";
 const std::string zed_reset_odometry_name = "/zed_objdetect/reset_odometry";
@@ -128,6 +136,33 @@ namespace tf2
 
 }
 
+bool robot_enabled = true; // don't zero until confirmed disabled
+
+void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg) {
+  robot_enabled = msg->Enabled;
+}
+
+bool tagslam_zeroing_enabled = true;
+
+void tagslamCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+  // TODO: do we want to confirm multiple tag detections were used to create this estimate?
+  // Probably not, since we'll be doing it for all of auto and have overlapping FOVs
+  // ROS_INFO_STREAM("TagSLAM " << tagslam_zeroing_enabled << ", " << robot_enabled);
+  if (tagslam_zeroing_enabled && !robot_enabled) {
+    // ROS_INFO_STREAM("tagslam active!");
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);
+
+    double tagslam_roll, tagslam_pitch, tagslam_yaw;
+    tf2::Quaternion tagslam_q;
+    tf2::convert(msg->pose.pose.orientation, tagslam_q);
+    tf2::Matrix3x3(tagslam_q).getRPY(tagslam_roll, tagslam_pitch, tagslam_yaw);
+
+    zero_rot.setRPY(0.0, 0.0, angles::shortest_angular_distance(yaw, tagslam_yaw));
+    zero_rot.normalize();
+  }
+}
+
 double getYaw(const tf2::Quaternion &q)
 {
 	double roll, pitch, yaw;
@@ -170,6 +205,12 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
     zeroed_imu.header = raw_msg->header;
 	  pub.publish(zeroed_imu);
   }
+}
+
+bool tagslamEnableSet(std_srvs::SetBool::Request& req, std_srvs::SetBool::Response& /*res*/) {
+  tagslam_zeroing_enabled = req.data;
+  ROS_INFO_STREAM("imu_zero: TagSLAM zeroing enabled = " << tagslam_zeroing_enabled);
+  return true;
 }
 
 bool zeroSet(imu_zero_msgs::ImuZeroAngle::Request& req,
@@ -240,7 +281,10 @@ int main(int argc, char* argv[]) {
   tfListener = std::make_unique<tf2_ros::TransformListener>(tfBuffer);
   pub = node.advertise<sensor_msgs::Imu>(pub_topic, 1);
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback, ros::TransportHints().tcpNoDelay());
+  ros::Subscriber tagslam_sub = node.subscribe(tagslam_odometry_topic, 1, tagslamCallback, ros::TransportHints().tcpNoDelay());
+  ros::Subscriber match_data_sub = node.subscribe(match_data_topic, 1, matchDataCallback, ros::TransportHints().tcpNoDelay());
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
+  ros::ServiceServer enable_tagslam_svc = node.advertiseService(enable_tagslam_service_name, tagslamEnableSet);
   bias_estimate = node.serviceClient<std_srvs::Trigger>(bias_service_name);
   ukf_zero_pos = node.serviceClient<robot_localization::SetPose>(ukf_set_pose_name);
   zed_reset_odometry = node.serviceClient<zed_interfaces::reset_odometry>(zed_reset_odometry_name);

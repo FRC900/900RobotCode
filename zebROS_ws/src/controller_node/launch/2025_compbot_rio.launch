@@ -28,7 +28,9 @@
 			 rumble_controller
 			 match_state_controller
 			 robot_controller_state_controller
-			 robot_code_ready_controller" />
+			 robot_code_ready_controller">
+			<remap from="match_data" to="match_data_raw"/>
+		</node>
 			<!-- pdh_state_controller -->
 		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
 
