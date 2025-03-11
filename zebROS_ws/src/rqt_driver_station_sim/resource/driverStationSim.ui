@@ -444,9 +444,6 @@ p, li { white-space: pre-wrap; }
               <property name="text">
                <string>Red 1</string>
               </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
              </widget>
             </item>
             <item>
@@ -480,6 +477,9 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="text">
                <string>Blue 1</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>

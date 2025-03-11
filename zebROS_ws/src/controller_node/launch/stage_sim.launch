@@ -18,6 +18,8 @@
         <remap from="cmd_vel" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
     </node>
 
+    <node name="tagslam_relay" pkg="topic_tools" type="relay" args="/frcrobot_jetson/swerve_drive_controller/odom /tagslam/odom/body_frc_robot"/>
+
     <!-- Create an imu message with noise from stage's ground truth, publish into sim interface imu input -->
     <node pkg="fake_sensors" type="fake_imu_node" name="fake_imu" />
 
