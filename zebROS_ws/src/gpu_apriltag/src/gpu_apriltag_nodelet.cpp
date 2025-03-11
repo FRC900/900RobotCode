@@ -174,7 +174,8 @@ public:
 
 private:
     bool cmd_service(gpu_apriltag_msgs::SetAllowedTags::Request &req,
-                    gpu_apriltag_msgs::SetAllowedTags::Response & ) {
+                    gpu_apriltag_msgs::SetAllowedTags::Response &res) {
+        ROS_ERROR_STREAM("CMD service for gpu apriltag called");
         legal_tags_.clear();
         for (int legal_tag : req.allowed_tags)
         {
@@ -185,6 +186,7 @@ private:
         std::copy(legal_tags_.begin(), legal_tags_.end(), std::ostream_iterator<int>(info_stream, " "));
         info_stream << std::endl;
         ROS_INFO_STREAM(info_stream.str());
+        res.success = true;
         return true;
     } 
     void drawCorner(cv::Mat &image, const std::array<cv::Point2d, 4> &corner, const cv::Scalar &color) const
