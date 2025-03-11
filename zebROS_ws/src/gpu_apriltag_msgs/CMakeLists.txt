@@ -1,46 +1,21 @@
-cmake_minimum_required(VERSION 3.21)
-project(gpu_apriltag)
-enable_language(CUDA)
+cmake_minimum_required(VERSION 3.0.2)
+project(gpu_apriltag_msgs)
 
-include("../cmake_modules/CMakeOpt.cmake")
+## Compile as C++11, supported in ROS Kinetic and newer
+# add_compile_options(-std=c++11)
 
-set(CMAKE_CXX_STANDARD 20)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  apriltag_msgs
-  cv_bridge
-  ddynamic_reconfigure
-  field_obj
-  image_geometry
-  image_transport
-  nodelet
-  roscpp
-  sensor_msgs
+  message_generation
   std_msgs
-  gpu_apriltag_msgs
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
 
-set(CMAKE_CUDA_STANDARD 17)
-set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
-
-# Use the correct version of CUDA
-set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
-find_package(CUDA REQUIRED)
-find_package(OpenCV REQUIRED)
-find_library(LIBNVTOOLSEXT nvToolsExt PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-# find_package(glog REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(glog REQUIRED libglog)
-find_package(GTest REQUIRED)
-find_package(absl REQUIRED)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -78,11 +53,10 @@ find_package(absl REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  SetAllowedTags.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -92,10 +66,10 @@ find_package(absl REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -128,8 +102,8 @@ find_package(absl REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES gpu_apriltag
-#  CATKIN_DEPENDS cv_bridge ddynamic_reconfigure image_geometry image_transport nodelet roscpp sensor_msgs std_msgs
+#  LIBRARIES gpu_apriltag_msgs
+ CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
@@ -137,119 +111,42 @@ catkin_package(
 ## Build ##
 ###########
 
-# add_definitions(-DTHRUST_IGNORE_CUB_VERSION_CHECK)
-set (FRC971 ../../../971-Robot-Code)
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
-  ../../../cccl/cub
-  ../../../cccl/thrust
-  ../../../cccl/libcudacxx/include
-  ${CUDA_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-  ${FRC971}
-  ${FRC971}/third_party/apriltag
-  ${glog_INCLUDE_DIRS}
-  ${absl_INCLUDE_DIRS}
+# include
+# ${catkin_INCLUDE_DIRS}
 )
 
-set_source_files_properties(${FRC971}/frc971/orin/apriltag.cc PROPERTIES LANGUAGE CUDA)
-set_source_files_properties(${FRC971}/frc971/orin/apriltag_detect.cc PROPERTIES LANGUAGE CUDA)
-set_source_files_properties(${FRC971}/frc971/orin/cuda.cc PROPERTIES LANGUAGE CUDA)
-set_source_files_properties(${FRC971}/frc971/orin/labeling_allegretti_2019_BKE.cc PROPERTIES LANGUAGE CUDA)
-set_source_files_properties(${FRC971}/frc971/orin/line_fit_filter.cc PROPERTIES LANGUAGE CUDA)
-set_source_files_properties(${FRC971}/frc971/orin/threshold.cc PROPERTIES LANGUAGE CUDA)
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
-  src/gpu_apriltag.cu
-  src/gpu_apriltag_impl.cu
-  src/gpu_apriltag_nodelet.cpp
-  src/stubs.cpp
-  ${FRC971}/frc971/orin/apriltag.cc
-  ${FRC971}/frc971/orin/apriltag_detect.cc
-  ${FRC971}/frc971/orin/cuda.cc
-  ${FRC971}/frc971/orin/cuda_event_timing.cc
-  ${FRC971}/frc971/orin/cuda_utils.cc
-  ${FRC971}/frc971/orin/labeling_allegretti_2019_BKE.cc
-  ${FRC971}/frc971/orin/line_fit_filter.cc
-  ${FRC971}/frc971/orin/threshold.cc
-  ${FRC971}/third_party/apriltag/apriltag.c
-  ${FRC971}/third_party/apriltag/apriltag_pose.c
-  ${FRC971}/third_party/apriltag/apriltag_quad_thresh.c
-  ${FRC971}/third_party/apriltag/tag36h11.c
-  ${FRC971}/third_party/apriltag/common/g2d.c
-  ${FRC971}/third_party/apriltag/common/homography.c
-  ${FRC971}/third_party/apriltag/common/image_u8.c
-  ${FRC971}/third_party/apriltag/common/image_u8x3.c
-  ${FRC971}/third_party/apriltag/common/matd.c
-  ${FRC971}/third_party/apriltag/common/pnm.c
-  ${FRC971}/third_party/apriltag/common/time_util.c
-  ${FRC971}/third_party/apriltag/common/svd22.c
-  ${FRC971}/third_party/apriltag/common/workerpool.c
-  ${FRC971}/third_party/apriltag/common/zmaxheap.c
-)
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/gpu_apriltag_msgs.cpp
+# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-  ${CUDA_LIBRARIES} 
-  ${LIBNVTOOLSEXT}
-  ${glog_LIBRARIES}
-  # absl::flags_internal
-  /usr/local/lib/libabsl_flags_internal.a
-  absl::flags
-  absl::log
-)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  # Xavier and Orin ... Xavier can probably be disabled before too long
-  # ... unless perf is good enough to use it for a camera platform?
-  set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "72;87")
-else()
-  # RTX 30xx. Use 89 for RTX40xx cards if needed
-  set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "86")
-endif()
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/gpu_apriltag_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/gpu_apriltag_msgs_node.cpp)
+
+## Rename C++ executable without prefix
+## The above recommended prefix causes long target names, the following renames the
+## target back to the shorter version for ease of user use
+## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
-  ${catkin_LIBRARIES}
-)
-
-if(0)
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_test src/gpu_apriltag_test.cu)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-add_dependencies(${PROJECT_NAME}_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_test
-  ${catkin_LIBRARIES}
-  ${PROJECT_NAME}
-)
-set_target_properties(${PROJECT_NAME}_test PROPERTIES CUDA_ARCHITECTURES "86;87")
-set_property(TARGET ${PROJECT_NAME}_test PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-endif()
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -287,17 +184,18 @@ endif()
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
-  nodelet_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpu_apriltag.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpu_apriltag_msgs.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
