@@ -67,6 +67,7 @@ add_service_files(
   DynamicPath.srv
   GamePiecePickup.srv
   RelocalizePoint.srv
+  OverrideAllianceColor.srv
 )
 
 ## Generate actions in the 'action' folder
