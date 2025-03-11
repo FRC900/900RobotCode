@@ -60,4 +60,5 @@
 		<arg name="joy1_device" value="$(arg joy1_device)" />
 		<arg name="button_box_device" value="$(arg button_box_device)" />
 	</include>
+	<node pkg="fake_sensors" type="fake_leds.py" name="fake_leds" if="$(eval hw_or_sim=='sim' and arg('stage_sim'))"/> 
 </launch>
