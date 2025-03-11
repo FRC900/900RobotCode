@@ -154,9 +154,10 @@ if __name__ == "__main__":
                 intake_goal = Intaking2025Goal()
                 intaking_client.send_goal(intake_goal)
             elif closest_coral_dist >= 2.0:
+                if intake_running:
+                    intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 intake_running = False
-                intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
-        #rospy.loginfo(f"{tag_x, tag_y}") 
+        #rospy.loginfo(f"{tag_x, tag_y}")
         dist_sq = min(closest_coral[0], closest_reef[0])
 
         if dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
