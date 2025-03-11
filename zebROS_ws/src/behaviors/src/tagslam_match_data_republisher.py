@@ -7,7 +7,7 @@ from behavior_actions.srv import OverrideAllianceColor, OverrideAllianceColorReq
 
 FIELD_LENGTH = 17.55
 
-class TagSLAMZeroAndRepublish:
+class TagSLAMRepublisher:
     tagslam_alliance = MatchSpecificData.ALLIANCE_COLOR_UNKNOWN
     tagslam_last_x = None
     tagslam_last_time = None
@@ -78,5 +78,5 @@ class TagSLAMZeroAndRepublish:
  
 if __name__ == "__main__":
     rospy.init_node("tagslam_match_data_republisher")
-    republisher = TagSLAMZeroAndRepublish()  
+    republisher = TagSLAMRepublisher()  
     rospy.spin()
