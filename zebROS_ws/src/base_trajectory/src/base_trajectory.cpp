@@ -980,8 +980,15 @@ bool evaluateTrajectory(T &cost,
 #endif
 
 	// Init translational velocity from requested starting x&y&rotational velocities
+	// There's lots of sqrt(vel) followed by equations which use vel^2
+	// so use an optimization where, until then end of the process,
+	// vTrans is actually vTrans^2.
 	vTrans.clear();
-	vTrans.push_back(hypot(xStates[0].velocity, yStates[0].velocity, rotationToLinear(tStates[0].velocity)));
+
+	const auto xStartVel = xStates[0].velocity;
+	const auto yStartVel = yStates[0].velocity;
+	const auto tStartVel = rotationToLinear(tStates[0].velocity);
+	vTrans.push_back(xStartVel * xStartVel + yStartVel * yStartVel + tStartVel * tStartVel);
 
 	// Add 0th entries for arrays so indices line up with equalArcLengthTimes
 	// Starting at arclength 0
