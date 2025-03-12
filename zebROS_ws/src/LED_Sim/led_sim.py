@@ -97,8 +97,19 @@ while(1):
         color = (r,g,b)
         thickness = -1
         cv.rectangle(img, start_point, end_point, color, thickness)
-        print(i)
     
+    """
+    colourflow - block of color that moves
+    fire - goes outwards
+    larson - skip for now
+    rainbow - self-explanatory
+    rgb fade - rainbow fade
+    single fade - Flash a color and then fade
+    strobe - flashes between two color
+    twinkle - turn on and off
+    twinkle off - turn on and off until light disappears
+    """
+
     """
     if s == 0:
         img[:] = 0
