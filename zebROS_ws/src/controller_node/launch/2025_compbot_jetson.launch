@@ -135,6 +135,10 @@
 	
 	<include file="$(find controller_node)/launch/record_2025_compbot.launch" if="$(arg record)" />
 	
-	<node pkg="behaviors" type="2025_fake_sim.py" name="fake_sim_2025" if="$(eval hw_or_sim=='sim')"/> 
+	<node pkg="behaviors" type="2025_fake_sim.py" name="fake_sim_2025" if="$(eval hw_or_sim=='sim')"/>
+
+	<group ns="tagslam_match_data_republisher">
+		<node pkg="behaviors" type="tagslam_match_data_republisher.py" name="tagslam_match_data_republisher" respawn="true"/>
+	</group>
 	
 </launch>
