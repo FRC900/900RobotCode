@@ -169,7 +169,7 @@ latency_compensation_state_controller:
 roller_controller:
     type: roller_controller_2025/RollerController_2025   
     roller_joint: roller
-    roller_stopped_position: 0.0
+    roller_stopped_position: -1.0
     dynamic_reconfigure: True
     roller:
         type: talonfxpro_controllers/TalonFXProControllerInterface
@@ -178,4 +178,4 @@ roller_controller:
         dynamic_reconfigure: True
         neutral_mode: Brake
         close_loop_values: # TUNE ME
-            - {kP: 0.0, kI: 0.0, kD: 0.0, kV: 0.0, kS: 0.0}
+            - {kP: 60.0, kI: 0.0, kD: 0.0, kV: 0.0, kS: 0.0}

@@ -88,7 +88,7 @@ public:
                 roller_joint_.setRotorPosition(0);
             }
             roller_joint_.setControlMode(hardware_interface::talonfxpro::TalonMode::PositionVoltage);
-            roller_joint_.setControlPosition(0);
+            roller_joint_.setControlPosition(0 + roller_stopped_position_);
         }
         else
         {
