@@ -26,7 +26,7 @@
 #include <behavior_actions/AlignAndPlace2025Action.h>
 #include <behavior_actions/Elevater2025Action.h>
 #include <behavior_actions/Intaking2025Action.h>
-#include <behavior_actions/Roller2025Action.h>
+#include <behavior_actions/Placing2025Action.h>
 
 #include "talon_controller_msgs/Command.h"
 
@@ -51,11 +51,11 @@ auto current_level = behavior_actions::AlignAndPlace2025Goal::L4;
 std::unique_ptr<AutoModeCalculator2025> auto_calculator;
 
 // TODO: Add 2025 versions, initialize in main before calling generic inititalizer
-std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> path_follower_ac;
-std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>> align_and_place_ac;
-std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>> elevater_ac;
-std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac;
-std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> roller_ac;
+std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> path_follower_ac; // just in case
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>> align_and_place_ac; // usual method of placing with alignment
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>> elevater_ac; // for manual elevator movements to get unstuck
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac; // manual intaking
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>> placing_ac; // manual placement (very sad)
 
 
 ros::ServiceClient toggle_auto_rotate_client;
@@ -226,27 +226,33 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
-					if (not_safe) {
+					if (not_safe) { // not safe :)
 						ROS_INFO_STREAM("Sending align and place goal LEFT");
 						behavior_actions::AlignAndPlace2025Goal align_goal_;
 						align_goal_.pipe = align_goal_.LEFT_PIPE;
 						align_goal_.level = current_level;
 						align_and_place_ac->sendGoal(align_goal_);
 					}
-					else {
+					else { // safe :(
 						// elevator up, want to score
 						if (placing_in_safe) {
+							ROS_INFO_STREAM("Placing in safe mode and moving elevator down!");
 							// send placing goal
-								
+							behavior_actions::Placing2025Goal place_goal;
+							place_goal.level = current_level;
+							place_goal.setup_only = false; // shoot the coral
+							placing_ac->sendGoal(place_goal);
 							// set placing in safe to false
 							placing_in_safe = false;
 						}
 						else {
 							// elevator not up, want to bring it up 
-							ROS_INFO_STREAM("Sending just place goal! LEFT");
-							behavior_actions::Elevater2025Goal elevater_goal_;
-							elevater_goal_.mode = current_level;
-							elevater_ac->sendGoal(elevater_goal_);
+							ROS_INFO_STREAM("Sending just place goal (setup only)! LEFT");
+							behavior_actions::Placing2025Goal place_goal;
+							place_goal.level = current_level;
+							place_goal.setup_only = true; // need time to manually align
+							placing_ac->sendGoal(place_goal);
+							// set placing in safe to false
 							placing_in_safe = true;
 						}
 					}
@@ -275,11 +281,28 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 						align_goal_.level = current_level;
 						align_and_place_ac->sendGoal(align_goal_);
 					}
-					else {
-						ROS_INFO_STREAM("Sending just place goal! RIGHT");
-						behavior_actions::Elevater2025Goal elevater_goal_;
-						elevater_goal_.mode = current_level;
-						elevater_ac->sendGoal(elevater_goal_);
+					else { // safe :(
+						// elevator up, want to score
+						if (placing_in_safe) {
+							ROS_INFO_STREAM("Placing in safe mode and moving elevator down!");
+							// send placing goal
+							behavior_actions::Placing2025Goal place_goal;
+							place_goal.level = current_level;
+							place_goal.setup_only = false; // shoot the coral
+							placing_ac->sendGoal(place_goal);
+							// set placing in safe to false
+							placing_in_safe = false;
+						}
+						else {
+							// elevator not up, want to bring it up 
+							ROS_INFO_STREAM("Sending just place goal (setup only)! RIGHT");
+							behavior_actions::Placing2025Goal place_goal;
+							place_goal.level = current_level;
+							place_goal.setup_only = true; // need time to manually align
+							placing_ac->sendGoal(place_goal);
+							// set placing in safe to false
+							placing_in_safe = true;
+						}
 					}
 				}
 
@@ -577,7 +600,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 		elevater_ac->cancelAllGoals();
 		intaking_ac->cancelAllGoals();
 		align_and_place_ac->cancelAllGoals();
-		roller_ac->cancelAllGoals();
+		placing_ac->cancelAllGoals();
 		driver->setJoystickOverride(false);
 	}
 	if (button_box->redRelease)
@@ -773,6 +796,7 @@ int main(int argc, char **argv)
 	align_and_place_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>>("/align_and_place/alignandplaceing_server", true);
 	elevater_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>>("/elevater/elevater_server_2025", true);
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>>("/intaking/intaking_server_2025", true);
+	placing_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>>("/placing/placing_server_2025", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
