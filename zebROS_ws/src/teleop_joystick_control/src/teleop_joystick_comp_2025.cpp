@@ -26,6 +26,7 @@
 #include <behavior_actions/AlignAndPlace2025Action.h>
 #include <behavior_actions/Elevater2025Action.h>
 #include <behavior_actions/Intaking2025Action.h>
+#include <behavior_actions/Roller2025Action.h>
 
 #include "talon_controller_msgs/Command.h"
 
@@ -54,12 +55,15 @@ std::unique_ptr<actionlib::SimpleActionClient<path_follower_msgs::PathAction>> p
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace2025Action>> align_and_place_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>> elevater_ac;
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac;
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> roller_ac;
+
 
 ros::ServiceClient toggle_auto_rotate_client;
 ros::ServiceClient outtaking_client;
 
 bool currently_outtaking = false;
-
+bool not_safe = true;
+bool placing_in_safe = false;
 // void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 // {    
 // 	ROS_WARN("Calling unimplemented function \"talonFXProStateCallback()\" in teleop_joystick_comp_2025.cpp ");
@@ -222,11 +226,30 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
-					ROS_INFO_STREAM("Sending align and place goal LEFT");
-					behavior_actions::AlignAndPlace2025Goal align_goal_;
-					align_goal_.pipe = align_goal_.LEFT_PIPE;
-					align_goal_.level = current_level;
-					align_and_place_ac->sendGoal(align_goal_);
+					if (not_safe) {
+						ROS_INFO_STREAM("Sending align and place goal LEFT");
+						behavior_actions::AlignAndPlace2025Goal align_goal_;
+						align_goal_.pipe = align_goal_.LEFT_PIPE;
+						align_goal_.level = current_level;
+						align_and_place_ac->sendGoal(align_goal_);
+					}
+					else {
+						// elevator up, want to score
+						if (placing_in_safe) {
+							// send placing goal
+								
+							// set placing in safe to false
+							placing_in_safe = false;
+						}
+						else {
+							// elevator not up, want to bring it up 
+							ROS_INFO_STREAM("Sending just place goal! LEFT");
+							behavior_actions::Elevater2025Goal elevater_goal_;
+							elevater_goal_.mode = current_level;
+							elevater_ac->sendGoal(elevater_goal_);
+							placing_in_safe = true;
+						}
+					}
 				}
 
 				joystick1_left_trigger_pressed = true;
@@ -244,12 +267,20 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->rightTrigger > config.trigger_threshold)
 			{
 				if(!joystick1_right_trigger_pressed)
-				{
-					ROS_INFO_STREAM("Sending align and place goal RIGHT");
-					behavior_actions::AlignAndPlace2025Goal align_goal_;
-					align_goal_.pipe = align_goal_.RIGHT_PIPE;
-					align_goal_.level = current_level;
-					align_and_place_ac->sendGoal(align_goal_);
+				{	
+					if (not_safe) {
+						ROS_INFO_STREAM("Sending align and place goal RIGHT");
+						behavior_actions::AlignAndPlace2025Goal align_goal_;
+						align_goal_.pipe = align_goal_.RIGHT_PIPE;
+						align_goal_.level = current_level;
+						align_and_place_ac->sendGoal(align_goal_);
+					}
+					else {
+						ROS_INFO_STREAM("Sending just place goal! RIGHT");
+						behavior_actions::Elevater2025Goal elevater_goal_;
+						elevater_goal_.mode = current_level;
+						elevater_ac->sendGoal(elevater_goal_);
+					}
 				}
 
 				joystick1_right_trigger_pressed = true;
@@ -503,9 +534,13 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 	}
 	if (button_box->notSafeModeLockingSwitchPress)
 	{
+		not_safe = true;
+		ROS_WARN_STREAM("NOT SAFE MODE ACTIVATED ! :)");
 	}
 	if (button_box->notSafeModeLockingSwitchRelease)
 	{
+		not_safe = false;
+		ROS_WARN_STREAM("SAFE MODE ACTIVATED :(");
 	}
 
 	// TODO We'll probably want to check the actual value here
@@ -541,6 +576,8 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 		path_follower_ac->cancelAllGoals();
 		elevater_ac->cancelAllGoals();
 		intaking_ac->cancelAllGoals();
+		align_and_place_ac->cancelAllGoals();
+		roller_ac->cancelAllGoals();
 		driver->setJoystickOverride(false);
 	}
 	if (button_box->redRelease)

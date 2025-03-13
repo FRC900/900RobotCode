@@ -30,8 +30,8 @@ elevator_controller:
         motion_magic_expo_kV: 4.0
         motion_magic_expo_kA: 8.0
 
-        motion_magic_cruise_velocity: 3.6 # 1.5 for slow
-        motion_magic_acceleration: 10.0 # 4 for slow
+        motion_magic_cruise_velocity: 1.5 # 1.5 for slow, 3.6 for fast
+        motion_magic_acceleration: 4 # 4 for slow, 10 for fast
         motion_s_curve_strength: 100.0
 
         rotor_to_sensor_ratio: 1.0
