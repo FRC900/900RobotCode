@@ -36,7 +36,7 @@ IMU_CORRECT = 7
 AUTO_POSITION_CLOSE = 8
 AUTO_ROTATION_CLOSE = 9
 
-ELEVATOR_AVOID_OFF = 10
+ELEVATOR_AVOID_TRIGGERED = 10
 HAVE_CORAL = 11
 
 HEARTBEAT = 20 # last in row
@@ -49,6 +49,11 @@ IMU_ZERO_ANGLE_THRESHOLD = 0.051 # radians, approx. 3 degrees
 MAP_TO_BASE_LINK_TIMEOUT = 0.5 # seconds
 AUTO_ANGLE_THRESHOLD = 0.17 # radians, approx. 10 degrees
 AUTO_POSITION_THRESHOLD = 0.5 # meters (radius/hypotenuse)
+
+ELEVATOR_AVOID_SWITCH_NAME = "elevator_avoid_limit_switch"
+ROLLER_SWITCH_NAME = "roller_limit_switch"
+
+elevator_avoid_was_triggered = False
 
 imu_orientation: Quaternion = Quaternion(0,0,0,1)
 
@@ -119,13 +124,23 @@ def camera_cb(msg, args):
     idx = args 
     status_array[idx] = GREEN
 
-# def limit_switch_callback(msg: JointState):
-#     if self.switch_name in data.name:
-#         self.switch = data.position[data.name.index(self.switch_name)]
-#         #rospy.loginfo(f"Found {self.switch_name} with value {self.switch}")
-#     else:
-#         rospy.logwarn_throttle(1.0, f'2025_intaking_server: {self.switch_name} not found')
-#         pass
+def limit_switch_callback(data: JointState):
+    global elevator_avoid_was_triggered
+    if ELEVATOR_AVOID_SWITCH_NAME in data.name:
+        elevator_avoid_was_triggered = elevator_avoid_was_triggered or data.position[data.name.index(ELEVATOR_AVOID_SWITCH_NAME)]
+    else:
+        rospy.logwarn_throttle(1.0, f'2025_candle_prematch: elevator avoid switch "{ELEVATOR_AVOID_SWITCH_NAME}" not found')
+        pass
+
+    if elevator_avoid_was_triggered:
+        status_array[ELEVATOR_AVOID_TRIGGERED] = GREEN
+
+    if ROLLER_SWITCH_NAME in data.name:
+        if data.position[data.name.index(ROLLER_SWITCH_NAME)]:
+            status_array[HAVE_CORAL] = GREEN
+    else:
+        rospy.logwarn_throttle(1.0, f'2025_candle_prematch: roller switch "{ROLLER_SWITCH_NAME}" not found')
+        pass
 
 wanted_x = None
 imu_orientation = None
@@ -138,7 +153,7 @@ if __name__ == "__main__":
     wanted_point_sub = rospy.Subscriber("/auto/first_point", PoseStamped, wanted_point_callback, tcp_nodelay=True)
     match_data_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, match_data_callback, tcp_nodelay=True)
     raw_match_data_sub = rospy.Subscriber("/frcrobot_rio/match_data_raw", MatchSpecificData, raw_match_data_callback, tcp_nodelay=True)
-    # limit_switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, limit_switch_callback, tcp_nodelay=True)
+    limit_switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, limit_switch_callback, tcp_nodelay=True)
     rospy.wait_for_service('/frcrobot_jetson/candle_controller/colour_array')
     colour_client = rospy.ServiceProxy('/frcrobot_jetson/candle_controller/colour_array', ColourArray)
     blink_timer = rospy.Timer(period=rospy.Duration(1.0/2.0), callback=set_blink)
@@ -213,7 +228,7 @@ if __name__ == "__main__":
             colour_client(led_arr_msg)
         except:
             rospy.logerr_throttle(1.0, "2025_candle_prematch: unable to call LED service?")
-        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE]:
+        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL]:
             blink_idx(idx, ORANGE)
         blink_idx(HEARTBEAT, (255, 255, 255))
         if is_enabled:
