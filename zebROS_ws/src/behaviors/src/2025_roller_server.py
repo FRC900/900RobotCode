@@ -30,7 +30,7 @@ class Roller2025ActionServer(object):
         self.avoid_elevator_switch_name = rospy.get_param('avoid_elevator_switch_name')
         self.roller_speed = rospy.get_param('roller_speed')
         self.slow_roller_speed = rospy.get_param('slow_roller_speed')
-
+        self.time_to_wait = rospy.get_param("time_to_wait")
         self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback, tcp_nodelay=True)
 
         self.last_touched_diverter = rospy.Time()
@@ -111,7 +111,7 @@ class Roller2025ActionServer(object):
                     success = False
                     return
                 r.sleep()
-            time.sleep(1.0)
+            time.sleep(self.time_to_wait)
             pct_out.data = 0
             self.roller_client.call(RollerSrvRequest(pct_out.data))
             if success:

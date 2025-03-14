@@ -109,7 +109,7 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         led_arr_msg = ColourArrayRequest()
         for idx, i in enumerate(status_array):
-            
+        
             colour_srv = CANdleColour()
             colour_srv.start = 8 + idx
             colour_srv.count = 1
