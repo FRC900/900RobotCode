@@ -10,9 +10,11 @@ from placing_action import PlacingAction
 from wait_for_intake_action import WaitForIntakeAction
 from wait_trajectory_action import WaitTrajectoryAction
 
-class FourCoralNonProcessor(AutoBase):
-    def __init__(self) -> None:
-        super().__init__(display_name="2025_4_Coral", # must match choreo path name
+class FourCoral(AutoBase):
+    ELEVATOR_PERCENT = 0.4
+
+    def __init__(self, name: str) -> None:
+        super().__init__(display_name=name, # must match choreo path name
                          expected_trajectory_count=7) # how many segments of the path there are (split at waypoints)
 
     def get_action(self) -> SeriesAction:
@@ -21,39 +23,50 @@ class FourCoralNonProcessor(AutoBase):
         return SeriesAction([
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
-                SeriesAction([WaitTrajectoryAction(0.8),
+                SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
             ]),
             PlacingAction(),
+            WaitAction(0.5),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
+                SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
             ]),
             PlacingAction(),
+            WaitAction(0.5),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
+                SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
             ]),
             PlacingAction(),
+            WaitAction(0.5),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(),
-                SeriesAction([WaitTrajectoryAction(0.8),
+                SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
             ]),
             PlacingAction(),
         ])
+    
+class FourCoralProcessor(FourCoral):
+    def __init__(self):
+        super().__init__(name="2025_4_Coral_Processor_Side")
+
+class FourCoralNonProcessor(FourCoral):
+    def __init__(self):
+        super().__init__(name="2025_4_Coral")
