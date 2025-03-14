@@ -75,7 +75,8 @@ class Elevater2025ActionServer(object):
             self.current_position = states.position[self.elevator_idx]
     
     def safe_to_send_elevator(self) -> bool:
-        return (not self.avoid_elevator_switch_val)
+        # return (not self.avoid_elevator_switch_val)
+        return self.roller_limit_switch_val
 
     def execute_cb(self, goal: Elevater2025Goal):
         r = rospy.Rate(50)
