@@ -11,7 +11,7 @@ import actionlib
 class DriveTrajectoryAction(Action):
     """An action that drives a trajectory and waits for completion before ending"""
     #TODO: Make these possibly class variables
-    def __init__(self, autonomous_name : str, trajectory_index : int, expected_trajectory_count : int):
+    def __init__(self, autonomous_name : str, trajectory_index : int, expected_trajectory_count : int, dont_go_to_start: bool = False, final_pos_tol: float = None, final_rot_tol: float = None):
 
         self.__path_follower_client = actionlib.SimpleActionClient("/path_follower/path_follower_server", PathAction)
         if not self.__path_follower_client.wait_for_server(rospy.Duration(5)):
@@ -24,6 +24,9 @@ class DriveTrajectoryAction(Action):
         self.__latest_feedback: PathFeedback = None
         self.__path_sub = rospy.Subscriber("/auto/current_auto_path", PathGoalArray, self.path_sub, tcp_nodelay=True)
         self.__finished = False
+        self.__dont_go_to_start = dont_go_to_start
+        self.__final_pos_tol = final_pos_tol
+        self.__final_rot_tol = final_rot_tol
 
     def path_sub(self, path_array: PathGoalArray):
         trajectory_count = len(path_array.path_segments)
@@ -62,6 +65,19 @@ class DriveTrajectoryAction(Action):
         path_follower_goal.velocity_path = path_segment.velocity_path
         path_follower_goal.velocity_waypoints = path_segment.velocity_waypoints
         path_follower_goal.waypointsIdx = path_segment.waypointsIdx
+
+        if self.__dont_go_to_start:
+            rospy.logwarn("Not going to start!")
+            path_follower_goal.dont_go_to_start = self.__dont_go_to_start
+        
+        if self.__final_pos_tol != None:
+            rospy.logwarn(f"Using non-default positional tolerance of {self.__final_pos_tol}")
+            path_follower_goal.final_pos_tol = self.__final_pos_tol
+        
+        if self.__final_rot_tol != None:
+            rospy.logwarn(f"Using non-default rotational tolerance of {self.__final_rot_tol}")
+            path_follower_goal.final_rot_tol = self.__final_rot_tol
+
         self.__path_follower_client.send_goal(path_follower_goal, done_cb=self.done_cb, feedback_cb=self.feedback_cb)
         rospy.loginfo("Sent path follower goal!")
 

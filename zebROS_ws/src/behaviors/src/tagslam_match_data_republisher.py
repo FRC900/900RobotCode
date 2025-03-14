@@ -4,8 +4,11 @@ from nav_msgs.msg import Odometry
 from frc_msgs.msg import MatchSpecificData
 from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
 from behavior_actions.srv import OverrideAllianceColor, OverrideAllianceColorRequest, OverrideAllianceColorResponse
+from gpu_apriltag_msgs.srv import SetAllowedTags, SetAllowedTagsRequest, SetAllowedTagsResponse
 
 FIELD_LENGTH = 17.55
+RED_TAGS = [6,7,8,9,10,11]
+BLUE_TAGS = [17,18,19,20,21,22]
 
 class TagSLAMRepublisher:
     tagslam_alliance = MatchSpecificData.ALLIANCE_COLOR_UNKNOWN
@@ -14,6 +17,8 @@ class TagSLAMRepublisher:
     robot_enabled = True
     manual_override_enabled = False
     manual_alliance = MatchSpecificData.ALLIANCE_COLOR_UNKNOWN
+    red_ignored = True
+    blue_ignored = True
 
     def __init__(self):
         self.tagslam_sub = rospy.Subscriber("/tagslam/odom/body_frc_robot", Odometry, callback=self.tagslam_cb, tcp_nodelay=True, queue_size=1)
@@ -21,6 +26,10 @@ class TagSLAMRepublisher:
         self.match_data_pub = rospy.Publisher("/frcrobot_rio/match_data", MatchSpecificData, tcp_nodelay=True, queue_size=1)
         self.override_srv = rospy.Service("enable_manual_override", SetBool, self.manual_override_cb)
         self.set_alliance_srv = rospy.Service("set_alliance_color", OverrideAllianceColor, self.set_alliance_cb)
+        self.tag_allow_srvs = [rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_9_video0/set_allowed_tags_service", SetAllowedTags), 
+                                rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_9_video1/set_allowed_tags_service", SetAllowedTags),
+                                rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_10_video0/set_allowed_tags_service", SetAllowedTags),
+                                rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_10_video1/set_allowed_tags_service", SetAllowedTags)]
     
     def manual_override_cb(self, req: SetBoolRequest):
         if req.data:
@@ -64,18 +73,66 @@ class TagSLAMRepublisher:
     def match_data_cb(self, msg: MatchSpecificData):
         self.robot_enabled = msg.Enabled
 
+        if not self.robot_enabled and (self.red_ignored or self.blue_ignored):
+            rospy.loginfo("tagslam_match_data_republisher: enabling all reef tags")
+            req = SetAllowedTagsRequest()
+            req.allowed_tags = RED_TAGS + BLUE_TAGS # needed to find alliance
+            success = True
+            for tag_allow_srv in self.tag_allow_srvs:
+                try:
+                    tag_allow_srv.wait_for_service(timeout=0.01)
+                    tag_allow_srv.call(req)
+                except:
+                    success = False
+                    rospy.logerr_throttle(1.0, f"tagslam_match_data_republisher: service {tag_allow_srv.resolved_name} is unavailable, trying again next time")
+            if success:
+                self.red_ignored = False
+                self.blue_ignored = False
+
+        prev_alliance = msg.allianceColor
         if self.manual_override_enabled and self.manual_alliance != MatchSpecificData.ALLIANCE_COLOR_UNKNOWN:
-            prev_alliance = msg.allianceColor
             if self.manual_alliance != prev_alliance or self.manual_alliance != self.tagslam_alliance:
-                rospy.logerr(f"tagslam_match_data_republisher: ***MANUAL OVERRIDE*** FMS alliance color = {self.alliance_color_to_string(prev_alliance)}, TagSLAM alliance color = {self.alliance_color_to_string(self.tagslam_alliance)}. One of these DOES NOT MATCH MANUAL OVERRIDE = {self.alliance_color_to_string(self.manual_alliance)}. Using MANUAL color {self.alliance_color_to_string(self.manual_alliance)}.")
+                rospy.logerr_throttle(0.5, f"tagslam_match_data_republisher: ***MANUAL OVERRIDE*** FMS alliance color = {self.alliance_color_to_string(prev_alliance)}, TagSLAM alliance color = {self.alliance_color_to_string(self.tagslam_alliance)}. One of these DOES NOT MATCH MANUAL OVERRIDE = {self.alliance_color_to_string(self.manual_alliance)}. Using MANUAL color {self.alliance_color_to_string(self.manual_alliance)}.")
                 msg.allianceColor = self.manual_alliance
         elif self.tagslam_alliance != MatchSpecificData.ALLIANCE_COLOR_UNKNOWN:
-            prev_alliance = msg.allianceColor
             if self.tagslam_alliance != prev_alliance:
-                rospy.logerr(f"tagslam_match_data_republisher: FMS alliance color = {self.alliance_color_to_string(prev_alliance)}. This DOES NOT MATCH TagSLAM-based color = {self.alliance_color_to_string(self.tagslam_alliance)}, based on x = {self.tagslam_last_x} at {self.tagslam_last_time}. Using TagSLAM color {self.alliance_color_to_string(self.tagslam_alliance)}.")
-                msg.allianceColor = self.tagslam_alliance 
+                rospy.logerr_throttle(0.5, f"tagslam_match_data_republisher: FMS alliance color = {self.alliance_color_to_string(prev_alliance)}. This DOES NOT MATCH TagSLAM-based color = {self.alliance_color_to_string(self.tagslam_alliance)}, based on x = {self.tagslam_last_x} at {self.tagslam_last_time}. Using TagSLAM color {self.alliance_color_to_string(self.tagslam_alliance)}.")
+                msg.allianceColor = self.tagslam_alliance
+        
+        if self.robot_enabled and msg.allianceColor == MatchSpecificData.ALLIANCE_COLOR_RED and (self.red_ignored or not self.blue_ignored):
+            rospy.loginfo("tagslam_match_data_republisher: enabling red tags, ignoring blue tags")
+            req = SetAllowedTagsRequest()
+            req.allowed_tags = RED_TAGS
+            success = True
+            for tag_allow_srv in self.tag_allow_srvs:
+                try:
+                    tag_allow_srv.wait_for_service(timeout=0.01)
+                    tag_allow_srv.call(req)
+                except:
+                    success = False
+                    rospy.logerr_throttle(1.0, f"service {tag_allow_srv.resolved_name} is unavailable, trying again next time")
+            if success:
+                self.red_ignored = False
+                self.blue_ignored = True
+        
+        if self.robot_enabled and msg.allianceColor == MatchSpecificData.ALLIANCE_COLOR_BLUE and (self.blue_ignored or not self.red_ignored):
+            rospy.loginfo("tagslam_match_data_republisher: enabling blue tags, ignoring red tags")
+            req = SetAllowedTagsRequest()
+            req.allowed_tags = BLUE_TAGS
+            success = True
+            for tag_allow_srv in self.tag_allow_srvs:
+                try:
+                    tag_allow_srv.wait_for_service(timeout=0.01)
+                    tag_allow_srv.call(req)
+                except:
+                    success = False
+                    rospy.logerr_throttle(1.0, f"service {tag_allow_srv.resolved_name} is unavailable, trying again next time")
+            if success:
+                self.red_ignored = True
+                self.blue_ignored = False
+
         self.match_data_pub.publish(msg)
- 
+
 if __name__ == "__main__":
     rospy.init_node("tagslam_match_data_republisher")
     republisher = TagSLAMRepublisher()  

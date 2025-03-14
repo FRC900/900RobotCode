@@ -20,40 +20,40 @@ class FourCoralNonProcessor(AutoBase):
         
         return SeriesAction([
             ParallelAction([
-                drive_traj_iter.get_next_trajectory_action(),
-                # SeriesAction([WaitTrajectoryAction(0.8),
-                #               PlacingAction(True)
-                #               ])
+                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
+                SeriesAction([WaitTrajectoryAction(0.8),
+                              PlacingAction(True)
+                              ])
             ]),
-            # PlacingAction(),
-            # drive_traj_iter.get_next_trajectory_action(),
-            # # WaitForIntakeAction(),
+            PlacingAction(),
+            drive_traj_iter.get_next_trajectory_action(),
+            WaitForIntakeAction(),
 
-            # ParallelAction([
-            #     drive_traj_iter.get_next_trajectory_action(),
-            #     # SeriesAction([WaitTrajectoryAction(0.8),
-            #     #               PlacingAction(True)
-            #     #               ])
-            # ]),
-            # # PlacingAction(),
-            # drive_traj_iter.get_next_trajectory_action(),
-            # # WaitForIntakeAction(),
+            ParallelAction([
+                drive_traj_iter.get_next_trajectory_action(),
+                SeriesAction([WaitTrajectoryAction(0.8),
+                              PlacingAction(True)
+                              ])
+            ]),
+            PlacingAction(),
+            drive_traj_iter.get_next_trajectory_action(),
+            WaitForIntakeAction(),
 
-            # ParallelAction([
-            #     drive_traj_iter.get_next_trajectory_action(),
-            #     # SeriesAction([WaitTrajectoryAction(0.8),
-            #     #               PlacingAction(True)
-            #     #               ])
-            # ]),
-            # # PlacingAction(),
-            # drive_traj_iter.get_next_trajectory_action(),
-            # # WaitForIntakeAction(),
+            ParallelAction([
+                drive_traj_iter.get_next_trajectory_action(),
+                SeriesAction([WaitTrajectoryAction(0.8),
+                              PlacingAction(True)
+                              ])
+            ]),
+            PlacingAction(),
+            drive_traj_iter.get_next_trajectory_action(),
+            WaitForIntakeAction(),
 
-            # ParallelAction([
-            #     drive_traj_iter.get_next_trajectory_action(),
-            #     # SeriesAction([WaitTrajectoryAction(0.8),
-            #     #               PlacingAction(True)
-            #     #               ])
-            # ]),
-            # PlacingAction(),
+            ParallelAction([
+                drive_traj_iter.get_next_trajectory_action(),
+                SeriesAction([WaitTrajectoryAction(0.8),
+                              PlacingAction(True)
+                              ])
+            ]),
+            PlacingAction(),
         ])

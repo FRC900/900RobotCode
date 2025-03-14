@@ -59,7 +59,7 @@ floorplan
 omnidir_robot
 (
   # Everything but slalom
-  pose [ 1.880 4.989 0.000 180.000 ]
+  pose [ 7.071 2.087 0.000 180.000 ]
   # Slalom pose [ 1.0414 .762 0.0 0.0 ]
   name "robot"
 )
