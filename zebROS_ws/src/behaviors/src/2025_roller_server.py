@@ -59,6 +59,7 @@ class Roller2025ActionServer(object):
                     self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
+                rospy.loginfo_throttle(1, f"Waiting for avoid elevator to become 0 (first one) {self.avoid_elevator_switch}, center switch {self.switch}")
                 r.sleep()
             
             rospy.loginfo(f"2025_roller_server: first switch hit, slowing down to {self.slow_roller_speed}")
@@ -75,6 +76,7 @@ class Roller2025ActionServer(object):
                     self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
+                rospy.loginfo_throttle(1, f"Waiting for center swith to become 0 {self.avoid_elevator_switch}, center switch {self.switch}")
                 r.sleep()
 
             # wait for first switch to be off so we don't intersect elevator
@@ -86,6 +88,7 @@ class Roller2025ActionServer(object):
                     self.roller_client.call(RollerSrvRequest(pct_out.data))
                     success = False
                     return
+                rospy.loginfo_throttle(1, f"Waiting for elevator avoid switch avoid switch second one {self.avoid_elevator_switch}, center switch {self.switch}")
                 r.sleep()
 
             pct_out.data = 0
@@ -108,7 +111,7 @@ class Roller2025ActionServer(object):
                     success = False
                     return
                 r.sleep()
-
+            time.sleep(1.0)
             pct_out.data = 0
             self.roller_client.call(RollerSrvRequest(pct_out.data))
             if success:
