@@ -39,7 +39,7 @@ public:
         pub_debug_image_ = it.advertise("debug_image", 1);
 
         // TODO: test this
-        set_allowed_tags_service_ = base_nh.advertiseService("set_allowed_tags_service", &FRC971GpuApriltagNodelet::cmd_service, this);
+        set_allowed_tags_service_ = nh_.advertiseService("set_allowed_tags_service", &FRC971GpuApriltagNodelet::cmd_service, this);
         // Load config for legal apriltags
         std::vector<int> _legal_tags_vec;
         nh_.param<std::vector<int>>("legal_tags", _legal_tags_vec, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16});

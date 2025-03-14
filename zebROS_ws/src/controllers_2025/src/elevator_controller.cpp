@@ -165,6 +165,7 @@ public:
             ROS_INFO_THROTTLE(2, "ElevatorController_2025 : hit current spike");
             if (!zeroed_) // only do this once
             {
+                ROS_INFO_STREAM("ElevatorController_2025: actually zeroing!");
                 zeroed_ = true;
                 elevator_joint_.setRotorPosition(0);
                 elevator_joint_.setControlFeedforward(find_feedforward());

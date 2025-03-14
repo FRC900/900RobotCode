@@ -30,6 +30,8 @@ def talon_states_callback(states: TalonFXProState):
             intake_output = states.control_output[idx]
         elif states.name[idx] == "roller":
             roller_output = states.control_output[idx]
+            if states.control_mode[idx] == "PositionVoltage":
+                roller_output = 0 # attempting to hold in place
 
     if roller_output > 0.1:
         if intake_output > 0.1:
