@@ -5,6 +5,7 @@ from frc_utils.match_data_helper import RobotStatusHelper
 
 from typing import List
 from path_follower_msgs.msg import PathGoal, PathAction, PathFeedback, PathResult
+from geometry_msgs.msg import PoseStamped
 from auto_node_msgs.msg import PathGoalArray # have the path to be sent to the path follower
 import actionlib
 
@@ -12,7 +13,7 @@ class DriveTrajectoryAction(Action):
     """An action that drives a trajectory and waits for completion before ending"""
     #TODO: Make these possibly class variables
     def __init__(self, autonomous_name : str, trajectory_index : int, expected_trajectory_count : int, dont_go_to_start: bool = False, final_pos_tol: float = None, final_rot_tol: float = None):
-
+        self.__first_point_pub = rospy.Publisher("/auto/first_point", PoseStamped, queue_size=1, tcp_nodelay=True, latch=True)
         self.__path_follower_client = actionlib.SimpleActionClient("/path_follower/path_follower_server", PathAction)
         if not self.__path_follower_client.wait_for_server(rospy.Duration(5)):
             rospy.logerr("Path follower server not up after 5 seconds, exiting")
@@ -37,9 +38,16 @@ class DriveTrajectoryAction(Action):
         if self.__expected_trajectory_count != trajectory_count:
             rospy.logerr(f"Expected trajectory count for {self.__autonomous_name} is not correct. Expecting {self.__expected_trajectory_count} but got {trajectory_count}. Not setting path")
             self.__current_path = None
-            return 
+            return
 
         self.__current_path = path_array
+
+        if self.__trajectory_index == 0:
+            try:
+                first_pose = self.__current_path.path_segments[0].position_path.poses[0]
+                self.__first_point_pub.publish(first_pose)
+            except Exception as e:
+                rospy.logwarn(f"drive_trajectory_action: failed to publish first waypoint with error {e}")
 
     def feedback_cb(self, msg: PathFeedback):
         # currently dont use feedback but might later
