@@ -167,6 +167,21 @@ if __name__ == "__main__":
     for idx, i in enumerate(status_array):
         
         colour_srv = CANdleColour()
+        colour_srv.start = 0
+        colour_srv.count = 7
+        colour_srv.red = 0
+        colour_srv.green = 0
+        colour_srv.blue = 0
+        led_arr_msg.colours.append(colour_srv)   
+    try:
+        colour_client(led_arr_msg)
+    except:
+        rospy.logerr_throttle(1.0, "2025_candle_prematch: unable to call LED service?")
+
+    led_arr_msg = ColourArrayRequest()
+    for idx, i in enumerate(status_array):
+        
+        colour_srv = CANdleColour()
         colour_srv.start = 8 + idx
         colour_srv.count = 1
         colour_srv.red = 255

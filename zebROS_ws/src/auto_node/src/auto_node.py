@@ -20,8 +20,8 @@ from std_msgs.msg import String
 
 # number to str of auto name, what /auto/auto_mode needs to send to run a given auto
 IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.DriveForward,
-                                    1: AutonomousNames.FourCoralNonProcessor,
-                                    2: AutonomousNames.FourCoralProcessor}
+                                    2: AutonomousNames.FourCoralNonProcessor,
+                                    1: AutonomousNames.FourCoralProcessor}
 
 class AutoNode():
     def __init__(self):        
