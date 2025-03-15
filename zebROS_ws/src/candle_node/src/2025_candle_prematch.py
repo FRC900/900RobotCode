@@ -14,6 +14,8 @@ from apriltag_msgs.msg import ApriltagArrayStamped
 from sensor_msgs.msg import JointState
 from angles import shortest_angular_distance
 from math import hypot
+from geometry_msgs.msg import TwistStamped
+from behavior_actions.msg import AutoMode
 
 ORANGE = (255, 165, 0)
 GREEN = (0, 255, 0)
@@ -39,6 +41,9 @@ AUTO_ROTATION_CLOSE = 9
 ELEVATOR_AVOID_TRIGGERED = 10
 HAVE_CORAL = 11
 
+CMD_VEL_ZERO = 12
+CORRECT_AUTO = 13
+
 HEARTBEAT = 20 # last in row
 BLINK_STATE = True
 
@@ -56,6 +61,14 @@ ROLLER_SWITCH_NAME = "roller_limit_switch"
 elevator_avoid_was_triggered = False
 
 imu_orientation: Quaternion = Quaternion(0,0,0,1)
+
+def twist_callback(msg: TwistStamped):
+    if abs(hypot(msg.twist.linear.x, msg.twist.linear.y)) < 0.05 and abs(msg.twist.angular.z) < 0.05:
+        status_array[CMD_VEL_ZERO] = GREEN
+
+def auto_mode_callback(msg: AutoMode):
+    if msg.auto_mode == 1 or msg.auto_mode == 2:
+        status_array[CORRECT_AUTO] = GREEN
 
 def imu_callback(imu: Imu):
     global imu_orientation
@@ -162,6 +175,9 @@ if __name__ == "__main__":
     dot9v1sub = rospy.Subscriber("/apriltag_detection_ov2311_10_9_0_9_video1/tags", ApriltagArrayStamped, camera_cb, (DOT9V1), tcp_nodelay=True)
     dot10v0sub = rospy.Subscriber("/apriltag_detection_ov2311_10_9_0_10_video0/tags", ApriltagArrayStamped, camera_cb, (DOT10V0), tcp_nodelay=True)
     dot10v1sub = rospy.Subscriber("/apriltag_detection_ov2311_10_9_0_10_video1/tags", ApriltagArrayStamped, camera_cb, (DOT10V1), tcp_nodelay=True)
+
+    cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, twist_callback, tcp_nodelay=True)
+    auto_mode_sub = rospy.Subscriber("/auto/auto_mode", AutoMode, auto_mode_callback, tcp_nodelay=True)
     r = rospy.Rate(10)
     led_arr_msg = ColourArrayRequest()
     for idx, i in enumerate(status_array):
@@ -243,7 +259,7 @@ if __name__ == "__main__":
             colour_client(led_arr_msg)
         except:
             rospy.logerr_throttle(1.0, "2025_candle_prematch: unable to call LED service?")
-        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL]:
+        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL, CMD_VEL_ZERO, CORRECT_AUTO]:
             blink_idx(idx, ORANGE)
         blink_idx(HEARTBEAT, (255, 255, 255))
         if is_enabled:
