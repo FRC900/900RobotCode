@@ -136,10 +136,10 @@ namespace tf2
 
 }
 
-bool robot_enabled = true; // don't zero until confirmed disabled
+bool robot_enabled = false; // don't zero until confirmed disabled
 
 void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg) {
-  robot_enabled = msg->Enabled;
+  robot_enabled = robot_enabled || (msg->Enabled);
 }
 
 bool tagslam_zeroing_enabled = true;
