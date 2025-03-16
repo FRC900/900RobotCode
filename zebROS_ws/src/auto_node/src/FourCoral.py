@@ -14,7 +14,8 @@ from cmd_vel_action import CmdVelAction
 import math
 
 class FourCoral(AutoBase):
-    ELEVATOR_PERCENT = 0.4
+    ELEVATOR_PERCENT_START = 0.4
+    ELEVATOR_PERCENT = 0.9
 
     def __init__(self, name: str) -> None:
         super().__init__(display_name=name, # must match choreo path name
@@ -29,7 +30,7 @@ class FourCoral(AutoBase):
         return SeriesAction([
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
-                SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
+                SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT_START),
                               PlacingAction(True)
                               ])
             ]),
