@@ -9,6 +9,9 @@ from placing_action import PlacingAction
 #from wait_trajectory_action import WaitTrajectoryAction
 from wait_for_intake_action import WaitForIntakeAction
 from wait_trajectory_action import WaitTrajectoryAction
+from geometry_msgs.msg import Twist
+from cmd_vel_action import CmdVelAction
+import math
 
 class FourCoral(AutoBase):
     ELEVATOR_PERCENT = 0.4
@@ -19,6 +22,9 @@ class FourCoral(AutoBase):
 
     def get_action(self) -> SeriesAction:
         drive_traj_iter = DriveTrajectoryActionIterator(self.get_display_name(), self.expected_trajectory_count)
+        tw = Twist()        
+        tw.linear.x = -1     
+        tw.linear.y = 0  
         
         return SeriesAction([
             ParallelAction([
@@ -29,7 +35,8 @@ class FourCoral(AutoBase):
             ]),
             PlacingAction(),
             WaitAction(0.5),
-            drive_traj_iter.get_next_trajectory_action(),
+            drive_traj_iter.get_next_trajectory_action(final_pos_tol=1, final_rot_tol=math.pi/4),
+            CmdVelAction(tw, 1),
             WaitForIntakeAction(),
 
             ParallelAction([

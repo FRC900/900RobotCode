@@ -131,8 +131,8 @@ public:
             double tl_y =  std::numeric_limits<double>::max();
             for (size_t i = 0; i < msg.corners.size(); i++)
             {
-                msg.corners[i].x = result.original_corners_[i].x;
-                msg.corners[i].y = result.original_corners_[i].y;
+                msg.corners[i].x = result.undistorted_corners_[i].x;
+                msg.corners[i].y = result.undistorted_corners_[i].y;
                 br_x = std::max(br_x, result.undistorted_corners_[i].x);
                 br_y = std::max(br_y, result.undistorted_corners_[i].y);
                 tl_x = std::min(tl_x, result.undistorted_corners_[i].x);
