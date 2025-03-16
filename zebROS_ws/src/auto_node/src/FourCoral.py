@@ -40,7 +40,7 @@ class FourCoral(AutoBase):
             WaitForIntakeAction(),
 
             ParallelAction([
-                drive_traj_iter.get_next_trajectory_action(),
+                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
