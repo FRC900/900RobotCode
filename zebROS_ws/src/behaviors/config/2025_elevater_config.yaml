@@ -1,7 +1,7 @@
 # height in meters
 intake: 0.0
 L1: 0.43 # doesn't work
-L2: 0.78
+L2: 0.75
 L3: 1.11
 L4: 1.73 # might need to be lower
 
