@@ -557,11 +557,17 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 	}
 	if (button_box->notSafeModeLockingSwitchPress)
 	{
+		std_srvs::SetBool auto_rotate_enable_srv;
+		auto_rotate_enable_srv.request.data = true;
+		toggle_auto_rotate_client.call(auto_rotate_enable_srv);
 		not_safe = true;
 		ROS_WARN_STREAM("NOT SAFE MODE ACTIVATED ! :)");
 	}
 	if (button_box->notSafeModeLockingSwitchRelease)
 	{
+		std_srvs::SetBool auto_rotate_disable_srv;
+		auto_rotate_disable_srv.request.data = false;
+		toggle_auto_rotate_client.call(auto_rotate_disable_srv);
 		not_safe = false;
 		ROS_WARN_STREAM("SAFE MODE ACTIVATED :(");
 	}
