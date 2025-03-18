@@ -3,3 +3,4 @@ slow_roller_speed: 2.0
 controller_name: "roller_controller"
 avoid_elevator_switch_name: elevator_avoid_limit_switch
 switch_name: "roller_limit_switch"
+time_to_wait: 0.15

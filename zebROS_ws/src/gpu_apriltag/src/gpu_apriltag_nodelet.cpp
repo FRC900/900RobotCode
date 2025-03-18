@@ -39,7 +39,7 @@ public:
         pub_debug_image_ = it.advertise("debug_image", 1);
 
         // TODO: test this
-        set_allowed_tags_service_ = base_nh.advertiseService("set_allowed_tags_service", &FRC971GpuApriltagNodelet::cmd_service, this);
+        set_allowed_tags_service_ = nh_.advertiseService("set_allowed_tags_service", &FRC971GpuApriltagNodelet::cmd_service, this);
         // Load config for legal apriltags
         std::vector<int> _legal_tags_vec;
         nh_.param<std::vector<int>>("legal_tags", _legal_tags_vec, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16});
@@ -131,8 +131,8 @@ public:
             double tl_y =  std::numeric_limits<double>::max();
             for (size_t i = 0; i < msg.corners.size(); i++)
             {
-                msg.corners[i].x = result.original_corners_[i].x;
-                msg.corners[i].y = result.original_corners_[i].y;
+                msg.corners[i].x = result.undistorted_corners_[i].x;
+                msg.corners[i].y = result.undistorted_corners_[i].y;
                 br_x = std::max(br_x, result.undistorted_corners_[i].x);
                 br_y = std::max(br_y, result.undistorted_corners_[i].y);
                 tl_x = std::min(tl_x, result.undistorted_corners_[i].x);

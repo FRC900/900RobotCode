@@ -220,7 +220,7 @@ void CANdleDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Duration
                     state_->setLED(led_id, group.colour_);
                 }
 
-                ROS_INFO_STREAM("CANdle " << getName() << " : Changed colours");
+                // ROS_INFO_STREAM("CANdle " << getName() << " : Changed colours");
             } else {
                 // On an error, just re-queue the failed LED group
                 command_->setLEDGroup(group);

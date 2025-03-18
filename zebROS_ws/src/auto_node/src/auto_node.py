@@ -20,13 +20,8 @@ from std_msgs.msg import String
 
 # number to str of auto name, what /auto/auto_mode needs to send to run a given auto
 IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.DriveForward,
-                                    1: AutonomousNames.TwoCoralNonProcessor,
-                                    2: AutonomousNames.ThreeCoralNonProcessor,
-                                    3: AutonomousNames.FourCoralNonProcessor,
-                                    4: AutonomousNames.TestDriveForwardBack,
-                                    5: AutonomousNames.FourCoralProcessor,
-                                    6: AutonomousNames.TestFourCoralProcessor}
-
+                                    2: AutonomousNames.FourCoralNonProcessor,
+                                    1: AutonomousNames.FourCoralProcessor}
 
 class AutoNode():
     def __init__(self):        
@@ -129,6 +124,7 @@ class AutoNode():
             rospy.loginfo_throttle(10, f"Recived auto mode of - {msg.auto_mode} mapped to {IDS_TO_AUTO_NAME[msg.auto_mode]}")
         except Exception as e:
             rospy.logerr(f"Unable to look up auto with id {msg.auto_mode}\n error of {e}")
+            self.__selected_auto = None
 
 def signal_handler(sig, frame):
     rospy.logerr("Auto node recived SIGINT - shutting down")
