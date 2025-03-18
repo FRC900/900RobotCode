@@ -1,0 +1,59 @@
+cam0:
+  # cam0 data
+  camera_model: pinhole
+  # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
+  intrinsics: [907.580626, 908.178933, 800.913073, 678.792363]
+  distortion_model: plumb_bob
+  # are we sure they are all zero?
+  distortion_coeffs: [0.033815, -0.047453, 0.000617, -0.000162, 0.000000]
+  resolution: [1600, 1300]
+  # infotopic: /ov2311_10_9_0_10_video0/camera_info # /{cam_name}/camera_info
+  rostopic: /ov2311_10_9_0_10_video0_ignore
+  # CHECK THIS
+  tagtopic: /apriltag_detection_ov2311_10_9_0_10_video0/tags_undistorted # /apriltag_detection_{cam_name}/tags
+  rig_body: frc_robot
+
+cam1:
+  # cam1 data
+  camera_model: pinhole
+  # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
+  intrinsics: [908.905848, 908.978455, 814.304840, 614.719475]
+  distortion_model: plumb_bob
+  # are we sure they are all zero?
+  distortion_coeffs: [0.034877, -0.048418, -0.000054, 0.000043, 0.000000]
+  resolution: [1600, 1300]
+  # infotopic: /ov2311_10_9_0_10_video1/camera_info # /{cam_name}/camera_info
+  rostopic: /ov2311_10_9_0_10_video1_ignore
+  # CHECK THIS
+  tagtopic: /apriltag_detection_ov2311_10_9_0_10_video1/tags_undistorted # /apriltag_detection_{cam_name}/tags
+  rig_body: frc_robot
+
+cam2:
+  # cam2 data
+  camera_model: pinhole
+  # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
+  intrinsics: [910.33609, 910.6272, 787.82826, 627.1906]
+  distortion_model: plumb_bob
+  # are we sure they are all zero?
+  distortion_coeffs: [0.039866, -0.054857, 0.000471, 0.000253, 0.000000]
+  resolution: [1600, 1300]
+  # infotopic: /ov2311_10_9_0_9_video0/camera_info # /{cam_name}/camera_info
+  rostopic: /ov2311_10_9_0_9_video0_ignore
+  # CHECK THIS
+  tagtopic: /apriltag_detection_ov2311_10_9_0_9_video0/tags_undistorted # /apriltag_detection_{cam_name}/tags
+  rig_body: frc_robot
+
+cam3:
+  # cam3 data
+  camera_model: pinhole
+  # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
+  intrinsics: [907.19483, 908.17939, 809.68159, 620.78939]
+  distortion_model: plumb_bob
+  # are we sure they are all zero?
+  distortion_coeffs: [0.035165, -0.049790, -0.000089, -0.000987, 0.000000]
+  resolution: [1600, 1300]
+  # infotopic: /ov2311_10_9_0_9_video1/camera_info # /{cam_name}/camera_info
+  rostopic: /ov2311_10_9_0_9_video1_ignore
+  # CHECK THIS
+  tagtopic: /apriltag_detection_ov2311_10_9_0_9_video1/tags_undistorted # /apriltag_detection_{cam_name}/tags
+  rig_body: frc_robot

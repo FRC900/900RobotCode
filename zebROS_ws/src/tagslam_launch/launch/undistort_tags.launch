@@ -1,0 +1,12 @@
+<launch>
+
+<arg name="camera_info_ns" default="/"/>
+<arg name="tag_ns" default="/"/>
+
+<group ns="/$(arg tag_ns)">
+    <node pkg="gpu_apriltag" type="undistort_node" name="undistort_node_$(arg camera_info_ns)" output="screen">
+        <remap from="/$(arg tag_ns)/camera_info" to="/$(arg camera_info_ns)/camera_info"/>
+    </node>
+</group>
+
+</launch>

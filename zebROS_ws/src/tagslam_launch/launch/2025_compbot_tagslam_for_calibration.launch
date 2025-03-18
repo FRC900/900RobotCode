@@ -1,0 +1,69 @@
+<launch>
+  
+  <arg name="config_dir" default="$(find tagslam_launch)/y2025"/>
+  <arg name="undistort_hack" default="false"/>
+  
+  <arg name="tagslam_config_file" default="$(arg config_dir)/tagslam_for_calibration.yaml"/>
+  <arg name="calibration_file" default="$(arg config_dir)/cameras_ov2311_for_calibration.yaml"/>
+  <arg name="camera_poses_file" default="/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2025/camera_poses_for_calibration.yaml" unless="$(arg undistort_hack)"/>
+  <arg name="run_online" default="true"/>
+  <arg name="bag" default=""/>
+  <arg name="max_number_of_frames" default="1000000"/>
+  <arg name="start_time" default="0.0"/>
+  <arg name="has_compressed_images" default="false"/>
+  <arg name="family"   default="36_11"/>
+  <arg name="mesh_dir" default="package://tagslam_viz/tags/$(arg family)"/>
+  <arg name="tag_id_file" default="$(arg config_dir)/tagslam_for_calibration.yaml"/>
+
+
+  <node pkg="tagslam" type="tagslam_node" name="tagslam" clear_params="true" launch-prefix="gdb -ex run --args" output="screen">
+    <rosparam param="cameras" command="load" file="$(arg calibration_file)"/>
+    <rosparam param="tagslam_config" command="load"
+	      file="$(arg tagslam_config_file)"/>
+    <rosparam param="camera_poses" command="load"
+	      file="$(arg camera_poses_file)"/>
+    <param name="bag_start_time" value="$(arg start_time)"/>
+    <param name="bag_file" value="$(arg bag)" unless="$(arg run_online)"/>
+    <param name="has_compressed_images" value="false"/>
+    <param name="playback_rate" value="10.0"/>
+    <param name="max_number_of_frames" value="$(arg max_number_of_frames)"/>
+  </node>
+
+  <rosparam command="load" file="$(find tagslam_launch)/config_map_odom/map_to_odom.yaml"/>
+
+  <node pkg="tagslam_launch" type="tagslam_launch_node" name="map_to_odom"/>
+
+  <!-- to visualize both wheeled and tagslam trajectories, bolt the odometry to the map
+  <node pkg="tf" type="static_transform_publisher" name="odom_to_map" args="0 0 0 0 0.0 0 frc_robot body_link 100"/>
+   -->
+  <!-- to see how the robot would move around with tagslam + odom, connect the two frames at the robot -->
+  
+  <node pkg="tf" type="static_transform_publisher" name="body_link_to_frc_robot" args="0 0 0 0 0.0 0 frc_robot body_link 100"/>
+
+  <!--- visualize tags -->
+  <param name="tags"
+	 command="$(find tagslam_viz)/src/make_tags.py --file $(arg tag_id_file) --family $(arg family) --mesh_dir $(arg mesh_dir)"/>
+
+  <!-- Post-process to undistort tag corners for cases where this wasn't done
+       correctly in the apriltag detector -->
+  <group if="$(arg undistort_hack)">
+    <arg name="camera_poses_file" default="/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2025/camera_poses_for_calibration_undistort.yaml" />
+    <include file="$(find tagslam_launch)/launch/undistort_tags.launch">
+      <arg name="camera_info_ns" value="ov2311_10_9_0_9_video0"/>
+      <arg name="tag_ns" value="apriltag_detection_ov2311_10_9_0_9_video0"/>
+    </include>
+    <include file="$(find tagslam_launch)/launch/undistort_tags.launch">
+      <arg name="camera_info_ns" value="ov2311_10_9_0_9_video1"/>
+      <arg name="tag_ns" value="apriltag_detection_ov2311_10_9_0_9_video1"/>
+    </include>
+    <include file="$(find tagslam_launch)/launch/undistort_tags.launch">
+      <arg name="camera_info_ns" value="ov2311_10_9_0_10_video0"/>
+      <arg name="tag_ns" value="apriltag_detection_ov2311_10_9_0_10_video0"/>
+    </include>
+    <include file="$(find tagslam_launch)/launch/undistort_tags.launch">
+      <arg name="camera_info_ns" value="ov2311_10_9_0_10_video1"/>
+      <arg name="tag_ns" value="apriltag_detection_ov2311_10_9_0_10_video1"/>
+    </include>
+  </group>
+
+</launch>
