@@ -51,7 +51,7 @@ def is_drive_objet():
 states = [
     State("drive_to_object", is_drive_objet, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
     State("autonomous", lambda: is_auto, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_RAINBOW, 0, 0, 0, 0, 0)),
-    State("alinging_and_placing", lambda: aligning, lambda: send_colour(255,255,255)),
+    State("aligning_and_placing", lambda: aligning, lambda: send_colour(255,255,255)),
     State("has_coral", lambda: has_coral, lambda: send_colour(0,255,0)),
     State("intaking_coral", lambda: intaking, lambda: send_animation(0.75, AnimationRequest.ANIMATION_TYPE_STROBE, 255, 255, 0, 0, 0)),
     State("teleop", lambda: True, lambda: send_colour(*team_color))
