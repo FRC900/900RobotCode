@@ -60,9 +60,6 @@ def Animation(msg):
     global count
     global brightness
     global reversed
-    #Not sure if to include these two below
-    #Animation
-    #Colour 
     global direction
 
 rospy.Subscriber('ctre_interfaces/candle_state_interface.h', Colour, Animation,)
