@@ -27,6 +27,7 @@
 #include <behavior_actions/Elevater2025Action.h>
 #include <behavior_actions/Intaking2025Action.h>
 #include <behavior_actions/Placing2025Action.h>
+#include <behavior_actions/Roller2025Action.h>
 
 #include "talon_controller_msgs/Command.h"
 
@@ -56,6 +57,8 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlace202
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>> elevater_ac; // for manual elevator movements to get unstuck
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac; // manual intaking
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>> placing_ac; // manual placement (very sad)
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>> roller_ac; // manual eject (very sad)
+
 
 
 ros::ServiceClient toggle_auto_rotate_client;
@@ -630,9 +633,13 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 
 	if (button_box->backupButton2Button)
 	{
+
 	}
 	if (button_box->backupButton2Press)
 	{
+		behavior_actions::Roller2025Goal roller_goal;
+		roller_goal.mode = roller_goal.OUTTAKE;
+		roller_ac->sendGoal(roller_goal);
 	}
 	if (button_box->backupButton2Release)
 	{
@@ -803,7 +810,7 @@ int main(int argc, char **argv)
 	elevater_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Elevater2025Action>>("/elevater/elevater_server_2025", true);
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>>("/intaking/intaking_server_2025", true);
 	placing_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>>("/placing/placing_server_2025", true);
-
+	roller_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>>("/roller/roller_server_2025", true);
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
 	outtaking_client = n.serviceClient<talon_controller_msgs::Command>("/frcrobot_jetson/intake_controller/command", false, {{"tcp_nodelay", "1"}});
