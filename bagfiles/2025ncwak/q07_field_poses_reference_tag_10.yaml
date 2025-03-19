@@ -1,0 +1,66 @@
+bodies:
+ - zebracorn_labs:
+     type: simple
+     is_static: true
+     default_tag_size: 0.1651
+     pose:
+       position:
+         x: -0.00000000
+         y: -0.00000000
+         z: 0.00000000
+       rotation:
+         x: -0.00000000
+         y: -0.00000000
+         z: 0.00000000
+       position_noise:
+         x: 0.00010000
+         y: 0.00010000
+         z: 0.00010000
+       rotation_noise:
+         x: 0.00001000
+         y: 0.00001000
+         z: 0.00001000
+     tags:
+       - id: 10
+         size: 0.16510000
+         pose:
+           position:
+             x: 12.22730600
+             y: 4.02082000
+             z: 0.30810200
+           rotation:
+             x: 1.20919958
+             y: -1.20919958
+             z: -1.20919958
+           position_noise:
+             x: 0.00050000
+             y: 0.00050000
+             z: 0.00050000
+           rotation_noise:
+             x: 0.00400000
+             y: 0.00400000
+             z: 0.00400000
+       - id: 11
+         size: 0.16510000
+         pose:
+           position:
+             x: 12.58345007
+             y: 3.26486586
+             z: 0.32074236
+           rotation:
+             x: 1.53901391
+             y: -0.42855971
+             z: -0.36283222
+           position_noise:
+             x: 0.00220709
+             y: 0.00339168
+             z: 0.00311559
+           rotation_noise:
+             x: 0.00422481
+             y: 0.00421941
+             z: 0.00406807
+ - frc_robot:
+     type: simple
+     is_static: false
+     default_tag_size: 0.00000000
+     tags:

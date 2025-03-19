@@ -1,0 +1,142 @@
+bodies:
+ - zebracorn_labs:
+     type: simple
+     is_static: true
+     default_tag_size: 0.1651
+     pose:
+       position:
+         x: -0.00000001
+         y: 0.00000002
+         z: -0.00000007
+       rotation:
+         x: -0.00000001
+         y: 0.00000001
+         z: 0.00000001
+       position_noise:
+         x: 0.00010000
+         y: 0.00010000
+         z: 0.00010000
+       rotation_noise:
+         x: 0.00001000
+         y: 0.00001000
+         z: 0.00001000
+     tags:
+       - id: 10
+         size: 0.16510000
+         pose:
+           position:
+             x: 12.22730612
+             y: 4.02082038
+             z: 0.30810195
+           rotation:
+             x: 1.20919141
+             y: -1.20909807
+             z: -1.20901927
+           position_noise:
+             x: 0.00050000
+             y: 0.00050000
+             z: 0.00050000
+           rotation_noise:
+             x: 0.00400000
+             y: 0.00400000
+             z: 0.00400000
+       - id: 11
+         size: 0.16510000
+         pose:
+           position:
+             x: 12.61033044
+             y: 3.28487477
+             z: 0.31669715
+           rotation:
+             x: 1.53395669
+             y: -0.42155124
+             z: -0.37538986
+           position_noise:
+             x: 0.00196398
+             y: 0.00336825
+             z: 0.00292911
+           rotation_noise:
+             x: 0.00421655
+             y: 0.00416196
+             z: 0.00406444
+       - id: 6
+         size: 0.16510000
+         pose:
+           position:
+             x: 13.38451440
+             y: 3.25051613
+             z: 0.33440147
+           rotation:
+             x: 1.53282964
+             y: 0.37822492
+             z: 0.39672339
+           position_noise:
+             x: 0.00547665
+             y: 0.00586783
+             z: 0.00459145
+           rotation_noise:
+             x: 0.00613369
+             y: 0.00655551
+             z: 0.00594839
+       - id: 7
+         size: 0.16510000
+         pose:
+           position:
+             x: 13.79586587
+             y: 3.96713146
+             z: 0.35121757
+           rotation:
+             x: 1.22160668
+             y: 1.20462080
+             z: 1.22454082
+           position_noise:
+             x: 0.00886746
+             y: 0.00873281
+             z: 0.00407560
+           rotation_noise:
+             x: 0.00490268
+             y: 0.00666132
+             z: 0.00709145
+       - id: 8
+         size: 0.16510000
+         pose:
+           position:
+             x: 13.39848354
+             y: 4.69729490
+             z: 0.37542118
+           rotation:
+             x: 0.52577289
+             y: 1.93653626
+             z: 1.94385131
+           position_noise:
+             x: 0.00987869
+             y: 0.01096732
+             z: 0.00371209
+           rotation_noise:
+             x: 0.00703981
+             y: 0.00668232
+             z: 0.00502782
+       - id: 9
+         size: 0.16510000
+         pose:
+           position:
+             x: 12.64251816
+             y: 4.74499305
+             z: 0.30371461
+           rotation:
+             x: 0.47451152
+             y: -1.90038466
+             z: -1.99114228
+           position_noise:
+             x: 0.00198270
+             y: 0.00345880
+             z: 0.00317862
+           rotation_noise:
+             x: 0.00467671
+             y: 0.00455426
+             z: 0.00428263
+ - frc_robot:
+     type: simple
+     is_static: false
+     default_tag_size: 0.00000000
+     tags:

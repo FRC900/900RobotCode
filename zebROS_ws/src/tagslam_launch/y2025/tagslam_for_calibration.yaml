@@ -5,17 +5,17 @@ tagslam_parameters:
 # default: slow
   optimizer_mode: fast
 # minimum angle [in degrees] between optical axis and tag surface
-  minimum_viewing_angle: 15.0
+  minimum_viewing_angle: 30.0
 # minimum tag area in pixels^2. Any tags smaller than that are ignored
-  minimum_tag_area: 300
+  minimum_tag_area: 500
 # number of incremental updates before running
 # a full graph optimization (default: 50)
-  max_num_incremental_opt: 10
+  max_num_incremental_opt: 500
 # estimated error of tag corner detector
   pixel_noise: 1.0
 # maximum allowed subgraph error. If error is above that,
 # the frame is thrown away, the measurement ignored.
-  max_subgraph_error: 50.0
+  max_subgraph_error: 20.0
 # Noise with which the subgraph absolute priors will be
 # pinned down. This parameter usually does not need to be touched.
   subgraph_abs_prior_position_noise: 0.1
@@ -154,44 +154,44 @@ bodies:
     #       y: 0.004
     #       z: 0.004
     #   size: 0.1651
-    - id: 6
-      pose:
-        position:
-          x: 13.474446
-          y: 3.3012379999999997
-          z: 0.308102
-        position_noise:
-          x: 0.0005
-          y: 0.0005
-          z: 0.0005
-        rotation:
-          x: 1.5315599088338596
-          y: 0.41038024073191665
-          z: 0.4103802407319166
-        rotation_noise:
-          x: 0.004
-          y: 0.004
-          z: 0.004
-      size: 0.1651
-    # - id: 7
+    # - id: 6
     #   pose:
     #     position:
-    #       x: 13.890498
-    #       y: 4.0208200000000005
+    #       x: 13.474446
+    #       y: 3.3012379999999997
     #       z: 0.308102
     #     position_noise:
     #       x: 0.0005
     #       y: 0.0005
     #       z: 0.0005
     #     rotation:
-    #       x: 1.2091995761561452
-    #       y: 1.2091995761561452
-    #       z: 1.209199576156145
+    #       x: 1.5315599088338596
+    #       y: 0.41038024073191665
+    #       z: 0.4103802407319166
     #     rotation_noise:
     #       x: 0.004
     #       y: 0.004
     #       z: 0.004
     #   size: 0.1651
+    - id: 7
+      pose:
+        position:
+          x: 13.890498
+          y: 4.0208200000000005
+          z: 0.308102
+        position_noise:
+          x: 0.0005
+          y: 0.0005
+          z: 0.0005
+        rotation:
+          x: 1.2091995761561452
+          y: 1.2091995761561452
+          z: 1.209199576156145
+        rotation_noise:
+          x: 0.004
+          y: 0.004
+          z: 0.004
+      size: 0.1651
     # - id: 8
     #   pose:
     #     position:
@@ -497,3 +497,10 @@ bodies:
     #      x:  0
     #      y:  0
     #      z:  0
+squash:
+ - time: "192.350196184"
+   tags: [2, 8, 14, 4, 12, 1]
+ - time: "192.370704849"
+   tags: [2, 8, 14, 4, 12, 1]
+ - time: "192.387433718"
+   tags: [2, 8, 14, 4, 12, 1]

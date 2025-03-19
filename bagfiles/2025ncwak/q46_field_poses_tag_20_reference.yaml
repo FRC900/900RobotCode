@@ -1,0 +1,85 @@
+bodies:
+ - zebracorn_labs:
+     type: simple
+     is_static: true
+     default_tag_size: 0.1651
+     pose:
+       position:
+         x: 0.00000000
+         y: -0.00000000
+         z: 0.00000000
+       rotation:
+         x: -0.00000000
+         y: 0.00000000
+         z: -0.00000000
+       position_noise:
+         x: 0.00010000
+         y: 0.00010000
+         z: 0.00010000
+       rotation_noise:
+         x: 0.00001000
+         y: 0.00001000
+         z: 0.00001000
+     tags:
+       - id: 20
+         size: 0.16510000
+         pose:
+           position:
+             x: 4.90474000
+             y: 4.74040200
+             z: 0.30810200
+           rotation:
+             x: 0.51630447
+             y: 1.92687451
+             z: 1.92687451
+           position_noise:
+             x: 0.00050000
+             y: 0.00050000
+             z: 0.00050000
+           rotation_noise:
+             x: 0.00400000
+             y: 0.00400000
+             z: 0.00400000
+       - id: 21
+         size: 0.16510000
+         pose:
+           position:
+             x: 5.26157375
+             y: 3.98358037
+             z: 0.31990426
+           rotation:
+             x: 1.17941233
+             y: 1.22141266
+             z: 1.20467912
+           position_noise:
+             x: 0.00175200
+             y: 0.00341745
+             z: 0.00361219
+           rotation_noise:
+             x: 0.00415722
+             y: 0.00420419
+             z: 0.00411728
+       - id: 22
+         size: 0.16510000
+         pose:
+           position:
+             x: 4.80484076
+             y: 3.24144758
+             z: 0.34174738
+           rotation:
+             x: 1.51283364
+             y: 0.30251003
+             z: 0.28020914
+           position_noise:
+             x: 0.00620882
+             y: 0.00628118
+             z: 0.00310016
+           rotation_noise:
+             x: 0.00520017
+             y: 0.00613327
+             z: 0.00561784
+ - frc_robot:
+     type: simple
+     is_static: false
+     default_tag_size: 0.00000000
+     tags:

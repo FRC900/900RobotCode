@@ -1,0 +1,5 @@
+base_link_in_front_of_tag_7_extrinsics_march19_1969-12-31-19-15-13.bag
+
+69.8cm in X to the tag (this is forward so positive x)
+-3cm in Y to the tag (this is to the right so negative y)
+30.3cm in Z to the tag (this is up so positive z)

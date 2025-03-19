@@ -27,6 +27,8 @@ class FourCoral(AutoBase):
         tw.linear.x = -1     
         tw.linear.y = 0  
         
+        # CHECK IF BEHIND
+
         return SeriesAction([
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
