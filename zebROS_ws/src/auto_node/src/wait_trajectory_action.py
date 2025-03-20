@@ -14,7 +14,7 @@ class WaitTrajectoryAction(Action):
     """
 
     def __init__(self, percent_complete):
-        self.__path_follower_feedback_sub = rospy.Subscriber("/path_follower/path_follower_server/feedback", PathActionFeedback, self.feedback_cb)
+        self.__path_follower_feedback_sub = rospy.Subscriber("/path_follower/path_follower_server/feedback", PathActionFeedback, self.feedback_cb, tcp_nodelay=True)
         self.__latest_feedback: PathActionFeedback = None
         if not percent_complete:
             rospy.logerr("Must provide percent complete in wait for trajectory")

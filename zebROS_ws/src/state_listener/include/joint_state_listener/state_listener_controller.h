@@ -61,7 +61,7 @@ class JointStateListenerController :
 
 			// Might wantt to make message type a template
 			// parameter as well?
-			sub_command_ = n.subscribe<sensor_msgs::JointState>(topic, 1, &JointStateListenerController::commandCB, this);
+			sub_command_ = n.subscribe<sensor_msgs::JointState>(topic, 1, &JointStateListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 			return true;
 		}
 
@@ -126,7 +126,7 @@ class JointModeListenerController :
 		{
 			// Read list of hw, make a list, grab handles for them, plus allocate storage space
 			joint_names_ = hw->getNames();
-			for (auto j : joint_names_)
+			for (const auto &j : joint_names_)
 			{
 				ROS_INFO_STREAM("Joint Mode Listener Controller got joint " << j);
 				handles_.push_back(hw->getHandle(j));
@@ -143,7 +143,7 @@ class JointModeListenerController :
 
 			// Might wantt to make message type a template
 			// parameter as well?
-			sub_command_ = n.subscribe<frc_msgs::JointMode>(topic, 1, &JointModeListenerController::commandCB, this);
+			sub_command_ = n.subscribe<frc_msgs::JointMode>(topic, 1, &JointModeListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 			return true;
 		}
 
@@ -237,7 +237,7 @@ class IMUStateListenerController :
 				return false;
 			}
 
-			sub_command_ = n.subscribe<sensor_msgs::Imu>(topic, 1, &IMUStateListenerController::commandCB, this);
+			sub_command_ = n.subscribe<sensor_msgs::Imu>(topic, 1, &IMUStateListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 			return true;
 		}
 
@@ -280,6 +280,7 @@ class IMUStateListenerController :
 			data.orientation_[2] = msg->orientation.z;
 			data.orientation_[3] = msg->orientation.w;
 			std::copy(msg->orientation_covariance.cbegin(), msg->orientation_covariance.cend(), data.orientation_covariance_.begin());
+
 			data.angular_velocity_[0] = msg->angular_velocity.x;
 			data.angular_velocity_[1] = msg->angular_velocity.y;
 			data.angular_velocity_[2] = msg->angular_velocity.z;

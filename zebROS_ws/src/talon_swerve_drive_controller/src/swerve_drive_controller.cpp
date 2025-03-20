@@ -262,7 +262,7 @@ bool init(hardware_interface::RobotHW *hw,
 		}
 	}
 
-	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
+	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this, ros::TransportHints().tcpNoDelay());
 	// Publish limited velocity:
 	bool publish_cmd;
 	controller_nh.param("publish_cmd", publish_cmd, true);
