@@ -20,4 +20,7 @@ teleop_params:
     middle_position_angle: -0.0
     top_position_angle: -200.0
 
-    #teleop_diagnostics_params:
+orientation_profile:
+    speed: 6.0
+    acceleration: 20.0
+    jerk: 100.0
