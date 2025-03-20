@@ -11,9 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   ddynamic_reconfigure
   nav_msgs
   path_follower_msgs
-  pid_velocity_msg
   roscpp
   std_msgs
+  teleop_orientation_msgs
   tf2
   tf2_ros
 )
@@ -90,7 +90,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES path_follower
-  CATKIN_DEPENDS geometry_msgs roscpp std_msgs std_srvs nav_msgs pid_velocity_msg
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs std_srvs nav_msgs teleop_orientation_msgs
   # DEPENDS system_lib
 )
 
