@@ -2,6 +2,7 @@
 #define ROTATION_WITH_STICK
 
 #include "ros/ros.h"
+#include "std_srvs/SetBool.h"
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
 
