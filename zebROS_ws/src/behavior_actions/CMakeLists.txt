@@ -131,6 +131,7 @@ add_action_files(
 		Intaking2025.action
 		AlignAndPlace2025.action
 		Roller2025.action
+		PulseOuttake2025.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs geometry_msgs)

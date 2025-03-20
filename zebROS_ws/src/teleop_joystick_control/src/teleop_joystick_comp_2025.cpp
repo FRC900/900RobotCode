@@ -26,6 +26,7 @@
 #include <behavior_actions/Intaking2025Action.h>
 #include <behavior_actions/Placing2025Action.h>
 #include <behavior_actions/Roller2025Action.h>
+#include <behavior_actions/PulseOuttake2025Action.h>
 
 #include "talon_controller_msgs/Command.h"
 
@@ -56,6 +57,8 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Elevater2025Acti
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>> intaking_ac; // manual intaking
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>> placing_ac; // manual placement (very sad)
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>> roller_ac; // manual eject (very sad)
+
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>> pulse_outtake_ac; // manual eject (very sad)
 
 
 
@@ -142,14 +145,16 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			//Joystick1: bumperRight
 			if(joystick_state->bumperRightPress)
 			{
-				driver->teleop_cmd_vel_.setCaps(config.max_speed_slow, config.max_rot_slow);
+				ROS_INFO_STREAM("Sending pulse outtake goal");
+				pulse_outtake_ac->sendGoal(behavior_actions::PulseOuttake2025Goal());
+				//driver->teleop_cmd_vel_.setCaps(config.max_speed_slow, config.max_rot_slow);
 			}
 			if(joystick_state->bumperRightButton)
 			{
 			}
 			if(joystick_state->bumperRightRelease)
 			{
-				driver->teleop_cmd_vel_.resetCaps();
+				//driver->teleop_cmd_vel_.resetCaps();
 			}
 
 
@@ -809,6 +814,8 @@ int main(int argc, char **argv)
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>>("/intaking/intaking_server_2025", true);
 	placing_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>>("/placing/placing_server_2025", true);
 	roller_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>>("/roller/roller_server_2025", true);
+	pulse_outtake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::PulseOuttake2025Action>>("/pulse_outtake/intaking_server_2025", true);
+
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
 	outtaking_client = n.serviceClient<talon_controller_msgs::Command>("/frcrobot_jetson/intake_controller/command", false, {{"tcp_nodelay", "1"}});

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="pulse_outtake">
+		<rosparam command="load" file="$(find behaviors)/config/2025_pulse_config.yaml"/>
+		<node name="pulse_server_2025" pkg="behaviors" type="2025_pulse_intake_outtake.py" output="screen"/>
+	</group>
+</launch>
