@@ -2,8 +2,8 @@
 #define ROTATION_WITH_STICK
 
 #include "ros/ros.h"
-#include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
+#include "std_srvs/Empty.h"
 
 #include "frc_msgs/ButtonBoxState2025.h"
 #include "frc_msgs/JoystickState.h"
@@ -18,8 +18,6 @@
 // #include <talon_state_msgs/TalonFXProState.h>
 
 #include "teleop_joystick_control/teleop_joystick_comp_general.h"
-
-#include <tf2_ros/transform_listener.h>
 
 #include <path_follower_msgs/PathAction.h>
 
@@ -77,7 +75,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 	//Only do this for the first joystick
 	if(joystick_id == 0) {
 		static ros::Time last_header_stamp = ros::Time(0);
-		last_header_stamp = driver->evalateDriverCommands(*joystick_state, config);
+		last_header_stamp = driver->evaluateDriverCommands(*joystick_state, config);
 
 		if(!diagnostics_mode)
 		{

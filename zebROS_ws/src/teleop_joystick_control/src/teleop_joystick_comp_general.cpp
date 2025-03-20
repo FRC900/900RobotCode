@@ -131,7 +131,7 @@ void Driver::setJoystickOverride(bool override) {
 	robot_orientation_driver_.setJoystickOverride(override);
 }
 
-ros::Time Driver::evalateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config) {
+ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config) {
 
 	teleop_cmd_vel_.updateRateLimit(config);
 	// TODO : make swerve invert the yaw so we can deal in ccw-positive angles

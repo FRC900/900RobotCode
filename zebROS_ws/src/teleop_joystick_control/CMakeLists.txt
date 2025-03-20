@@ -85,31 +85,44 @@ include_directories(
 	${Eigen3_INCLUDE_DIRS}
 	)
 
-add_executable(teleop_joystick_comp_2025 src/teleop_joystick_comp_2025.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+add_library(teleop_joystick_comp_general STATIC
+	src/robot_orientation_driver.cpp
+	src/teleop_joystick_comp_general.cpp
+	src/store_xy.cpp
+)
+target_link_libraries(teleop_joystick_comp_general
+	${catkin_LIBRARIES}
+)
+
+add_executable(teleop_joystick_comp_2025 src/teleop_joystick_comp_2025.cpp)
 target_link_libraries(teleop_joystick_comp_2025
-	${catkin_LIBRARIES})
+	${catkin_LIBRARIES}
+	teleop_joystick_comp_general)
 add_dependencies(teleop_joystick_comp_2025
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
-add_executable(teleop_joystick_comp_2024 src/teleop_joystick_comp_2024.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+add_executable(teleop_joystick_comp_2024 src/teleop_joystick_comp_2024.cpp)
 target_link_libraries(teleop_joystick_comp_2024
-	${catkin_LIBRARIES})
+	${catkin_LIBRARIES}
+	teleop_joystick_comp_general)
 add_dependencies(teleop_joystick_comp_2024
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
-add_executable(teleop_joystick_comp_9000 src/teleop_joystick_comp_9000.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+add_executable(teleop_joystick_comp_9000 src/teleop_joystick_comp_9000.cpp)
 target_link_libraries(teleop_joystick_comp_9000
-	${catkin_LIBRARIES})
+	${catkin_LIBRARIES}
+	teleop_joystick_comp_general)
 add_dependencies(teleop_joystick_comp_9000
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
 if(0)
-add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp src/robot_orientation_driver.cpp src/teleop_joystick_comp_general.cpp src/store_xy.cpp)
+add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp)
 target_link_libraries(teleop_joystick_comp_2023
-	${catkin_LIBRARIES})
+	${catkin_LIBRARIES}
+	teleop_joystick_comp_general)
 add_dependencies(teleop_joystick_comp_2023
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})

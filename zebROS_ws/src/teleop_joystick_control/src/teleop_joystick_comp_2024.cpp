@@ -82,7 +82,7 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 	//Only do this for the first joystick
 	if(joystick_id == 0) {
 		static ros::Time last_header_stamp = ros::Time(0);
-		last_header_stamp = driver->evalateDriverCommands(*joystick_state, config);
+		last_header_stamp = driver->evaluateDriverCommands(*joystick_state, config);
 
 		if(!diagnostics_mode)
 		{

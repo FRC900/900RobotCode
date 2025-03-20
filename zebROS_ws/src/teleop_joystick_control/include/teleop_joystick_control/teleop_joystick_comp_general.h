@@ -67,7 +67,7 @@ public:
 	Driver(ros::NodeHandle n, DynamicReconfigVars config);
 	void moveDirection(int x, int y, int z, double button_move_speed);
 	void sendDirection(double button_move_speed);
-	ros::Time evalateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config);
+	ros::Time evaluateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config);
 	void setTargetOrientation(const double angle, const bool from_teleop, const double velocity = (0.0));
 	bool getNoDriverInput();
 	bool orientCallback(teleop_joystick_control::RobotOrient::Request &req,
