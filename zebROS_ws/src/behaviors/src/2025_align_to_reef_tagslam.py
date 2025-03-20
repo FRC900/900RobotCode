@@ -93,7 +93,7 @@ class Aligner:
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.current_yaw = 0
-        self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback)
+        self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback, tcp_nodelay=True)
 
         self.team_subscribe = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_callback)
 

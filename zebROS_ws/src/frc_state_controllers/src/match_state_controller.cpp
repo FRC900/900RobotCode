@@ -221,7 +221,7 @@ public:
 			return false;
 		}
 
-		sub_command_ = n.subscribe<frc_msgs::MatchSpecificData>(topic, 1, &MatchStateListenerController::commandCB, this);
+		sub_command_ = n.subscribe<frc_msgs::MatchSpecificData>(topic, 1, &MatchStateListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 		return true;
 	}
 

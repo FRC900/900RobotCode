@@ -183,7 +183,7 @@ public:
 			return false;
 		}
 
-		sub_command_ = n.subscribe<frc_msgs::RumbleState>(topic, 1, &RumbleStateListenerController::commandCB, this);
+		sub_command_ = n.subscribe<frc_msgs::RumbleState>(topic, 1, &RumbleStateListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 		return true;
 	}
 
