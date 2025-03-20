@@ -4,7 +4,7 @@
 
 OrientationProfile::OrientationProfile()
 {
-    // TODO : params for max velocity, acceleration and jerk
+    // TODO : params from config for max velocity, acceleration and jerk
     ruckig_input_.max_velocity[0] = 6;
     ruckig_input_.max_acceleration[0] = 18;
     ruckig_input_.max_jerk[0] = 54;
@@ -12,6 +12,7 @@ OrientationProfile::OrientationProfile()
 
 bool OrientationProfile::createProfile(const OrientationState &current_state, const double target_orientation)
 {
+    // Prevent constantly regenrating the same trajectory
     if (most_recent_was_trajectory_ && (target_orientation == target_state_.position))
     {
         return true;
@@ -48,8 +49,7 @@ void OrientationProfile::setOrientationTarget(const OrientationState &state)
 
 OrientationState OrientationProfile::getOrientationState(void)
 {
-    // Check to see if we're finished with the trajectory
-    const auto now = ros::Time::now();
+    const auto now = ros::Time::now(); // Check to see if we're finished with the trajectory
     if (trajectory_running_)
     {
         const auto trajectory_time = (now - start_time_).toSec();

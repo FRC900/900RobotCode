@@ -114,10 +114,8 @@ private:
 	ros::Subscriber match_data_sub_; // subscriber to match data, used to get enable/disable
 	ros::ServiceServer robot_orient_service_;
 
+	// Object to store orientation target and profile to get there
 	OrientationProfile orientation_profile_;
-
-	// The current orientation (angular-Z) setpoint for the drive base
-	// double target_orientation_{INITIAL_ROBOT_ORIENTATION};
 
 	// The current orientation of the robot itself
 	double robot_orientation_{INITIAL_ROBOT_ORIENTATION};
