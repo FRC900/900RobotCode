@@ -17,4 +17,9 @@ teleop_params:
     stick_threshold: 0.5
     button_move_speed: 0.5
     imu_zero_angle: 0.0
+
+orientation_profile:
+    speed: 4.0
+    acceleration: 12.0
+    jerk: 72.0
     

@@ -1,8 +1,10 @@
 #ifndef ORIENTATION_PROFILE_INC__
 #define ORIENTATION_PROFILE_INC__
 
+#include <ros/node_handle.h>
 #include <ros/time.h>
 #include <ruckig/ruckig.hpp>
+#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 // Store orientation state
 // Currently only position and velocity are used, but accel is
@@ -27,7 +29,7 @@ struct OrientationState
 class OrientationProfile
 {
 public:
-    explicit OrientationProfile();
+    explicit OrientationProfile(ros::NodeHandle &nh);
 
     // This sets at target state with profiling enabled, including generating a trajectory to follow
     bool createProfile(const OrientationState &current_state, const double target_orientation);
@@ -68,6 +70,8 @@ private:
     ruckig::Ruckig<1> ruckig_obj_;
     ruckig::InputParameter<1> ruckig_input_;
     ruckig::Trajectory<1> ruckig_trajectory_;
+
+    ddynamic_reconfigure::DDynamicReconfigure ddr_;
 };
 
 #endif
