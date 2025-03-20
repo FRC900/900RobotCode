@@ -19,6 +19,7 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	, imu_sub_{nh_.subscribe("/imu/zeroed_imu", 1, &RobotOrientationDriver::imuCallback, this, ros::TransportHints().tcpNoDelay())}
 	, match_data_sub_{nh_.subscribe("/frcrobot_rio/match_data", 1, &RobotOrientationDriver::matchStateCallback, this)}
     , robot_orient_service_{nh_.advertiseService("set_teleop_orient", &RobotOrientationDriver::holdTargetOrientation, this)}
+	, orientation_profile_{nh_}
 	// one_shot = true, auto_start = false
 	// inversting that
 	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
