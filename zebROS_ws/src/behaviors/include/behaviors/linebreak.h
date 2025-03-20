@@ -102,7 +102,7 @@ class Linebreak {
 			//some stuff below needs a node handle
 			ros::NodeHandle nh;
 
-			joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, &Linebreak::update, this);
+			joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, &Linebreak::update, this, ros::TransportHints().tcpNoDelay());
 
 			//search for debounce iterations param and get it
 			if(!nh.getParam("/actionlib_params/linebreak_debounce_iterations", debounce_iterations_))

@@ -96,11 +96,11 @@ class Aligner:
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.current_yaw = 0
-        self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback)
+        self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback, tcp_nodelay=True)
 
         self.team_subscribe = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_callback)
 
-        self.odom_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/odom", Odometry, self.odometry_callback)
+        self.odom_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/odom", Odometry, self.odometry_callback, tcp_nodelay=True)
         self.base_trajectory_client = rospy.ServiceProxy("/path_follower/base_trajectory/spline_gen", GenerateSpline)
 
         self.tf_buffer = tf2_ros.Buffer()
