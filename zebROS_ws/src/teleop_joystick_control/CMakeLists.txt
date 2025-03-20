@@ -30,6 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Eigen3 REQUIRED)
+find_package(ruckig REQUIRED)
 
 ## Generate messages in the 'msg' folder
 #add_message_files(
@@ -87,13 +88,15 @@ include_directories(
 	)
 
 add_library(teleop_joystick_comp_general STATIC
+	src/orientation_profile.cpp
 	src/robot_orientation_driver.cpp
 	src/teleop_joystick_comp_general.cpp
 	src/store_xy.cpp
-)
+	)
 target_link_libraries(teleop_joystick_comp_general
 	${catkin_LIBRARIES}
-)
+	ruckig::ruckig
+	)
 add_dependencies(teleop_joystick_comp_general
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
@@ -133,7 +136,7 @@ add_dependencies(teleop_joystick_comp_2023
 endif()
 
 if(0)
-add_executable(teleop_joystick_comp_2022 src/teleop_joystick_comp_2022.cpp src/robot_orientation_driver.cpp)
+add_executable(teleop_joystick_comp_2022 src/teleop_joystick_comp_2022.cpp src/orientation_profile.cpp src/robot_orientation_driver.cpp)
 target_link_libraries(teleop_joystick_comp_2022
 	${catkin_LIBRARIES})
 add_dependencies(teleop_joystick_comp_2022
