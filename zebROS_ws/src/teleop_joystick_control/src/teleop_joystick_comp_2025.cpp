@@ -58,7 +58,7 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2025Acti
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>> placing_ac; // manual placement (very sad)
 std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>> roller_ac; // manual eject (very sad)
 
-std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>> pulse_outtake_ac; // manual eject (very sad)
+std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::PulseOuttake2025Action>> pulse_outtake_ac; // manual eject (very sad)
 
 
 
@@ -146,7 +146,8 @@ void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int
 			if(joystick_state->bumperRightPress)
 			{
 				ROS_INFO_STREAM("Sending pulse outtake goal");
-				pulse_outtake_ac->sendGoal(behavior_actions::PulseOuttake2025Goal());
+				behavior_actions::PulseOuttake2025Goal outtake_goal_;
+				pulse_outtake_ac->sendGoal(outtake_goal_);
 				//driver->teleop_cmd_vel_.setCaps(config.max_speed_slow, config.max_rot_slow);
 			}
 			if(joystick_state->bumperRightButton)
