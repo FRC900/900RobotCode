@@ -24,6 +24,6 @@ teleop_params:
     match_time_to_park: 20.0
     
 orientation_profile:
-    speed: 6.0
+    velocity: 6.0
     acceleration: 20.0
     jerk: 100.0
