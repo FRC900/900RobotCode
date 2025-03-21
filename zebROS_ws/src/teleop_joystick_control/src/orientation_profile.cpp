@@ -28,7 +28,8 @@ bool OrientationProfile::createProfile(const OrientationState &current_state, co
     {
         return true;
     }
-    ROS_WARN_STREAM("Generating profile for angle " << target_orientation);
+    ROS_WARN_STREAM("Generating profile for angle " << target_orientation << " normalized to " << normalized_taget_orientation);
+    ROS_WARN_STREAM("Current state: " << current_state.position << " " << current_state.velocity << " " << current_state.acceleration);
     initial_state_ = OrientationState(angles::normalize_angle(current_state.position), current_state.velocity, current_state.acceleration);
     target_state_ = OrientationState(normalized_taget_orientation, 0, 0);
     start_time_ = ros::Time::now();
