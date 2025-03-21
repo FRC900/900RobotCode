@@ -64,7 +64,7 @@ max_cent_acc: 4.0
 drive_base_radius: 0.29689 # center to corner swerve module (this is for 9000 bot)
 
 # what frame to generate the path coords in
-path_frame_id: "base_link"
+path_frame_id: "map"
 
 # Load and use a map of field obstacles to avoid
 use_obstacle_cost: false
