@@ -2,7 +2,7 @@
 #include "ros/console.h"
 #include "teleop_joystick_control/orientation_profile.h"
 
-OrientationProfile::OrientationProfile(ros::NodeHandle &nh)
+OrientationProfile::OrientationProfile(const ros::NodeHandle &nh)
     : ddr_{ros::NodeHandle(nh, "orientation_profile")}
 {
     // Feels dumb to repeat this twice (once for DDR, once here), but
@@ -18,9 +18,17 @@ OrientationProfile::OrientationProfile(ros::NodeHandle &nh)
     ddr_.registerVariable<double>("jerk", &ruckig_input_.max_jerk[0], "Orientation profile jerk", 0.0, 1000.0);
 
     ddr_.publishServicesTopics();
+
+    // These are the same for all trajectories, so set them once here and leave them alone
+    ruckig_input_.current_position[0] = 0;
+    ruckig_input_.current_velocity[0] = 0; 
+    ruckig_input_.current_acceleration[0] = 0; 
+
+    ruckig_input_.target_velocity[0] = 0;
+    ruckig_input_.target_acceleration[0] = 0;
 }
 
-bool OrientationProfile::createProfile(const OrientationState &current_state, const double target_orientation)
+bool OrientationProfile::createProfile(const double current_orientation, const double target_orientation)
 {
     // Prevent constantly regenrating the same trajectory
     const auto normalized_taget_orientation = angles::normalize_angle(target_orientation);
@@ -28,21 +36,17 @@ bool OrientationProfile::createProfile(const OrientationState &current_state, co
     {
         return true;
     }
-    ROS_WARN_STREAM("Generating profile for angle " << target_orientation << " normalized to " << normalized_taget_orientation);
-    ROS_WARN_STREAM("Current state: " << current_state.position << " " << current_state.velocity << " " << current_state.acceleration);
-    initial_state_ = OrientationState(angles::normalize_angle(current_state.position), current_state.velocity, current_state.acceleration);
+    // TODO : if we can get a reliable angular velocity from the robot (e.g. from swerve odom
+    // or maybe the commanded angular velocity from the PID node), we can use that as the
+    // initial velocity for the profile. We'd have to increase the accel and jerk limits to
+    // prevent the robot from overshooting in one direction before snapping back the other way.
+    initial_state_ = OrientationState(angles::normalize_angle(current_orientation), 0, 0);
     target_state_ = OrientationState(normalized_taget_orientation, 0, 0);
-    start_time_ = ros::Time::now();
 
-    ruckig_input_.current_position[0] = 0;
-    ruckig_input_.current_velocity[0] = current_state.velocity;
-    ruckig_input_.current_acceleration[0] = current_state.acceleration;
     // Profile is delta angle from initial state position. The profile goes from 0
     // to delta angle in the nearest driection.  The code which returns the angle
     // to drive to is responsible for adding the initial state position back in.
-    ruckig_input_.target_position[0] = angles::shortest_angular_distance(current_state.position, normalized_taget_orientation);
-    ruckig_input_.target_velocity[0] = 0;
-    ruckig_input_.target_acceleration[0] = 0;
+    ruckig_input_.target_position[0] = angles::shortest_angular_distance(current_orientation, target_orientation);
     const auto result = ruckig_obj_.calculate(ruckig_input_, ruckig_trajectory_);
     if (result != ruckig::Result::Working)
     {
@@ -50,11 +54,17 @@ bool OrientationProfile::createProfile(const OrientationState &current_state, co
         trajectory_running_ = false;
         return false;
     }
+    start_time_ = ros::Time::now();
     trajectory_running_ = true;
     most_recent_was_trajectory_ = true;
     return true;
 }
 
+// Set a non-profiled target state.
+// That is, the robot will just seek the target state using pure PID (plus
+// a static FF term if state.velocity is non-zero). This is used in cases
+// where we are holding a position set via teleop control or when following
+// e.g. a path follower path where the profile is generated elsewhere.
 void OrientationProfile::setOrientationTarget(const OrientationState &state)
 {
     target_state_ = OrientationState(angles::normalize_angle(state.position), state.velocity, state.acceleration);

@@ -131,6 +131,7 @@ private:
 	ros::Timer most_recent_teleop_timer_;
 	ros::Timer pid_publish_timer_;
 
+	void setTargetOrientation(const double angle, const bool from_teleop, const double velocity, const bool drive_from_teleop);
 	void orientationCmdCallback(const std_msgs::Float64::ConstPtr &orientation_cmd);
 	void velocityOrientationCmdCallback(const teleop_orientation_msgs::TeleopOrientation::ConstPtr &orient_msg);
 	void controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort);
