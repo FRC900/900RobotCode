@@ -29,10 +29,10 @@ struct OrientationState
 class OrientationProfile
 {
 public:
-    explicit OrientationProfile(ros::NodeHandle &nh);
+    explicit OrientationProfile(const ros::NodeHandle &nh);
 
     // This sets at target state with profiling enabled, including generating a trajectory to follow
-    bool createProfile(const OrientationState &current_state, const double target_orientation);
+    bool createProfile(const double current_orientation, const double target_orientation);
 
     // This sets a target state with profiling disabled
     void setOrientationTarget(const OrientationState &state);
