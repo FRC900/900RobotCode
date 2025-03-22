@@ -5,17 +5,17 @@ tagslam_parameters:
 # default: slow
   optimizer_mode: fast
 # minimum angle [in degrees] between optical axis and tag surface
-  minimum_viewing_angle: 15.0
+  minimum_viewing_angle: 30.0
 # minimum tag area in pixels^2. Any tags smaller than that are ignored
-  minimum_tag_area: 300
+  minimum_tag_area: 500
 # number of incremental updates before running
 # a full graph optimization (default: 50)
-  max_num_incremental_opt: 10
+  max_num_incremental_opt: 500
 # estimated error of tag corner detector
   pixel_noise: 1.0
 # maximum allowed subgraph error. If error is above that,
 # the frame is thrown away, the measurement ignored.
-  max_subgraph_error: 50.0
+  max_subgraph_error: 20.0
 # Noise with which the subgraph absolute priors will be
 # pinned down. This parameter usually does not need to be touched.
   subgraph_abs_prior_position_noise: 0.1

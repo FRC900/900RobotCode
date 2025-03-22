@@ -5,7 +5,7 @@ tagslam_parameters:
 # default: slow
   optimizer_mode: fast
 # minimum angle [in degrees] between optical axis and tag surface
-  minimum_viewing_angle: 15.0
+  minimum_viewing_angle: 30.0
 # minimum tag area in pixels^2. Any tags smaller than that are ignored
   minimum_tag_area: 300
 # number of incremental updates before running
@@ -488,9 +488,9 @@ bodies:
     #  #odom_topic: "/frcrobot_jetson/swerve_drive_state_controller/odom"
      odom_frame_id: base_link
      # assumed odom noise in meters(!): the larger this parameter, the less you rely on odom
-     odom_translation_noise: 0.01
+     odom_translation_noise: 0.5
      # assomed odom noise in radians(!)
-     odom_rotation_noise: 0.001
+     odom_rotation_noise: 0.017
      T_body_odom:
        position:
          x:  0
