@@ -61,10 +61,10 @@ max_linear_dec: 9.0
 max_cent_acc: 4.0
 
 # Robot drivebase radius (meters)
-drive_base_radius: 0.29689 # center to corner swerve module (this is for 9000 bot)
+drive_base_radius: 0.426562
 
 # what frame to generate the path coords in
-path_frame_id: "base_link"
+path_frame_id: "map"
 
 # Load and use a map of field obstacles to avoid
 use_obstacle_cost: false
