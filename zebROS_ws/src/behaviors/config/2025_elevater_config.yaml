@@ -4,6 +4,7 @@ L1: 0.43 # doesn't work
 L2: 0.75
 L3: 1.11
 L4: 1.73 # might need to be lower
+stow: 0.25 
 
 avoid_elevator_switch: elevator_avoid_limit_switch
 outtake_switch: roller_limit_switch

@@ -68,7 +68,7 @@ public:
 	void moveDirection(int x, int y, int z, double button_move_speed);
 	void sendDirection(double button_move_speed);
 	ros::Time evaluateDriverCommands(const frc_msgs::JoystickState &joy_state, const DynamicReconfigVars& config);
-	void setTargetOrientation(const double angle, const bool from_teleop, const double velocity = 0.0);
+	void setTargetOrientation(const double angle, const bool from_teleop, const double velocity = (0.0));
 	bool getNoDriverInput();
 	bool orientCallback(teleop_joystick_control::RobotOrient::Request &req,
 						teleop_joystick_control::RobotOrient::Response & /* res*/);
@@ -87,6 +87,7 @@ private:
 	bool sendRobotZero_{false};
 	bool no_driver_input_{false};
 	double old_angular_z_{0.0};
+	bool sendSetAngle_{true};
 };
 
 extern bool diagnostics_mode;

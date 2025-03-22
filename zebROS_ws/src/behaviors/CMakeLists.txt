@@ -34,7 +34,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   talon_state_msgs
   talon_controller_msgs
-  teleop_orientation_msgs
   #teraranger_array
   tf2_ros
 )

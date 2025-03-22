@@ -8,9 +8,9 @@ project(axis_state)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  pid_velocity_msg
   roscpp
   std_msgs
-  teleop_orientation_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -105,7 +105,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES axis_state
-  CATKIN_DEPENDS teleop_orientation_msgs roscpp std_msgs
+  CATKIN_DEPENDS pid_velocity_msg roscpp std_msgs
 #  DEPENDS system_lib
 )
 

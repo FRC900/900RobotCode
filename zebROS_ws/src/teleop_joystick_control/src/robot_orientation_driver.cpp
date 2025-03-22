@@ -4,7 +4,6 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "pid_velocity_msg/PIDVelocity.h"
-#include "teleop_orientation_msgs/TeleopOrientation.h"
 
 #include "teleop_joystick_control/RobotOrientationDriver.h"
 
@@ -23,7 +22,6 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	// inversting that
 	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
 {
-	// Make sure the PID node is enabled
 	std_msgs::Bool enable_pub_msg;
 	enable_pub_msg.data = true;
 	pid_enable_pub_.publish(enable_pub_msg);
@@ -54,6 +52,9 @@ void RobotOrientationDriver::setTargetOrientation(const double angle, const bool
 	//ROS_INFO_STREAM_THROTTLE(2, "Publishing pid setpoid with value " << pid_setpoint_msg);
 	pid_setpoint_pub_.publish(pid_setpoint_msg);
 
+	//ROS_INFO_STREAM(__FUNCTION__ << "pub setpoint = " << pid_setpoint_msg.data );
+	// Make sure the PID node is enabled
+
 	// Reset the "non-teleop mode has timed-out" timer
 	if (!from_teleop)
 	{
@@ -78,10 +79,10 @@ void RobotOrientationDriver::orientationCmdCallback(const std_msgs::Float64::Con
 	setTargetOrientation(orient_msg->data, false);
 }
 
-void RobotOrientationDriver::velocityOrientationCmdCallback(const teleop_orientation_msgs::TeleopOrientation::ConstPtr &orient_msg)
+void RobotOrientationDriver::velocityOrientationCmdCallback(const pid_velocity_msg::PIDVelocity::ConstPtr &orient_msg)
 {
-	// ROS_INFO_STREAM(__FUNCTION__ << " angle = " << orient_msg->position << " drive_from_teleop = " << (int)orient_msg->drive_from_teleop << " velocity = " << orient_msg->velocity);
-	setTargetOrientation(orient_msg->position, orient_msg->drive_from_teleop, orient_msg->velocity);
+	//ROS_INFO_STREAM(__FUNCTION__ << " angle = " << orient_msg->data);
+	setTargetOrientation(orient_msg->position, false, orient_msg->velocity);
 }
 
 void RobotOrientationDriver::controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort)
