@@ -26,6 +26,7 @@ class Elevater2025ActionServer(object):
         self.L2_pos = rospy.get_param("L2")
         self.L3_pos = rospy.get_param("L3")
         self.L4_pos = rospy.get_param("L4")
+        self.stow_pos = rospy.get_param("stow")
 
         ddynrec = DDynamicReconfigure("elevater_dyn_rec")
         ddynrec.add_variable("intake_pos", "float/double variable", self.intake_pos, 0.0, 2.0)
@@ -33,6 +34,8 @@ class Elevater2025ActionServer(object):
         ddynrec.add_variable("L2_pos", "float/double variable", self.L2_pos, 0.0, 2.0)
         ddynrec.add_variable("L3_pos", "float/double variable", self.L3_pos, 0.0, 2.0)
         ddynrec.add_variable("L4_pos", "float/double variable", self.L4_pos, 0.0, 2.0)
+        ddynrec.add_variable("stow", "float/double variable", self.stow_pos, 0.0, 2.0)
+
         ddynrec.start(self.dyn_rec_callback)
 
         self.tolerance = rospy.get_param("tolerance")
@@ -54,6 +57,7 @@ class Elevater2025ActionServer(object):
         self.L2_pos = config["L2_pos"]
         self.L3_pos = config["L3_pos"]
         self.L4_pos = config["L4_pos"]
+        self.stow_pos = config["stow"]
 
         return config
 
@@ -99,6 +103,9 @@ class Elevater2025ActionServer(object):
         elif goal.mode == goal.L4:
             target_pos_str = "L4"
             target_pos = self.L4_pos
+        elif goal.mode == goal.STOW:
+            target_pos_str = "STOW"
+            target_pos = self.stow_pos
         else:
             rospy.logerr(f"2025_elevater_server: INVALID MODE {goal.mode}")
             self.result.success = False

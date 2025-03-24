@@ -111,7 +111,7 @@ class IntakingServer(object):
         self.server.set_succeeded(self.result) 
         
         # move elevater to l2 after intaking to unblock cameras and have less distance to travel
-        elevater_goal.mode = Elevater2025Goal.L2
+        elevater_goal.mode = Elevater2025Goal.STOW
         self.elevater_client.send_goal(elevater_goal)
         rospy.loginfo("Intaking server - Sent elevator goal to l2")
         return

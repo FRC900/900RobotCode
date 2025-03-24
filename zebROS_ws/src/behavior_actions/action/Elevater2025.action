@@ -3,6 +3,7 @@ uint8 L3=1
 uint8 L2=2
 uint8 L1=3
 uint8 INTAKE=4
+uint8 STOW=5
 uint8 mode
 ---
 #result
