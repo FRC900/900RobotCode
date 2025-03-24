@@ -11,22 +11,26 @@ import numpy as np
 
 import math
 
+import sys
+
 rospy.init_node("tf_finder", anonymous=True)
 
 tf_buffer = tf2_ros.Buffer()
 tf_listener = tf2_ros.TransformListener(tf_buffer)
 
-bag_path = "/home/ubuntu/900RobotCode/bagfiles/auto_testing_march24/auto_test_fourth_kevin_video_2025-03-24-18-25-54.bag"
+bag_path = sys.argv[1]
+
+print(f"\nOpening {bag_path}:\n")
 
 bag = rosbag.Bag(bag_path)
 
 path_following_running = False
+has_coral = False
 
-csv = """time,tagslam_latency_ms,distance_between_frcrobot_and_baselink,is_path_following_running\n"""
+csv = """time,tagslam_latency_ms,distance_between_frcrobot_and_baselink,is_path_following_running,has_coral\n"""
 
-for topic, msg_, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_follower/path_follower_server/result', '/path_follower/path_follower_server/goal', '/frcrobot_rio/match_data']):
+for topic, msg, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_follower/path_follower_server/result', '/path_follower/path_follower_server/goal', '/frcrobot_jetson/swerve_drive_controller/odom', '/frcrobot_rio/joint_states']):
     if topic == "/tf" or topic == "/tf_static":
-        msg: TransformStamped = msg_
         for transform in msg.transforms:
             try:
                 if topic == '/tf_static':
@@ -36,23 +40,35 @@ for topic, msg_, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_foll
             except (tf2_ros.ExtrapolationException, tf2_ros.ConnectivityException, tf2_ros.LookupException) as e:
                 rospy.logwarn(f"Error adding transform: {e}")
     
+    try:
+        tagslam_latest: TransformStamped = tf_buffer.lookup_transform("map", "frc_robot", rospy.Time(0))
+        base_link_latest: TransformStamped = tf_buffer.lookup_transform("map", "base_link", rospy.Time(0))
+        latency = base_link_latest.header.stamp.to_sec() - tagslam_latest.header.stamp.to_sec()
+        pos_difference = math.hypot(tagslam_latest.transform.translation.x - base_link_latest.transform.translation.x, tagslam_latest.transform.translation.y - base_link_latest.transform.translation.y)
+    except:
+        pass
+
     if topic == '/path_follower/path_follower_server/goal':
         print("******************************PATH FOLLOWING STARTED")
         path_following_running = True
     
     if topic == '/path_follower/path_follower_server/result':
         path_following_running = False
-        print("******************************PATH FOLLOWING STOPPED")
+        print(f"******************************PATH FOLLOWING STOPPED, DELTA POS = {pos_difference}, LATENCY = {latency}")
+    
+    if topic == '/frcrobot_rio/joint_states':
+        if "roller_limit_switch" in msg.name:
+            prev_has_coral = has_coral
+            has_coral = msg.position[msg.name.index("roller_limit_switch")]
+            if has_coral != prev_has_coral:
+                print(f"Coral state changed, now has_coral={has_coral}")
 
-    try:
-        # if path_following_running:
-        tagslam_latest: TransformStamped = tf_buffer.lookup_transform("map", "frc_robot", rospy.Time(0))
-        base_link_latest: TransformStamped = tf_buffer.lookup_transform("map", "base_link", rospy.Time(0))
-        latency = base_link_latest.header.stamp.to_sec() - tagslam_latest.header.stamp.to_sec()
-        pos_difference = math.hypot(tagslam_latest.transform.translation.x - base_link_latest.transform.translation.x, tagslam_latest.transform.translation.y - base_link_latest.transform.translation.y)
-        csv += f"{t.to_sec()},{latency*1000},{pos_difference},{path_following_running}\n"
-    except:
-        pass
+    if topic == '/frcrobot_jetson/swerve_drive_controller/odom':
+        # using as 250 Hz clock
+        try:
+            csv += f"{t.to_sec()},{latency*1000},{pos_difference},{int(path_following_running)},{int(has_coral)}\n"
+        except:
+            pass
 
 bag.close()
 
