@@ -94,6 +94,9 @@ add_library(teleop_joystick_comp_general STATIC
 target_link_libraries(teleop_joystick_comp_general
 	${catkin_LIBRARIES}
 )
+add_dependencies(teleop_joystick_comp_general
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS})
 
 add_executable(teleop_joystick_comp_2025 src/teleop_joystick_comp_2025.cpp)
 target_link_libraries(teleop_joystick_comp_2025

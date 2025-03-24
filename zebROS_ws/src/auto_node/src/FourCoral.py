@@ -13,6 +13,8 @@ from geometry_msgs.msg import Twist
 from cmd_vel_action import CmdVelAction
 import math
 
+# NOTE: current updated path is ONLY for processor
+
 class FourCoral(AutoBase):
     ELEVATOR_PERCENT_START = 0.4
     ELEVATOR_PERCENT = 0.9
