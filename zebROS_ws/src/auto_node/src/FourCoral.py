@@ -36,8 +36,7 @@ class FourCoral(AutoBase):
             ]),
             PlacingAction(),
             WaitAction(0.5),
-            drive_traj_iter.get_next_trajectory_action(final_pos_tol=1, final_rot_tol=math.pi/4),
-            CmdVelAction(tw, 1),
+            drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
             ParallelAction([
