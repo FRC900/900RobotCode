@@ -45,8 +45,8 @@
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
                 <param name="Kf" value="1.0" />
-                <param name="upper_limit" value="5.0" />
-                <param name="lower_limit" value="-5.0" />
+                <param name="upper_limit" value="3.5" />
+                <param name="lower_limit" value="-3.5" />
                 <param name="windup_limit" value="10" />
                 <param name="max_loop_frequency" value="250.0" />
                 <param name="min_loop_frequency" value="250.0" />
@@ -63,8 +63,8 @@
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
                 <param name="Kf" value="1.0" />
-                <param name="upper_limit" value="5.0" />
-                <param name="lower_limit" value="-5.0" />
+                <param name="upper_limit" value="3.5" />
+                <param name="lower_limit" value="-3.5" />
                 <param name="windup_limit" value="10" />
                 <param name="max_loop_frequency" value="250.0" />
                 <param name="min_loop_frequency" value="250.0" />
