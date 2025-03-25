@@ -190,6 +190,7 @@ class Aligner:
         path_goal.velocity_waypoints.poses.append(d)
         path_goal.velocity_waypoints.poses.append(d)
 
+        path_goal.wait_at_last_endpoint = True
         rospy.loginfo(f"Sending path goal {path_goal}")
         self.path_client.send_goal(path_goal, done_cb=done_callback, feedback_cb=feedback_callback)
 
@@ -217,6 +218,9 @@ class Aligner:
             self._result.success = True
             rospy.loginfo('%s: Succeeded' % self._action_name)
             self._as.set_succeeded(self._result)
+        else:
+            rospy.loginfo('%s: Failed' % self._action_name)
+            self._as.set_aborted(self._result)
         
 if __name__ == '__main__':
     rospy.init_node('align_to_reef_tagslam')
