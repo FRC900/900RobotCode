@@ -36,6 +36,7 @@ path_runnings = []
 has_corals = []
 
 full_optimizations = []
+dropped_tags = []
 
 csv = """time,tagslam_latency_ms,distance_between_frcrobot_and_baselink,is_path_following_running,has_coral\n"""
 
@@ -88,6 +89,8 @@ for topic, msg, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_follo
     if topic == '/rosout':
         if "running full optimization" in msg.msg:
             full_optimizations.append(t.to_sec())
+        if "drop tag with low viewing angle" in msg.msg:
+            dropped_tags.append(t.to_sec())
 
 bag.close()
 
@@ -99,9 +102,9 @@ plt.plot(times, latencies, color='green', linestyle='-', label='Latency (s)')
 plt.plot(times, path_runnings, color='red', linestyle='-', label='Path following running')
 plt.plot(times, has_corals, color='yellow', linestyle='-', label='Has coral')
 
-for xc in full_optimizations:
-    if xc == full_optimizations[0]:
-        plt.axvline(x=xc, color='purple', linestyle='-', alpha=0.5, label="Full graph optimization")
+for xc in dropped_tags:
+    if xc == dropped_tags[0]:
+        plt.axvline(x=xc, color='purple', linestyle='-', alpha=0.5, label="Dropped tags due to low viewing angle")
     else:
         plt.axvline(x=xc, color='purple', linestyle='-', alpha=0.5)
 
