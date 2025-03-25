@@ -13,6 +13,8 @@ import math
 
 import sys
 
+import matplotlib.pyplot as plt
+
 rospy.init_node("tf_finder", anonymous=True)
 
 tf_buffer = tf2_ros.Buffer()
@@ -27,9 +29,17 @@ bag = rosbag.Bag(bag_path)
 path_following_running = False
 has_coral = False
 
+times = []
+latencies = []
+pos_diffs = []
+path_runnings = []
+has_corals = []
+
+full_optimizations = []
+
 csv = """time,tagslam_latency_ms,distance_between_frcrobot_and_baselink,is_path_following_running,has_coral\n"""
 
-for topic, msg, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_follower/path_follower_server/result', '/path_follower/path_follower_server/goal', '/frcrobot_jetson/swerve_drive_controller/odom', '/frcrobot_rio/joint_states']):
+for topic, msg, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_follower/path_follower_server/result', '/path_follower/path_follower_server/goal', '/frcrobot_jetson/swerve_drive_controller/odom', '/frcrobot_rio/joint_states', '/rosout']):
     if topic == "/tf" or topic == "/tf_static":
         for transform in msg.transforms:
             try:
@@ -67,10 +77,33 @@ for topic, msg, t in bag.read_messages(topics=['/tf', '/tf_static', '/path_follo
         # using as 250 Hz clock
         try:
             csv += f"{t.to_sec()},{latency*1000},{pos_difference},{int(path_following_running)},{int(has_coral)}\n"
+            times.append(t.to_sec())
+            latencies.append(latency)
+            pos_diffs.append(pos_difference)
+            path_runnings.append(int(path_following_running))
+            has_corals.append(int(has_coral))
         except:
             pass
+
+    if topic == '/rosout':
+        if "running full optimization" in msg.msg:
+            full_optimizations.append(t.to_sec())
 
 bag.close()
 
 with open(f"{bag_path}.csv", "w") as f:
     f.write(csv)
+
+plt.plot(times, pos_diffs, color='blue', linestyle='-', label='Pos delta (m)')
+plt.plot(times, latencies, color='green', linestyle='-', label='Latency (s)')
+plt.plot(times, path_runnings, color='red', linestyle='-', label='Path following running')
+plt.plot(times, has_corals, color='yellow', linestyle='-', label='Has coral')
+
+for xc in full_optimizations:
+    if xc == full_optimizations[0]:
+        plt.axvline(x=xc, color='purple', linestyle='-', alpha=0.5, label="Full graph optimization")
+    else:
+        plt.axvline(x=xc, color='purple', linestyle='-', alpha=0.5)
+
+plt.legend()
+plt.show()
