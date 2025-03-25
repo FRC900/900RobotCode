@@ -454,13 +454,17 @@ class PathAction
 				// NOTE: this is enforcing zero velocity at the end of a path
 				// If we want to end with a nonzero velocity, need to transform vel to be odom-relative to compare with robot velocity
 				// Right now, there's a bug where pf will think it finished immediately when start == end
+				if (goal->wait_at_last_endpoint) {
+					ROS_WARN_STREAM_THROTTLE(1, "Path follower - not exiting since wait_at_last_endpoint is true");
+				}
 				if ((fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) < final_pos_tol) &&
 					(fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) < final_pos_tol) &&
 					(fabs(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state)) < final_rot_tol) &&
 					(fabs(latest_odom_.twist.twist.linear.x) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.linear.y) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.angular.z) < final_angvel_tol) &&
-					(current_index >= (goal->position_path.poses.size() - 2)))
+					(current_index >= (goal->position_path.poses.size() - 2)) &&
+					(!goal->wait_at_last_endpoint))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
 					ROS_INFO_STREAM("    endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << map_to_baselink_.transform.translation.x);

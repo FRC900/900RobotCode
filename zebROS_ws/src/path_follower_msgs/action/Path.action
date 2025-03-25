@@ -12,6 +12,7 @@ float64 final_rot_tol
 float64 final_angvel_tol
 
 bool dont_go_to_start
+bool wait_at_last_endpoint # if true, will wait (and keep correcting error) at last endpoint until timeout
 ---
 bool timed_out
 bool success
