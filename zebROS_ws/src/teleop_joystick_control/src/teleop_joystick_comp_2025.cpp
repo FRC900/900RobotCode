@@ -597,9 +597,9 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 		}
 		ROS_INFO_STREAM("teleop_joystick_comp_2025 : zeroing IMU to " << imu_cmd.request.angle);
 		IMUZeroSrv.call(imu_cmd);
-		ROS_INFO_STREAM("teleop_joystick_comp_2025 : zeroing swerve odom");
-		std_srvs::Empty odom_cmd;
-		SwerveOdomZeroSrv.call(odom_cmd);
+		// ROS_INFO_STREAM("teleop_joystick_comp_2025 : zeroing swerve odom");
+		// std_srvs::Empty odom_cmd;
+		// SwerveOdomZeroSrv.call(odom_cmd);
 	}
 	if(button_box->zeroRelease) {
 	}

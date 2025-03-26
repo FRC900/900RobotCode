@@ -63,4 +63,5 @@
     <node pkg="tf2_ros" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link" />
     <!-- Stage odom is based at map origin, so create an identity transform here so map and odom are part of the same tree -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="static_maptoodom" args="0 0 0 0 0 0 map odom" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_baselinktofrcrobot" args="0 0 0 0 0 0 base_link frc_robot" />
 </launch>

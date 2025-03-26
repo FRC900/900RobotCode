@@ -29,7 +29,7 @@ class DriveTrajectoryActionIterator():
         self.__current_path = path_array
 
 
-    def get_next_trajectory_action(self, dont_go_to_start: bool = False, final_pos_tol: float = None, final_rot_tol: float = None) -> DriveTrajectoryAction:
+    def get_next_trajectory_action(self, dont_go_to_start: bool = False, enforce_actually_localized: bool = False, final_pos_tol: float = None, final_rot_tol: float = None) -> DriveTrajectoryAction:
         curr_iterator = self.__trajectory_index_iterator
         self.__trajectory_index_iterator = self.__trajectory_index_iterator + 1
 
@@ -37,7 +37,7 @@ class DriveTrajectoryActionIterator():
         #     rospy.logerr(f"Index out of range for trajectory {curr_iterator} in auto {self.__autonomous_name}")
         #     return None
         
-        return DriveTrajectoryAction(self.__autonomous_name, curr_iterator, self.__expected_trajectory_count, dont_go_to_start, final_pos_tol, final_rot_tol)
+        return DriveTrajectoryAction(self.__autonomous_name, curr_iterator, self.__expected_trajectory_count, dont_go_to_start=dont_go_to_start, enforce_actually_localized=enforce_actually_localized, final_pos_tol=final_pos_tol, final_rot_tol=final_rot_tol)
     
     def reset_iterator(self):
         self.__trajectory_index_iterator = 0

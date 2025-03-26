@@ -190,7 +190,7 @@ class Aligner:
         path_goal.velocity_waypoints.poses.append(d)
         path_goal.velocity_waypoints.poses.append(d)
 
-        path_goal.wait_at_last_endpoint = True
+        path_goal.enforce_actually_localized = True
         rospy.loginfo(f"Sending path goal {path_goal}")
         self.path_client.send_goal(path_goal, done_cb=done_callback, feedback_cb=feedback_callback)
 

@@ -13,6 +13,7 @@ path_follower:
     dynamic_reconfigure: True
     final_pos_tol: 0.0254 # was 8cm
     final_rot_tol: 0.034 # was 0.2 ~1deg = 0.017
+    max_baselink_to_tagslam_difference: 0.05 # seemed to be an okay value when looking at bags
     ros_rate: 250
     server_timeout: 15
     time_offset: 0.0

@@ -31,7 +31,7 @@ class FourCoral(AutoBase):
         
         return SeriesAction([
             ParallelAction([
-                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
+                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT_START),
                               PlacingAction(True)
                               ])
@@ -42,7 +42,7 @@ class FourCoral(AutoBase):
             WaitForIntakeAction(),
 
             ParallelAction([
-                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True),
+                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
@@ -53,7 +53,7 @@ class FourCoral(AutoBase):
             WaitForIntakeAction(),
 
             ParallelAction([
-                drive_traj_iter.get_next_trajectory_action(),
+                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])
@@ -64,7 +64,7 @@ class FourCoral(AutoBase):
             WaitForIntakeAction(),
 
             ParallelAction([
-                drive_traj_iter.get_next_trajectory_action(),
+                drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
                               PlacingAction(True)
                               ])

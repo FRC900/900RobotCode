@@ -13,6 +13,7 @@ float64 final_angvel_tol
 
 bool dont_go_to_start
 bool wait_at_last_endpoint # if true, will wait (and keep correcting error) at last endpoint until timeout
+bool enforce_actually_localized # if true, will wait for difference between frc_robot (tagslam frame) and base_link to be less than some param-configurable value
 ---
 bool timed_out
 bool success
@@ -24,3 +25,4 @@ int32 current_waypoint
 float64 x_error
 float64 y_error
 float64 angle_error
+float64 baselink_vs_tagslam_difference
