@@ -2,6 +2,7 @@
 
 from cgitb import enable
 import os
+from sys import exit
 import argparse
 import rospy
 import rospkg
@@ -353,6 +354,7 @@ class DriverStationSim(Plugin):
                 r.sleep()
 
             match_pub.unregister()
+            sys.exit(0)
 
         self._load_thread = threading.Thread(target=pub_data, args=(self,))
         self._load_thread.start()
