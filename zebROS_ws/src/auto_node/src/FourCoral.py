@@ -19,7 +19,8 @@ class FourCoral(AutoBase):
     ELEVATOR_PERCENT_START = 0.4
     ELEVATOR_PERCENT = 0.9
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, do_push: bool = False) -> None:
+        self.__do_push = do_push
         super().__init__(display_name=name, # must match choreo path name
                          expected_trajectory_count=7) # how many segments of the path there are (split at waypoints)
 
@@ -29,7 +30,7 @@ class FourCoral(AutoBase):
         tw.linear.x = -1     
         tw.linear.y = 0  
         
-        return SeriesAction([
+        actions = [
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT_START),
@@ -70,11 +71,22 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-        ])
+        ]
+
+        if self.__do_push:
+            tw = Twist()
+            tw.linear.y = -0.5
+            actions = [CmdVelAction(twist=tw, time=0.5)] + actions
+        
+        return SeriesAction(actions)
     
 class FourCoralProcessor(FourCoral):
     def __init__(self):
         super().__init__(name="2025_4_Coral_Processor_Side")
+
+class PushFourCoralProcessor(FourCoral):
+    def __init__(self):
+        super().__init__(name="2025_Push_4_Coral_Processor_Side", do_push=True)
 
 class FourCoralNonProcessor(FourCoral):
     def __init__(self):
