@@ -37,7 +37,7 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-            WaitAction(0.5),
+            WaitAction(0.1),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
@@ -48,7 +48,7 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-            WaitAction(0.5),
+            WaitAction(0.1),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
@@ -59,7 +59,7 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-            WaitAction(0.5),
+            WaitAction(0.1),
             drive_traj_iter.get_next_trajectory_action(),
             WaitForIntakeAction(),
 
