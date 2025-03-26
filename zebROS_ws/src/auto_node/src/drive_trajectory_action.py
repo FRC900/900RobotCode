@@ -12,7 +12,7 @@ import actionlib
 class DriveTrajectoryAction(Action):
     """An action that drives a trajectory and waits for completion before ending"""
     #TODO: Make these possibly class variables
-    def __init__(self, autonomous_name : str, trajectory_index : int, expected_trajectory_count : int, dont_go_to_start: bool = False, final_pos_tol: float = None, final_rot_tol: float = None):
+    def __init__(self, autonomous_name : str, trajectory_index : int, expected_trajectory_count : int, dont_go_to_start: bool = False, enforce_actually_localized: bool = False, final_pos_tol: float = None, final_rot_tol: float = None):
         self.__first_point_pub = rospy.Publisher("/auto/first_point", PoseStamped, queue_size=1, tcp_nodelay=True, latch=True)
         self.__path_follower_client = actionlib.SimpleActionClient("/path_follower/path_follower_server", PathAction)
         if not self.__path_follower_client.wait_for_server(rospy.Duration(5)):
@@ -26,6 +26,7 @@ class DriveTrajectoryAction(Action):
         self.__path_sub = rospy.Subscriber("/auto/current_auto_path", PathGoalArray, self.path_sub, tcp_nodelay=True)
         self.__finished = False
         self.__dont_go_to_start = dont_go_to_start
+        self.__enforce_actually_localized = enforce_actually_localized
         self.__final_pos_tol = final_pos_tol
         self.__final_rot_tol = final_rot_tol
 
@@ -77,6 +78,10 @@ class DriveTrajectoryAction(Action):
         if self.__dont_go_to_start:
             rospy.logwarn("Not going to start!")
             path_follower_goal.dont_go_to_start = self.__dont_go_to_start
+        
+        if self.__enforce_actually_localized:
+            rospy.logwarn("(happy) Enforcing that TagSLAM frame and robot frame are on top of each other at the end of a path!")
+            path_follower_goal.enforce_actually_localized = self.__enforce_actually_localized
         
         if self.__final_pos_tol != None:
             rospy.logwarn(f"Using non-default positional tolerance of {self.__final_pos_tol}")

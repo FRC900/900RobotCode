@@ -142,7 +142,7 @@ void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg) {
   robot_enabled = robot_enabled || (msg->Enabled);
 }
 
-bool tagslam_zeroing_enabled = true;
+bool tagslam_zeroing_enabled = false;
 
 void tagslamCallback(const nav_msgs::Odometry::ConstPtr& msg) {
   // TODO: do we want to confirm multiple tag detections were used to create this estimate?

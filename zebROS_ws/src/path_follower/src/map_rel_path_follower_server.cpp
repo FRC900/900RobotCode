@@ -26,6 +26,7 @@ class PathAction
 		actionlib::SimpleActionServer<path_follower_msgs::PathAction> as_;
 		std::string action_name_;
 		geometry_msgs::TransformStamped map_to_baselink_;
+		geometry_msgs::TransformStamped map_to_tagslam_;
 		//ros::Subscriber pose_sub_;
 		//geometry_msgs::PoseStamped pose_;
 		ros::Subscriber yaw_sub_;
@@ -47,6 +48,7 @@ class PathAction
 		double final_vel_tol_;
 		double final_rot_tol_;
 		double final_angvel_tol_;
+		double max_baselink_to_tagslam_difference_;
 		double server_timeout_;
 
 		bool debug_;
@@ -68,6 +70,7 @@ class PathAction
 				   double final_vel_tol,
 				   double final_rot_tol,
 				   double final_angvel_tol,
+				   double max_baselink_to_tagslam_difference,
 				   double server_timeout,
 				   double ros_rate,
 				   double time_offset,
@@ -86,6 +89,7 @@ class PathAction
 			, final_vel_tol_(final_vel_tol)
 			, final_rot_tol_(final_rot_tol)
 			, final_angvel_tol_(final_angvel_tol)
+			, max_baselink_to_tagslam_difference_(max_baselink_to_tagslam_difference)
 			, server_timeout_(server_timeout)
 			, debug_(debug)
 			, ros_rate_(ros_rate)
@@ -163,6 +167,7 @@ class PathAction
 				// This is correct, although counterintuitive and we don't know why
 				// Because it feels like it should be the opposite, but breaks when we do what is "correct".
 				map_to_baselink_ = tf_buffer_.lookupTransform(map_frame_, "base_link", ros::Time(0));
+				map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
 			}
 			catch (tf2::TransformException &ex) {
 				ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
@@ -248,6 +253,7 @@ class PathAction
 					// This is correct, although counterintuitive and we don't know why
 					// Because it feels like it should be the opposite, but breaks when we do what is "correct".
 					map_to_baselink_ = tf_buffer_.lookupTransform(map_frame_, "base_link", ros::Time(0));
+					map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
 				}
 				catch (tf2::TransformException &ex) {
 					ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
@@ -366,6 +372,7 @@ class PathAction
 					// This is correct, although counterintuitive and we don't know why
 					// Because it feels like it should be the opposite, but breaks when we do what is "correct".
 					map_to_baselink_ = tf_buffer_.lookupTransform(map_frame_, "base_link", ros::Time(0));
+					map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
 				}
 				catch (tf2::TransformException &ex) {
 					ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
@@ -403,6 +410,8 @@ class PathAction
 				feedback.x_error = std::fabs(map_to_baselink_.transform.translation.x - next_waypoint.position.position.x);
 				feedback.y_error = std::fabs(map_to_baselink_.transform.translation.y - next_waypoint.position.position.y);
 				feedback.angle_error = std::fabs(angles::shortest_angular_distance(path_follower_.getYaw(map_to_baselink_.transform.rotation), path_follower_.getYaw(next_waypoint.position.orientation)));
+				feedback.baselink_vs_tagslam_difference = std::fabs(std::hypot((map_to_baselink_.transform.translation.x - map_to_tagslam_.transform.translation.x),
+																	           (map_to_baselink_.transform.translation.y - map_to_tagslam_.transform.translation.y)));
 
 				as_.publishFeedback(feedback);
 #ifdef DEBUG
@@ -464,7 +473,8 @@ class PathAction
 					(fabs(latest_odom_.twist.twist.linear.y) < final_vel_tol) &&
 					(fabs(latest_odom_.twist.twist.angular.z) < final_angvel_tol) &&
 					(current_index >= (goal->position_path.poses.size() - 2)) &&
-					(!goal->wait_at_last_endpoint))
+					(!goal->wait_at_last_endpoint) &&
+					((feedback.baselink_vs_tagslam_difference < max_baselink_to_tagslam_difference_) || (!(goal->enforce_actually_localized))))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
 					ROS_INFO_STREAM("    endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << map_to_baselink_.transform.translation.x);
@@ -622,6 +632,7 @@ int main(int argc, char **argv)
 	double final_vel_tol = 0.1;
 	double final_rot_tol = 0.01;
 	double final_angvel_tol = 0.1;
+	double max_baselink_to_tagslam_difference = 0.05;
 	double server_timeout = 15.0;
 	double ros_rate = 20;
 	double time_offset = 0;
@@ -633,6 +644,7 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/final_vel_tol", final_vel_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
 	nh.getParam("/path_follower/path_follower/final_angvel_tol", final_angvel_tol);
+	nh.getParam("/path_follower/path_follower/max_baselink_to_tagslam_difference", max_baselink_to_tagslam_difference);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
@@ -645,6 +657,7 @@ int main(int argc, char **argv)
 								  final_vel_tol,
 								  final_rot_tol,
 								  final_angvel_tol,
+								  max_baselink_to_tagslam_difference,
 								  server_timeout,
 								  ros_rate,
 								  time_offset,
