@@ -72,7 +72,7 @@
   <depend>actionlib_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>path_follower_msgs</depend>
-  <depend>teleop_orientation_msgs</depend>
+  <depend>pid_velocity_msg</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

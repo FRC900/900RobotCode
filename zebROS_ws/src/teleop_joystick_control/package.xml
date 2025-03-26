@@ -32,7 +32,6 @@
   <depend>talon_state_msgs</depend>
   <depend>talon_swerve_drive_controller_msgs</depend>
   <depend>pid_velocity_msg</depend>
-  <depend>teleop_orientation_msgs</depend>
   
   <export>
   </export>

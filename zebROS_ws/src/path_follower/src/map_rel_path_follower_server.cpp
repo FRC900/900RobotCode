@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include "tf2_ros/transform_listener.h"
-#include "teleop_orientation_msgs/TeleopOrientation.h"
+#include "pid_velocity_msg/PIDVelocity.h"
 #include <angles/angles.h>
 #include <std_srvs/SetBool.h>
 #include <nav_msgs/Odometry.h>
@@ -80,7 +80,7 @@ class PathAction
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
 			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this, ros::TransportHints().tcpNoDelay()))
-			, orientation_command_pub_(nh_.advertise<teleop_orientation_msgs::TeleopOrientation>("/teleop/velocity_orientation_command", 1))
+			, orientation_command_pub_(nh_.advertise<pid_velocity_msg::PIDVelocity>("/teleop/velocity_orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
 			, odom_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/odom", 1, &PathAction::odomCallback, this))
@@ -225,8 +225,7 @@ class PathAction
 			size_t current_index = 0;
 
 			std_msgs::Bool enable_msg;
-			teleop_orientation_msgs::TeleopOrientation command_msg; 
-			command_msg.drive_from_teleop = false;
+			pid_velocity_msg::PIDVelocity command_msg; 
 			auto x_axis_it = axis_states_.find("x");
 			auto &x_axis = x_axis_it->second;
 			auto y_axis_it = axis_states_.find("y");
