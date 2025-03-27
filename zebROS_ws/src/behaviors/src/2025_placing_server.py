@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 
 class PlacingServer(object):
     DRIVE_BACK_SPEED = 0.5
-    DRIVE_BACK_TIME = 0.25
+    DRIVE_BACK_TIME = 0.5
 
     def __init__(self, name):
         self.__action_name = name
@@ -102,15 +102,6 @@ class PlacingServer(object):
         self.result.success = True
         rospy.loginfo("placing_server_2025: succeeded")
         self.server.set_succeeded(self.result)
-
-        if not goal.dont_drive_back:
-            rospy.loginfo("placing_server_2025: driving back")
-            twist = Twist()
-            twist.linear.x = -abs(self.DRIVE_BACK_SPEED)
-            start = rospy.Time.now()
-            while (rospy.Time.now() - start) < rospy.Duration(self.DRIVE_BACK_TIME) and not rospy.is_shutdown():
-                self.cmd_vel_pub.publish(twist)
-            self.cmd_vel_pub.publish(Twist()) # send zero when done
         
         # Lower elevator
         self.elevater_client.send_goal(Elevater2025Goal(mode=Elevater2025Goal.INTAKE), done_cb=elevater_done_cb)
@@ -118,6 +109,21 @@ class PlacingServer(object):
         elevator_done = False
         elevator_success = False
         rospy.loginfo('Elevater lowering action sent')
+
+        if not goal.dont_drive_back:
+            rospy.loginfo("placing_server_2025: driving back")
+            twist = Twist()
+            twist.linear.x = -abs(self.DRIVE_BACK_SPEED)
+            start = rospy.Time.now()
+            while (rospy.Time.now() - start) < rospy.Duration(self.DRIVE_BACK_TIME) and not rospy.is_shutdown():
+                if self.server.is_preempt_requested():
+                    self.elevater_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                    self.cmd_vel_pub.publish(Twist()) # send zero when done
+                    self.server.set_preempted()
+                    return
+                self.cmd_vel_pub.publish(twist)
+                r.sleep()
+            self.cmd_vel_pub.publish(Twist()) # send zero when done
 
         while not elevator_done and not rospy.is_shutdown():
             if self.server.is_preempt_requested():
