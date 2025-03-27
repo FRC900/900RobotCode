@@ -6,8 +6,12 @@ import actionlib
 from behavior_actions.msg import Placing2025Goal, Placing2025Feedback, Placing2025Result, Placing2025Action
 from behavior_actions.msg import Elevater2025Goal, Elevater2025Feedback, Elevater2025Result, Elevater2025Action
 from behavior_actions.msg import Roller2025Goal, Roller2025Feedback, Roller2025Result, Roller2025Action
+from geometry_msgs.msg import Twist
 
 class PlacingServer(object):
+    DRIVE_BACK_SPEED = 0.5
+    DRIVE_BACK_TIME = 0.5
+
     def __init__(self, name):
         self.__action_name = name
         self.result = Placing2025Result()
@@ -19,6 +23,7 @@ class PlacingServer(object):
         rospy.loginfo('Waiting for Roller action server')
         self.roller_client.wait_for_server()
         rospy.loginfo('Found Elevater and Roller server')
+        self.cmd_vel_pub = rospy.Publisher("/placing/cmd_vel", Twist, tcp_nodelay=True, queue_size=1)
         self.server = actionlib.SimpleActionServer(name, Placing2025Action, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
 
@@ -97,6 +102,15 @@ class PlacingServer(object):
         self.result.success = True
         rospy.loginfo("placing_server_2025: succeeded")
         self.server.set_succeeded(self.result)
+
+        if not goal.dont_drive_back:
+            rospy.loginfo("placing_server_2025: driving back")
+            twist = Twist()
+            twist.linear.x = -abs(self.DRIVE_BACK_SPEED)
+            start = rospy.Time.now()
+            while (rospy.Time.now() - start) < rospy.Duration(self.DRIVE_BACK_TIME) and not rospy.is_shutdown():
+                self.cmd_vel_pub.publish(twist)
+            self.cmd_vel_pub.publish(Twist()) # send zero when done
         
         # Lower elevator
         self.elevater_client.send_goal(Elevater2025Goal(mode=Elevater2025Goal.INTAKE), done_cb=elevater_done_cb)

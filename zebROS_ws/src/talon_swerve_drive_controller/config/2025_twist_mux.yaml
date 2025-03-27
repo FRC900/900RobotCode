@@ -34,5 +34,10 @@ topics:
   topic   : /hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
+-
+  name    : placing
+  topic   : /placing/cmd_vel
+  timeout : 0.2
+  priority: 129
 
 locks: []

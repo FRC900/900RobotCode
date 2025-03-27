@@ -30,6 +30,7 @@ class PlacingAction(Action):
         placing_goal: Placing2025Goal = Placing2025Goal()
         placing_goal.level = placing_goal.L4 #level 4 coral placing
         placing_goal.setup_only = self.__SetupBool
+        placing_goal.dont_drive_back = True
         
         self.__placing_client.send_goal(placing_goal, done_cb=self.done_cb)
 
