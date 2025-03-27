@@ -84,6 +84,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	tagslam_viz \
 	tagslam_test \
 	tagslam_launch \
+	teleop_joystick_control \
 	template_controller \
 	teraranger_array \
 	teraranger_array_converter \
