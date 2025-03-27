@@ -74,8 +74,10 @@ class FourCoral(AutoBase):
         ]
 
         if self.__do_push:
+            # NOTE THIS ONLY WORKS FOR NON PROCESSOR SIDE (our barge, which is the only place where we want to push an opponent anyway)
+            # For processor side/opposite barge, y should be -0.5
             tw = Twist()
-            tw.linear.y = -0.5
+            tw.linear.y = 0.5
             actions = [CmdVelAction(twist=tw, time=0.5)] + actions
         
         return SeriesAction(actions)
@@ -84,9 +86,9 @@ class FourCoralProcessor(FourCoral):
     def __init__(self):
         super().__init__(name="2025_4_Coral_Processor_Side")
 
-class PushFourCoralProcessor(FourCoral):
+class PushFourCoral(FourCoral):
     def __init__(self):
-        super().__init__(name="2025_Push_4_Coral_Processor_Side", do_push=True)
+        super().__init__(name="2025_Push_4_Coral", do_push=True)
 
 class FourCoralNonProcessor(FourCoral):
     def __init__(self):

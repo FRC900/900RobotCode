@@ -19,6 +19,7 @@ from behavior_actions.msg import AutoMode
 
 ORANGE = (255, 165, 0)
 GREEN = (0, 255, 0)
+PURPLE = (255, 0, 255)
 status_array = [ORANGE] * 43
 
 DOT9V0 = 0
@@ -69,6 +70,9 @@ def twist_callback(msg: TwistStamped):
 def auto_mode_callback(msg: AutoMode):
     if msg.auto_mode == 1 or msg.auto_mode == 2:
         status_array[CORRECT_AUTO] = GREEN
+    if msg.auto_mode == 3:
+        # push
+        status_array[CORRECT_AUTO] = PURPLE
 
 def imu_callback(imu: Imu):
     global imu_orientation
