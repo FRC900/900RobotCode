@@ -9,8 +9,8 @@ from behavior_actions.msg import Roller2025Goal, Roller2025Feedback, Roller2025R
 from geometry_msgs.msg import Twist
 
 class PlacingServer(object):
-    DRIVE_BACK_SPEED = 0.5
-    DRIVE_BACK_TIME = 0.5
+    DRIVE_BACK_SPEED = 1
+    DRIVE_BACK_TIME = 1
 
     def __init__(self, name):
         self.__action_name = name

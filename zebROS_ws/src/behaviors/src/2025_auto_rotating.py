@@ -155,7 +155,8 @@ if __name__ == "__main__":
                 intaking_client.send_goal(intake_goal)
             elif closest_coral_dist >= 2.0:
                 if intake_running:
-                    intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
+                    pass
+                    #intaking_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 intake_running = False
         #rospy.loginfo(f"{tag_x, tag_y}")
         dist_sq = min(closest_coral[0], closest_reef[0])
