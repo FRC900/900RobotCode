@@ -815,7 +815,7 @@ int main(int argc, char **argv)
 	intaking_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Intaking2025Action>>("/intaking/intaking_server_2025", true);
 	placing_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Placing2025Action>>("/placing/placing_server_2025", true);
 	roller_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>>("/roller/roller_server_2025", true);
-	pulse_outtake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::PulseOuttake2025Action>>("/pulse_outtake/intaking_server_2025", true);
+	pulse_outtake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::PulseOuttake2025Action>>("/pulse_outtake/pulse_server_2025", true);
 
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
