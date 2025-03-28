@@ -1,8 +1,8 @@
 #ifndef STAGE2_KEYPOINT_TRUST_INC__
 #define STAGE2_KEYPOINT_TRUST_INC__
 #include <cuda_runtime.h>
-#include "stage2_keypoint.h"
-#include "span.hpp"
+#include "deeptag_ros/stage2_keypoint.h"
+#include "deeptag_ros/span.hpp"
 
 // Given a list of keypoints, check that enough of them
 // have a high enough confidence that we trust that the group
