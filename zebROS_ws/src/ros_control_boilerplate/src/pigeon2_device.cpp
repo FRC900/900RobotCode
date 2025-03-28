@@ -121,7 +121,7 @@ void Pigeon2Device::simInit(ros::NodeHandle nh, size_t joint_index)
         // Create a subscriber to sim inputs
         std::stringstream s;
         s << "imu_" << joint_index << "_in";
-        sim_sub_ = nh.subscribe<nav_msgs::Odometry>(s.str(), 1, &Pigeon2Device::imuOdomCallback, this);
+        sim_sub_ = nh.subscribe<nav_msgs::Odometry>(s.str(), 1, &Pigeon2Device::imuOdomCallback, this, ros::TransportHints().tcpNoDelay());
         pigeon2_->GetSimState().SetSupplyVoltage(units::volt_t{12.5});
     }
 }

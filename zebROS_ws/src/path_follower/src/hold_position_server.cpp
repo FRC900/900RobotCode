@@ -63,8 +63,8 @@ class HoldPosition
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&HoldPosition::executeCB, this, _1), false)
 			, action_name_(name)
-			, odom_sub_(nh_.subscribe(odom_topic, 1, &HoldPosition::odomCallback, this))
-			, pose_sub_(nh_.subscribe(pose_topic, 1, &HoldPosition::poseCallback, this))
+			, odom_sub_(nh_.subscribe(odom_topic, 1, &HoldPosition::odomCallback, this, ros::TransportHints().tcpNoDelay()))
+			, pose_sub_(nh_.subscribe(pose_topic, 1, &HoldPosition::poseCallback, this, ros::TransportHints().tcpNoDelay()))
 			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("hold_position_pid/pid_enable", 1, true))
 			, server_timeout_(server_timeout)
@@ -77,7 +77,7 @@ class HoldPosition
 		{
 			if (!use_odom_orientation_)
 			{
-				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &HoldPosition::yawCallback, this);
+				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &HoldPosition::yawCallback, this, ros::TransportHints().tcpNoDelay());
 			}
 
 			std_msgs::Bool bool_msg;

@@ -1,6 +1,7 @@
 // Class to hold current alignment state of a particular axis
 // Holds various pub and sub topics to use as well as error and timeout status
-#pragma once
+#ifndef ALIGN_ACTION_AXIS_STATE_H__
+#define ALIGN_ACTION_AXIS_STATE_H__
 
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
@@ -17,7 +18,7 @@ class AlignActionAxisState
 				const double timeout,
 				const double error_threshold)
 			: enable_pub_(nh.advertise<std_msgs::Bool>(enable_pub_topic, 1, true))
-			, error_sub_(nh.subscribe(error_sub_topic, 1, error_sub_cb))
+			, error_sub_(nh.subscribe(error_sub_topic, 1, error_sub_cb, ros::TransportHints().tcpNoDelay()))
 			, aligned_(false)
 			, error_(0.0)
 			, timeout_(timeout)
@@ -34,3 +35,4 @@ class AlignActionAxisState
 		bool timed_out_;
 };
 
+#endif

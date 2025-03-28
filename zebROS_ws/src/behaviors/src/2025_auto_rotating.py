@@ -88,7 +88,7 @@ if __name__ == "__main__":
     switch_name = rospy.get_param("switch_name")
     too_close_zone = rospy.get_param("too_close_zone")
 
-    game_piece_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, game_piece_callback)
+    game_piece_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, game_piece_callback, tcp_nodelay=True)
     team_color_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, team_color_callback)
     intaking_client = actionlib.SimpleActionClient("/intaking/intaking_server_2025", Intaking2025Action)
     rospy.loginfo("waiting for intaking server")
