@@ -50,7 +50,7 @@ BLINK_STATE = True
 
 # ------------------
 TAGSLAM_TIMEOUT = 10.0 # seconds
-IMU_ZERO_ANGLE_THRESHOLD = 0.051 # radians, approx. 3 degrees
+IMU_ZERO_ANGLE_THRESHOLD = 0.1 # radians, approx. 5 degrees
 
 MAP_TO_BASE_LINK_TIMEOUT = 0.5 # seconds
 AUTO_ANGLE_THRESHOLD = 0.17 # radians, approx. 10 degrees
