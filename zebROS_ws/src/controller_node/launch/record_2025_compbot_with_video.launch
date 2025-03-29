@@ -250,7 +250,6 @@
 /teleop/velocity_orientation_command
 /tf
 /tf_static
-/apriltag_detection_ov2311_10_9_0_9_video0/debug_image/compressed
-/apriltag_detection_ov2311_10_9_0_10_video0/debug_image/compressed
+/ov2311_10_9_0_9_video0/image_raw
 "/>
 </launch>

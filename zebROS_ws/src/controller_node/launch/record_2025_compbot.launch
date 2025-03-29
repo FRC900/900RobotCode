@@ -233,7 +233,6 @@
 /roller/roller_server_2025/result
 /roller/roller_server_2025/status
 /rosout
-/rosout_agg
 /tagslam/odom/body_frc_robot
 /teleop/orient_strafing/control_effort
 /teleop/orient_strafing/orient_strafing_pid/parameter_descriptions
