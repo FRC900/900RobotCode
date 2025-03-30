@@ -41,14 +41,14 @@
 	</include>
 
     <!-- Jetson .10 Nodes -->
-	<group if="$(eval hw_or_sim=='hw')">
+	<!-- <group if="$(eval hw_or_sim=='hw')">
 		<machine name="jetson_10" address="10.9.0.10" env-loader="/home/ubuntu/900RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
 	</group>
     <include file="$(find controller_node)/launch/2025_compbot_vision.launch"> 
 		<arg name="run_camera" value="$(eval arg('hw_or_sim') == 'hw')" />
 		<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 		<arg name="ip_underscore" value="10_9_0_10"/>
-	</include>
+	</include> -->
 
 	<!-- StageSim related code 
 		TODO : make this an additional option on top of hw_or_sim?
