@@ -116,6 +116,7 @@ class CharucoCalibrator:
         self.board = cv.aruco.CharucoBoard(
             self.chessboard_size, self.square_mm, self.marker_mm, aruco_dict
         )
+        self.board.setLegacyPattern(True)
 
         # Create detector
         detector = cv.aruco.CharucoDetector(self.board)
