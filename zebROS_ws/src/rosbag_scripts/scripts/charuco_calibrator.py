@@ -36,8 +36,8 @@ class CharucoCalibrator:
         frame_size_w=4608,
         f_in_mm=None,
         pixel_size_mm=None,
-        square_mm=20,
-        marker_mm=15,
+        square_mm=120,
+        marker_mm=90,
         aruco_dict=cv.aruco.DICT_4X4_250,
         debug=False,
     ):
@@ -128,6 +128,7 @@ class CharucoCalibrator:
         for img_path in image_paths:
             img = cv.imread(img_path)
             gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            cv.imshow("Original", img)
 
             # Check frame size
             if gray.shape != (self.frame_size_h, self.frame_size_w):
@@ -187,9 +188,10 @@ if __name__ == "__main__":
 
     images_path = "*.jpg"
     image_files = glob.glob(images_path)
+    #print(image_files)
     # image_files = ['frame0009.jpg']
 
-    chessboard_size = (8, 8)
+    chessboard_size = (5,4)
     frame_size_h = 1300
     frame_size_w = 1600
 
@@ -209,14 +211,14 @@ if __name__ == "__main__":
     # log_message("Starting image processing for calibration...", "INFO")
     objpoints, imgpoints = calibrator.process_images(image_files)
 
-    if objpoints and imgpoints:
-        log_message("Calibrating the camera...", "INFO")
-        ret, camera_matrix, dist, rvecs, tvecs = calibrator.calibrate_camera(
-            objpoints, imgpoints
-        )
-        log_message(f"🎥 Camera Calibration RMS Error: {ret:.4f}", "SUCCESS")
-        calibrator.print_pretty_matrix("Camera Matrix", camera_matrix)
-        calibrator.print_pretty_matrix("Distortion Coefficients", dist)
-    else:
-        log_message("No valid Charuco corners found in any images.", "ERROR")
+    # if objpoints and imgpoints:
+    #     log_message("Calibrating the camera...", "INFO")
+    #     ret, camera_matrix, dist, rvecs, tvecs = calibrator.calibrate_camera(
+    #         objpoints, imgpoints
+    #     )
+    #     log_message(f"🎥 Camera Calibration RMS Error: {ret:.4f}", "SUCCESS")
+    #     calibrator.print_pretty_matrix("Camera Matrix", camera_matrix)
+    #     calibrator.print_pretty_matrix("Distortion Coefficients", dist)
+    # else:
+    #     log_message("No valid Charuco corners found in any images.", "ERROR")
 

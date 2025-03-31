@@ -32,10 +32,11 @@ mrgingham -j 32 --gridn 9 '*.jpg' > corners.vnl
 # fov_x_deg is the horizontal field of view of the camera, this is a guess which can be refined later
 mrcal-calibrate-cameras                                                         \
   --corners-cache corners.vnl                                                   \
-  --lensmodel LENSMODEL_SPLINED_STEREOGRAPHIC_order=3_Nx=30_Ny=25_fov_x_deg=80  \
+  --lensmodel LENSMODEL_OPENCV5  \
   --focal 1000                                                                  \
-  --object-spacing 0.01                                                         \
-  --object-width-n 9                                                            \
+  --object-spacing 0.12                                                         \
+  --object-width-n 4                                                            \
+  --object-height-n 3                                                            \
   '*.jpg'
 
 # Check error
