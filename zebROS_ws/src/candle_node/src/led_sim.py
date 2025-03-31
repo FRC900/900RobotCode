@@ -9,6 +9,8 @@
 import rospy
 import numpy as np
 import cv2 as cv
+from candle_controller_msgs.srv import Animation, ColourRequest
+from talon_state_msgs.msg import CANdleStateArray
 
 #May not need to include this
 
@@ -30,92 +32,54 @@ class State:
     def stop(self):
         self.currently_running = False
 
+class LEDSim():
+    def __init__(self):
+        self.img = cv.imread("/home/ubuntu/900RobotCode/zebROS_ws/src/candle_node/assets/2025_LED_Mappings_white_bg.png")
+        self.img = cv.resize(self.img, (0, 0), fx=0.5, fy=0.5)
+        cv.namedWindow('LED')
 
-def nothing(x):
-    pass
+        self.led_state_sub = rospy.Subscriber("/frcrobot_jetson/candle_states", CANdleStateArray, self.led_state_callback)
 
-#Specify this to draw rectangles later
-img = np.zeros((600,600,3), np.uint8)
-cv.namedWindow('LED')
+        # rospy.Subscriber('ctre_interfaces/candle_state_interface.h', ColourRequest, Animation)
 
-cv.createTrackbar('R','LED',0,255,nothing)
-cv.createTrackbar('G','LED',0,255,nothing)
-cv.createTrackbar('B','LED',0,255,nothing)
-#switch = 'OFF | ON'
-#cv.createTrackbar(switch, 'LED',0,1,nothing)
+        nothing = lambda x: ()
 
-#Depending on which file should be used (most likely .h but other path just in case it's needed)
-#rospy.Subscriber('ctre_interfaces/candle_state_interface.cpp', Colour, Animation)
+        cv.createTrackbar('R','LED',0,255,nothing)
+        cv.createTrackbar('G','LED',0,255,nothing)
+        cv.createTrackbar('B','LED',0,255,nothing)
+
+    def draw_led(self, r, g, b, w):
+        cv.circle(self.img, (27,135), 25, (r,g,b), 5)
+
+    def led_state_callback(self, msg: CANdleStateArray):
+        print("called")
+        for led in msg[0].leds:
+            self.draw_led(led.red, led.green, led.blue, led.white)
+        
+        # get current positions of four trackbars
+        r = cv.getTrackbarPos('R','LED')
+        g = cv.getTrackbarPos('G','LED')
+        b = cv.getTrackbarPos('B','LED')
+        #s = cv.getTrackbarPos(switch,'LED')
+            
+        for i in range(0,10):
+            start_point = (0+60*i,270)
+            end_point = (60+60*i,330)
+            color = (r,g,b)
+            thickness = -1
+            cv.rectangle(self.img, start_point, end_point, color, thickness)
 
 
-def Colour(msg):
-    global red
-    global green
-    global blue 
-    global white
-
-def Animation(msg):
-    global speed
-    global start
-    global count
-    global brightness
-    global reversed
-    global direction
-
-rospy.Subscriber('ctre_interfaces/candle_state_interface.h', Colour, Animation,)
+led_sim = LEDSim()
 
 while True:
-    cv.imshow('LED',img)
-
-    #Random break to keep while loop from running forever in generating GUI
     k = cv.waitKey(1) & 0xFF
-    if k == 2:
+
+    # Window closes on Esc
+    if k == 27:
         break
-    
-    # get current positions of four trackbars
-    r = cv.getTrackbarPos('R','LED')
-    g = cv.getTrackbarPos('G','LED')
-    b = cv.getTrackbarPos('B','LED')
-    #s = cv.getTrackbarPos(switch,'LED')
-    
-    img[:] = [0,0,0]
-    
-    for i in range(0,10):
-        start_point = (0+60*i,270)
-        end_point = (60+60*i,330)
-        color = (r,g,b)
-        thickness = -1
-        cv.rectangle(img, start_point, end_point, color, thickness)
-    
-    """
-    colourflow - block of color that moves
-    fire - goes outwards
-    larson - skip for now
-    rainbow - self-explanatory
-    rgb fade - rainbow fade
-    single fade - Flash a color and then fade
-    strobe - flashes between two color
-    twinkle - turn on and off
-    twinkle off - turn on and off until light disappears
-    """
 
-    """
-    if s == 0:
-        img[:] = 0
-    else:
-        img[:] = [b,g,r]
-    """
-    #For displaying color
-    """
-    if animation == 0:
-        img[:] = [blue, green, red]
-    """
+    cv.imshow('LED', led_sim.img)
 
+led_sim.led_state_sub.unregister()
 cv.destroyAllWindows()
-
-"""
-if __name__ = '__main__':
-    rospy.init_node("LED_Simulation")
-    r = rospy.Rate(60)
-    rospy.spin()
-"""
