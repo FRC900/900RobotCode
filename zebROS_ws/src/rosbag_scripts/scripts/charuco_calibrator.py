@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import cv2 as cv
 import glob
 import re
 import datetime
-
+import sys
 
 def log_message(message, level="INFO"):
     """Helper function to log messages with color and timestamps."""
@@ -16,7 +18,7 @@ def log_message(message, level="INFO"):
     }
     reset_color = "\033[0m"
     color = level_colors.get(level.upper(), "\033[94m")  # Default to Blue for INFO
-    print(f"{color}[{level.upper()}] {now} - {message}{reset_color}")
+    sys.stderr.write(f"{color}[{level.upper()}] {now} - {message}{reset_color}")
 
 
 def numerical_sort(value):
@@ -136,7 +138,7 @@ class CharucoCalibrator:
             charuco_corners, charuco_ids, _, _ = detector.detectBoard(gray)
 
             if charuco_ids is not None:
-                if len(charuco_ids) >= 49:  # if at least 4 charuco corners are found
+                if len(charuco_ids) >= 6:  # if at least 6 charuco corners are found (needed by the mrcal optimizer)
                     cv.cornerSubPix(
                         gray, charuco_corners, (17, 17), (-1, -1), self.criteria
                     )
@@ -145,19 +147,28 @@ class CharucoCalibrator:
                     )
                     imgpoints.append(img_points)
                     objpoints.append(obj_points)
-                    for corner in img_points:
-                        print(f'{img_path} {corner[0][0]} {corner[0][1]} 1.0')
+                    # Create mapping of ids to corner coordinates
+                    point_map = {id[0]: corner[0] for id, corner in zip(charuco_ids, img_points)}
+                    # Print all corners - use coords if detected, or dashes if not
+                    # The dashed corners will be treated as outliers during mrcal optimization
+                    #   so don't be alarmed if you see a decent number of them in the output
+                    for id in range((self.chessboard_size[0] - 1) * (self.chessboard_size[1] - 1)):
+                        if id in point_map:
+                            corner = point_map[id]
+                            print(f'{img_path} {corner[0]} {corner[1]} 1.0')
+                        else:
+                            print(f'{img_path} - - -')
 
                 # Optionally, display detected corners on the image
                 if self.debug:
                     cv.aruco.drawDetectedCornersCharuco(
                         img, charuco_corners, charuco_ids
                     )
-                    for corner in img_points:
-                        print(f'{img_path} {corner[0][0]} {corner[0][1]} 1.0')
-                        cv.circle(img, (int(corner[0][0]), int(corner[0][1])), 5, (0, 255, 0), -1)
+                    # for corner in img_points:
+                    #     print(f'{img_path} {corner[0][0]} {corner[0][1]} 1.0')
+                    #     cv.circle(img, (int(corner[0][0]), int(corner[0][1])), 5, (0, 255, 0), -1)
                     cv.imshow("Charuco Detection", img)
-                    cv.waitKey(3000)
+                    cv.waitKey(0)
 
         cv.destroyAllWindows()
         return objpoints, imgpoints
@@ -175,7 +186,7 @@ if __name__ == "__main__":
 
     images_path = "*.jpg"
     image_files = glob.glob(images_path)
-    # image_files = ['frame0281.jpg']
+    # image_files = ['frame0009.jpg']
 
     chessboard_size = (8, 8)
     frame_size_h = 1300
@@ -197,14 +208,14 @@ if __name__ == "__main__":
     # log_message("Starting image processing for calibration...", "INFO")
     objpoints, imgpoints = calibrator.process_images(image_files)
 
-    # if objpoints and imgpoints:
-    #     log_message("Calibrating the camera...", "INFO")
-    #     ret, camera_matrix, dist, rvecs, tvecs = calibrator.calibrate_camera(
-    #         objpoints, imgpoints
-    #     )
-    #     log_message(f"🎥 Camera Calibration RMS Error: {ret:.4f}", "SUCCESS")
-    #     calibrator.print_pretty_matrix("Camera Matrix", camera_matrix)
-    #     calibrator.print_pretty_matrix("Distortion Coefficients", dist)
-    # else:
-    #     log_message("No valid Charuco corners found in any images.", "ERROR")
+    if objpoints and imgpoints:
+        log_message("Calibrating the camera...", "INFO")
+        ret, camera_matrix, dist, rvecs, tvecs = calibrator.calibrate_camera(
+            objpoints, imgpoints
+        )
+        log_message(f"🎥 Camera Calibration RMS Error: {ret:.4f}", "SUCCESS")
+        calibrator.print_pretty_matrix("Camera Matrix", camera_matrix)
+        calibrator.print_pretty_matrix("Distortion Coefficients", dist)
+    else:
+        log_message("No valid Charuco corners found in any images.", "ERROR")
 
