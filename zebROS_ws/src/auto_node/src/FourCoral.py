@@ -17,7 +17,7 @@ import math
 
 class FourCoral(AutoBase):
     ELEVATOR_PERCENT_START = 0.4
-    ELEVATOR_PERCENT = 0.9
+    ELEVATOR_PERCENT = 0.7
 
     def __init__(self, name: str, do_push: bool = False) -> None:
         self.__do_push = do_push
