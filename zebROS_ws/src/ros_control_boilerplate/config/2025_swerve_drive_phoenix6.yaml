@@ -15,12 +15,10 @@ swerve_drive_controller:
     cmd_vel_timout: 0.5
     max_speed: 7 # Potentially raise, otherwise swerve math will limit max motor speed
 
-    # TODO : multiplied ctre5 values by 12v/ 100% output as a guess, need to verify
-    # This would be a good guess, except we're using % duty cycle, not voltage out
     # f_s is static feedfoward - the is the min motor output used by
     # the speed motors to overcome static friction
-    
     f_s: 0.019
+
     # Small amount of power given to motors to get the swerve to coast to a 
     # stop rather than snapping on brake mode immediately
     stopping_ff: 0.019

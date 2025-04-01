@@ -274,7 +274,7 @@ bool init(hardware_interface::RobotHW *hw,
 	reset_odom_serv_ = controller_nh.advertiseService("reset_odom", &TalonSwerveDriveController::resetOdomService, this);
 	park_serv_ = controller_nh.advertiseService("toggle_park", &TalonSwerveDriveController::parkService, this);
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
-	percent_out_drive_mode_serv_ = controller_nh.advertiseService("percent_out_drive_mode", &TalonSwerveDriveController::percentOutDriveModeService, this);
+	voltage_out_drive_mode_serv_ = controller_nh.advertiseService("voltage_out_drive_mode", &TalonSwerveDriveController::voltageOutDriveModeService, this);
 	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
 	set_neutral_mode_serv_ = controller_nh.advertiseService("set_neutral_mode", &TalonSwerveDriveController::setNeturalModeService, this);
 
@@ -443,7 +443,7 @@ void update(const ros::Time &time, const ros::Duration &period) override
 	Commands curr_cmd = *(command_.readFromRT());
 	const double dt = (time - curr_cmd.stamp).toSec();
 	const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
-	const bool percent_out_drive_mode = percent_out_drive_mode_.load(std::memory_order_relaxed);
+	const bool voltage_out_drive_mode = voltage_out_drive_mode_.load(std::memory_order_relaxed);
 
 	//ROS_INFO_STREAM("ang_vel_tar: " << curr_cmd.ang << " lin_vel_tar: " << curr_cmd.lin);
 
@@ -546,7 +546,7 @@ void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		for (size_t i = 0; i < WHEELCOUNT; ++i)
 		{
-			if (!percent_out_drive_mode)
+			if (!voltage_out_drive_mode)
 			{
 				speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::VelocityVoltage);
 				speed_joints_[i].setControlVelocity(speeds_angles_[i].speed);
@@ -557,10 +557,9 @@ void update(const ros::Time &time, const ros::Duration &period) override
 			}
 			else
 			{
-				// ROS_INFO_STREAM("Percent out drive mode stopping wheels!!!!!!!!!!!!!!!!======================================");
 				// Debugging mode - used for robot characterization by sweeping
 				// from 0-100% output and measuring response
-				speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::DutyCycleOut);
+				speed_joints_[i].setControlMode(hardware_interface::talonfxpro::TalonMode::VoltageOut);
 				speed_joints_[i].setControlOutput(hypot(curr_cmd.lin.x, curr_cmd.lin.y));
 				speed_joints_[i].setControlFeedforward(0);
 			}
@@ -568,10 +567,8 @@ void update(const ros::Time &time, const ros::Duration &period) override
 	}
 	else
 	{
-		// For a small time after coming out of parking config keep the drive motors
-		// stopped.
-		// TODO - experiment with coast mode, and perhaps position PID at the current
-		// position?
+		// For a small time after coming out of parking config keep the drive motors stopped.
+		// TODO - experiment with coast mode, and perhaps position PID at the current position?
 		for (size_t i = 0; i < WHEELCOUNT; ++i)
 		{
 			speed_joints_[i].setControlOutput(0);
@@ -978,12 +975,12 @@ bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool:
 	}
 }
 
-bool percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+bool voltageOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
 	if (this->isRunning())
 	{
-		ROS_WARN_STREAM("percent_out_drive_mode_mode_ set to = " << static_cast<int>(req.data));
-		percent_out_drive_mode_.store(req.data, std::memory_order_relaxed);
+		ROS_WARN_STREAM("voltage_out_drive_mode_mode_ set to = " << static_cast<int>(req.data));
+		voltage_out_drive_mode_.store(req.data, std::memory_order_relaxed);
 
 		res.success = true;
 		res.message = "SUCCESS!";
@@ -992,7 +989,7 @@ bool percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBo
 	}
 	else
 	{
-		ROS_ERROR_NAMED(name_, "Can't set percent_out_drive_mode_. Controller is not running.");
+		ROS_ERROR_NAMED(name_, "Can't set voltage_out_drive_mode_. Controller is not running.");
 		return false;
 	}
 }
@@ -1050,10 +1047,10 @@ ros::ServiceServer dont_set_angle_mode_serv_;
 std::atomic<bool> dont_set_angle_mode_{false};	  // used to lock wheels into place
 
 // If set, the robot will lock the angle motors into tank mode and drive
-// the speed motors using the cmd_vel linear x as a % out value rather than
+// the speed motors using the cmd_vel linear x as a voltage out value rather than
 // a speed in m/s.  Used for determining static feed forward values during bring-up
-ros::ServiceServer percent_out_drive_mode_serv_;
-std::atomic<bool> percent_out_drive_mode_{false}; // run drive wheels in open-loop mode
+ros::ServiceServer voltage_out_drive_mode_serv_;
+std::atomic<bool> voltage_out_drive_mode_{false}; // run drive wheels in open-loop voltage out mode
 
 // Switch between brake and coast mode for speed wheels when stopping the robot
 ros::ServiceServer set_neutral_mode_serv_;
