@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   tf2_ros::StaticTransformBroadcaster tfbr;
 
   double map_to_odom_rate;
-  nh_.param<double>("map_to_odom_rate", map_to_odom_rate, 20.0);
+  nh_.param<double>("map_to_odom_rate", map_to_odom_rate, 250.0);
 
   // make a timer that runs at the requested rate and updates the tagslam transform 
   ros::Rate r(map_to_odom_rate);
