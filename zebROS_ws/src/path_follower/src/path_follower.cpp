@@ -144,6 +144,7 @@ std::optional<PositionVelocity> PathFollower::run(double &total_distance_travell
 	ROS_INFO_STREAM("drive to velocity: " << index << " (" << final_x_velocity << ", " << final_y_velocity << ", " << final_velocities_orientation << ")");
 
 	// This is strictly for the debugging ROS_INFO below
+#if 0
 	double now_x;
 	double now_y;
 	double now_x_velocity;
@@ -198,6 +199,7 @@ std::optional<PositionVelocity> PathFollower::run(double &total_distance_travell
 	ROS_INFO_STREAM("now coordinates: " << now_index << " (" << now_x << ", " << now_y << ", " << now_orientation << ")");
 	ROS_INFO_STREAM("now velocity: " << now_index << " (" << now_x_velocity << ", " << now_y_velocity << ", " << now_velocities_orientation << ")");
 #endif
+#endif
 	// Convert back to quaternion
 	const tf2::Quaternion q_final_tf = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_orientation));
 	geometry_msgs::Quaternion q_final = tf2::toMsg(q_final_tf);
@@ -227,7 +229,7 @@ std::optional<PositionVelocity> PathFollower::run(double &total_distance_travell
 	total_distance_travelled = vec_path_length_[now_index - 1];
 	current_index = now_index - 1;
 #ifdef DEBUG
-	ROS_INFO_STREAM("Successfully returned target position and orientation");
+	// ROS_INFO_STREAM("Successfully returned target position and orientation");
 #endif
 	return target;
 }
