@@ -78,6 +78,7 @@ should_run = True
 def handle_service(req):
     global should_run
     should_run = req.data
+    rospy.loginfo(f"2025_auto_rotating: auto rotate {'enabled' if should_run else 'disabled'}")
     return SetBoolResponse(success=True)
 
 
