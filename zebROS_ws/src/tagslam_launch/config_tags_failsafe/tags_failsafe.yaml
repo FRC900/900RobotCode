@@ -1,0 +1,3 @@
+camera_names: ["ov2311_10_9_0_10_video0", "ov2311_10_9_0_10_video1", "ov2311_10_9_0_9_video0", "ov2311_10_9_0_9_video1"]
+tolerance: 0.5 # (seconds) Amount of time after publishing after which a camera is considered lost and an empty tagarray is published
+rate: 100.0 # (Hz) Rate at which the main loop executes to detect lost cameras and publish tagarrays

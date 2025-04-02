@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="tagslam" type="tagslam_node" name="tags_failsafe" clear_params="true"
+	output="screen">
+    <rosparam command="load" file="$(find tagslam_launch)/config_tags_failsafe/tags_failsafe.yaml"/>
+  </node>
+</launch>
