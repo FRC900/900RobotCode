@@ -2,10 +2,10 @@ cam0:
   # cam0 data
   camera_model: pinhole
   # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
-  intrinsics: [907.580626, 908.178933, 800.913073, 678.792363]
+  intrinsics: [910.6291839000, 910.7125457000, 786.7107435000, 625.9050966000]
   distortion_model: plumb_bob
   # are we sure they are all zero?
-  distortion_coeffs: [0.033815, -0.047453, 0.000617, -0.000162, 0.000000]
+  distortion_coeffs: [0.0472140054, -0.0720803351, 0.0002088803, -0.0001783977, 0.0114996117]
   resolution: [1600, 1300]
   # infotopic: /ov2311_10_9_0_10_video0/camera_info # /{cam_name}/camera_info
   rostopic: /ov2311_10_9_0_10_video0_ignore
@@ -17,10 +17,10 @@ cam1:
   # cam1 data
   camera_model: pinhole
   # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
-  intrinsics: [908.905848, 908.978455, 814.304840, 614.719475]
+  intrinsics: [907.2721815000, 907.6101155000, 814.7433726000, 620.1123461000]
   distortion_model: plumb_bob
   # are we sure they are all zero?
-  distortion_coeffs: [0.034877, -0.048418, -0.000054, 0.000043, 0.000000]
+  distortion_coeffs: [0.0515620002, -0.0849351111, -0.0000775698, -0.0004525302, 0.0214064690]
   resolution: [1600, 1300]
   # infotopic: /ov2311_10_9_0_10_video1/camera_info # /{cam_name}/camera_info
   rostopic: /ov2311_10_9_0_10_video1_ignore
@@ -32,10 +32,10 @@ cam2:
   # cam2 data
   camera_model: pinhole
   # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
-  intrinsics: [910.33609, 910.6272, 787.82826, 627.1906]
+  intrinsics: [905.2780997000, 905.2526142000, 796.1073700000, 680.8553286000]
   distortion_model: plumb_bob
   # are we sure they are all zero?
-  distortion_coeffs: [0.039866, -0.054857, 0.000471, 0.000253, 0.000000]
+  distortion_coeffs: [0.0489116686, -0.0826897586, 0.0012620946, -0.0003600987, 0.0237817782]
   resolution: [1600, 1300]
   # infotopic: /ov2311_10_9_0_9_video0/camera_info # /{cam_name}/camera_info
   rostopic: /ov2311_10_9_0_9_video0_ignore
@@ -47,10 +47,10 @@ cam3:
   # cam3 data
   camera_model: pinhole
   # NOTE: the intrinsics data is [fx, fy, cx, cy]! It is a common mistake to switch that around, as they show up in a different order in the K-matrix.
-  intrinsics: [907.19483, 908.17939, 809.68159, 620.78939]
+  intrinsics: [910.8627566000, 910.8535509000, 812.2285899000, 614.3256909000]
   distortion_model: plumb_bob
   # are we sure they are all zero?
-  distortion_coeffs: [0.035165, -0.049790, -0.000089, -0.000987, 0.000000]
+  distortion_coeffs: [0.0481465817, -0.0773277764, -0.0000923701, 0.0001062880, 0.0173194723]
   resolution: [1600, 1300]
   # infotopic: /ov2311_10_9_0_9_video1/camera_info # /{cam_name}/camera_info
   rostopic: /ov2311_10_9_0_9_video1_ignore
