@@ -144,7 +144,7 @@ ros::Time Driver::evaluateDriverCommands(const frc_msgs::JoystickState &joy_stat
 			ROS_INFO_STREAM("Locking to current orientation!");
 			robot_orientation_driver_.setTargetOrientation(robot_orientation_driver_.getCurrentOrientation(), true /* from telop */);
 		}
-		ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z " << cmd_vel.angular.z);
+		// ROS_INFO_STREAM_THROTTLE(1, "CMD_VEL angular z " << cmd_vel.angular.z);
 		old_angular_z_ = cmd_vel.angular.z;
 
 		// if there's no joystick rotation commanded, use the PID output

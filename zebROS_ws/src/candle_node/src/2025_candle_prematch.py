@@ -93,7 +93,7 @@ def wanted_point_callback(pose: PoseStamped):
 
 def set_blink(msg):
     global BLINK_STATE
-    rospy.loginfo("inverted blink state")
+    # rospy.loginfo("inverted blink state")
     BLINK_STATE = not BLINK_STATE
 
 def blink_idx(idx, color):
