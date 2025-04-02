@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 	talon_state_msgs
 	talon_controller_msgs
 	talon_swerve_drive_controller_msgs
+	teleop_orientation_msgs
 	tf2_ros
 	tf2
 	)
