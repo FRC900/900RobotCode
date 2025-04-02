@@ -5,6 +5,7 @@ import actionlib
 
 import math
 
+from std_srvs.srv import SetBool
 from behavior_actions.msg import AlignAndPlace2025Action, AlignAndPlace2025Goal, AlignAndPlace2025Result, AlignAndPlace2025Feedback
 from behavior_actions.msg import AlignToReef2025Action, AlignToReef2025Goal, AlignToReef2025Result, AlignToReef2025Feedback
 from behavior_actions.msg import Placing2025Action, Placing2025Goal, Placing2025Result, Placing2025Feedback
@@ -49,6 +50,20 @@ class AlignAndPlaceServer(object):
                 self._feedback.stage = self._feedback.PLACING
                 self._as.publish_feedback(self._feedback)
 
+        def reenable_auto_rotate():
+            nonlocal set_auto_rotate
+            try:
+                set_auto_rotate(True)
+            except rospy.ServiceException as e:
+                rospy.logerr("2025_alignandplaceing_server: toggle_auto_rotate enable service call failed: %s" % e)
+
+        # Disable auto-rotate while aligning so only one node is driving rotation
+        set_auto_rotate = rospy.ServiceProxy('/auto_rotating/toggle_auto_rotate', SetBool)
+        try:
+            set_auto_rotate(False)
+        except rospy.ServiceException as e:
+            rospy.logerr("2025_alignandplaceing_server: toggle_auto_rotate disable service call failed: %s" % e)
+
         # Call aligning server
         distance = 69
         aligning_success = True
@@ -63,11 +78,13 @@ class AlignAndPlaceServer(object):
                 self.aligning_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self._as.set_preempted()
                 self._result.success = False
+                reenable_auto_rotate()
                 return
             if not aligning_success:
                 rospy.logerr("2025_alignandplaceing_server: error in aligning server")
                 self._result.success = False
                 self._as.set_aborted(self._result)
+                reenable_auto_rotate()
                 return
             r.sleep()
         
@@ -97,16 +114,19 @@ class AlignAndPlaceServer(object):
                 self.placing_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self._as.set_preempted()
                 self._result.success = False
+                reenable_auto_rotate()
                 return
             if not aligning_success:
                 rospy.logerr("2025_alignandplaceing_server: error in aligning server")
                 self._result.success = False
                 self._as.set_aborted(self._result)
+                reenable_auto_rotate()
                 return
             if not placing_success:
                 rospy.logerr("2025_alignandplaceing_server: error in placing server (setup_only = True)")
                 self._result.success = False
                 self._as.set_aborted(self._result)
+                reenable_auto_rotate()
                 return
             r.sleep()
         
@@ -114,11 +134,13 @@ class AlignAndPlaceServer(object):
             rospy.logerr("2025_alignandplaceing_server: error in aligning server")
             self._result.success = False
             self._as.set_aborted(self._result)
+            reenable_auto_rotate()
             return
         if not placing_success:
             rospy.logerr("2025_alignandplaceing_server: error in placing server (setup_only = True)")
             self._result.success = False
             self._as.set_aborted(self._result)
+            reenable_auto_rotate()
             return
         
         # Once aligning is finished, call placing server w/ setup_only = False
@@ -137,6 +159,7 @@ class AlignAndPlaceServer(object):
                 self.placing_client.cancel_goals_at_and_before_time(rospy.Time.now())
                 self._as.set_preempted()
                 self._result.success = False
+                reenable_auto_rotate()
                 return
             r.sleep()
         
@@ -144,12 +167,14 @@ class AlignAndPlaceServer(object):
             rospy.logerr("2025_alignandplaceing_server: error in placing server (setup_only = False)")
             self._result.success = False
             self._as.set_aborted(self._result)
+            reenable_auto_rotate()
             return
 
         self.aligning_client.cancel_goals_at_and_before_time(rospy.Time.now())
         
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
+        reenable_auto_rotate()
 
 if __name__ == '__main__':
     rospy.init_node('alignandplaceing_server_2025')
