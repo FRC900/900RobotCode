@@ -29,12 +29,12 @@ for topic, msg, t in rosbag.Bag(sys.argv[1]).read_messages(["/tagslam/odom/body_
         ang_vels.append((t.to_sec(), abs(msg.twist.angular.z)))
 
 plt.plot(times, latencies, '-', color="black", label="latencies")
-# plt.plot(*zip(*tags_9_0), '-', color="green", label="tags9_0")
-# plt.plot(*zip(*tags_9_1), '-', color="blue", label="tags9_1")
-# plt.plot(*zip(*tags_10_0), '-', color="red", label="tags10_0")
-# plt.plot(*zip(*tags_10_1), '-', color="yellow", label="tags10_1")
-# plt.plot(*zip(*vels), '-', color="pink", label="vel")
-# plt.plot(*zip(*ang_vels), '-', color="purple", label="ang_vel")
+plt.plot(*zip(*tags_9_0), '-', color="green", label="tags9_0")
+plt.plot(*zip(*tags_9_1), '-', color="blue", label="tags9_1")
+plt.plot(*zip(*tags_10_0), '-', color="red", label="tags10_0")
+plt.plot(*zip(*tags_10_1), '-', color="yellow", label="tags10_1")
+plt.plot(*zip(*vels), '-', color="pink", label="vel")
+plt.plot(*zip(*ang_vels), '-', color="purple", label="ang_vel")
 plt.legend()
 plt.show()
 

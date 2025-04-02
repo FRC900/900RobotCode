@@ -25,7 +25,7 @@ sysctl -w kernel.sched_rt_runtime_us=-1
 ulimit -r unlimited
 
 # Sync time from each follower jetson to this one
-JETSON_ADDR=(10.9.0.9)
+JETSON_ADDR=(10.9.0.9 10.9.0.10)
 
 for i in "${JETSON_ADDR[@]}"
 do
