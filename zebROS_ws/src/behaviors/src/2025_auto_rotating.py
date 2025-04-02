@@ -3,7 +3,6 @@
 import actionlib.simple_action_client
 import rospy
 import tf2_ros
-import tf2_geometry_msgs
 from math import pi
 from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
@@ -11,6 +10,7 @@ from std_msgs.msg import Float64
 from std_srvs.srv import SetBool, SetBoolResponse
 import actionlib 
 from behavior_actions.msg import Intaking2025Action, Intaking2025Goal
+from teleop_orientation_msgs.msg import TeleopOrientation
 
 # needs to NOT RUN DURING PATH FOLLOWING
 # need to stop intaking when away from coral station
@@ -83,7 +83,7 @@ def handle_service(req):
 
 if __name__ == "__main__":
     rospy.init_node("auto_rotating_2025")
-    angle_pub = rospy.Publisher("/teleop/orientation_command", Float64, queue_size=1)
+    angle_pub = rospy.Publisher("/teleop/velocity_orientation_command", TeleopOrientation, queue_size=1)
 
     switch_name = rospy.get_param("switch_name")
     too_close_zone = rospy.get_param("too_close_zone")
@@ -169,5 +169,5 @@ if __name__ == "__main__":
             continue
 
         angle = ANGLE_FROM_TAG[closest_tag]
-        angle *= pi/180
-        angle_pub.publish(Float64(data=angle))
+        angle *= pi/180.
+        angle_pub.publish(TeleopOrientation(position=angle, velocity=0, drive_from_teleop=True))
