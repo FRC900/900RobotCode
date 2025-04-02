@@ -41,3 +41,6 @@ mrcal-calibrate-cameras                                                         
 
 # Check error
 mrcal-show-projection-uncertainty camera-0.cameramodel --cbmax 4 --unset key
+
+# use the resulting file to find extrinsics
+mrcal-to-cahvor camera-0.cameramodel

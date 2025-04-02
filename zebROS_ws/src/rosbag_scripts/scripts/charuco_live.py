@@ -76,7 +76,7 @@ if __name__ == "__main__":
         img = bridge.imgmsg_to_cv2(msg, "bgr8")
         calibrator.callback(img)
 
-    sub = rospy.Subscriber("/ov2311_10_9_0_9_video0/image_raw", Image, image_callback)
+    sub = rospy.Subscriber("/ov2311_10_9_0_10_video1/image_raw", Image, image_callback)
 
 
     while not rospy.is_shutdown():
