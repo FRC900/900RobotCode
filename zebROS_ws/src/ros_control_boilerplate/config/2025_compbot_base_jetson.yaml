@@ -58,6 +58,7 @@ hardware_interface:
 
        #- {name: pcm, type: pcm, pcm_id: 0}
        - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
+       - {name: pigeon2_old, type: pigeon2, frame_id: pigeon2_old_frame, can_bus: CANivore, can_id: 1, local: true}
 
        - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
 
@@ -72,7 +73,7 @@ hardware_interface:
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
 
         #  taken out
-       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw}] }
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw}, {name: pigeon2_old, type: pigeon2_yaw}] }
 
 # Create controllers for each joint
 #
@@ -137,6 +138,23 @@ orchestra_controller:
 orchestra_state_controller:
     type:   orchestra_state_controller/OrchestraStateController
     publish_rate: 10
+
+pigeon2_old_state_controller:
+    type: pigeon2_state_controller/Pigeon2StateController
+    publish_rate: 100
+    joint_name: pigeon2_old
+    compass_enable: false
+
+pigeon2_old_controller:
+    type: pigeon2_controller/Pigeon2Controller
+    publish_rate: 20
+    joint_name: pigeon2_old
+
+pigeon2_old_imu_state_controller:
+    type: imu_sensor_controller/ImuSensorController
+    joint_name: pigeon2_old
+    publish_rate: 100
+
 
 pigeon2_state_controller:
     type: pigeon2_state_controller/Pigeon2StateController

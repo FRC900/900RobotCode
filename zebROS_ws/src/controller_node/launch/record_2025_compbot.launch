@@ -148,6 +148,7 @@
 /frcrobot_jetson/joint_states
 /frcrobot_jetson/latency_compensation_states
 /frcrobot_jetson/pigeon2
+/frcrobot_jetson/pigeon2_old
 /frcrobot_jetson/roller_controller/command
 /frcrobot_jetson/roller_controller/parameter_descriptions
 /frcrobot_jetson/roller_controller/parameter_updates
