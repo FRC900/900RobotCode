@@ -3,27 +3,27 @@
 import rospy
 from apriltag_msgs.msg import ApriltagArrayStamped
 
-tolerance = rospy.get_param("tolerance", 0.5) # seconds
-rate = rospy.get_param("rate", 60) # Hz
-
-latest_timestamp = rospy.Time()
-
-def tag_detection_cb(camera: str):
-    def internal_tag_detection_cb(msg: ApriltagArrayStamped):
-        global latest_timestamp
-        if msg.header.frame_id != f"fake_{camera}":
-            cameras_last_sent[camera] = rospy.Time.now()
-            latest_timestamp = msg.header.stamp
-    return internal_tag_detection_cb
-
-cameras = rospy.get_param("camera_names", ["ov2311_10_9_0_10_video0", "ov2311_10_9_0_10_video1", "ov2311_10_9_0_9_video0", "ov2311_10_9_0_9_video1"])
-cameras_last_sent: dict[str, int] = {}
-camera_pubs: dict[str, rospy.Publisher] = {}
-camera_subs: dict[str, rospy.Subscriber] = {}
-last_logged: dict[str, rospy.Time] = {}
-
 if __name__ == '__main__':
     rospy.init_node('tags_failsafe_node')
+    
+    tolerance = rospy.get_param("tolerance", 0.5) # seconds
+    rate = rospy.get_param("rate", 60) # Hz
+
+    latest_timestamp = rospy.Time()
+
+    def tag_detection_cb(camera: str):
+        def internal_tag_detection_cb(msg: ApriltagArrayStamped):
+            global latest_timestamp
+            if msg.header.frame_id != f"fake_{camera}":
+                cameras_last_sent[camera] = rospy.Time.now()
+                latest_timestamp = msg.header.stamp
+        return internal_tag_detection_cb
+
+    cameras = rospy.get_param("camera_names", ["ov2311_10_9_0_10_video0", "ov2311_10_9_0_10_video1", "ov2311_10_9_0_9_video0", "ov2311_10_9_0_9_video1"])
+    cameras_last_sent: dict[str, int] = {}
+    camera_pubs: dict[str, rospy.Publisher] = {}
+    camera_subs: dict[str, rospy.Subscriber] = {}
+    last_logged: dict[str, rospy.Time] = {}
 
     r = rospy.Rate(rate)
 
