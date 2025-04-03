@@ -5,7 +5,7 @@
   <arg name="field_type" default="andymark"/> <!-- TODO change to "welded" in April -->
   
   <arg name="tagslam_config_file" default="$(arg config_dir)/tagslam_$(arg field_type).yaml"/>
-  <arg name="calibration_file" default="$(arg config_dir)/cameras_ov2311.yaml"/>
+  <arg name="calibration_file" default="$(arg config_dir)/cameras_ov2311_for_calibration.yaml"/>
   <arg name="camera_poses_file"
        default="/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2025/camera_poses.yaml"/>
   <arg name="run_online" default="true"/>

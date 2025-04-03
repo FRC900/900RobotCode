@@ -12,6 +12,8 @@ cam0:
   # CHECK THIS
   tagtopic: /apriltag_detection_ov2311_10_9_0_10_video0/tags # /apriltag_detection_{cam_name}/tags
   rig_body: frc_robot
+  wiggle_rotation: 0.01
+  wiggle_translation: 0.01
 
 cam1:
   # cam1 data
@@ -27,6 +29,8 @@ cam1:
   # CHECK THIS
   tagtopic: /apriltag_detection_ov2311_10_9_0_10_video1/tags # /apriltag_detection_{cam_name}/tags
   rig_body: frc_robot
+  wiggle_rotation: 0.01
+  wiggle_translation: 0.01
 
 cam2:
   # cam2 data
@@ -42,6 +46,8 @@ cam2:
   # CHECK THIS
   tagtopic: /apriltag_detection_ov2311_10_9_0_9_video0/tags # /apriltag_detection_{cam_name}/tags
   rig_body: frc_robot
+  wiggle_rotation: 0.01
+  wiggle_translation: 0.01
 
 cam3:
   # cam3 data
@@ -57,3 +63,5 @@ cam3:
   # CHECK THIS
   tagtopic: /apriltag_detection_ov2311_10_9_0_9_video1/tags # /apriltag_detection_{cam_name}/tags
   rig_body: frc_robot
+  wiggle_rotation: 0.01
+  wiggle_translation: 0.01
