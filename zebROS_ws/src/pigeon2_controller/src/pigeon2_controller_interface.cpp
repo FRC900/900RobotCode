@@ -121,6 +121,11 @@ void Pigeon2ControllerInterface::setYaw(const double yaw)
 	set_yaw_bool_ = true;
 }
 
+void Pigeon2ControllerInterface::setDisableNoMotionCalibration(const bool flag)
+{
+	params_.disable_no_motion_calibration_.store(flag, std::memory_order_release);
+}
+
 #if 0
 void Pigeon2ControllerInterface::setVelocityMeasPeriod(hardware_interface::pigeon2::SensorVelocityMeasPeriod velocity_meas_period)
 {

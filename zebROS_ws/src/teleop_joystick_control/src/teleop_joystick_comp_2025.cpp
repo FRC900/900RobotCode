@@ -64,6 +64,7 @@ std::unique_ptr<actionlib::SimpleActionClient<behavior_actions::PulseOuttake2025
 
 ros::ServiceClient toggle_auto_rotate_client;
 ros::ServiceClient outtaking_client;
+ros::ServiceClient toggle_no_motion_calibration_client;
 
 bool currently_outtaking = false;
 bool not_safe = true;
@@ -596,6 +597,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 		}
 		ROS_INFO_STREAM("teleop_joystick_comp_2025 : zeroing IMU to " << imu_cmd.request.angle);
 		IMUZeroSrv.call(imu_cmd);
+
+		ROS_INFO_STREAM("teleop_joystick_comp_2025 : DISABLE NO MOTION CALIBRATION = TRUE");
+		std::srvs::SetBool disable_no_motion_calibration_srv;
+		disable_no_motion_calibration_srv.request.data = true;
+		toggle_no_motion_calibration_client.call(disable_no_motion_calibration_srv);
 		// ROS_INFO_STREAM("teleop_joystick_comp_2025 : zeroing swerve odom");
 		// std_srvs::Empty odom_cmd;
 		// SwerveOdomZeroSrv.call(odom_cmd);
@@ -821,6 +827,8 @@ int main(int argc, char **argv)
 
 	outtaking_client = n.serviceClient<talon_controller_msgs::Command>("/frcrobot_jetson/intake_controller/command", false, {{"tcp_nodelay", "1"}});
 	toggle_auto_rotate_client = n.serviceClient<std_srvs::SetBool>("/auto_rotating/toggle_auto_rotate", false, {{"tcp_nodelay", "1"}});
+
+	toggle_no_motion_calibration_client = n.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/pigeon2_controller/disable_no_motion_calibration", false, {{"tcp_nodelay", "1"}});
 
 	TeleopInitializer initializer;
 	initializer.set_n_params(n_params);
