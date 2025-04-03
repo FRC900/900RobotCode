@@ -1,4 +1,4 @@
-roller_speed: 2.5
+roller_speed: 2.0
 slow_roller_speed: 2.0
 controller_name: "roller_controller"
 avoid_elevator_switch_name: elevator_avoid_limit_switch
