@@ -39,7 +39,7 @@ class FourCoral(AutoBase):
             ]),
             PlacingAction(),
             # WaitAction(0.1),
-            drive_traj_iter.get_next_trajectory_action(),
+            drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05),
             WaitForIntakeAction(),
 
             ParallelAction([
@@ -50,7 +50,7 @@ class FourCoral(AutoBase):
             ]),
             PlacingAction(),
             # WaitAction(0.1),
-            drive_traj_iter.get_next_trajectory_action(),
+            drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05),
             WaitForIntakeAction(),
 
             ParallelAction([
@@ -61,7 +61,7 @@ class FourCoral(AutoBase):
             ]),
             PlacingAction(),
             # WaitAction(0.1),
-            drive_traj_iter.get_next_trajectory_action(),
+            drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05),
             WaitForIntakeAction(),
 
             ParallelAction([
