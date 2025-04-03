@@ -54,6 +54,8 @@ class Pigeon2ControllerInterface
 		void setClearStickyFaults(void);
 		void setYaw(const double yaw);
 
+		void setDisableNoMotionCalibration(const bool flag);
+
         // Functions which pass through to the CIParams for this controller interface
 		// Only needed if normal code needs to access them?
 #if 0

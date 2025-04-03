@@ -50,6 +50,7 @@
 			 talonfxpro_config_controller
 			 pigeon2_imu_state_controller
 			 pigeon2_old_imu_state_controller
+			 pigeon2_controller
 			 candle_controller
 			 candle_state_controller
 			 cancoder_state_controller
