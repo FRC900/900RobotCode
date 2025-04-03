@@ -137,9 +137,10 @@ def make_colour_obj(start, count, r, g, b):
     colour.white = 0
     return colour
 
-def camera_cb(msg, args):
-    idx = args 
-    status_array[idx] = GREEN
+def camera_cb(msg: ApriltagArrayStamped, args):
+    if "fake" not in msg.header.frame_id:
+        idx = args
+        status_array[idx] = GREEN
 
 def limit_switch_callback(data: JointState):
     global elevator_avoid_was_triggered

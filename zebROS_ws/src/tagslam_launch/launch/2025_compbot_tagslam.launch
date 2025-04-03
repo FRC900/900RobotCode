@@ -5,7 +5,7 @@
   <arg name="field_type" default="andymark"/> <!-- TODO change to "welded" in April -->
   
   <arg name="tagslam_config_file" default="$(arg config_dir)/tagslam_$(arg field_type).yaml"/>
-  <arg name="calibration_file" default="$(arg config_dir)/cameras_ov2311.yaml"/>
+  <arg name="calibration_file" default="$(arg config_dir)/cameras_ov2311_for_calibration.yaml"/>
   <arg name="camera_poses_file"
        default="/home/ubuntu/900RobotCode/zebROS_ws/src/tagslam_launch/y2025/camera_poses.yaml"/>
   <arg name="run_online" default="true"/>
@@ -33,6 +33,7 @@
   <rosparam command="load" file="$(find tagslam_launch)/config_map_odom/map_to_odom.yaml"/>
 
   <node pkg="tagslam_launch" type="tagslam_launch_node" name="map_to_odom"/>
+  <node pkg="tagslam_launch" type="tags_failsafe.py" name="tags_failsafe"/>
 
   <!-- to visualize both wheeled and tagslam trajectories, bolt the odometry to the map
   <node pkg="tf" type="static_transform_publisher" name="odom_to_map" args="0 0 0 0 0.0 0 frc_robot body_link 100"/>
