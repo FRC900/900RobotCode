@@ -6,10 +6,14 @@ from apriltag_msgs.msg import ApriltagArrayStamped
 tolerance = rospy.get_param("tolerance", 0.5) # seconds
 rate = rospy.get_param("rate", 60) # Hz
 
+latest_timestamp = rospy.Time()
+
 def tag_detection_cb(camera: str):
     def internal_tag_detection_cb(msg: ApriltagArrayStamped):
+        global latest_timestamp
         if msg.header.frame_id != f"fake_{camera}":
             cameras_last_sent[camera] = rospy.Time.now()
+            latest_timestamp = msg.header.stamp
     return internal_tag_detection_cb
 
 cameras = rospy.get_param("camera_names", ["ov2311_10_9_0_10_video0", "ov2311_10_9_0_10_video1", "ov2311_10_9_0_9_video0", "ov2311_10_9_0_9_video1"])
@@ -38,7 +42,7 @@ if __name__ == '__main__':
                 empty_tags = ApriltagArrayStamped()
                 empty_tags.apriltags = []
                 empty_tags.header.frame_id = f"fake_{camera}"
-                empty_tags.header.stamp = rospy.Time.now()
+                empty_tags.header.stamp = latest_timestamp
                 if (rospy.Time.now() - last_logged[camera]).to_sec() > 1.0:
                     rospy.logwarn(f"tags_failsafe_node: camera {camera} offline! publishing empty tags to {camera_pubs[camera].resolved_name}")
                     last_logged[camera] = rospy.Time.now()
