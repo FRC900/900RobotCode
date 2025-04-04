@@ -599,7 +599,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 		IMUZeroSrv.call(imu_cmd);
 
 		ROS_INFO_STREAM("teleop_joystick_comp_2025 : DISABLE NO MOTION CALIBRATION = TRUE");
-		std::srvs::SetBool disable_no_motion_calibration_srv;
+		std_srvs::SetBool disable_no_motion_calibration_srv;
 		disable_no_motion_calibration_srv.request.data = true;
 		toggle_no_motion_calibration_client.call(disable_no_motion_calibration_srv);
 		// ROS_INFO_STREAM("teleop_joystick_comp_2025 : zeroing swerve odom");
