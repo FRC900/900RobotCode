@@ -16,6 +16,7 @@ from angles import shortest_angular_distance
 from math import hypot
 from geometry_msgs.msg import TwistStamped
 from behavior_actions.msg import AutoMode
+from frc_msgs.msg import ButtonBoxState2025
 
 ORANGE = (255, 165, 0)
 GREEN = (0, 255, 0)
@@ -45,6 +46,8 @@ HAVE_CORAL = 11
 CMD_VEL_ZERO = 12
 CORRECT_AUTO = 13
 
+HAS_BEEN_ZEROED = 14
+
 HEARTBEAT = 20 # last in row
 BLINK_STATE = True
 
@@ -60,6 +63,8 @@ ELEVATOR_AVOID_SWITCH_NAME = "elevator_avoid_limit_switch"
 ROLLER_SWITCH_NAME = "roller_limit_switch"
 
 elevator_avoid_was_triggered = False
+
+has_been_zeroed = False
 
 imu_orientation: Quaternion = Quaternion(0,0,0,1)
 
@@ -160,6 +165,12 @@ def limit_switch_callback(data: JointState):
         rospy.logwarn_throttle(1.0, f'2025_candle_prematch: roller switch "{ROLLER_SWITCH_NAME}" not found')
         pass
 
+def button_box_callback(msg: ButtonBoxState2025):
+    global has_been_zeroed
+    has_been_zeroed = msg.zeroButton or has_been_zeroed
+    if has_been_zeroed:
+        status_array[HAS_BEEN_ZEROED] = GREEN
+
 wanted_x = None
 imu_orientation = None
 is_enabled = False
@@ -183,6 +194,7 @@ if __name__ == "__main__":
 
     cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, twist_callback, tcp_nodelay=True)
     auto_mode_sub = rospy.Subscriber("/auto/auto_mode", AutoMode, auto_mode_callback, tcp_nodelay=True)
+    button_box_sub = rospy.Subscriber("/frcrobot_rio/button_box_states", ButtonBoxState2025, button_box_callback, tcp_nodelay=True)
     r = rospy.Rate(10)
     led_arr_msg = ColourArrayRequest()
     for idx, i in enumerate(status_array):
@@ -264,7 +276,7 @@ if __name__ == "__main__":
             colour_client(led_arr_msg)
         except:
             rospy.logerr_throttle(1.0, "2025_candle_prematch: unable to call LED service?")
-        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL, CMD_VEL_ZERO, CORRECT_AUTO]:
+        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL, CMD_VEL_ZERO, CORRECT_AUTO, HAS_BEEN_ZEROED]:
             blink_idx(idx, ORANGE)
         blink_idx(HEARTBEAT, (255, 255, 255))
         if is_enabled:
