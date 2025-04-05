@@ -11,8 +11,13 @@ static void safeCall(ctre::phoenix::StatusCode status_code, const std::string &m
     }
 }
 
-HootLoggerDevices::HootLoggerDevices(const ros::NodeHandle &root_nh)
+HootLoggerDevices::HootLoggerDevices(ros::NodeHandle root_nh)
+    : force_enable_service_{root_nh.advertiseService("force_enable", &HootLoggerDevices::forceEnableSrv, this)}
+    , write_string_service_{root_nh.advertiseService("write_string", &HootLoggerDevices::writeStringSrv, this)}
 {
+    // Disable auto logging if not on HAL robot
+    // This is to prevent the SignalLogger from running on a non-HAL robot
+    // and causing issues with the hardware interface.
     if (!isHALRobot())
     {
         safeCall(ctre::phoenix6::SignalLogger::EnableAutoLogging(false), "ctre::phoenix6::SignalLogger::EnableAutoLogging(false)");
@@ -43,4 +48,34 @@ void HootLoggerDevices::write(const ros::Time& time, const ros::Duration& period
         }
     }
     prev_robot_enabled_ = enabled;
+}
+
+bool HootLoggerDevices::forceEnableSrv(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+    if (req.data)
+    {
+        ROS_INFO_STREAM("Forcing SignalLogger to start");
+        safeCall(ctre::phoenix6::SignalLogger::Start(), "ctre::phoenix6::SignalLogger::Start()");
+    }
+    else
+    {
+        ROS_INFO_STREAM("Forcing SignalLogger to stop");
+        safeCall(ctre::phoenix6::SignalLogger::Stop(), "ctre::phoenix6::SignalLogger::Stop()");
+    }
+    res.success = true;
+    return true;
+}
+
+bool HootLoggerDevices::writeStringSrv(ros_control_boilerplate::SignalLoggerString::Request &req, ros_control_boilerplate::SignalLoggerString::Response &res)
+{
+    if (req.name.empty() || req.value.empty())
+    {
+        ROS_ERROR_STREAM("Empty name or data passed to writeStringSrv");
+        res.success = false;
+        return false;
+    }
+    ROS_INFO_STREAM("Writing string to SignalLogger: " << req.name << " : " << req.value);
+    safeCall(ctre::phoenix6::SignalLogger::WriteString(req.name, req.value), "ctre::phoenix6::SignalLogger::WriteString");
+    res.success = true;
+    return true;
 }
