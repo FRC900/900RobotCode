@@ -750,6 +750,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 
 	if (button_box->rightGreenPress)
 	{
+		ROS_INFO_STREAM("teleop_joystick_comp_2025 : DISABLE NO-MOTION CALIBRATION = FALSE, NO-MOTION CALIBRATION REENABLED");
+		std_srvs::SetBool disable_no_motion_calibration_srv;
+		disable_no_motion_calibration_srv.request.data = false;
+		toggle_no_motion_calibration_client.call(disable_no_motion_calibration_srv);
+
 		driver->moveDirection(0, 1, 0, config.button_move_speed);
 	}
 	if (button_box->rightGreenButton)
@@ -763,6 +768,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 
 	if (button_box->leftGreenPress)
 	{
+		ROS_INFO_STREAM("teleop_joystick_comp_2025 : DISABLE NO-MOTION CALIBRATION = FALSE, NO-MOTION CALIBRATION REENABLED");
+		std_srvs::SetBool disable_no_motion_calibration_srv;
+		disable_no_motion_calibration_srv.request.data = false;
+		toggle_no_motion_calibration_client.call(disable_no_motion_calibration_srv);
+
 		driver->moveDirection(0, -1, 0, config.button_move_speed);
 	}
 	if (button_box->leftGreenButton)
@@ -776,6 +786,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 
 	if (button_box->topGreenPress)
 	{
+		ROS_INFO_STREAM("teleop_joystick_comp_2025 : DISABLE NO-MOTION CALIBRATION = FALSE, NO-MOTION CALIBRATION REENABLED");
+		std_srvs::SetBool disable_no_motion_calibration_srv;
+		disable_no_motion_calibration_srv.request.data = false;
+		toggle_no_motion_calibration_client.call(disable_no_motion_calibration_srv);
+
 		driver->moveDirection(1, 0, 0, config.button_move_speed);
 	}
 	if (button_box->topGreenButton)
@@ -789,6 +804,11 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 
 	if (button_box->bottomGreenPress)
 	{
+		ROS_INFO_STREAM("teleop_joystick_comp_2025 : DISABLE NO-MOTION CALIBRATION = FALSE, NO-MOTION CALIBRATION REENABLED");
+		std_srvs::SetBool disable_no_motion_calibration_srv;
+		disable_no_motion_calibration_srv.request.data = false;
+		toggle_no_motion_calibration_client.call(disable_no_motion_calibration_srv);
+		
 		driver->moveDirection(-1, 0, 0, config.button_move_speed);
 	}
 	if (button_box->bottomGreenButton)
