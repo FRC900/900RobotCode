@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include "tf2_ros/transform_listener.h"
-#include "pid_velocity_msg/PIDVelocity.h"
+#include "teleop_orientation_msgs/TeleopOrientation.h"
 #include <angles/angles.h>
 #include <std_srvs/SetBool.h>
 #include <nav_msgs/Odometry.h>
@@ -80,7 +80,7 @@ class PathAction
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
 			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this, ros::TransportHints().tcpNoDelay()))
-			, orientation_command_pub_(nh_.advertise<pid_velocity_msg::PIDVelocity>("/teleop/velocity_orientation_command", 1))
+			, orientation_command_pub_(nh_.advertise<teleop_orientation_msgs::TeleopOrientation>("/teleop/velocity_orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
 			, odom_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/odom", 1, &PathAction::odomCallback, this))
@@ -167,7 +167,7 @@ class PathAction
 				// This is correct, although counterintuitive and we don't know why
 				// Because it feels like it should be the opposite, but breaks when we do what is "correct".
 				map_to_baselink_ = tf_buffer_.lookupTransform(map_frame_, "base_link", ros::Time(0));
-				map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
+				// map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
 			}
 			catch (tf2::TransformException &ex) {
 				ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
@@ -225,22 +225,22 @@ class PathAction
 			size_t current_index = 0;
 
 			std_msgs::Bool enable_msg;
-			pid_velocity_msg::PIDVelocity command_msg; 
-			auto x_axis_it = axis_states_.find("x");
-			auto &x_axis = x_axis_it->second;
-			auto y_axis_it = axis_states_.find("y");
-			auto &y_axis = y_axis_it->second;
+			teleop_orientation_msgs::TeleopOrientation command_msg; 
+			command_msg.drive_from_teleop = false;
+			const auto x_axis_it = axis_states_.find("x");
+			const auto &x_axis = x_axis_it->second;
+			const auto y_axis_it = axis_states_.find("y");
+			const auto &y_axis = y_axis_it->second;
 
 			// Align to first waypoint (within tolerance)
 			x_axis.setEnable(true);
 			x_axis.setCommand(goal->position_path.poses[0].pose.position.x, 0); 
-			ROS_WARN_STREAM("Setting inital command to pos:" << goal->position_path.poses[0].pose.position.x << " Velocity: " << goal->velocity_path.poses[0].pose.position.x);
+			ROS_WARN_STREAM("Setting inital X command to pos:" << goal->position_path.poses[0].pose.position.x << " Velocity: " << goal->velocity_path.poses[0].pose.position.x);
 			y_axis.setEnable(true);
 			y_axis.setCommand(goal->position_path.poses[0].pose.position.y, 0); 
-			ROS_WARN_STREAM("Setting inital command to pos:" << goal->position_path.poses[0].pose.position.x << " Velocity: " << goal->velocity_path.poses[0].pose.position.x);
+			ROS_WARN_STREAM("Setting inital Y command to pos:" << goal->position_path.poses[0].pose.position.x << " Velocity: " << goal->velocity_path.poses[0].pose.position.x);
 
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
-			
 			{
 				if (goal->dont_go_to_start) {
 					ROS_INFO_STREAM("path_follower: not going to starting waypoint");
@@ -252,7 +252,7 @@ class PathAction
 					// This is correct, although counterintuitive and we don't know why
 					// Because it feels like it should be the opposite, but breaks when we do what is "correct".
 					map_to_baselink_ = tf_buffer_.lookupTransform(map_frame_, "base_link", ros::Time(0));
-					map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
+					// map_to_tagslam_ = tf_buffer_.lookupTransform(map_frame_, "frc_robot", ros::Time(0));
 				}
 				catch (tf2::TransformException &ex) {
 					ROS_ERROR_STREAM("path_follower: no map to base link transform found! (!!)" << ex.what());
@@ -283,9 +283,9 @@ class PathAction
 				if (std::isfinite(command_msg.position)) 
 				{
 					orientation_command_pub_.publish(command_msg);
-					#ifdef DEBUG
+#ifdef DEBUG
 					ROS_INFO_STREAM("Orientation: " << command_msg.position << " at angular velocity " << command_msg.velocity << ", target is " << orientation_state << ", shortest distance is (note: we are using absolute value everywhere else) " << angles::shortest_angular_distance(command_msg.position, orientation_state) << ", rot tol is " << final_rot_tol);
-					#endif
+#endif
 				}
 
 				// NOTE: this is enforcing zero velocity at the end of a path
@@ -361,7 +361,7 @@ class PathAction
 					continue;
 				}
 
-				auto start_time_ = std::chrono::high_resolution_clock::now();
+				// auto start_time_ = std::chrono::high_resolution_clock::now();
 				path_follower_msgs::PathFeedback feedback; // FIXME: Add velocity (probably?)
 				// Spin once to get the most up to date odom and yaw info
 				ros::spinOnce();
@@ -418,7 +418,7 @@ class PathAction
 #endif
 				// tf2::doTransform(next_waypoint.position, next_waypoint.position, map_to_base_link_tf);
 #ifdef DEBUG
-				ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.position.x << ", " << next_waypoint.position.position.y << ", " << path_follower_.getYaw(next_waypoint.position.orientation) << ")");
+				// ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.position.x << ", " << next_waypoint.position.position.y << ", " << path_follower_.getYaw(next_waypoint.position.orientation) << ")");
 #endif
 				enable_msg.data = true;
 				combine_cmd_vel_pub_.publish(enable_msg);
@@ -456,7 +456,7 @@ class PathAction
 				const double orientation_state = path_follower_.getYaw(orientation_);
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
 				
-				auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_).count();
+				// auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_).count();
 				// ROS_INFO_STREAM("Path follower calculations took " << duration);
 
 				// NOTE: this is enforcing zero velocity at the end of a path
@@ -484,12 +484,19 @@ class PathAction
 				}
 				else if (!preempted && !timed_out)
 				{
-					#ifdef DEBUG
+#ifdef DEBUG
 					ROS_INFO_STREAM("X ERROR: " << fabs(final_pose_transformed.position.x - map_to_baselink_.transform.translation.x) << " tolerance " << final_pos_tol);
 					ROS_INFO_STREAM("Y ERROR: " << fabs(final_pose_transformed.position.y - map_to_baselink_.transform.translation.y) << " tolerance " << final_pos_tol);
 					ROS_INFO_STREAM("ROT ERROR: " << fabs(angles::shortest_angular_distance(path_follower_.getYaw(final_pose_transformed.orientation), orientation_state)) << " tolerance " << final_rot_tol);
-					ROS_INFO_STREAM("CURRENT INDEX: " << current_index << " goal poses -2: " << goal->position_path.poses.size() - 2);
-					#endif
+					ROS_INFO_STREAM("CURRENT INDEX: " << current_index << " goal poses - 2: " << goal->position_path.poses.size() - 2);
+					if (current_index >= (goal->position_path.poses.size() - 2))
+					{
+						ROS_INFO_STREAM("X_VEL = " << latest_odom_.twist.twist.linear.x << " tolerance " << final_vel_tol);
+						ROS_INFO_STREAM("Y_VEL = " << latest_odom_.twist.twist.linear.y << " tolerance " << final_vel_tol);
+						ROS_INFO_STREAM("ANG_VEL = " << latest_odom_.twist.twist.angular.z << " tolerance " << final_angvel_tol);
+						ROS_INFO_STREAM("baselink vs tagslam difference = " << feedback.baselink_vs_tagslam_difference << " tolerance " << max_baselink_to_tagslam_difference_);
+					}
+#endif
 					ros::spinOnce();
 					// Pass along the current x, y robot states
 					// to the PID controllers for each axis
@@ -520,12 +527,12 @@ class PathAction
 					r.sleep();
 				}
 			}
-			#ifdef DEBUG
+#ifdef DEBUG
 			ROS_INFO_STREAM("    final delta odom_ = " << map_to_baselink_.transform.translation.x - starting_tf.transform.translation.x
 					<< ", " << map_to_baselink_.transform.translation.y - starting_tf.transform.translation.y);
 			// ROS_INFO_STREAM("    final delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 			// 		<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
-			#endif
+#endif
 
 			// Shut off publishing both combined x+y+rotation messages
 			// along with the combined cmd_vel output generated from them
