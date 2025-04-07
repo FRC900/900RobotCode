@@ -11,9 +11,8 @@ from wait_for_intake_action import WaitForIntakeAction
 from wait_trajectory_action import WaitTrajectoryAction
 from geometry_msgs.msg import Twist
 from cmd_vel_action import CmdVelAction
+from early_exit_parallel_action import EarlyExitParallelAction
 import math
-
-# NOTE: current updated path is ONLY for processor
 
 class FourCoral(AutoBase):
     ELEVATOR_PERCENT_START = 0.4
@@ -38,10 +37,11 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-            # WaitAction(0.1),
-            drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05),
-            WaitForIntakeAction(),
-
+            
+            EarlyExitParallelAction(
+                wait_for_action_list=[WaitForIntakeAction()],
+                also_run_action_list=[drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05)]
+            ),
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
@@ -49,10 +49,11 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-            # WaitAction(0.1),
-            drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05),
-            WaitForIntakeAction(),
-
+            
+            EarlyExitParallelAction(
+                wait_for_action_list=[WaitForIntakeAction()],
+                also_run_action_list=[drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05)]
+            ),
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
@@ -60,10 +61,11 @@ class FourCoral(AutoBase):
                               ])
             ]),
             PlacingAction(),
-            # WaitAction(0.1),
-            drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05),
-            WaitForIntakeAction(),
-
+            
+            EarlyExitParallelAction(
+                wait_for_action_list=[WaitForIntakeAction()],
+                also_run_action_list=[drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05)]
+            ),
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT),
