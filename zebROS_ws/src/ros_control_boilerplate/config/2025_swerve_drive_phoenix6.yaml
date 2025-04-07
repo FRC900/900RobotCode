@@ -45,7 +45,7 @@ swerve_drive_controller:
     # this assumes 23.75 inches = 0.60325m between wheels --> the values here are half that (center to wheel) = 0.301625m
     wheel_coords: [[0.301625, 0.301625], [0.301625, -0.301625], [-0.301625, 0.301625], [-0.301625, -0.301625]]
     parking_config_time_delay: 0.75
-    drive_speed_time_delay: 0.125
+    drive_speed_time_delay: 0.0
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     use_cos_scaling: True # scale motor speed by how close angle motors are to setpoints
 
@@ -58,7 +58,7 @@ swerve_drive_controller:
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.1
         dynamic_reconfigure: True
         neutral_mode: Brake
         forward_limit_enable: False
@@ -75,7 +75,7 @@ swerve_drive_controller:
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.1
         dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
@@ -93,7 +93,7 @@ swerve_drive_controller:
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.1
         dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
@@ -111,7 +111,7 @@ swerve_drive_controller:
         #current_limit_peak_amps: 25
         #current_limit_peak_msec: 50
         #current_limit_enable: True
-        voltage_closed_loop_ramp_period: 0.25
+        voltage_closed_loop_ramp_period: 0.1
         dynamic_reconfigure: True
         neutral_mode: "Brake"
         forward_limit_enable: False
