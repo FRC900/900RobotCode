@@ -169,7 +169,7 @@ public:
 			return false;
 		}
 
-		sub_command_ = n.subscribe<frc_msgs::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this);
+		sub_command_ = n.subscribe<frc_msgs::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 		return true;
 	}
 

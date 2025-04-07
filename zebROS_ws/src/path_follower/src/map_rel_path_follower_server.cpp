@@ -83,7 +83,7 @@ class PathAction
 			, orientation_command_pub_(nh_.advertise<teleop_orientation_msgs::TeleopOrientation>("/teleop/velocity_orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
-			, odom_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/odom", 1, &PathAction::odomCallback, this))
+			, odom_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/odom", 1, &PathAction::odomCallback, this, ros::TransportHints().tcpNoDelay()))
 			, path_follower_(time_offset)
 			, final_pos_tol_(final_pos_tol)
 			, final_vel_tol_(final_vel_tol)

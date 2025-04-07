@@ -230,7 +230,7 @@ public:
 			return false;
 		}
 
-		sub_command_ = n.subscribe<frc_msgs::PDHData>(topic, 1, &PDHStateListenerController::commandCB, this);
+		sub_command_ = n.subscribe<frc_msgs::PDHData>(topic, 1, &PDHStateListenerController::commandCB, this, ros::TransportHints().tcpNoDelay());
 		return true;
 	}
 

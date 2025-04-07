@@ -85,15 +85,15 @@ class Aligner:
         self._as.start()
 
         self.drive_to_object_client = actionlib.SimpleActionClient("/drive_to_object/drive_to_object", behavior_actions.msg.DriveToObjectAction)
-        self.norfair_sub = rospy.Subscriber("/norfair/output", norfair_ros.msg.Detections, self.tracked_objects_callback)
+        # self.norfair_sub = rospy.Subscriber("/norfair/output", norfair_ros.msg.Detections, self.tracked_objects_callback)
 
         self.t_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.t_buffer)
 
-        self.visible_objects = []
+        # self.visible_objects = []
         
         self.current_yaw = 0
-        self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback)
+        self.imu_subscribe = rospy.Subscriber("/imu/zeroed_imu", sensor_msgs.msg.Imu, self.imu_callback, tcp_nodelay=True)
 
         self.team_subscribe = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, self.match_data_callback)
 
@@ -105,8 +105,8 @@ class Aligner:
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w])
         self.current_yaw = euler[2]
 
-    def tracked_objects_callback(self, msg: norfair_ros.msg.Detections):
-        self.visible_objects = [detection.label for detection in msg.detections]
+    # def tracked_objects_callback(self, msg: norfair_ros.msg.Detections):
+    #     self.visible_objects = [detection.label for detection in msg.detections]
 
     def aligner_callback(self, goal: behavior_actions.msg.AlignToReef2025Goal):
         success = True
