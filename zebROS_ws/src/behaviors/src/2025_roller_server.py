@@ -8,6 +8,7 @@ from std_msgs.msg import Float64
 from controllers_2025_msgs.srv import RollerSrv, RollerSrvRequest
 # from talon_state_msgs.msg import TalonFXProState
 from frc_msgs.srv import RumbleCommand, RumbleCommandRequest
+from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 import actionlib
 import time
 
@@ -28,18 +29,41 @@ class Roller2025ActionServer(object):
         self.avoid_elevator_switch = 0
         self.switch_name = rospy.get_param('switch_name')
         self.avoid_elevator_switch_name = rospy.get_param('avoid_elevator_switch_name')
-        self.roller_speed = rospy.get_param('roller_speed')
+        self.intake_roller_speed = rospy.get_param('intake_roller_speed')
+        self.l1_roller_speed = rospy.get_param('l1_roller_speed')
+        self.l2_roller_speed = rospy.get_param('l2_roller_speed')
+        self.l3_roller_speed = rospy.get_param('l3_roller_speed')
+        self.l4_roller_speed = rospy.get_param('l4_roller_speed')
         self.slow_roller_speed = rospy.get_param('slow_roller_speed')
         self.time_to_wait = rospy.get_param("time_to_wait")
         self.switch_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, self.callback, tcp_nodelay=True)
 
         self.last_touched_diverter = rospy.Time()
 
-        rospy.loginfo(f"2025_roller_server: switch name: {self.switch_name}, avoid elevator switch name: {self.avoid_elevator_switch_name}, roller speed: {self.roller_speed}")
+        ddynrec = DDynamicReconfigure("roller_dyn_rec") 
+        ddynrec.add_variable("intake_roller_speed", "float/double variable", self.intake_roller_speed, 0.0, 4.0)
+        ddynrec.add_variable("l1_roller_speed", "float/double variable", self.l1_roller_speed, 0.0, 4.0)
+        ddynrec.add_variable("l2_roller_speed", "float/double variable", self.l2_roller_speed, 0.0, 4.0)
+        ddynrec.add_variable("l3_roller_speed", "float/double variable", self.l3_roller_speed, 0.0, 4.0)
+        ddynrec.add_variable("l4_roller_speed", "float/double variable", self.l4_roller_speed, 0.0, 4.0)
+
+        ddynrec.start(self.dyn_rec_callback)
+
+        rospy.loginfo(f"intake roller speed: {self.intake_roller_speed}, 2025_roller_server: switch name: {self.switch_name}, avoid elevator switch name: {self.avoid_elevator_switch_name}, L1 roller speed: {self.l1_roller_speed}, L2 roller speed: {self.l2_roller_speed}, L3 roller speed: {self.l3_roller_speed}, L4 roller speed: {self.l4_roller_speed}")
 
         self._as = actionlib.SimpleActionServer(self._action_name, Roller2025Action, execute_cb=self.execute_cb, auto_start = False)
         self._as.start()
 
+    def dyn_rec_callback(self, config, level):
+        rospy.loginfo("Received reconf call: " + str(config))
+        self.intake_roller_speed = config["intake_roller_speed"]
+        self.l1_roller_speed = config["l1_roller_speed"]
+        self.l2_roller_speed = config["l2_roller_speed"]
+        self.l3_roller_speed = config["l3_roller_speed"]
+        self.l4_roller_speed = config["l4_roller_speed"]
+
+        return config
+    
     def execute_cb(self, goal):
         pct_out = Float64()
         success = True
@@ -47,7 +71,7 @@ class Roller2025ActionServer(object):
         
         if goal.mode == goal.INTAKE:
             rospy.loginfo("2025_roller_server: Roller intaking!")
-            pct_out.data = self.roller_speed
+            pct_out.data = self.intake_roller_speed
             self.roller_client.call(RollerSrvRequest(pct_out.data))
 
             # wait for first switch, then slow down speed
@@ -100,7 +124,14 @@ class Roller2025ActionServer(object):
 
         else:
             rospy.loginfo("2025_roller_server: Roller outtaking!")
-            pct_out.data = self.roller_speed
+            if goal.mode == 0:
+                pct_out.data = self.l4_roller_speed
+            elif goal.mode == 1:
+                pct_out.data = self.l3_roller_speed
+            elif goal.mode == 2:
+                pct_out.data = self.l2_roller_speed
+            elif goal.mode == 3:
+                pct_out.data = self.l1_roller_speed
             self.roller_client.call(RollerSrvRequest(pct_out.data))
             while self.switch == 1 and not rospy.is_shutdown():
                 if self._as.is_preempt_requested():

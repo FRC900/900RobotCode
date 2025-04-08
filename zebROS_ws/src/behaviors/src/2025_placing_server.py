@@ -36,7 +36,7 @@ class PlacingServer(object):
         elevater_goal = Elevater2025Goal()
         elevater_goal.mode = goal.level
         roller_goal = Roller2025Goal()
-        roller_goal.mode = roller_goal.OUTTAKE # Set the roller goal to OUTTAKE
+        roller_goal.mode = goal.level # Set the roller goal to OUTTAKE
        
         def elevater_done_cb(state, result):
             nonlocal elevator_done
