@@ -3,7 +3,8 @@
 import actionlib.simple_action_client
 import rospy
 import tf2_ros
-from math import pi, hypot
+from tf.transformations import euler_from_quaternion
+from math import pi, hypot, cos, sin
 from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     angle_pub = rospy.Publisher("/teleop/velocity_orientation_command", TeleopOrientation, queue_size=1)
 
     switch_name = rospy.get_param("switch_name")
-    # too_close_zone = rospy.get_param("too_close_zone")
+    too_close_zone = rospy.get_param("too_close_zone")
     lookahead_dt = rospy.get_param("lookahead_dt")
     velocity_threshold = rospy.get_param("velocity_threshold")
 
@@ -134,8 +135,10 @@ if __name__ == "__main__":
         y = trans.transform.translation.y
 
         if hypot(vel_x, vel_y) > velocity_threshold:
-            x += vel_x * lookahead_dt
-            y += vel_y * lookahead_dt
+            # convert vel_x and vel_y from robot's frame to map frame and add them to the robot's coordinates
+            angle = euler_from_quaternion([trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w])[2]
+            x += lookahead_dt * (vel_x * cos(angle) - vel_y * sin(angle))
+            y += lookahead_dt * (vel_x * sin(angle) + vel_y * cos(angle))
 
         closest_dist_sq = 99999
         reef_distances = []

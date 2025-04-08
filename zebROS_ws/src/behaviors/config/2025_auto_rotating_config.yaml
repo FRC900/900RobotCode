@@ -1,4 +1,4 @@
 switch_name: "roller_limit_switch"
 too_close_zone: 1.5
 velocity_threshold: 0.5
-lookahead_dt: 0.5
+lookahead_dt: 0.2
