@@ -22,7 +22,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	adi_pico_driver \
 	ar_track_alvar \
 	apriltag_launch \
-    apriltag_ros \
+	apriltag_ros \
 	base_trajectory \
 	compressed_image_transport \
 	compressed_depth_image_transport \
@@ -84,7 +84,6 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	tagslam_viz \
 	tagslam_test \
 	tagslam_launch \
-	teleop_joystick_control \
 	template_controller \
 	teraranger_array \
 	teraranger_array_converter \
