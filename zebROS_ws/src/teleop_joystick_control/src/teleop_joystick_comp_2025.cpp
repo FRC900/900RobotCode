@@ -649,7 +649,7 @@ void buttonBoxCallback(const frc_msgs::ButtonBoxState2025ConstPtr &button_box)
 	if (button_box->backupButton2Press)
 	{
 		behavior_actions::Roller2025Goal roller_goal;
-		roller_goal.mode = roller_goal.OUTTAKE;
+		roller_goal.mode = roller_goal.L4;
 		roller_ac->sendGoal(roller_goal);
 	}
 	if (button_box->backupButton2Release)
