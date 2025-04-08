@@ -3,9 +3,10 @@
 import actionlib.simple_action_client
 import rospy
 import tf2_ros
-from math import pi
+from math import pi, hypot
 from frc_msgs.msg import MatchSpecificData
 from sensor_msgs.msg import JointState
+from geometry_msgs.msg import Twist
 from std_msgs.msg import Float64
 from std_srvs.srv import SetBool, SetBoolResponse
 import actionlib 
@@ -74,6 +75,11 @@ def team_color_callback(msg: MatchSpecificData):
     team_color = msg.allianceColor
     is_auto = msg.Autonomous
 
+velocity = (0.0, 0.0)
+def velocity_callback(msg: Twist):
+    global velocity
+    velocity = (msg.linear.x, msg.linear.y)
+
 should_run = True
 def handle_service(req):
     global should_run
@@ -87,10 +93,13 @@ if __name__ == "__main__":
     angle_pub = rospy.Publisher("/teleop/velocity_orientation_command", TeleopOrientation, queue_size=1)
 
     switch_name = rospy.get_param("switch_name")
-    too_close_zone = rospy.get_param("too_close_zone")
+    # too_close_zone = rospy.get_param("too_close_zone")
+    lookahead_dt = rospy.get_param("lookahead_dt")
+    velocity_threshold = rospy.get_param("velocity_threshold")
 
     game_piece_sub = rospy.Subscriber("/frcrobot_rio/joint_states", JointState, game_piece_callback, tcp_nodelay=True)
     team_color_sub = rospy.Subscriber("/frcrobot_rio/match_data", MatchSpecificData, team_color_callback)
+    velocity_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel", Twist, velocity_callback)
     intaking_client = actionlib.SimpleActionClient("/intaking/intaking_server_2025", Intaking2025Action)
     rospy.loginfo("waiting for intaking server")
     intaking_client.wait_for_server()
@@ -113,8 +122,6 @@ if __name__ == "__main__":
         else:
             tags = BLUE_TAGS
             
-
-
         try:
             trans = tf_buffer.lookup_transform('map', 'base_link', rospy.Time())
         except:
@@ -124,10 +131,13 @@ if __name__ == "__main__":
         x = trans.transform.translation.x
         y = trans.transform.translation.y
 
+        if hypot(velocity[0], velocity[1]) > velocity_threshold:
+            x += velocity[0] * lookahead_dt
+            y += velocity[1] * lookahead_dt
+
         closest_dist_sq = 99999
         reef_distances = []
         coral_distances = []
-        
         for (tag_x, tag_y, is_on_reef) in tags:
             dist_sq = (tag_x - x) ** 2 + (tag_y - y) ** 2
             if is_on_reef:
@@ -162,9 +172,9 @@ if __name__ == "__main__":
         #rospy.loginfo(f"{tag_x, tag_y}")
         dist_sq = min(closest_coral[0], closest_reef[0])
 
-        if dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
-            closest_tag = (tag_x, tag_y)
-            closest_dist_sq = dist_sq
+        # if dist_sq < too_close_zone ** 2: # if we're very close to something, we should stay aligned to that
+        #     closest_tag = (tag_x, tag_y)
+        #     closest_dist_sq = dist_sq
         
         if is_auto or not should_run:
             continue
