@@ -75,10 +75,12 @@ def team_color_callback(msg: MatchSpecificData):
     team_color = msg.allianceColor
     is_auto = msg.Autonomous
 
-velocity = (0.0, 0.0)
+vel_x = 0.0
+vel_y = 0.0
 def velocity_callback(msg: Twist):
-    global velocity
-    velocity = (msg.linear.x, msg.linear.y)
+    global vel_x, vel_y
+    vel_x = msg.linear.x
+    vel_y = msg.linear.y
 
 should_run = True
 def handle_service(req):
@@ -131,9 +133,9 @@ if __name__ == "__main__":
         x = trans.transform.translation.x
         y = trans.transform.translation.y
 
-        if hypot(velocity[0], velocity[1]) > velocity_threshold:
-            x += velocity[0] * lookahead_dt
-            y += velocity[1] * lookahead_dt
+        if hypot(vel_x, vel_y) > velocity_threshold:
+            x += vel_x * lookahead_dt
+            y += vel_y * lookahead_dt
 
         closest_dist_sq = 99999
         reef_distances = []
