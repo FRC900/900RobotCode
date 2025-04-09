@@ -22,7 +22,9 @@ from std_msgs.msg import String
 IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.DriveForward,
                                     1: AutonomousNames.FourCoralProcessor,
                                     2: AutonomousNames.FourCoralNonProcessor,
-                                    3: AutonomousNames.PushFourCoral}
+                                    3: AutonomousNames.PushFourCoral,
+                                    4: AutonomousNames.OneCoralMidProcessor, # actually scores non processor side first, then for the 2-coral goes to the processor side
+                                    5: AutonomousNames.OneCoralMidNonProcessor} # actually scores processor side first, then for the 2-coral goes to the non processor side
 
 class AutoNode():
     def __init__(self):        

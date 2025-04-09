@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json, sys
 
-with open("2025_4_Coral_Processor_Side.traj") as f:
+with open("2025_2_Mid_Coral.traj") as f:
     data = json.load(f)
 
 new_waypoints = []
@@ -18,5 +18,5 @@ for waypoint in data["params"]["waypoints"]:
 
 data["params"]["waypoints"] = new_waypoints
 
-with open("2025_4_Coral.traj", "w") as f:
+with open("2025_2_Mid_Coral_NonProcessor.traj", "w") as f:
     json.dump(data, f)
