@@ -2,8 +2,8 @@
 #define STAGE2_CORNERS_INC__
 
 #include "cuda_runtime.h"
-#include "grid_prior_value.h"
-#include "span.hpp"
+#include "deeptag_ros/grid_prior_value.h"
+#include "deeptag_ros/span.hpp"
 
 class Stage2Corners
 {
@@ -18,7 +18,7 @@ public:
 
     virtual ~Stage2Corners();
     void compute(const float *input, const tcb::span<const GridPriorValue> &priors, const float centerVariance, cudaStream_t cudaStream);
-    const tcb::span<const float2> getDeviceOutput(void);
+    // const tcb::span<const float2> getDeviceOutput(void);
     const tcb::span<const float2> getHostOutput(void);
 
 private:
