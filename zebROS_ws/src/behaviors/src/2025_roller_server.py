@@ -132,6 +132,8 @@ class Roller2025ActionServer(object):
                 pct_out.data = self.l2_roller_speed
             elif goal.mode == goal.L1:
                 pct_out.data = self.l1_roller_speed
+            else:
+                rospy.logwarn("2025_roller_server: Invalid action: {}. No corresponding roller speed!".format(str(goal.mode)))
             self.roller_client.call(RollerSrvRequest(pct_out.data))
             while self.switch == 1 and not rospy.is_shutdown():
                 if self._as.is_preempt_requested():
