@@ -1,7 +1,7 @@
 intake_roller_speed: 2.0
-l1_roller_speed: 1.2
-l2_roller_speed: 1.5
-l3_roller_speed: 1.5
+l1_roller_speed: 2.0
+l2_roller_speed: 2.0
+l3_roller_speed: 2.0
 l4_roller_speed: 2.0
 slow_roller_speed: 2.0
 controller_name: "roller_controller"
