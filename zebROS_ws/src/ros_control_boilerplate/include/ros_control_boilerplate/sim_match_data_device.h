@@ -21,16 +21,16 @@ public:
     explicit SimMatchDataDevice(const ros::NodeHandle &nh);
     SimMatchDataDevice(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice(SimMatchDataDevice &&other) noexcept = delete;
-    virtual ~SimMatchDataDevice();
+    ~SimMatchDataDevice() override;
 
     SimMatchDataDevice &operator=(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice &operator=(SimMatchDataDevice &&) noexcept = delete;
 
-    void read(const ros::Time& time, const ros::Duration& period);
+    void read(const ros::Time& time, const ros::Duration& period) override;
 
-    void simInit(ros::NodeHandle nh);
+    void simInit(ros::NodeHandle &nh) override;
 
-    std::optional<bool> isEnabled(void) const;
+    std::optional<bool> isEnabled(void) const override;
     bool getControlWord(HAL_ControlWord &cw) const;
 
 private:
