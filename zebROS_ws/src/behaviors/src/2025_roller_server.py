@@ -124,13 +124,13 @@ class Roller2025ActionServer(object):
 
         else:
             rospy.loginfo("2025_roller_server: Roller outtaking!")
-            if goal.mode == 0:
+            if goal.mode == goal.L4:
                 pct_out.data = self.l4_roller_speed
-            elif goal.mode == 1:
+            elif goal.mode == goal.L3:
                 pct_out.data = self.l3_roller_speed
-            elif goal.mode == 2:
+            elif goal.mode == goal.L2:
                 pct_out.data = self.l2_roller_speed
-            elif goal.mode == 3:
+            elif goal.mode == goal.L1:
                 pct_out.data = self.l1_roller_speed
             self.roller_client.call(RollerSrvRequest(pct_out.data))
             while self.switch == 1 and not rospy.is_shutdown():
