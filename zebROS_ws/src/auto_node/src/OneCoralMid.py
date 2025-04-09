@@ -21,7 +21,7 @@ class OneCoralMid(AutoBase):
     def __init__(self, name: str, do_push: bool = False) -> None:
         self.__do_push = do_push
         super().__init__(display_name=name, # must match choreo path name
-                         expected_trajectory_count=1) # how many segments of the path there are (split at waypoints)
+                         expected_trajectory_count=3) # how many segments of the path there are (split at waypoints)
 
     def get_action(self) -> SeriesAction:
         drive_traj_iter = DriveTrajectoryActionIterator(self.get_display_name(), self.expected_trajectory_count)

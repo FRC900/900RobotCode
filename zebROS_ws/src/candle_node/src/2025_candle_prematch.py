@@ -21,6 +21,7 @@ from frc_msgs.msg import ButtonBoxState2025
 ORANGE = (255, 165, 0)
 GREEN = (0, 255, 0)
 PURPLE = (255, 0, 255)
+WHITE = (255, 255, 255)
 status_array = [ORANGE] * 43
 
 DOT9V0 = 0
@@ -78,6 +79,8 @@ def auto_mode_callback(msg: AutoMode):
     if msg.auto_mode == 3:
         # push
         status_array[CORRECT_AUTO] = PURPLE
+    if msg.auto_mode == 4 or msg.auto_mode == 5:
+        status_array[CORRECT_AUTO] = WHITE
 
 def imu_callback(imu: Imu):
     global imu_orientation
