@@ -49,15 +49,14 @@ void ROSMathShared::ReportUsage(wpi::math::MathUsageId id, int count)
         HAL_Report(HALUsageReporting::kResourceType_PIDController2, count);
         break;
     case wpi::math::MathUsageId::kController_ProfiledPIDController:
-        HAL_Report(HALUsageReporting::kResourceType_ProfiledPIDController,
-                   count);
+        HAL_Report(HALUsageReporting::kResourceType_ProfiledPIDController, count);
         break;
     case wpi::math::MathUsageId::kController_BangBangController:
         HAL_Report(HALUsageReporting::kResourceType_BangBangController, count);
         break;
     case wpi::math::MathUsageId::kTrajectory_PathWeaver:
-        HAL_Report(HALUsageReporting::kResourceType_PathWeaverTrajectory,
-                   count);
+        HAL_Report(HALUsageReporting::kResourceType_PathWeaverTrajectory, count);
+        break;
     }
 }
 

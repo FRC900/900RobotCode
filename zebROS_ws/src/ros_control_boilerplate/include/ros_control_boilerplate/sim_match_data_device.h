@@ -25,11 +25,11 @@ public:
     SimMatchDataDevice &operator=(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice &operator=(SimMatchDataDevice &&) noexcept = delete;
 
-    void read(const ros::Time& time, const ros::Duration& period);
+    void read(const ros::Time& time, const ros::Duration& period) override;
 
     void simInit(ros::NodeHandle &nh) override;
 
-    std::optional<bool> isEnabled(void) const;
+    std::optional<bool> isEnabled(void) const override;
     bool getControlWord(HAL_ControlWord &cw) const;
 
 private:
