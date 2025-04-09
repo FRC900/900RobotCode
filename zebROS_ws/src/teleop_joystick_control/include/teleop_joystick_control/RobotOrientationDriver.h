@@ -35,6 +35,7 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <teleop_joystick_control/AlignToOrientation.h>
+#include <teleop_joystick_control/orientation_profile.h>
 #include "frc_msgs/MatchSpecificData.h"
 #include "teleop_orientation_msgs/TeleopOrientation.h"
 
@@ -57,6 +58,7 @@ constexpr double INITIAL_ROBOT_ORIENTATION = M_PI / 2.0;
 // explicitly give up control, we just let the timeout happen
 // and teleop naturally takes back over.
 const ros::Duration RESET_TO_TELEOP_CMDVEL_TIMEOUT{0.5};
+const ros::Duration PID_PUBLISH_RATE{1/50.};
 
 class RobotOrientationDriver
 {
@@ -72,7 +74,7 @@ public:
 	void setRobotEnabled(const bool enabled);
 
 	// For debugging?
-	double getTargetOrientation(void) const;
+	double getTargetOrientation(void);
 
 	// Used to generate cmd_vel message in teleop code
 	double getOrientationVelocityPIDOutput(void) const;
@@ -112,8 +114,8 @@ private:
 	ros::Subscriber match_data_sub_; // subscriber to match data, used to get enable/disable
 	ros::ServiceServer robot_orient_service_;
 
-	// The current orientation (angular-Z) setpoint for the drive base
-	double target_orientation_{INITIAL_ROBOT_ORIENTATION};
+	// Object to store orientation target and profile to get there
+	OrientationProfile orientation_profile_;
 
 	// The current orientation of the robot itself
 	double robot_orientation_{INITIAL_ROBOT_ORIENTATION};
@@ -127,7 +129,9 @@ private:
 	// True if most recent target sent to PID is from teleop commands
 	bool most_recent_is_teleop_{true};
 	ros::Timer most_recent_teleop_timer_;
+	ros::Timer pid_publish_timer_;
 
+	void setTargetOrientation(const double angle, const bool from_teleop, const double velocity, const bool drive_from_teleop);
 	void orientationCmdCallback(const std_msgs::Float64::ConstPtr &orientation_cmd);
 	void velocityOrientationCmdCallback(const teleop_orientation_msgs::TeleopOrientation::ConstPtr &orient_msg);
 	void controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort);
@@ -136,6 +140,7 @@ private:
 	void checkFromTeleopTimeout(const ros::TimerEvent &/*event*/);
 	bool holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request &req,
 							   teleop_joystick_control::AlignToOrientation::Response & /* res*/);
+	void publishPIDSetpoint(const ros::TimerEvent & /*event*/);
 	
 	bool joystick_overridden_ = false;
 };

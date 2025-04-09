@@ -23,5 +23,7 @@ teleop_params:
     max_rot_elevator_extended: 0.75
     match_time_to_park: 20.0
     
-
-    #teleop_diagnostics_params:
+orientation_profile:
+    velocity: 6.0
+    acceleration: 20.0
+    jerk: 100.0
