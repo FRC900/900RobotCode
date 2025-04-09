@@ -13,9 +13,9 @@ OrientationProfile::OrientationProfile(const ros::NodeHandle &nh)
     n_params.param<double>("acceleration", ruckig_input_.max_acceleration[0], 12.0);
     n_params.param<double>("jerk", ruckig_input_.max_jerk[0], 64.0);
 
-    ddr_.registerVariable<double>("velocity", &ruckig_input_.max_velocity[0], "Orientation profile velocity", 0.0, 20.0);
-    ddr_.registerVariable<double>("acceleration", &ruckig_input_.max_acceleration[0], "Orientation profile acceleration", 0.0, 200.0);
-    ddr_.registerVariable<double>("jerk", &ruckig_input_.max_jerk[0], "Orientation profile jerk", 0.0, 1000.0);
+    ddr_.registerVariable("velocity", ruckig_input_.max_velocity.data(), "Orientation profile velocity", 0.0, 20.0);
+    ddr_.registerVariable("acceleration", ruckig_input_.max_acceleration.data(), "Orientation profile acceleration", 0.0, 200.0);
+    ddr_.registerVariable("jerk", ruckig_input_.max_jerk.data(), "Orientation profile jerk", 0.0, 1000.0);
 
     ddr_.publishServicesTopics();
 
