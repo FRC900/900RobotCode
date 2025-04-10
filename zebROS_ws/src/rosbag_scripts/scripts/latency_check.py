@@ -10,7 +10,7 @@ VEL_THRESHOLD = 0.01  # Threshold to consider velocity as non-zero
 def get_enable_time(bag):
     for topic, msg, t in bag.read_messages(topics=[ENABLE_TOPIC]):
         try:
-            if msg.enabled:  # Adjust this if the actual field name is different
+            if msg.Enabled:  # Adjust this if the actual field name is different
                 return t.to_sec()
         except AttributeError:
             print("Message from /frcrobot_rio/match_data does not have 'enabled' field.")
@@ -20,7 +20,7 @@ def get_enable_time(bag):
 def get_first_nonzero_cmd_vel_time(bag):
     for topic, msg, t in bag.read_messages(topics=[CMD_VEL_TOPIC]):
         try:
-            vel = math.hypot(msg.linear.x, msg.linear.y)
+            vel = math.hypot(msg.twist.linear.x, msg.twist.linear.y)
             if vel > VEL_THRESHOLD:
                 return t.to_sec()
         except AttributeError:
@@ -46,4 +46,4 @@ def main(bagfile):
 
     bag.close()
 
-
+main("rosbags/19700101_000642_NCCMP_Q12.bag")
