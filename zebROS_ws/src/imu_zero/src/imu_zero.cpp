@@ -136,19 +136,17 @@ namespace tf2
 
 }
 
-bool robot_enabled = false; // don't zero until confirmed disabled
+bool tagslam_zeroing_enabled = true;
 
 void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg) {
-  robot_enabled = robot_enabled || (msg->Enabled);
+  tagslam_zeroing_enabled = tagslam_zeroing_enabled && (!(msg->Enabled));
 }
-
-bool tagslam_zeroing_enabled = false;
 
 void tagslamCallback(const nav_msgs::Odometry::ConstPtr& msg) {
   // TODO: do we want to confirm multiple tag detections were used to create this estimate?
   // Probably not, since we'll be doing it for all of auto and have overlapping FOVs
   // ROS_INFO_STREAM("TagSLAM " << tagslam_zeroing_enabled << ", " << robot_enabled);
-  if (tagslam_zeroing_enabled && !robot_enabled) {
+  if (tagslam_zeroing_enabled) {
     // ROS_INFO_STREAM("tagslam active!");
     double roll, pitch, yaw;
     tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);

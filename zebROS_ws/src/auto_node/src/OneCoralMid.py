@@ -30,6 +30,7 @@ class OneCoralMid(AutoBase):
         tw.linear.y = 0  
         
         actions = [
+            WaitAction(2.0),
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT_START),

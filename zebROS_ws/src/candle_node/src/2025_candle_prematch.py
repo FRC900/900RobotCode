@@ -76,10 +76,10 @@ def twist_callback(msg: TwistStamped):
 def auto_mode_callback(msg: AutoMode):
     if msg.auto_mode == 1 or msg.auto_mode == 2:
         status_array[CORRECT_AUTO] = GREEN
-    if msg.auto_mode == 3:
+    if msg.auto_mode == 5:
         # push
         status_array[CORRECT_AUTO] = PURPLE
-    if msg.auto_mode == 4 or msg.auto_mode == 5:
+    if msg.auto_mode == 3 or msg.auto_mode == 4:
         status_array[CORRECT_AUTO] = WHITE
 
 def imu_callback(imu: Imu):
