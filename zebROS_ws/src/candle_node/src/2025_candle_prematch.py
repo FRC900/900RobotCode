@@ -7,6 +7,7 @@ from candle_controller_msgs.srv import Colour, ColourRequest
 from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
 from sensor_msgs.msg import Imu
 from frc_msgs.msg import MatchSpecificData
+import time
 from time import sleep
 from candle_controller_msgs.srv import ColourArray, ColourArrayRequest
 from candle_controller_msgs.msg import CANdleColour
@@ -73,7 +74,9 @@ imu_orientation: Quaternion = Quaternion(0,0,0,1)
 
 zeroed_while_calibrating = False
 
-time_last = rospy.Time().to_sec()
+time_last = time.time()
+
+time_since_last_change = 0
 
 pigeon_zeroing_count = 0 # pigeon2 no motion count of last message
 
@@ -183,17 +186,25 @@ def button_box_callback(msg: ButtonBoxState2025):
 def imu_zero_callback(pigeon2state: Pigeon2State):
     global zeroed_while_calibrating
     global time_last
+    global time_since_last_change
     global pigeon_zeroing_count
 
     pigeon_no_motion_count = pigeon2state.no_motion_count[pigeon2state.name.index("pigeon2")]
-    time_delta = rospy.Time().to_sec() - time_last
-    if int(pigeon_no_motion_count) != pigeon_zeroing_count or time_delta < 0.75:
+    time_delta = time.time() - time_last
+    if int(pigeon_no_motion_count) == pigeon_zeroing_count:
+        time_since_last_change += time_delta
+    else:
+        time_since_last_change == 0
+
+    if int(pigeon_no_motion_count) != pigeon_zeroing_count or time_since_last_change < 0.75: # what if msg is sent every 0.01 secs with no change after 0.75
         zeroed_while_calibrating = True
-        time_last = rospy.Time().to_sec()
+        time_last = time.time()
         pigeon_zeroing_count = pigeon_no_motion_count
         status_array[NO_MOTION_CALIBRATION] = GREEN
+        # print("zeroed green")
     else:
-        zeroed_while_calibrating = False
+        zeroed_while_calibrating = False 
+        # print("not zeroed green")
 
 wanted_x = None
 imu_orientation = None
