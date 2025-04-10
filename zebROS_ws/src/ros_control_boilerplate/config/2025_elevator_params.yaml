@@ -6,6 +6,12 @@ elevator_controller:
       - [0.0, 0.3]
       - [0.44, 0.3]
       - [1.07, 0.35]
+    
+    motion_magic_velocity_fast: 3.6
+    motion_magic_acceleration_fast: 10.0
+    
+    motion_magic_velocity_slow: 1.5
+    motion_magic_acceleration_slow: 4.0
 
     elevator_joint: [ 'elevator_leader', 'elevator_follower' ]
     dynamic_reconfigure: True

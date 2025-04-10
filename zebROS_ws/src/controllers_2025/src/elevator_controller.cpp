@@ -87,6 +87,30 @@ public:
             return false;
         }
 
+        if (!readIntoScalar(controller_nh, "motion_magic_velocity_fast", motion_magic_velocity_fast_))
+        {
+            ROS_ERROR("Could not find motion_magic_velocity_fast");
+            return false;
+        }
+
+        if (!readIntoScalar(controller_nh, "motion_magic_acceleration_fast", motion_magic_acceleration_fast_))
+        {
+            ROS_ERROR("Could not find motion_magic_acceleration_fast");
+            return false;
+        }
+
+        if (!readIntoScalar(controller_nh, "motion_magic_velocity_slow", motion_magic_velocity_slow_))
+        {
+            ROS_ERROR("Could not find motion_magic_velocity_slow");
+            return false;
+        }
+
+        if (!readIntoScalar(controller_nh, "motion_magic_acceleration_slow", motion_magic_acceleration_slow_))
+        {
+            ROS_ERROR("Could not find motion_magic_acceleration_slow");
+            return false;
+        }
+
         // get config values for the elevator talon
         XmlRpc::XmlRpcValue elevator_params;
         if (!controller_nh.getParam("elevator_joint", elevator_params))
@@ -130,7 +154,7 @@ public:
                 [this](double b)
                 { current_limit_for_zero_.store(b); },
                 "Current threshold for zeroing the elevator",
-                50, 0.0);
+                0.0, 50.0);
 
             ddr_->registerVariable<double>(
                 "elevator_zeroing_timeout",
@@ -140,6 +164,42 @@ public:
                 { elevator_zeroing_timeout_.store(b); },
                 "Elevator Zeroing Timeout",
                 0.0, 15.0);
+            
+            ddr_->registerVariable<double>(
+                "motion_magic_velocity_fast",
+                [this]()
+                { return motion_magic_velocity_fast_.load(); },
+                [this](double b)
+                { motion_magic_velocity_fast_.store(b); },
+                "Fast Motion Magic cruise velocity (for going up)",
+                0.0, 6.0);
+            
+            ddr_->registerVariable<double>(
+                "motion_magic_velocity_slow",
+                [this]()
+                { return motion_magic_velocity_slow_.load(); },
+                [this](double b)
+                { motion_magic_velocity_slow_.store(b); },
+                "Slow Motion Magic cruise velocity (for going down)",
+                0.0, 6.0);
+            
+            ddr_->registerVariable<double>(
+                "motion_magic_acceleration_fast",
+                [this]()
+                { return motion_magic_acceleration_fast_.load(); },
+                [this](double b)
+                { motion_magic_acceleration_fast_.store(b); },
+                "Fast Motion Magic acceleration (for going up)",
+                0.0, 20.0);
+            
+            ddr_->registerVariable<double>(
+                "motion_magic_acceleration_slow",
+                [this]()
+                { return motion_magic_acceleration_slow_.load(); },
+                [this](double b)
+                { motion_magic_acceleration_slow_.store(b); },
+                "Slow Motion Magic acceleration (for going down)",
+                0.0, 20.0);
 
             ddr_->publishServicesTopics();
         }
@@ -169,6 +229,8 @@ public:
                 zeroed_ = true;
                 elevator_joint_.setRotorPosition(0);
                 elevator_joint_.setControlFeedforward(find_feedforward());
+                elevator_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_fast_);
+                elevator_joint_.setMotionMagicAcceleration(motion_magic_acceleration_fast_);
             }
         }
 
@@ -179,8 +241,22 @@ public:
             {
                 position_command_ = elevator_joint_.getPosition();
             }
+            double cached_position_command = position_command_;
+            if (elevator_joint_.getControlMode() != hardware_interface::talonfxpro::TalonMode::Disabled && cached_position_command != last_position_command_) {
+                // Command is different from last time. If the new command is lower than the current position, run slowly. Otherwise, run fast.
+                if (cached_position_command < elevator_joint_.getPosition()) {
+                    // Going down
+                    elevator_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_slow_);
+                    elevator_joint_.setMotionMagicAcceleration(motion_magic_acceleration_slow_);
+                } else {
+                    // Going up
+                    elevator_joint_.setMotionMagicCruiseVelocity(motion_magic_velocity_fast_);
+                    elevator_joint_.setMotionMagicAcceleration(motion_magic_acceleration_fast_);
+                }
+            }
+            last_position_command_ = cached_position_command;
             elevator_joint_.setControlOutput(0);
-            elevator_joint_.setControlPosition(position_command_);
+            elevator_joint_.setControlPosition(cached_position_command);
             elevator_joint_.setControlVelocity(0);
             elevator_joint_.setControlAcceleration(0);
             elevator_joint_.setControlSlot(0);
@@ -260,6 +336,7 @@ private:
 
     talonfxpro_controllers::TalonFXProControllerInterface elevator_joint_;
 
+    std::atomic<double> last_position_command_;
     std::atomic<double> position_command_;
     ros::ServiceServer elevator_service_; // service for receiving commands
 
@@ -283,6 +360,10 @@ private:
     std::atomic<double> elevator_zeroing_percent_output_;
     std::atomic<double> elevator_zeroing_timeout_;
     std::atomic<double> current_limit_for_zero_;
+    std::atomic<double> motion_magic_velocity_fast_;
+    std::atomic<double> motion_magic_velocity_slow_;
+    std::atomic<double> motion_magic_acceleration_fast_;
+    std::atomic<double> motion_magic_acceleration_slow_;
 
     std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
