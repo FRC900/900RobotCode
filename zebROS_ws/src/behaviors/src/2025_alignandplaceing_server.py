@@ -4,6 +4,7 @@ import rospy
 import actionlib
 
 import math
+import time
 
 from std_srvs.srv import SetBool
 from behavior_actions.msg import AlignAndPlace2025Action, AlignAndPlace2025Goal, AlignAndPlace2025Result, AlignAndPlace2025Feedback
@@ -174,6 +175,9 @@ class AlignAndPlaceServer(object):
         
         rospy.loginfo('%s: Succeeded' % self._action_name)
         self._as.set_succeeded(self._result)
+
+        time.sleep(1.0)
+
         reenable_auto_rotate()
 
 if __name__ == '__main__':
