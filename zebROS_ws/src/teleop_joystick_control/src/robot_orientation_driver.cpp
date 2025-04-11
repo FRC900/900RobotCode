@@ -1,5 +1,4 @@
 // TODO - consider tying pid enable pub to robot enabled?
-#include <angles/angles.h>
 #include <std_msgs/Bool.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -19,9 +18,11 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	, imu_sub_{nh_.subscribe("/imu/zeroed_imu", 1, &RobotOrientationDriver::imuCallback, this, ros::TransportHints().tcpNoDelay())}
 	, match_data_sub_{nh_.subscribe("/frcrobot_rio/match_data", 1, &RobotOrientationDriver::matchStateCallback, this)}
     , robot_orient_service_{nh_.advertiseService("set_teleop_orient", &RobotOrientationDriver::holdTargetOrientation, this)}
+	, orientation_profile_{nh_}
 	// one_shot = true, auto_start = false
 	// inversting that
 	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
+	, pid_publish_timer_{nh_.createTimer(PID_PUBLISH_RATE, &RobotOrientationDriver::publishPIDSetpoint, this, false, true)}
 {
 	// Make sure the PID node is enabled
 	std_msgs::Bool enable_pub_msg;
@@ -29,13 +30,43 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	pid_enable_pub_.publish(enable_pub_msg);
 }
 
+void RobotOrientationDriver::publishPIDSetpoint(const ros::TimerEvent & /*event*/)
+{
+	// Publish desired robot orientation to the PID node
+	pid_velocity_msg::PIDVelocity pid_setpoint_msg;
+	const auto orientation_state = orientation_profile_.getOrientationState();
+	pid_setpoint_msg.position = orientation_state.position;
+	pid_setpoint_msg.velocity = orientation_state.velocity;
+	pid_setpoint_pub_.publish(pid_setpoint_msg);
+}
 
+// Interface to teleop code to set the desired orientation of the robot
+// Expose the from_teleop flag to allow the teleop code to determine if
+// the teleop evaluateCommands function is driving the robot (used only
+// in the case of green button driving, which has a separate cmd_vel publisher)
 void RobotOrientationDriver::setTargetOrientation(const double angle, const bool from_teleop, const double velocity)
 {
-	//ROS_INFO_STREAM("Setting orientation with from teleop =" << from_teleop);
+	setTargetOrientation(angle, from_teleop, velocity, false);
+}
+
+// Internal common function to handle setting the desired orientation of the robot
+void RobotOrientationDriver::setTargetOrientation(const double angle, const bool from_teleop, const double velocity, const bool drive_in_teleop)
+{
 	if (robot_enabled_)
 	{
-		target_orientation_ = angle;
+		// Don't motion profile if we're in teleop mode
+		// Don't use internal motion profile if velocity is priovided
+		//   by an external node already calculating the velocity as
+		//   (hopefully) part of its own profiling
+		// TODO - a check on delta angle - don't profile small motions?
+		if (from_teleop || (velocity != 0))
+		{
+			orientation_profile_.setOrientationTarget(OrientationState(angle, velocity));
+		}
+		else
+		{
+			orientation_profile_.createProfile(robot_orientation_, angle);
+		}
 	}
 	else
 	{
@@ -43,16 +74,9 @@ void RobotOrientationDriver::setTargetOrientation(const double angle, const bool
 		// If the robot is disabled, set the desired orientation to the
 		// current orientation to prevent the robot from snapping to a
 		// random angle when reenabled
-		target_orientation_ = robot_orientation_;
+		orientation_profile_.setOrientationTarget(OrientationState(robot_orientation_, 0));
 	}
-	most_recent_is_teleop_ = from_teleop;
-	// Publish desired robot orientation to the PID node
-	pid_velocity_msg::PIDVelocity pid_setpoint_msg;
-	target_orientation_ = angles::normalize_angle(target_orientation_);
-	pid_setpoint_msg.position = target_orientation_;
-	pid_setpoint_msg.velocity = velocity;
-	//ROS_INFO_STREAM_THROTTLE(2, "Publishing pid setpoid with value " << pid_setpoint_msg);
-	pid_setpoint_pub_.publish(pid_setpoint_msg);
+	most_recent_is_teleop_ = from_teleop || drive_in_teleop;
 
 	// Reset the "non-teleop mode has timed-out" timer
 	if (!from_teleop)
@@ -60,9 +84,6 @@ void RobotOrientationDriver::setTargetOrientation(const double angle, const bool
 		most_recent_teleop_timer_.stop();
 		most_recent_teleop_timer_.start();
 	}
-
-	//ROS_INFO_STREAM("Target orientation = " << target_orientation_ << " state = " << robot_orientation_);
-	//ROS_INFO_STREAM(__FUNCTION__ << "pub enable = " << (int)enable_pub_msg.data );
 }
 
 // Set the desired orientation to the current IMU orientation
@@ -74,14 +95,13 @@ void RobotOrientationDriver::stopRotation(void)
 
 void RobotOrientationDriver::orientationCmdCallback(const std_msgs::Float64::ConstPtr &orient_msg)
 {
-	//ROS_INFO_STREAM(__FUNCTION__ << " angle = " << orient_msg->data);
 	setTargetOrientation(orient_msg->data, false);
 }
 
 void RobotOrientationDriver::velocityOrientationCmdCallback(const teleop_orientation_msgs::TeleopOrientation::ConstPtr &orient_msg)
 {
-	// ROS_INFO_STREAM(__FUNCTION__ << " angle = " << orient_msg->position << " drive_from_teleop = " << (int)orient_msg->drive_from_teleop << " velocity = " << orient_msg->velocity);
-	setTargetOrientation(orient_msg->position, orient_msg->drive_from_teleop, orient_msg->velocity);
+	// Using the drive_from_teleop flag will let the robot know to use a profile if velocity is 0.
+	setTargetOrientation(orient_msg->position, false, orient_msg->velocity, orient_msg->drive_from_teleop);
 }
 
 void RobotOrientationDriver::controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort)
@@ -93,7 +113,6 @@ void RobotOrientationDriver::controlEffortCallback(const std_msgs::Float64::Cons
 
 void RobotOrientationDriver::setRobotOrientation(const double angle)
 {
-	//ROS_INFO_STREAM(__FUNCTION__ << " angle = " << angle);
 	robot_orientation_ = angle;
 	// If the robot is disabled, set the desired orientation to the
 	// current orientation to prevent the robot from snapping to a
@@ -111,7 +130,6 @@ void RobotOrientationDriver::setRobotOrientation(const double angle)
 
 void RobotOrientationDriver::setRobotEnabled(const bool enabled)
 {
-	//ROS_INFO_STREAM(__FUNCTION__ << " robot_enabled = " << enabled);
 	robot_enabled_ = enabled;
 	// If the robot is disabled, set the desired orientation to the
 	// current orientation to prevent the robot from snapping to a
@@ -127,9 +145,9 @@ double RobotOrientationDriver::getCurrentOrientation(void) const
 	return robot_orientation_; 
 }
 
-double RobotOrientationDriver::getTargetOrientation(void) const
+double RobotOrientationDriver::getTargetOrientation(void)
 {
-	return target_orientation_;
+	return orientation_profile_.getOrientationState().position;
 }
 
 bool RobotOrientationDriver::getRobotEnabled(void) const

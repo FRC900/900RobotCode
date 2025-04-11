@@ -22,7 +22,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	adi_pico_driver \
 	ar_track_alvar \
 	apriltag_launch \
-    apriltag_ros \
+	apriltag_ros \
 	base_trajectory \
 	compressed_image_transport \
 	compressed_depth_image_transport \
