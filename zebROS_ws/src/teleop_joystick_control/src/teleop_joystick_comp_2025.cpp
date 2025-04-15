@@ -31,6 +31,9 @@
 
 #include "talon_controller_msgs/Command.h"
 
+#include <Xinput.h>
+#pragma comment(lib, "Xinput.lib")
+
 class AutoModeCalculator2025 : public AutoModeCalculator {
 public:
 	explicit AutoModeCalculator2025(ros::NodeHandle &n)
@@ -70,10 +73,39 @@ ros::ServiceClient toggle_no_motion_calibration_client;
 bool currently_outtaking = false;
 bool not_safe = true;
 bool placing_in_safe = false;
+
+bool aligning = false; // logic for subscribing to a msg that tells us if we are aligning or not
+ros::Time last_seen_time;
 // void talonFXProStateCallback(const talon_state_msgs::TalonFXProStateConstPtr &talon_state)
 // {    
 // 	ROS_WARN("Calling unimplemented function \"talonFXProStateCallback()\" in teleop_joystick_comp_2025.cpp ");
 // }
+
+void vibrateController(WORD leftSpeed, WORD rightSpeed, DWORD durationMs) {
+    XINPUT_VIBRATION vibration = {};
+    vibration.wLeftMotorSpeed = leftSpeed;
+    vibration.wRightMotorSpeed = rightSpeed;
+    XInputSetState(0, &vibration); 
+    Sleep(durationMs);
+    vibration.wLeftMotorSpeed = 0;
+    vibration.wRightMotorSpeed = 0;
+    XInputSetState(0, &vibration);
+}
+
+void checkForMissingTag(const ros::TimerEvent&) {
+    ros::Duration time_since_seen = ros::Time::now() - last_seen_time;
+    if (time_since_seen.toSec() > 1.0 && aligning) { 
+        vibrateController(30000, 30000, 500); 
+    }
+}
+
+void aligningCallback(const std_msgs::Bool::ConstPtr& msg) {
+	aligning = msg->data;
+}
+
+void tagSeenCallback(const std_msgs::Empty::ConstPtr&) {
+    last_seen_time = ros::Time::now();
+}
 
 void evaluateCommands(const frc_msgs::JoystickStateConstPtr& joystick_state, int joystick_id)	
 {
@@ -844,7 +876,11 @@ int main(int argc, char **argv)
 	roller_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::Roller2025Action>>("/roller/roller_server_2025", true);
 	pulse_outtake_ac = std::make_unique<actionlib::SimpleActionClient<behavior_actions::PulseOuttake2025Action>>("/pulse_outtake/pulse_server_2025", true);
 
+	ros::Timer missing_tag_timer = n.createTimer(ros::Duration(0.1), checkForMissingTag);
+
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
+	ros::Subscriber align_sub = n.subscribe("/aligning", 1, aligningCallback); // assumes that whatever msg publishes this will publish a bool
+	ros::Subscriber last_seen_sub = n.subscribe("/tag_last_seen", 1, tagSeenCallback); // assumes that this is only published when a tag is seen (i.e., it is not a bool)
 
 	outtaking_client = n.serviceClient<talon_controller_msgs::Command>("/frcrobot_jetson/intake_controller/command", false, {{"tcp_nodelay", "1"}});
 	toggle_auto_rotate_client = n.serviceClient<std_srvs::SetBool>("/auto_rotating/toggle_auto_rotate", false, {{"tcp_nodelay", "1"}});
