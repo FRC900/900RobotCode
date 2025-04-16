@@ -12,6 +12,7 @@ from wait_trajectory_action import WaitTrajectoryAction
 from geometry_msgs.msg import Twist
 from cmd_vel_action import CmdVelAction
 from early_exit_parallel_action import EarlyExitParallelAction
+from elevater_action import ElevaterAction
 import math
 
 class FourCoral(AutoBase):
@@ -31,6 +32,7 @@ class FourCoral(AutoBase):
         
         actions = [
             ParallelAction([
+                ElevaterAction(),
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT_START),
                               PlacingAction(True)
