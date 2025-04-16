@@ -4,6 +4,7 @@
 enum class imageFormat
 {
     IMAGE_MONO8,
+    IMAGE_MONO32F,
     IMAGE_RGB8,
     IMAGE_BGR8,
     IMAGE_RGBA8,
