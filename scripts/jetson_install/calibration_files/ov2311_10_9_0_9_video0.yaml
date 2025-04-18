@@ -1,17 +1,19 @@
+# The physical camera formerly attached to 10.9.0.9 video0 is now on 10.9.0.10 video1
+# The physical camera formerly attached to 10.9.0.10 video1 is now on 10.9.0.9 video0
 image_width: 1600
 image_height: 1300
 camera_name: ov2311_10_9_0_9_video0
 camera_matrix:
   rows: 3
   cols: 3
-  data: [905.2780997000,   0.     , 796.1073700000,
-           0.     , 905.2526142000 , 680.8553286000 ,
-           0.     ,   0.     ,   1.     ]
+  data: [907.2721815000, 0.000000, 814.7433726000,
+         0.000000, 907.6101155000, 620.1123461000,
+         0.000000, 0.000000, 1.000000]
 distortion_model: plumb_bob
 distortion_coefficients:
   rows: 1
   cols: 5
-  data: [0.0489116686, -0.0826897586, 0.0012620946, -0.0003600987, 0.0237817782]
+  data: [0.0515620002, -0.0849351111, -0.0000775698, -0.0004525302, 0.0214064690]
 rectification_matrix:
   rows: 3
   cols: 3
@@ -21,6 +23,6 @@ rectification_matrix:
 projection_matrix:
   rows: 3
   cols: 4
-  data: [905.2780997,   0.     , 796.10737,   0.     ,
-           0.     , 905.2526142 , 680.8553286,   0.     ,
-           0.     ,   0.     ,   1.     ,   0.     ]
+  data: [907.2721815, 0.000000, 814.7433726, 0.000000,
+         0.000000, 907.6101155, 620.1123461, 0.000000,
+         0.000000, 0.000000, 1.000000, 0.000000]
