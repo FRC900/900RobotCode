@@ -19,6 +19,10 @@ class TagSLAMRepublisher:
     manual_alliance = MatchSpecificData.ALLIANCE_COLOR_UNKNOWN
     red_ignored = True
     blue_ignored = True
+    last_alliance_color = MatchSpecificData.ALLIANCE_COLOR_UNKNOWN
+
+    LEFT_CAM_IDX = 2 # .10
+    RIGHT_CAM_IDX = 0 # .9
 
     def __init__(self):
         self.tagslam_sub = rospy.Subscriber("/tagslam/odom/body_frc_robot", Odometry, callback=self.tagslam_cb, tcp_nodelay=True, queue_size=1)
@@ -30,7 +34,97 @@ class TagSLAMRepublisher:
                                 rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_9_video1/set_allowed_tags_service", SetAllowedTags),
                                 rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_10_video0/set_allowed_tags_service", SetAllowedTags),
                                 rospy.ServiceProxy("/apriltag_detection_ov2311_10_9_0_10_video1/set_allowed_tags_service", SetAllowedTags)]
+        self.disable_left_tags_srv = rospy.Service("disable_left_tags", SetBool, self.disable_left_tags_cb)
+        self.disable_right_tags_srv = rospy.Service("disable_right_tags", SetBool, self.disable_right_tags_cb)
     
+    def disable_left_tags_cb(self, req: SetBoolRequest):
+        # true = disable
+        # ALWAYS REENABLE AFTER PLACING
+        if req.data:
+            rospy.logwarn("Disabling tags for left camera")
+            req = SetAllowedTagsRequest()
+            req.allowed_tags = []
+            try:
+                self.tag_allow_srvs[self.LEFT_CAM_IDX].wait_for_service(timeout=0.01)
+                self.tag_allow_srvs[self.LEFT_CAM_IDX].call(req)
+            except:
+                rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.LEFT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+        else:
+            rospy.logwarn("Enabling tags for left camera")
+            if self.last_alliance_color == MatchSpecificData.ALLIANCE_COLOR_RED:
+                rospy.loginfo("We are red alliance")
+                req = SetAllowedTagsRequest()
+                req.allowed_tags = RED_TAGS
+                try:
+                    self.tag_allow_srvs[self.LEFT_CAM_IDX].wait_for_service(timeout=0.01)
+                    self.tag_allow_srvs[self.LEFT_CAM_IDX].call(req)
+                except:
+                    rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.LEFT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+            elif self.last_alliance_color == MatchSpecificData.ALLIANCE_COLOR_BLUE:
+                rospy.loginfo("We are blue alliance")
+                req = SetAllowedTagsRequest()
+                req.allowed_tags = BLUE_TAGS
+                try:
+                    self.tag_allow_srvs[self.LEFT_CAM_IDX].wait_for_service(timeout=0.01)
+                    self.tag_allow_srvs[self.LEFT_CAM_IDX].call(req)
+                except:
+                    rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.LEFT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+            else:
+                rospy.logwarn("Alliance color is unknown, enabling all tags")
+                req = SetAllowedTagsRequest()
+                req.allowed_tags = RED_TAGS + BLUE_TAGS
+                try:
+                    self.tag_allow_srvs[self.LEFT_CAM_IDX].wait_for_service(timeout=0.01)
+                    self.tag_allow_srvs[self.LEFT_CAM_IDX].call(req)
+                except:
+                    rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.LEFT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+
+        return SetBoolResponse()
+    
+    def disable_right_tags_cb(self, req: SetBoolRequest):
+        # true = disable
+        # ALWAYS REENABLE AFTER PLACING
+        if req.data:
+            rospy.logwarn("Disabling tags for right camera")
+            req = SetAllowedTagsRequest()
+            req.allowed_tags = []
+            try:
+                self.tag_allow_srvs[self.RIGHT_CAM_IDX].wait_for_service(timeout=0.01)
+                self.tag_allow_srvs[self.RIGHT_CAM_IDX].call(req)
+            except:
+                rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.RIGHT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+        else:
+            rospy.logwarn("Enabling tags for right camera")
+            if self.last_alliance_color == MatchSpecificData.ALLIANCE_COLOR_RED:
+                rospy.loginfo("We are red alliance")
+                req = SetAllowedTagsRequest()
+                req.allowed_tags = RED_TAGS
+                try:
+                    self.tag_allow_srvs[self.RIGHT_CAM_IDX].wait_for_service(timeout=0.01)
+                    self.tag_allow_srvs[self.RIGHT_CAM_IDX].call(req)
+                except:
+                    rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.RIGHT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+            elif self.last_alliance_color == MatchSpecificData.ALLIANCE_COLOR_BLUE:
+                rospy.loginfo("We are blue alliance")
+                req = SetAllowedTagsRequest()
+                req.allowed_tags = BLUE_TAGS
+                try:
+                    self.tag_allow_srvs[self.RIGHT_CAM_IDX].wait_for_service(timeout=0.01)
+                    self.tag_allow_srvs[self.RIGHT_CAM_IDX].call(req)
+                except:
+                    rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.RIGHT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+            else:
+                rospy.logwarn("Alliance color is unknown, enabling all tags")
+                req = SetAllowedTagsRequest()
+                req.allowed_tags = RED_TAGS + BLUE_TAGS
+                try:
+                    self.tag_allow_srvs[self.RIGHT_CAM_IDX].wait_for_service(timeout=0.01)
+                    self.tag_allow_srvs[self.RIGHT_CAM_IDX].call(req)
+                except:
+                    rospy.logerr_throttle(1.0, f"service {self.tag_allow_srvs[self.RIGHT_CAM_IDX].resolved_name} is unavailable, trying again next time")
+
+        return SetBoolResponse()
+
     def manual_override_cb(self, req: SetBoolRequest):
         if req.data:
             rospy.logwarn("tagslam_match_data_republisher: ENABLING MANUAL OVERRIDE. HERE BE DRAGONS. (or unicorns?)")
@@ -130,6 +224,8 @@ class TagSLAMRepublisher:
             if success:
                 self.red_ignored = True
                 self.blue_ignored = False
+        
+        self.last_alliance_color = msg.allianceColor
 
         self.match_data_pub.publish(msg)
 
