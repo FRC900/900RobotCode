@@ -20,10 +20,10 @@ if __name__ == '__main__':
         return internal_tag_detection_cb
 
     cameras = rospy.get_param("camera_names", ["ov2311_10_9_0_10_video0", "ov2311_10_9_0_10_video1", "ov2311_10_9_0_9_video0", "ov2311_10_9_0_9_video1"])
-    cameras_last_sent: dict[str, int] = {}
-    camera_pubs: dict[str, rospy.Publisher] = {}
-    camera_subs: dict[str, rospy.Subscriber] = {}
-    last_logged: dict[str, rospy.Time] = {}
+    cameras_last_sent: dict = {}
+    camera_pubs: dict = {}
+    camera_subs: dict = {}
+    last_logged: dict = {}
 
     r = rospy.Rate(rate)
 
