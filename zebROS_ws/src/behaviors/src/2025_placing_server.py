@@ -7,7 +7,6 @@ from behavior_actions.msg import Placing2025Goal, Placing2025Feedback, Placing20
 from behavior_actions.msg import Elevater2025Goal, Elevater2025Feedback, Elevater2025Result, Elevater2025Action
 from behavior_actions.msg import Roller2025Goal, Roller2025Feedback, Roller2025Result, Roller2025Action
 from geometry_msgs.msg import Twist
-from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
 
 class PlacingServer(object):
     DRIVE_BACK_SPEED = 1
@@ -26,28 +25,13 @@ class PlacingServer(object):
         rospy.loginfo('Found Elevater and Roller server')
         self.cmd_vel_pub = rospy.Publisher("/placing/cmd_vel", Twist, tcp_nodelay=True, queue_size=1)
         self.server = actionlib.SimpleActionServer(name, Placing2025Action, execute_cb=self.execute_cb, auto_start = False)
-        self.disable_left_tags_srv = rospy.ServiceProxy("/tagslam_match_data_republisher/disable_left_tags", SetBool)
-        self.disable_right_tags_srv = rospy.ServiceProxy("/tagslam_match_data_republisher/disable_right_tags", SetBool)
         self.server.start()
 
 
     def execute_cb(self, goal : Placing2025Goal):
         r = rospy.Rate(60)
 
-        if goal.setup_only:
-            rospy.loginfo('Placing Server - Setup Mode') # Tell the user that the robot is in setup mode
-        else:
-            # Enable all tags
-            rospy.loginfo("Enabling all tags, aka disable = false")
-            req = SetBoolRequest()
-            req.data = False
-            try:
-                self.disable_left_tags_srv.wait_for_service(timeout=0.01)
-                self.disable_left_tags_srv.call(req)
-                self.disable_right_tags_srv.wait_for_service(timeout=0.01)
-                self.disable_right_tags_srv.call(req)
-            except:
-                rospy.logwarn("womp womp couldn't reenable tags, services down?")
+        if goal.setup_only: rospy.loginfo('Placing Server - Setup Mode') # Tell the user that the robot is in setup mode
         
         elevater_goal = Elevater2025Goal()
         elevater_goal.mode = goal.level
