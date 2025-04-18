@@ -73,8 +73,9 @@ class AlignAndPlaceServer(object):
             req = SetBoolRequest()
             req.data = True
             try:
-                self.disable_right_tags_srv.wait_for_service(timeout=0.01)
-                self.disable_right_tags_srv.call(req)
+                pass
+                # self.disable_right_tags_srv.wait_for_service(timeout=0.01)
+                # self.disable_right_tags_srv.call(req)
             except:
                 rospy.logwarn("couldn't disable tags, services down?")
         if goal.pipe == goal.RIGHT_PIPE:
@@ -82,8 +83,9 @@ class AlignAndPlaceServer(object):
             req = SetBoolRequest()
             req.data = True
             try:
-                self.disable_left_tags_srv.wait_for_service(timeout=0.01)
-                self.disable_left_tags_srv.call(req)
+                pass
+                # self.disable_left_tags_srv.wait_for_service(timeout=0.01)
+                # self.disable_left_tags_srv.call(req)
             except:
                 rospy.logwarn("couldn't disable tags, services down?")
 
