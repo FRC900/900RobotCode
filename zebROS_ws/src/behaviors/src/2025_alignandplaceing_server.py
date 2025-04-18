@@ -6,7 +6,7 @@ import actionlib
 import math
 import time
 
-from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
+from std_srvs.srv import SetBool
 from behavior_actions.msg import AlignAndPlace2025Action, AlignAndPlace2025Goal, AlignAndPlace2025Result, AlignAndPlace2025Feedback
 from behavior_actions.msg import AlignToReef2025Action, AlignToReef2025Goal, AlignToReef2025Result, AlignToReef2025Feedback
 from behavior_actions.msg import Placing2025Action, Placing2025Goal, Placing2025Result, Placing2025Feedback
@@ -28,9 +28,6 @@ class AlignAndPlaceServer(object):
         self.placing_distance = rospy.get_param("placing_distance")
 
         self._action_name = name
-
-        self.disable_left_tags_srv = rospy.ServiceProxy("/tagslam_match_data_republisher/disable_left_tags", SetBool)
-        self.disable_right_tags_srv = rospy.ServiceProxy("/tagslam_match_data_republisher/disable_right_tags", SetBool)
 
         self._as = actionlib.SimpleActionServer(self._action_name, AlignAndPlace2025Action, execute_cb=self.execute_cb, auto_start = False)
         self._as.start()
@@ -67,27 +64,6 @@ class AlignAndPlaceServer(object):
             set_auto_rotate(False)
         except rospy.ServiceException as e:
             rospy.logerr("2025_alignandplaceing_server: toggle_auto_rotate disable service call failed: %s" % e)
-
-        if goal.pipe == goal.LEFT_PIPE:
-            rospy.loginfo("Scoring on the left, so disabling right camera")
-            req = SetBoolRequest()
-            req.data = True
-            try:
-                pass
-                # self.disable_right_tags_srv.wait_for_service(timeout=0.01)
-                # self.disable_right_tags_srv.call(req)
-            except:
-                rospy.logwarn("couldn't disable tags, services down?")
-        if goal.pipe == goal.RIGHT_PIPE:
-            rospy.loginfo("Scoring on the right, so disabling left camera")
-            req = SetBoolRequest()
-            req.data = True
-            try:
-                pass
-                # self.disable_left_tags_srv.wait_for_service(timeout=0.01)
-                # self.disable_left_tags_srv.call(req)
-            except:
-                rospy.logwarn("couldn't disable tags, services down?")
 
         # Call aligning server
         distance = 69
