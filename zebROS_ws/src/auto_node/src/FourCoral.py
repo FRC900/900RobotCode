@@ -13,6 +13,7 @@ from geometry_msgs.msg import Twist
 from cmd_vel_action import CmdVelAction
 from early_exit_parallel_action import EarlyExitParallelAction
 from elevater_action import ElevaterAction
+from disable_camera_action import DisableCameraAction
 import math
 
 class FourCoral(AutoBase):
@@ -21,17 +22,23 @@ class FourCoral(AutoBase):
 
     def __init__(self, name: str, do_push: bool = False) -> None:
         self.__do_push = do_push
+        self.__the_display_name = name
         super().__init__(display_name=name, # must match choreo path name
                          expected_trajectory_count=7) # how many segments of the path there are (split at waypoints)
 
     def get_action(self) -> SeriesAction:
+        # Processor is left, left, right (so first disable right, then disable left)
+        # Non processor is right, right, left
         drive_traj_iter = DriveTrajectoryActionIterator(self.get_display_name(), self.expected_trajectory_count)
         tw = Twist()        
         tw.linear.x = -1     
         tw.linear.y = 0  
+
+        is_processor = "Processor" in self.__the_display_name
         
         actions = [
             ParallelAction([
+                DisableCameraAction(disable_right=True if is_processor else False, disable_left=False if is_processor else True), # if processor, we want left camera, so disable right
                 ElevaterAction(),
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
                 SeriesAction([WaitTrajectoryAction(self.ELEVATOR_PERCENT_START),
@@ -54,7 +61,10 @@ class FourCoral(AutoBase):
             
             EarlyExitParallelAction(
                 wait_for_action_list=[WaitForIntakeAction()],
-                also_run_action_list=[drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05)]
+                also_run_action_list=[
+                    DisableCameraAction(disable_right=False if is_processor else True, disable_left=True if is_processor else False), # if processor, we want right camera, so disable left
+                    drive_traj_iter.get_next_trajectory_action(final_pos_tol=0.06, final_rot_tol=0.05)
+                ]
             ),
             ParallelAction([
                 drive_traj_iter.get_next_trajectory_action(dont_go_to_start=True, enforce_actually_localized=True),
