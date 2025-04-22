@@ -57,14 +57,8 @@ SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap
 
             for (int j = 0; j < joints_array.size(); j++)
             {
-<<<<<<< HEAD
-                std::string controlled_joint_name;
-                readStringRequired(joints_array[j], "name", controlled_joint_name);
-                controlled_joints_.push_back(controlled_joint_name);
-=======
                 readStringRequired(joints_array[j], "name", joint_name);
                 controlled_joints_.push_back(joint_name);
->>>>>>> b643c85a4 (Create an actionlib server which mimics wpilib sysid)
             }
         }
     }
@@ -93,19 +87,11 @@ SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap
         }
     }
 
-<<<<<<< HEAD
     if (!all_talonfxpros.empty())
     {
         XmlRpc::XmlRpcValue xmlrpc_talonfxpros;
         xmlrpc_talonfxpros.setSize(all_talonfxpros.size());
         int i = 0;
-=======
-    if (all_talonfxpros.size() > 0)
-    {
-        XmlRpc::XmlRpcValue xmlrpc_talonfxpros;
-        xmlrpc_talonfxpros.setSize(all_talonfxpros.size());
-        size_t i = 0;
->>>>>>> b643c85a4 (Create an actionlib server which mimics wpilib sysid)
         for (const auto &pair : all_talonfxpros)
         {
             xmlrpc_talonfxpros[i] = pair.second;
