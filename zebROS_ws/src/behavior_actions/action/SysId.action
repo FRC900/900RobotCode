@@ -1,0 +1,20 @@
+
+# True for quasistatic (slow voltage ramp) test
+# False for dynamic (instant voltage step) test
+bool quasistatic
+
+# True for forward (positive) test
+# False for reverse (negative) test
+bool forward
+
+# Quasi-static test, voltage ramp rate in volts per second
+float64 ramp_rate
+
+# For Quasi-static test, the target voltage to ramp to
+# For Dynamic test, the target voltage to step to
+float64 voltage_target
+
+---
+bool success
+---
+float64 voltage_out

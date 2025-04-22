@@ -75,6 +75,7 @@ add_action_files(
 	DIRECTORY
 		action
 	FILES
+		SysId.action
 		Path.action
 		#Climb.action
 		#Intake.action
