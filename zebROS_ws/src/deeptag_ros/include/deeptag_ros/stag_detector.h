@@ -7,14 +7,14 @@
 #include <memory>                            // for unique_ptr:w
 #include <string>                            // for string
 #include <vector>                            // for vector
-#include "confidence_filter.h"               // for Stage1Predicate, Confide...
+#include "deeptag_ros/confidence_filter.h"   // for Stage1Predicate, Confide...
 #include "driver_types.h"                    // for CUevent_st, cudaEvent_t
-#include "grid_prior.h"                      // for GridPrior
-#include "softmax.h"                         // for Softmax
-#include "span.hpp"                          // for span
-#include "ssd_grid_prior.h"                  // for SSDGridPrior
-#include "suppress_and_average_keypoints.h"  // for SuppressAndAverageKeypoints
-#include "tag_detect_info.h"                 // for TagDetectInfo
+#include "deeptag_ros/grid_prior.h"          // for GridPrior
+#include "deeptag_ros/softmax.h"             // for Softmax
+#include "deeptag_ros/span.hpp"              // for span
+#include "deeptag_ros/ssd_grid_prior.h"      // for SSDGridPrior
+#include "deeptag_ros/suppress_and_average_keypoints.h"  // for SuppressAndAverageKeypoints
+#include "deeptag_ros/tag_detect_info.h"     // for TagDetectInfo
 #include "vector_types.h"                    // for ushort2
 template <size_t NUM_TILES, bool USE_SCALED_IMAGE> class DetectionEngine;
 class GpuImageWrapper;

@@ -702,23 +702,32 @@ cv::Mat Engine<CALIBRATOR>::getDebugImage(const size_t imageIdx)
     std::cout << "Input dims = " << inputDims.d[0] << " " << inputDims.d[1] << " " << inputDims.d[2] << " " << inputDims.d[3] << std::endl;
     const int outputHeight = inputDims.d[2];
     const int outputWidth = inputDims.d[3];
-    cv::Mat hR(outputHeight, outputWidth, CV_32FC1);
-    cv::Mat hG(outputHeight, outputWidth, CV_32FC1);
-    cv::Mat hB(outputHeight, outputWidth, CV_32FC1);
     const float *destBuffer = getBufferByName("input");
     const size_t channelStride = outputWidth * outputHeight;
     cudaSafeCall(cudaStreamSynchronize(getCudaStream()));
-    cudaSafeCall(cudaMemcpyAsync(hR.data, destBuffer + (imageIdx * 3 + 0) * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
-    cudaSafeCall(cudaMemcpyAsync(hG.data, destBuffer + (imageIdx * 3 + 1) * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
-    cudaSafeCall(cudaMemcpyAsync(hB.data, destBuffer + (imageIdx * 3 + 2) * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
-    cudaSafeCall(cudaStreamSynchronize(getCudaStream()));
-    std::vector<cv::Mat> channels;
-    channels.push_back(hR);
-    channels.push_back(hG);
-    channels.push_back(hB);
-    cv::Mat fin_img;
-    cv::merge(channels, fin_img);
-    return fin_img;
+    if (inputDims.d[1] == 1)
+    {
+        cv::Mat fin_img(outputHeight, outputWidth, CV_32FC1);
+        cudaSafeCall(cudaMemcpyAsync(fin_img.data, destBuffer + imageIdx * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
+        return fin_img;
+    }
+    else
+    {
+        cv::Mat hR(outputHeight, outputWidth, CV_32FC1);
+        cv::Mat hG(outputHeight, outputWidth, CV_32FC1);
+        cv::Mat hB(outputHeight, outputWidth, CV_32FC1);
+        cudaSafeCall(cudaMemcpyAsync(hR.data, destBuffer + (imageIdx * 3 + 0) * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
+        cudaSafeCall(cudaMemcpyAsync(hG.data, destBuffer + (imageIdx * 3 + 1) * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
+        cudaSafeCall(cudaMemcpyAsync(hB.data, destBuffer + (imageIdx * 3 + 2) * channelStride, channelStride * sizeof(float), cudaMemcpyDeviceToHost, getCudaStream()));
+        cudaSafeCall(cudaStreamSynchronize(getCudaStream()));
+        std::vector<cv::Mat> channels;
+        channels.push_back(hR);
+        channels.push_back(hG);
+        channels.push_back(hB);
+        cv::Mat fin_img;
+        cv::merge(channels, fin_img);
+        return fin_img;
+    }
 }
 
 Int8EntropyCalibrator2::Int8EntropyCalibrator2(int32_t batchSize, int32_t inputW, int32_t inputH,

@@ -151,8 +151,8 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
 #ifdef DEBUG
     static int callNum = 0;
 #endif
-    constexpr size_t outputHW = 256;
-    constexpr size_t imgSize = outputHW * outputHW * 3;
+    const size_t outputHW = 256; // This assumes a square image
+    const size_t imgSize = outputHW * outputHW * batchInput[0].channels();
     const size_t thisBatchSize = std::min(m_rois.size(), static_cast<size_t>(m_options.maxBatchSize));
     //std::cout << "thisBatchSize = " << thisBatchSize << std::endl;
     // Get crop images ordered corners
@@ -173,7 +173,11 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
     cv::Mat inputRoi(4, 2, CV_64FC1);
     for (size_t batchIdx = 0; batchIdx < thisBatchSize; batchIdx++)
     {
-        // std::cout << "batchIdx = " << batchIdx << std::endl;
+        // Create a mapping from the input roi (tag corners) in
+        // the input image to a fixed position in the output image
+        // Assign to a location in the output image with a border
+        // to catch the tag corners even if the initial detection
+        // is off by a bit.
         for (int i = 0; i < 4; i++)
         {
             inputRoi.at<double>(i, 0) = m_rois[batchIdx][i].x;
@@ -193,39 +197,46 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
         std::cout << "H = " << std::endl << "\t" << H << std::endl;
         std::cout << "H.inv() = " << std::endl << "\t" << H.inv() << std::endl;
 #endif
-        m_hH[batchIdx][0] = static_cast<float>(H.at<double>(0, 0));
-        m_hH[batchIdx][1] = static_cast<float>(H.at<double>(0, 1));
-        m_hH[batchIdx][2] = static_cast<float>(H.at<double>(0, 2));
-        m_hH[batchIdx][3] = static_cast<float>(H.at<double>(1, 0));
-        m_hH[batchIdx][4] = static_cast<float>(H.at<double>(1, 1));
-        m_hH[batchIdx][5] = static_cast<float>(H.at<double>(1, 2));
-        m_hH[batchIdx][6] = static_cast<float>(H.at<double>(2, 0));
-        m_hH[batchIdx][7] = static_cast<float>(H.at<double>(2, 1));
-        m_hH[batchIdx][8] = static_cast<float>(H.at<double>(2, 2));
-        // Calculate H mat from roi
-        // Get inv transform matrix (from dest to src)
-        // pass this into a kernel which creates output image at requested
-        // buffer output
-        // Needs to pick appropriate input pixel for each output pixel, possible with bilinear filtering
-        // then split channels, convert to float.
-        cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessRGB(m_hH[batchIdx],
-                                                                        batchInput[0].getDataPtr(),
-                                                                        imageFormat::IMAGE_RGB8,
-                                                                        batchInput[0].cols(),
-                                                                        batchInput[0].rows(),
-                                                                        static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,
-                                                                        outputHW,
-                                                                        outputHW,
-                                                                        float2{0., 1.},
-                                                                        m_preprocCudaStreams[batchIdx]));
-
+        // Use a separate H matrix for each batch entry since they
+        // might not be copied to the device before the next
+        // iteration writes over the same memory
+        for (size_t i = 0; i < 9; i++)
+        {
+            m_hH[batchIdx][i] = static_cast<float>(H.at<double>(i / 3, i % 3));
+        }
+        if (batchInput[0].channels() == 1)
+        {
+            cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessGray(m_hH[batchIdx],
+                                                                             batchInput[0].getDataPtr(),
+                                                                             imageFormat::IMAGE_MONO8,
+                                                                             batchInput[0].cols(),
+                                                                             batchInput[0].rows(),
+                                                                             static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,
+                                                                             outputHW,
+                                                                             outputHW,
+                                                                             float2{0., 1.},
+                                                                             m_preprocCudaStreams[batchIdx]));
+        }
+        else
+        {
+            cudaSafeCall(m_decoderPreprocess[batchIdx].decoderPreprocessRGB(m_hH[batchIdx],
+                                                                            batchInput[0].getDataPtr(),
+                                                                            imageFormat::IMAGE_RGB8,
+                                                                            batchInput[0].cols(),
+                                                                            batchInput[0].rows(),
+                                                                            static_cast<float *>(m_buffers[inputIdx]) + batchIdx * imgSize,
+                                                                            outputHW,
+                                                                            outputHW,
+                                                                            float2{0., 1.},
+                                                                            m_preprocCudaStreams[batchIdx]));
+        }
         cudaSafeCall(cudaEventRecord(m_preprocCudaEvents[batchIdx], m_preprocCudaStreams[batchIdx]));
 #ifdef DEBUG
         cv::Mat m = getDebugImage(batchIdx);
         std::stringstream s;
         s << "C" << callNum << "B" << batchIdx;
         cv::imshow(s.str().c_str(), m);
-        cv::imwrite(s.str() + ".png", m);
+        // cv::imwrite(s.str() + ".png", m);
 #endif
     }
     for (size_t batchIdx = 0; batchIdx < thisBatchSize; batchIdx++)
@@ -235,7 +246,7 @@ void DecoderEngine::blobFromGpuImageWrappers(const std::vector<GpuImageWrapper> 
 
 #ifdef DEBUG
     callNum += 1;
-    constexpr size_t channelStride = outputHW * outputHW;
+    const size_t channelStride = outputHW * outputHW;
 #if 0
     std::cout << " imgSize = " << imgSize << std::endl;
     cv::Mat hR(outputHW, outputHW, CV_32FC1);
@@ -282,7 +293,7 @@ nvinfer1::Dims DecoderEngine::inputDimsFromInputImage(const GpuImageWrapper &gpu
     // Decoder is fixed at 3, 256, 256
     return nvinfer1::Dims{4,
                           {modelInputDims.d[0],
-                          3,
+                          static_cast<int32_t>(gpuImg.channels()),
                           256,
                           256}};
 }
