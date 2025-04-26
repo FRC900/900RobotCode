@@ -519,8 +519,8 @@ sed -i -e 's/add_compile_options(-std=c++11)/add_compile_options(-std=c++20)/' s
 sed -i -e 's/add_compile_options(-std=c++14)/add_compile_options(-std=c++20)/' src/perception_pcl/pcl_ros/CMakeLists.txt
 sed -i -e 's/-std=c++11/-std=c++20/' src/resource_retriever/CMakeLists.txt
 sed -i -e 's/-std=c++11/-std=c++20/' src/sophus/CMakeLists.txt
-sed -i -e 's/option(BUILD_TESTS "Build tests." ON/option(BUILD_TESTS "Build tests." OFF)/' src/sophus/CMakeLists.txt
-sed -i -e 's/option(BUILD_EXAMPLES "Build tests." ON/option(BUILD_EXAMPLES "Build tests." OFF)/' src/sophus/CMakeLists.txt
+sed -i -e 's/option(BUILD_TESTS "Build tests." ON)/option(BUILD_TESTS "Build tests." OFF)/' src/sophus/CMakeLists.txt
+sed -i -e 's/option(BUILD_EXAMPLES "Build tests." ON)/option(BUILD_EXAMPLES "Build tests." OFF)/' src/sophus/CMakeLists.txt
 sed -i -e 's/-std=c++11/-std=c++20/' src/rosparam_shortcuts/CMakeLists.txt
 sed -i -e 's/-std=c++11/-std=c++20/' src/robot_state_publisher/CMakeLists.txt
 sed -i -e 's/-std=c++11/-std=c++20/' src/roscpp_core/rostime/CMakeLists.txt
