@@ -7,8 +7,7 @@
     SIMFLAG ? true : safeCall(error_code, call_string)
 
 template <bool SIMFLAG>
-TalonOrchestraDevice<SIMFLAG>::TalonOrchestraDevice(const std::string &name_space,
-                                                    const int joint_index,
+TalonOrchestraDevice<SIMFLAG>::TalonOrchestraDevice(const int joint_index,
                                                     const std::string &joint_name)
     : CTREV6Device{"TalonOrchestra", joint_name, joint_index}
     , orchestra_{nullptr}

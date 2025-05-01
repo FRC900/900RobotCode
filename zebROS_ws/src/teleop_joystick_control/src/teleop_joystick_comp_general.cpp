@@ -11,7 +11,6 @@
 #include "std_msgs/Bool.h"
 #include <string>
 #include <cmath>
-#include <boost/bind.hpp>
 
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
@@ -208,7 +207,7 @@ void preemptActionlibServers(void)
 	// dont forget to add new actionlib servers here
 }
 
-void buttonBoxCallback(const ros::MessageEvent<std_msgs::Bool const>& event)
+void buttonBoxCallback(const ros::MessageEvent<std_msgs::Bool const>& /*event*/)
 {
 	ROS_WARN("Called unimplemented function \"buttonBoxCallback\"");
 }
