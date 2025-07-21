@@ -1,3 +1,4 @@
+#include <optional>
 #include "ros/console.h"
 #include "ros/node_handle.h"
 #include "hal/DriverStation.h"
