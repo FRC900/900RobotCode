@@ -188,7 +188,7 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
             --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' \
             --exclude 'zebROS_ws/.catkin_tools' \
             --exclude '.md5sum*txt' \
-            --exclude '*.pt' --exclude '*.engine' \
+            --exclude '*.pt' --exclude '*.engine' --exclude '*.engine.*' \
 	    --exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
 	    --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
 	    --exclude '*.pyc' --exclude '__pycache__' \
@@ -216,7 +216,7 @@ do
         --exclude '*.zms' --exclude '*.stl' --exclude '*.dae'  \
         --exclude 'zebROS_ws/.catkin_tools' \
         --exclude '.md5sum*txt' \
-        --exclude '*.pt' --exclude '*.engine' \
+		--exclude '*.pt' --exclude '*.engine' --exclude '*.engine.*' \
 	--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
 	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
 	--exclude '*.pyc'  --exclude '__pycache__' \
