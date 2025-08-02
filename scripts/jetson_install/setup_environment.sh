@@ -1,5 +1,5 @@
-# Script to setup Jetson Orin  NX environment. Probably would also work
-# with slight modifications on other Jetson hardware
+# Script to setup Jetson Orin  NX environment. 
+# See _xavier.sh script for a similar script for the Jetson Xavier NX
 
 #install basic dependencies
 sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
@@ -357,20 +357,23 @@ sudo python3 -m pip install --no-cache-dir --upgrade 'onnx>=1.12'
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnxsim>=0.4.1'
 wget https://nvidia.box.com/shared/static/6l0u97rj80ifwkk8rqbzj1try89fk26z.whl -O onnxruntime_gpu-1-19.0-cp310-cp310-linux_aarch64.whl
 wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/869/e41abdc35e093/onnxruntime_gpu-1.22.0-cp310-cp310-linux_aarch64.whl#sha256=869e41abdc35e09345876f047fce49267d699df3e44b67c2518b0469739484ff
- 
-sudo pip3 install onnxruntime_gpu-1-22.0-cp310-cp310-linux_aarch64.whl
-rm onnxruntime_gpu-1-22.0-cp310-cp310-linux_aarch64.whl
+wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/4eb/e6a8902dc7708/onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl#sha256=4ebe6a8902dc7708434b2e1541b3fe629ebf434e16ab5537d1d6a622b42c622b
+
+sudo pip3 install onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl 
+rm onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl 
 
 # cpu-only version : sudo python3 -m pip install --no-cache-dir --upgrade 'onnxruntime'
 #sudo python3 -m pip install --no-cache-dir --upgrade nvidia-pyindex
 #sudo python3 -m pip install --no-cache-dir --upgrade nvidia-tensorrt
 
 sudo apt-get install -y libopenblas-base libopenmpi-dev
-wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/6ef/f643c0a7acda9/torch-2.7.0-cp310-cp310-linux_aarch64.whl#sha256=6eff643c0a7acda92734cc798338f733ff35c7df1a4434576f5ff7c66fc97319
-rm torch-2.7.0-cp310-cp310-linux_aarch64.whl
+wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/62a/1beee9f2f1470/torch-2.8.0-cp310-cp310-linux_aarch64.whl#sha256=62a1beee9f2f147076a974d2942c90060c12771c94740830327cae705b2595fc
+sudo pip3 install torch-2.8.0-cp310-cp310-linux_aarch64.whl 
+rm torch-2.8.0-cp310-cp310-linux_aarch64.whl
 
-wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/daa/bff3a07259968/torchvision-0.22.0-cp310-cp310-linux_aarch64.whl#sha256=daabff3a0725996886b92e4b5dd143f5750ef4b181b5c7d01371a9185e8f0402
-sudo pip3 install torchvision-0.22.0-cp310-cp310-linux_aarch64.whl 
+wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/907/c4c1933789645/torchvision-0.23.0-cp310-cp310-linux_aarch64.whl#sha256=907c4c1933789645ebb20dd9181d40f8647978e6bd30086ae7b01febb937d2d1
+sudo pip3 install torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
+rm torchvision-0.23.0-cp310-cp310-linux_aarch64.whl
 
 sudo python3 -m pip install --no-cache-dir --upgrade 'pytorch_pfn_extras'
 sudo python3 -m pip install --no-cache-dir --upgrade ultralytics
@@ -432,17 +435,17 @@ cd /home/ubuntu &&\
 
 
 ### ROS setup
-sudo sh -c "echo 'deb [arch=arm64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg' >> /etc/apt/sources.list.d/robotpkg.list"
+# sudo sh -c "echo 'deb [arch=arm64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg' >> /etc/apt/sources.list.d/robotpkg.list"
 sudo apt update
 sudo apt install -y \
-    nlohmann-json3-dev \ 
+    nlohmann-json3-dev \
     libompl-dev \
     libturbojpeg0-dev \
     ompl-demos \
     python3-rosdistro \
     python3-rosinstall \
     python3-rosinstall-generator  
-sudo python3 -m pip install --no-cache-dir "catkin-pkg==1.0.0" "catkin-tools==0.9.5" rosdep roslibpy vcstool vcstools &&\
+sudo python3 -m pip install --no-cache-dir "catkin-pkg==1.0.0" "catkin-tools==0.9.5" rosdep roslibpy vcstool vcstools
 cd /usr/lib/python3/dist-packages/
 sudo patch -p0 < /home/ubuntu/900RobotCode/scripts/jetson_install/catkin_pkg.patch 
 
@@ -570,6 +573,7 @@ cd ..
 catkin config --install --install-space /opt/ros/noetic -DSETUPTOOLS_DEB_LAYOUT=OFF -DPYTHON_EXECUTABLE=/usr/bin/python3
 
 sudo bash
+pip3 install 'numpy<2.0.0'
 catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DPYTHON_EXECUTABLE=/usr/bin/python3 catkin 
 export PATH=/opt/openrobots/bin:$PATH
 export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH
