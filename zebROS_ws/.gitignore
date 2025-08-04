@@ -18,3 +18,4 @@ callgrind.out.*
 allwpilib/ntcore/generated
 zebROS_ws/src/.vscode/settings.json
 src/auto_node/scripts/path_info.txt
+.cache

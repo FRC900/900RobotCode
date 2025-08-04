@@ -105,18 +105,17 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120 --slave 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
 sudo update-alternatives --auto gcc
 
-#TensorRT requires a newer version of cmake than standard apt repos provide
-# TODO - we don't use TensorRT anymore, so this can probably be removed
-# cd
-# wget https://github.com/Kitware/CMake/releases/download/v3.27.0/cmake-3.27.0.tar.gz
-# tar -xf cmake-3.27.0.tar.gz
-# cd cmake-3.27.0
-# cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
-# sudo ninja install
-# sudo mv /usr/bin/cmake /usr/bin/cmake.old
-# sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
-# cd ..
-# sudo rm -rf cmake-3.27.0*
+# CUDA with c++20 requires a newer version of cmake than is provided via apt
+cd
+wget https://github.com/Kitware/CMake/releases/download/v3.31.8/cmake-3.31.8.tar.gz
+tar -xf cmake-3.31.8.tar.gz
+cd cmake-3.31.8
+cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
+sudo ninja install
+sudo mv /usr/bin/cmake /usr/bin/cmake.old
+sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
+cd ..
+sudo rm -rf cmake-3.31.8*
 
 # Install tinyxml2
 cd
@@ -433,6 +432,8 @@ cd /home/ubuntu &&\
     cd /home/ubuntu &&\
     sudo rm -rf gtsam
 
+# Needed to get catkin to put python libs in the correct locations
+sudo pip3 install -U 'setuptools<66'
 
 ### ROS setup
 # sudo sh -c "echo 'deb [arch=arm64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg' >> /etc/apt/sources.list.d/robotpkg.list"
@@ -498,6 +499,7 @@ rosinstall_generator \
        smach \
        smach_ros \
        tf \
+       tf2_py \
        tf2_ros \
        tf2_tools \
        transmission_interface \
@@ -584,8 +586,8 @@ export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/dist-packages
 export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/site-packages
 export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
 export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/site-packages
-devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3 dynamic_reconfigure
-cp -r /opt/ros/noetic/lib/python3.10/site-packages/dynamic_reconfigure/* /opt/ros/noetic/local/lib/python3.10/dist-packages/dynamic_reconfigure
+#devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3 dynamic_reconfigure
+#cp -r /opt/ros/noetic/lib/python3.10/site-packages/dynamic_reconfigure/* /opt/ros/noetic/local/lib/python3.10/dist-packages/dynamic_reconfigure
 # Build this with a lower number of jobs to prevent running out of memory
 devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3 -j2 eigenpy
 devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3

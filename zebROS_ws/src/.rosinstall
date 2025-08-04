@@ -35,8 +35,12 @@
     version: master 
 - git:
     local-name: teraranger
-    uri: https://github.com/Terabee/teraranger-release.git
-    version: release/melodic/teraranger/2.1.0-1
+    uri: https://github.com/FRC900/teraranger.git
+    version: master
+- git:
+    local-name: teraranger_array
+    uri: https://github.com/FRC900/teraranger_array.git
+    version: master
 - git:
     local-name: teraranger_description
     uri: https://github.com/Terabee/teraranger_description-release.git
