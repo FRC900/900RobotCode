@@ -62,8 +62,6 @@ class TalonCIParams
 
 		bool readConversion(const ros::NodeHandle &n);
 
-		bool readTalonFXSensorConfig(const ros::NodeHandle &n);
-
 		// Read a joint name from the given nodehandle's params
 		bool readNeutralMode(const ros::NodeHandle &n);
 
@@ -85,8 +83,6 @@ class TalonCIParams
 		bool readCurrentLimits(const ros::NodeHandle &n);
 
 		bool readSupplyCurrentLimits(const ros::NodeHandle &n);
-
-		bool readStatorCurrentLimits(const ros::NodeHandle &n);
 
 		bool readMotionControl(const ros::NodeHandle &n);
 
@@ -162,11 +158,6 @@ class TalonCIParams
 		double supply_current_trigger_threshold_time_;
 		bool   supply_current_limit_enable_;
 
-		double stator_current_limit_;
-		double stator_current_trigger_threshold_current_;
-		double stator_current_trigger_threshold_time_;
-		bool   stator_current_limit_enable_;
-
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
 		int    motion_s_curve_strength_;
@@ -175,11 +166,6 @@ class TalonCIParams
 		std::array<int, hardware_interface::Control_Last> control_frame_periods_;
 
 		double conversion_factor_;
-
-		// TalonFX / Falcon500 specific
-		hardware_interface::MotorCommutation motor_commutation_;
-		hardware_interface::AbsoluteSensorRange absolute_sensor_range_;
-		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
 
 		bool enable_read_thread_;
 
@@ -231,7 +217,7 @@ class TalonControllerInterface
 		// Read params from config file and use them to
 		// initialize the Talon hardware
 		virtual bool initWithNode(hardware_interface::TalonCommandInterface *tci,
-								  hardware_interface::TalonStateInterface * /*tsi*/,
+								  hardware_interface::TalonStateInterface */*tsi*/,
 								  ros::NodeHandle &n);
 
 		// Same as above, except pass in an array
@@ -378,7 +364,7 @@ class TalonControllerInterface
 		// via functions called in this interface
 		std::atomic_flag                                     srv_update_thread_flag_;
 		std::atomic<bool>                                    srv_update_thread_active_;
-		std::thread                                          srv_update_thread_;
+		std::jthread                                         srv_update_thread_;
 
 		// List of follower talons associated with the master
 		// listed above
@@ -460,7 +446,7 @@ using TalonPercentOutputControllerInterface = TalonFixedModeControllerInterface<
 class TalonFollowerControllerInterface : public TalonControllerInterface
 {
 	public:
-		TalonFollowerControllerInterface(void) : TalonControllerInterface() {}
+		using TalonControllerInterface::TalonControllerInterface;
 		TalonFollowerControllerInterface(const TalonFollowerControllerInterface &other) = delete;
 		TalonFollowerControllerInterface(TalonFollowerControllerInterface &&other) noexcept = delete;
 

@@ -178,7 +178,7 @@ set (FRCROBOT_HW_MAIN_SRCS
 	src/as726x_hw_device.cpp
 	src/cancoder_hw_device.cpp
 	src/candle_hw_device.cpp
-	# src/ctre_v5_motor_controller_hw_device.cpp
+	src/ctre_v5_motor_controller_hw_device.cpp
 	src/error_queue.cpp
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
@@ -460,14 +460,14 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		src/as726x_sim_device.cpp
 		src/cancoder_sim_device.cpp
 		src/candle_sim_device.cpp
-		# src/ctre_v5_motor_controller_sim_device.cpp
+		src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_sim.cpp
 		src/joystick_sim_device.cpp
 		src/match_data_sim_device.cpp
-		# src/sim_ctre_v5_motor_controller.cpp
+		src/sim_ctre_v5_motor_controller.cpp
 		src/sim_talonfxpro_device.cpp
 		# src/sparkmax_sim_device.cpp
 		src/talonfxpro_sim_devices.cpp
@@ -524,14 +524,14 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2025-linux-gnueabi") OR
 		src/as726x_sim_device.cpp
 		src/cancoder_sim_device.cpp
 		src/candle_sim_device.cpp
-		# src/ctre_v5_motor_controller_sim_device.cpp
+		src/ctre_v5_motor_controller_sim_device.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_sim.cpp
 		src/joystick_sim_device.cpp
 		src/match_data_sim_device.cpp
-		# src/sim_ctre_v5_motor_controller.cpp
+		src/sim_ctre_v5_motor_controller.cpp
 		src/sim_talonfxpro_device.cpp
 		# src/sparkmax_sim_device.cpp
 		src/talonfxpro_sim_devices.cpp
