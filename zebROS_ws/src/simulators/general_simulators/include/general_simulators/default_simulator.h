@@ -2,23 +2,23 @@
 #define GENERAL_SIMULATORS_DEFAULT_SIMULATOR_H_
 #include "simulator_interface/simulator_base.h"
 
+#include "units/angle.h"
+#include "units/angular_velocity.h"
+
 namespace general_simulators
 {
 class DefaultSimulator : public simulator_base::Simulator
 {
     public:
-        DefaultSimulator()
-        {
+        DefaultSimulator() = default;
 
-        }
-
-        void init(const XmlRpc::XmlRpcValue &simulator_info) override
+        void init(const XmlRpc::XmlRpcValue &/*simulator_info*/) override
         {
             // ROS_INFO_STREAM("DefaultSimulator init");
             // do nothing lol
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
+        void update(const std::string &/*name*/, const ros::Time &/*time*/, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
         {
             // This should run before simRead
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
@@ -77,7 +77,7 @@ class DefaultSimulator : public simulator_base::Simulator
             {
                 units::radian_t position{invert * state->getClosedLoopReference() * state->getSensorToMechanismRatio()};
                 const units::angular_velocity::radians_per_second_t velocity{invert * state->getClosedLoopReferenceSlope() * state->getSensorToMechanismRatio()};
-                units::radian_t delta_position{velocity * units::second_t{period.toSec()}};
+                // units::radian_t delta_position{velocity * units::second_t{period.toSec()}};
                 talonfxpro->setRawRotorPosition(position.value());
                 talonfxpro->setRotorVelocity(velocity.value());
                 break;
@@ -124,13 +124,10 @@ class DefaultSimulator : public simulator_base::Simulator
                 break;
             // TODO : support differential modes, somehow
             }
-            this->update_cancoder(talonfxpro, state, cancoder);
+            this->update_cancoder(state, cancoder);
         }
 
-        ~DefaultSimulator() override
-        {
-
-        }
+        ~DefaultSimulator() override = default;
 };
 
 };

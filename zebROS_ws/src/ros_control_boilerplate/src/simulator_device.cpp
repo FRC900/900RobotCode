@@ -1,5 +1,3 @@
-#include "ros/ros.h"
-
 #include "ctre/phoenix6/core/CoreTalonFX.hpp"
 
 #include "ctre_interfaces/talonfxpro_state_interface.h"
@@ -24,7 +22,7 @@ SimulatorDevice::SimulatorDevice(const std::string &name, const XmlRpc::XmlRpcVa
         readStringRequired(joint_params, "type", joint_type, joint_name);
 
         // Some C++ wizardry courtesy of Kevin
-        auto check_for_correct_pointer_entry = [&]<typename T>()
+        auto check_for_correct_pointer_entry = [&devices, &joint_name]<typename T>()
         {
             const auto &[map_begin, map_end] = devices.equal_range(joint_name);
             for (auto map_entry = map_begin; map_entry != map_end; ++map_entry)
@@ -51,7 +49,7 @@ SimulatorDevice::~SimulatorDevice() {
     simulator_.reset();
 }
 
-void SimulatorDevice::simInit(ros::NodeHandle &nh)
+void SimulatorDevice::simInit(ros::NodeHandle &/*nh*/)
 {
 
 }
@@ -72,29 +70,27 @@ void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period
         using hardware_interface::talonfxpro::FeedbackSensorSource::FusedCANcoder;
         using hardware_interface::talonfxpro::FeedbackSensorSource::RemoteCANcoder;
         using hardware_interface::talonfxpro::FeedbackSensorSource::SyncCANcoder;
-        if (tfxpro_sim_handle.state()->getFeedbackSensorSource() == FusedCANcoder || tfxpro_sim_handle.state()->getFeedbackSensorSource() == RemoteCANcoder || tfxpro_sim_handle.state()->getFeedbackSensorSource() == SyncCANcoder)
+        if ((tfxpro_sim_handle.state()->getFeedbackSensorSource() == FusedCANcoder || tfxpro_sim_handle.state()->getFeedbackSensorSource() == RemoteCANcoder || tfxpro_sim_handle.state()->getFeedbackSensorSource() == SyncCANcoder) &&
+            (!cancoder_ids_.contains(joint) || (tfxpro_sim_handle.state()->getFeedbackRemoteSensorID() != cancoder_ids_[joint]))) 
         {
-            if (!cancoder_ids_.contains(joint) || (tfxpro_sim_handle.state()->getFeedbackRemoteSensorID() != cancoder_ids_[joint]))
+            bool found_cancoder = false;
+            // We have the cancoder id from Talon states, but handles are looked up by name
+            // so we need to find the name of the cancoder with the given id
+            const auto names = sim_cancoder_if->getNames();
+            for (const auto &name : names)
             {
-                bool found_cancoder = false;
-                // We have the cancoder id from Talon states, but handles are looked up by name
-                // so we need to find the name of the cancoder with the given id
-                const auto names = sim_cancoder_if->getNames();
-                for (const auto &name : names)
+                auto handle = sim_cancoder_if->getHandle(name);
+                if (handle.state()->getDeviceNumber() == tfxpro_sim_handle.state()->getFeedbackRemoteSensorID())
                 {
-                    auto handle = sim_cancoder_if->getHandle(name);
-                    if (handle.state()->getDeviceNumber() == tfxpro_sim_handle.state()->getFeedbackRemoteSensorID())
-                    {
-                        cancoder_handles_[joint] = handle;
-                        cancoder_ids_[joint] = tfxpro_sim_handle.state()->getFeedbackRemoteSensorID();
-                        found_cancoder = true;
-                        break;
-                    }
+                    cancoder_handles_[joint] = handle;
+                    cancoder_ids_[joint] = tfxpro_sim_handle.state()->getFeedbackRemoteSensorID();
+                    found_cancoder = true;
+                    break;
                 }
-                if (!found_cancoder)
-                {
-                    ROS_ERROR_STREAM_THROTTLE(1.0, "SimulatorDevice for " << joint << " : Could not find cancoder with id " << tfxpro_sim_handle.state()->getFeedbackRemoteSensorID());
-                }
+            }
+            if (!found_cancoder)
+            {
+                ROS_ERROR_STREAM_THROTTLE(1.0, "SimulatorDevice for " << joint << " : Could not find cancoder with id " << tfxpro_sim_handle.state()->getFeedbackRemoteSensorID());
             }
         }
 

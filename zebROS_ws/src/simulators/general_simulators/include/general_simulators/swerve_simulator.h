@@ -1,8 +1,9 @@
 #ifndef GENERAL_SIMULATORS_SWERVE_SIMULATOR_H_
 #define GENERAL_SIMULATORS_SWERVE_SIMULATOR_H_
+#include "units/current.h"
+#include "units/moment_of_inertia.h"
 #include "simulator_interface/simulator_base.h"
 #include <frc/system/plant/DCMotor.h>
-#include "wpimath/MathShared.h"
 #include "frc/EigenCore.h"
 #include <units/inductance.h>
 #include <units/velocity.h>
@@ -27,29 +28,29 @@ class DCMotorModel
 {
     // TODO make this unit aware
     public:
-        DCMotorModel() {
+        DCMotorModel() = default;
 
+        DCMotorModel(units::ohm_t R, units::inductance::henry_t L, newton_meters_per_ampere_t Kt, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply, double b) 
+            : R_{R} // resistance
+            , L_{L} // inductance
+            , Kt_{Kt} // torque constant
+            , J_{J} // inertia
+            , gearing_{gearing} // gear ratio
+            , Vsupply_{Vsupply}
+            , b_{b}
+        {
         }
 
-        DCMotorModel(units::ohm_t R, units::inductance::henry_t L, newton_meters_per_ampere_t Kt, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply, double b) {
-            this->R = R; // resistance
-            this->L = L; // inductance
-            this->Kt = Kt; // torque constant
-            this->J = J; // inertia
-            this->gearing = gearing; // gear ratio
-            this->Vsupply = Vsupply;
-            this->b = b;
-        }
-
-        DCMotorModel(frc::DCMotor motor, units::inductance::henry_t L, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply, double b) {
-            this->R = motor.R; // resistance
-            this->L = L; // inductance
-            this->Kt = motor.Kt; // torque constant
-            this->J = J; // inertia
-            this->gearing = gearing; // gear ratio
-            this->Vsupply = Vsupply; // supply voltage
-            this->b = b;
-            ROS_INFO_STREAM("Initializing motor model with R=" << R.value() << ",L=" << L.value() << ",Kt=" << Kt.value() << ",J=" << J.value() << ",gearing=" << gearing << ",Vsupply=" << Vsupply.value());
+        DCMotorModel(const frc::DCMotor &motor, units::inductance::henry_t L, units::kilogram_square_meter_t J, double gearing, units::volt_t Vsupply, double b) 
+            : R_{motor.R} // resistance
+            , L_{L} // inductance
+            , Kt_{motor.Kt} // torque constant
+            , J_{J} // inertia
+            , gearing_{gearing} // gear ratio
+            , Vsupply_{Vsupply} // supply voltage
+            , b_{b}
+        {
+            ROS_INFO_STREAM("Initializing motor model with R=" << R_.value() << ",L=" << L_.value() << ",Kt=" << Kt_.value() << ",J=" << J.value() << ",gearing=" << gearing_ << ",Vsupply=" << Vsupply_.value());
         }
 
         // Actually simulate the motor
@@ -57,7 +58,7 @@ class DCMotorModel
         // Input/control vector = u = [applied voltage, external torque]
 
         // Derivative of state vector = ẋ = [angular acceleration, there isn't really a name for dCurrent/dt]
-        Eigen::Vector2d update(Eigen::Vector2d x, Eigen::Vector2d u) {
+        Eigen::Vector2d update(Eigen::Vector2d x, Eigen::Vector2d u) const {
             // WPILib model doesn't account for external torque but this does
 
             // ẋ = Ax + Bu
@@ -75,25 +76,41 @@ class DCMotorModel
             // and I don't really know what to do with the derivative of current so will just ignore it for now and hope it works
             // damping friction is 0.1 for now, idk what the right value is
             Eigen::Matrix2d A;
-            A <<                    -b/J.value(), (Kt.value()/J.value())/gearing,
-                 (-Kt.value()/L.value())*gearing, -R.value()/L.value();
+            A <<                    -b_/J_.value(), (Kt_.value()/J_.value())/gearing_,
+                 (-Kt_.value()/L_.value())*gearing_, -R_.value()/L_.value();
             
             Eigen::Matrix2d B;
-            B <<       0.0, 1.0/J.value(),
-                 Vsupply.value()/L, 0.0;
+            B <<       0.0, 1.0/J_.value(),
+                 Vsupply_.value()/L_, 0.0;
 
             // ROS_INFO_STREAM("motor model, x=" << x << ",u=" << u << ",A=" << A << ",B=" << B << ",y=" << A*x + B*u);
             
             return A*x + B*u;
         }
+    
+        double getB() const {
+            return b_;
+        }
 
-        units::ohm_t R; // resistance
-        units::inductance::henry_t L; // inductance
-        newton_meters_per_ampere_t Kt; // torque constant
-        units::kilogram_square_meter_t J; // inertia
-        double gearing; // gear ratio
-        units::volt_t Vsupply;
-        double b; // damping friction
+        void setB(const double b) {
+            b_ = b;
+        }
+
+        units::kilogram_square_meter_t getJ() const {
+            return J_;
+        }
+        void setJ(const units::kilogram_square_meter_t J) {
+            J_ = J;
+        }
+    private:
+
+        units::ohm_t R_; // resistance
+        units::inductance::henry_t L_; // inductance
+        newton_meters_per_ampere_t Kt_; // torque constant
+        units::kilogram_square_meter_t J_; // inertia
+        double gearing_; // gear ratio
+        units::volt_t Vsupply_;
+        double b_; // damping friction
 };
 
 struct PacejkaConstants {
@@ -127,9 +144,7 @@ public:
         debug_pub_ = nh.advertise<general_simulators::SwerveDebug>("swerve_debug", 1);
     }
 
-    ~SwerveDynamics() {
-
-    }
+    ~SwerveDynamics() = default;
 
     // Longitudinal force
     units::newton_t pacejka_model(double slip) {
@@ -241,14 +256,10 @@ template <size_t WHEELCOUNT>
 class SwerveSimulator : public simulator_base::Simulator
 {
     public:
-        SwerveSimulator()
-        {
-
-        }
+        SwerveSimulator() = default;
 
         void init(const XmlRpc::XmlRpcValue &simulator_info) override
         {
-            // TODO ddr-ify
             // Get parameters from the parameter server in our namespace
             double gearing = simulator_info["gearing"]; // unitless
             PacejkaConstants pacejka_constants;
@@ -309,8 +320,8 @@ class SwerveSimulator : public simulator_base::Simulator
             ddr_->registerVariable<double>("kiencke_constants/A", &swerve_dynamics_.kiencke_constants_.A, "A", 0.0, 100.0);
             ddr_->registerVariable<double>("kiencke_constants/B", &swerve_dynamics_.kiencke_constants_.B, "B", 0.0, 100.0);
             // ddr_->registerVariable<double>("wheel_radius", &swerve_dynamics_.wheel_radius_.value(), "m", 0.0, 0.5);
-            ddr_->registerVariable<double>("motor_inertia", [this](){ return swerve_dynamics_.drive_motor_.J.value(); }, [this](double J) { swerve_dynamics_.drive_motor_.J = units::kilogram_square_meter_t{J}; swerve_dynamics_.turn_motor_.J = units::kilogram_square_meter_t{J}; }, "kg m^2", 0.00001, 0.005);
-            ddr_->registerVariable<double>("damping_friction", [this](){ return swerve_dynamics_.drive_motor_.b; }, [this](double b) { swerve_dynamics_.drive_motor_.b = b; swerve_dynamics_.turn_motor_.b = b; }, "N m s", 0.00001, 0.01);
+            ddr_->registerVariable<double>("motor_inertia", [this](){ return swerve_dynamics_.drive_motor_.getJ().value(); }, [this](const double J) { swerve_dynamics_.drive_motor_.setJ(units::kilogram_square_meter_t{J}); swerve_dynamics_.turn_motor_.setJ(units::kilogram_square_meter_t{J}); }, "kg m^2", 0.00001, 0.005);
+            ddr_->registerVariable<double>("damping_friction", [this](){ return swerve_dynamics_.drive_motor_.getB(); }, [this](const double b) { swerve_dynamics_.drive_motor_.setB(b); swerve_dynamics_.turn_motor_.setB(b); }, "N m s", 0.00001, 0.01);
             ddr_->publishServicesTopics();
 
         }
@@ -347,7 +358,8 @@ class SwerveSimulator : public simulator_base::Simulator
             // ROS_INFO_STREAM("Motor " << name << " voltage: " << motor_voltage.value() << "V, read time is " << last_read_times_[motor_index * 2 + is_turn]);
 
             // If all of the times in last_read_times_ are equal, update swerve dynamics
-            if (std::adjacent_find(std::begin(last_read_times_), std::end(last_read_times_), std::not_equal_to<>()) == std::end(last_read_times_)) {
+            if (std::adjacent_find(std::begin(last_read_times_), std::end(last_read_times_), std::not_equal_to<>()) == std::end(last_read_times_))
+            {
                 // Update the swerve dynamics
                 auto result = swerve_dynamics_.update(x, u);
 
@@ -377,10 +389,10 @@ class SwerveSimulator : public simulator_base::Simulator
             // Add position delta
             talonfxpro->setAddRotorPosition((angular_velocity * units::second_t{period.toSec()}).value());
 
-            this->update_cancoder(talonfxpro, state, cancoder);
+            this->update_cancoder(state, cancoder);
         }
 
-        bool reset(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+        bool reset(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/) {
             // Zero out state and control vectors
             x.setZero();
             u.setZero();
@@ -390,19 +402,16 @@ class SwerveSimulator : public simulator_base::Simulator
             return true;
         }
 
-        ~SwerveSimulator() override
-        {
-
-        }
+        ~SwerveSimulator() override = default;
 
     private:
         SwerveDynamics<WHEELCOUNT> swerve_dynamics_;
         std::vector<std::string> drive_joints_;
         std::vector<std::string> turn_joints_;
-        bool set_initial_angle_[WHEELCOUNT];
+        std::array<bool, WHEELCOUNT> set_initial_angle_;
         Eigen::Matrix<double, 5 * WHEELCOUNT + 2 + 1 + 2 + 1, 1> x;
         Eigen::Matrix<double, 2 * WHEELCOUNT, 1> u;
-        ros::Time last_read_times_[2*WHEELCOUNT];
+        std::array<ros::Time, 2 * WHEELCOUNT> last_read_times_;
 
         ros::Publisher vel_pub_;
         ros::ServiceServer reset_service_;

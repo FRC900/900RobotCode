@@ -4,8 +4,6 @@
 #include <frc/simulation/ElevatorSim.h>
 #include <frc/system/plant/DCMotor.h>
 #include <frc/system/plant/LinearSystemId.h>
-#include "wpimath/MathShared.h"
-#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 // #define DEBUG
 
@@ -27,10 +25,7 @@ namespace general_simulators
 class ElevatorSimulator : public simulator_base::Simulator
 {
     public:
-        ElevatorSimulator()
-        {
-
-        }
+        ElevatorSimulator() = default;
 
         void init(const XmlRpc::XmlRpcValue &simulator_info) override
         {
@@ -48,7 +43,7 @@ class ElevatorSimulator : public simulator_base::Simulator
             elevator_sim_ = std::make_unique<frc::sim::ElevatorSim>(motor_, gearing_, units::kilogram_t{carraige_mass_}, units::meter_t{drum_radius_}, units::meter_t{min_height_}, units::meter_t{max_height_}, simulate_gravity_, units::meter_t{starting_height_});
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
+        void update(const std::string &/*name*/, const ros::Time &/*time*/, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
         {
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
             
@@ -66,13 +61,10 @@ class ElevatorSimulator : public simulator_base::Simulator
             talonfxpro->setRawRotorPosition(invert * position.value() * state->getSensorToMechanismRatio());
             talonfxpro->setRotorVelocity(invert * velocity.value() * state->getSensorToMechanismRatio());
 
-            this->update_cancoder(talonfxpro, state, cancoder);
+            this->update_cancoder(state, cancoder);
         }
 
-        ~ElevatorSimulator() override
-        {
-
-        }
+        ~ElevatorSimulator() override = default;
 
     private:
         frc::DCMotor motor_ = frc::DCMotor::KrakenX60FOC(1);

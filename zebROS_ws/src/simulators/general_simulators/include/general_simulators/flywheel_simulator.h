@@ -4,7 +4,6 @@
 #include <frc/simulation/FlywheelSim.h>
 #include <frc/system/plant/DCMotor.h>
 #include <frc/system/plant/LinearSystemId.h>
-#include "wpimath/MathShared.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 // #define DEBUG
@@ -75,12 +74,12 @@ class FlywheelSimulator : public simulator_base::Simulator
     public:
         FlywheelSimulator()
         {
-            ddr_.registerVariable<double>("gearing", [&](){return gearing_;}, [&](double val){
+            ddr_.registerVariable<double>("gearing", [this]() { return gearing_; }, [this](const double val) {
                 gearing_ = val;
                 frc::LinearSystem<1, 1, 1> m_plant{frc::LinearSystemId::FlywheelSystem(motor_, units::kilogram_square_meter_t{moment_of_inertia_}, gearing_)};
                 flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(m_plant, motor_);
             }, "unitless", 0, 10.0);
-            ddr_.registerVariable<double>("moment_of_inertia", [&](){return moment_of_inertia_;}, [&](double val){
+            ddr_.registerVariable<double>("moment_of_inertia", [this]() { return moment_of_inertia_; }, [this](const double val) {
                 moment_of_inertia_ = val;
                 frc::LinearSystem<1, 1, 1> m_plant{frc::LinearSystemId::FlywheelSystem(motor_, units::kilogram_square_meter_t{moment_of_inertia_}, gearing_)};
                 flywheel_sim_ = std::make_unique<frc::sim::FlywheelSim>(m_plant, motor_);
@@ -105,7 +104,7 @@ class FlywheelSimulator : public simulator_base::Simulator
             // ROS_INFO_STREAM("Created flywheel sim");
         }
 
-        void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
+        void update(const std::string &/*name*/, const ros::Time &/*time*/, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state, std::optional<hardware_interface::cancoder::CANCoderSimCommandHandle> cancoder) override
         {
             const double invert = state->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
             
@@ -128,13 +127,10 @@ class FlywheelSimulator : public simulator_base::Simulator
             // Add position delta
             talonfxpro->setAddRotorPosition(invert * angular_velocity.value() * state->getSensorToMechanismRatio() * period.toSec());
 
-            this->update_cancoder(talonfxpro, state, cancoder);
+            this->update_cancoder(state, cancoder);
         }
 
-        ~FlywheelSimulator() override
-        {
-
-        }
+        ~FlywheelSimulator() override = default;
 
     private:
         frc::DCMotor motor_ = frc::DCMotor::KrakenX60FOC(1);

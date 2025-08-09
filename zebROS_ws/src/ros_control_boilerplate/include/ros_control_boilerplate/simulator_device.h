@@ -2,19 +2,22 @@
 #define SIMULATOR_DEVICE_INC__
 
 #include <map>
-#include <mutex>
 #include <string>
-#include <thread>
+
+#include <ros/node_handle.h>
 
 #include "xmlrpcpp/XmlRpcValue.h"
 #include "simulator_interface/simulator_base.h"
-#include "pluginlib/class_loader.h"
 #include "ros_control_boilerplate/tracer.h"
 #include "ctre_interfaces/cancoder_sim_command_interface.h"
 
 namespace hardware_interface::talonfxpro
 {
     class TalonFXProHWState;
+}
+namespace ctre::phoenix6::hardware
+{
+    class ParentDevice;
 }
 
 class SimulatorDevice

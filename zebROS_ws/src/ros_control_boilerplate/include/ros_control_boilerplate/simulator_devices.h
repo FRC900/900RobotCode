@@ -1,8 +1,8 @@
 #ifndef INC_SIMULATOR_DEVICES_H_INC__
 #define INC_SIMULATOR_DEVICES_H_INC__
 
+#include <hardware_interface/robot_hw.h> // for hardware_interface::InterfaceManager
 #include "ros_control_boilerplate/devices.h"
-#include "frc/simulation/BatterySim.h"
 #include "simulator_interface/simulator_base.h"
 #include "pluginlib/class_loader.h"
 #include "ros_control_boilerplate/tracer.h"
