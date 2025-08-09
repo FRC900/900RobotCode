@@ -63,7 +63,6 @@ void SimulatorDevice::simStep(const ros::Time& time, const ros::Duration& period
     tracer.start(simulator_name_);
     for (std::string joint : names_)
     {
-        // virtual void update(const std::string &name, const ros::Time &time, const ros::Duration &period, hardware_interface::talonfxpro::TalonFXProSimCommand *talonfxpro, const hardware_interface::talonfxpro::TalonFXProHWState *state) {
         hardware_interface::talonfxpro::TalonFXProSimCommandHandle tfxpro_sim_handle = sim_talonfxpro_if->getHandle(joint);
         // ROS_INFO_STREAM("SimulatorDevice: Updating simulator " << simulator_name_ << " for joint " << joint);
 
