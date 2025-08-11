@@ -22,7 +22,7 @@ void SimMatchDataDevice::read(const ros::Time &time, const ros::Duration &period
     }
 }
 
-void SimMatchDataDevice::simInit(ros::NodeHandle nh)
+void SimMatchDataDevice::simInit(ros::NodeHandle &nh)
 {
     if (getLocal())
     {

@@ -22,7 +22,7 @@ hardware_interface:
    run_hal_robot: false
    can_interface: can0
    joints:
-       #- {name: terrance, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
+       - {name: terrance, type: talonfxpro, can_bus: CANivore, can_id: 1, local: true}
        #- {name: phillip, type: can_talon_fx, can_bus: CANivore, can_id: 2, local: true}
        - {name: candle1, can_id: 5, can_bus: CANivore, type: candle, local: true}
     #    - {name: clawster, type: can_talon_srx, can_bus: can0, can_id: 16, local: true}
@@ -61,6 +61,13 @@ talon_config_controller:
    type:         talon_config_controller/TalonConfigController
    publish_rate: 5
 
+talonfxpro_state_controller:
+   type:         talonfxpro_state_controller/TalonFXProStateController
+   publish_rate: 100
+talonfxpro_config_controller:
+   type:         talonfxpro_config_controller/TalonFXProConfigController
+   publish_rate: 5
+
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
 
@@ -72,16 +79,25 @@ talon_config_controller:
 # above.  
 # The type is a talon_controllers/TalonController
 terrance_controller:
-    type: talon_controllers/TalonPercentOutputController
+    type: talonfxpro_controllers/TalonFXProVelocityVoltageController
     joint: terrance
+    invert: counterclockwise_positive
+    neutral_mode: Brake
+    # feedback_sensor_source: FusedCANcoder
+    # remote_feedback_device_id0: 13
+    close_loop_values:
+        - {kP: 100.0, kI: 0.0, kD: 0.75, kV: 2.5, kS: 0.0}
+    motion_magic_cruise_velocity: 0.0
+    motion_magic_expo_kV: 0.4
+    motion_magic_expo_kA: 0.4
+    forward_limit_enable: False
+    reverse_limit_enable: False
     dynamic_reconfigure: True
-    voltage_compensation_Enable: True
 
 phillip_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: phillip
     dynamic_reconfigure: True
-    voltage_compensation_Enable: True
 
 talon9_motionmagic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController

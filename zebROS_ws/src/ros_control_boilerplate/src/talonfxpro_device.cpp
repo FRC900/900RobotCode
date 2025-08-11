@@ -362,7 +362,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         SAFE_READ(motor_stall_current, talonfxpro_->GetMotorStallCurrent())
 
         SAFE_READ(ctre_bridge_output_value, talonfxpro_->GetBridgeOutput())
-        hardware_interface::talonfxpro::BridgeOutput bridge_output_value;
+        hardware_interface::talonfxpro::BridgeOutput bridge_output_value{};
         switch (ctre_bridge_output_value->value)
         {
             case ctre::phoenix6::signals::BridgeOutputValue::BridgeReq_Coast:

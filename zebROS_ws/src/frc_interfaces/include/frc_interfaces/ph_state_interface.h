@@ -67,14 +67,14 @@ class PHHWState
 			return pressure_[channel];
 		}
 
-		void setCompressorEnabled(bool compressor_enabled)                       { compressor_enabled_ = compressor_enabled; }
-		void setPressureSwitch(bool pressure_switch)                             { pressure_switch_ = pressure_switch; }
-		void setCompressorCurrent(double compressor_current)                     { compressor_current_ = compressor_current; }
-		void setCompressorMinAnalogVoltage(double compressor_min_analog_voltage) { compressor_min_analog_voltage_ = compressor_min_analog_voltage; }
-		void setCompressorMaxAnalogVoltage(double compressor_max_analog_voltage) { compressor_max_analog_voltage_ = compressor_max_analog_voltage; }
-		void setCompressorForceDisable(double compressor_force_disable)          { compressor_force_disable_ = compressor_force_disable; }
-		void setCompressorUseDigital(double compressor_use_digital)              { compressor_use_digital_ = compressor_use_digital; }
-		void setAnalogVoltage(double analog_voltage, size_t channel)
+		void setCompressorEnabled(const bool compressor_enabled)                       { compressor_enabled_ = compressor_enabled; }
+		void setPressureSwitch(const bool pressure_switch)                             { pressure_switch_ = pressure_switch; }
+		void setCompressorCurrent(const double compressor_current)                     { compressor_current_ = compressor_current; }
+		void setCompressorMinAnalogVoltage(const double compressor_min_analog_voltage) { compressor_min_analog_voltage_ = compressor_min_analog_voltage; }
+		void setCompressorMaxAnalogVoltage(const double compressor_max_analog_voltage) { compressor_max_analog_voltage_ = compressor_max_analog_voltage; }
+		void setCompressorForceDisable(const bool compressor_force_disable)            { compressor_force_disable_ = compressor_force_disable; }
+		void setCompressorUseDigital(const bool compressor_use_digital)                { compressor_use_digital_ = compressor_use_digital; }
+		void setAnalogVoltage(const double analog_voltage, size_t channel)
 		{
 			if (channel >= analog_voltage_.size())
 			{

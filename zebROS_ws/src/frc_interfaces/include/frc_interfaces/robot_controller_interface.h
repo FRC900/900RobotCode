@@ -34,7 +34,7 @@ class RobotControllerState
 		double      GetCurrent6V(void) const                { return current6v_; }
 		bool        GetEnabled6V(void) const                { return enabled6v_ ; }
 		int         GetFaultCount6V(void) const             { return fault_count6v_; }
-		double      GetCANPercentBusUtilization(void) const { return can_percent_bus_utilization_; }
+		float       GetCANPercentBusUtilization(void) const { return can_percent_bus_utilization_; }
 		int         GetCANBusOffCount(void) const           { return can_bus_off_count_; }
 		int         GetCANTxFullCount(void) const           { return can_tx_full_count_; }
 		int         GetCANReceiveErrorCount(void) const     { return can_receive_error_count_; }
@@ -62,32 +62,31 @@ class RobotControllerState
 		std::string GetFaultCount6VStatus(void) const       { return fault_count6v_status_; }
 		std::string GetCANDataStatus(void) const            { return can_data_status_; }
 
-
-		void SetFPGAVersion(int fpga_version)                                { fpga_version_ = fpga_version; }
-		void SetFPGARevision(int64_t fpga_revision)                          { fpga_revision_ = fpga_revision; }
-		void SetFPGATime(uint64_t fpga_time)                                 { fpga_time_ = fpga_time; }
-		void SetUserButton(bool user_button)                                 { user_button_ = user_button; }
-		void SetIsSysActive(bool is_sys_active)                              { is_sys_active_ = is_sys_active; }
-		void SetIsBrownedOut(bool is_browned_out)                            { is_browned_out_ = is_browned_out; }
-		void SetInputVoltage(double input_voltage)                           { input_voltage_ = input_voltage; }
-		void SetInputCurrent(double input_current)                           { input_current_ = input_current; }
-		void SetVoltage3V3(double voltage3v3)                                { voltage3v3_ = voltage3v3; }
-		void SetCurrent3V3(double current3v3)                                { current3v3_ = current3v3; }
-		void SetEnabled3V3(bool enabled3v3)                                  { enabled3v3_  = enabled3v3; }
-		void SetFaultCount3V3(int fault_count3v3)                            { fault_count3v3_ = fault_count3v3; }
-		void SetVoltage5V(double voltage5v)                                  { voltage5v_ = voltage5v; }
-		void SetCurrent5V(double current5v)                                  { current5v_ = current5v; }
-		void SetEnabled5V(bool enabled5v)                                    { enabled5v_  = enabled5v; }
-		void SetFaultCount5V(int fault_count5v)                              { fault_count5v_ = fault_count5v; }
-		void SetVoltage6V(double voltage6v)                                  { voltage6v_ = voltage6v; }
-		void SetCurrent6V(double current6v)                                  { current6v_ = current6v; }
-		void SetEnabled6V(bool enabled6v)                                    { enabled6v_  = enabled6v; }
-		void SetFaultCount6V(int fault_count6v)                              { fault_count6v_ = fault_count6v; }
-		void SetCANPercentBusUtilization(double can_percent_bus_utilization) { can_percent_bus_utilization_ = can_percent_bus_utilization; }
-		void SetCANBusOffCount(int can_bus_off_count)                        { can_bus_off_count_ = can_bus_off_count; }
-		void SetCANTxFullCount(int can_tx_full_count)                        { can_tx_full_count_ = can_tx_full_count; }
-		void SetCANReceiveErrorCount(int can_receive_error_count)            { can_receive_error_count_ = can_receive_error_count; }
-		void SetCANTransmitErrorCount(int can_transmit_error_count)          { can_transmit_error_count_ = can_transmit_error_count; }
+		void SetFPGAVersion(const int fpga_version)                                { fpga_version_ = fpga_version; }
+		void SetFPGARevision(const int64_t fpga_revision)                          { fpga_revision_ = fpga_revision; }
+		void SetFPGATime(const uint64_t fpga_time)                                 { fpga_time_ = fpga_time; }
+		void SetUserButton(const bool user_button)                                 { user_button_ = user_button; }
+		void SetIsSysActive(const bool is_sys_active)                              { is_sys_active_ = is_sys_active; }
+		void SetIsBrownedOut(const bool is_browned_out)                            { is_browned_out_ = is_browned_out; }
+		void SetInputVoltage(const double input_voltage)                           { input_voltage_ = input_voltage; }
+		void SetInputCurrent(const double input_current)                           { input_current_ = input_current; }
+		void SetVoltage3V3(const double voltage3v3)                                { voltage3v3_ = voltage3v3; }
+		void SetCurrent3V3(const double current3v3)                                { current3v3_ = current3v3; }
+		void SetEnabled3V3(const bool enabled3v3)                                  { enabled3v3_  = enabled3v3; }
+		void SetFaultCount3V3(const int fault_count3v3)                            { fault_count3v3_ = fault_count3v3; }
+		void SetVoltage5V(const double voltage5v)                                  { voltage5v_ = voltage5v; }
+		void SetCurrent5V(const double current5v)                                  { current5v_ = current5v; }
+		void SetEnabled5V(const bool enabled5v)                                    { enabled5v_  = enabled5v; }
+		void SetFaultCount5V(const int fault_count5v)                              { fault_count5v_ = fault_count5v; }
+		void SetVoltage6V(const double voltage6v)                                  { voltage6v_ = voltage6v; }
+		void SetCurrent6V(const double current6v)                                  { current6v_ = current6v; }
+		void SetEnabled6V(const bool enabled6v)                                    { enabled6v_  = enabled6v; }
+		void SetFaultCount6V(const int fault_count6v)                              { fault_count6v_ = fault_count6v; }
+		void SetCANPercentBusUtilization(const float  can_percent_bus_utilization) { can_percent_bus_utilization_ = can_percent_bus_utilization; }
+		void SetCANBusOffCount(const int can_bus_off_count)                        { can_bus_off_count_ = can_bus_off_count; }
+		void SetCANTxFullCount(const int can_tx_full_count)                        { can_tx_full_count_ = can_tx_full_count; }
+		void SetCANReceiveErrorCount(const int can_receive_error_count)            { can_receive_error_count_ = can_receive_error_count; }
+		void SetCANTransmitErrorCount(const int can_transmit_error_count)          { can_transmit_error_count_ = can_transmit_error_count; }
 
 		void SetFPGAVersionStatus(const std::string &fpga_version_status)    { fpga_version_status_ = fpga_version_status; }
 		void SetFPGARevisionStatus(const std::string &fpga_revision_status)  { fpga_revision_status_ = fpga_revision_status; }
