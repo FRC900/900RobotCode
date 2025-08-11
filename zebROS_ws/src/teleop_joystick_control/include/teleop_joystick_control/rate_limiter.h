@@ -20,6 +20,13 @@ class RateLimiter
 
 		double applyLimit(const double value, const ros::Time &now)
 		{
+			// 0 rise time means disable the rate limiter
+			if (rise_time_in_msec_ == 0.0)
+			{
+				last_value_ = value;
+				last_update_time_ = now;
+				return value;
+			}
 			const double max_change_per_msec = (rise_time_in_msec_ < 0) ?
 				std::numeric_limits<double>::max() :
 				fabs(max_val_ - min_val_) / rise_time_in_msec_;

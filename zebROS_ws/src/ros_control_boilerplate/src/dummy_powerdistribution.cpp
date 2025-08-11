@@ -41,7 +41,7 @@ double HAL_GetREVPDHChannelCurrent(HAL_REVPDHHandle handle, int32_t channel,
 
 uint16_t HAL_GetREVPDHTotalCurrent(HAL_REVPDHHandle handle, int32_t* status)
 {
-	return HAL_GetPowerDistributionTotalCurrent(handle, status);
+	return static_cast<uint16_t>(HAL_GetPowerDistributionTotalCurrent(handle, status));
 }
 
 void HAL_SetREVPDHSwitchableChannel(HAL_REVPDHHandle handle, HAL_Bool enabled,

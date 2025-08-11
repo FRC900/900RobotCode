@@ -1,7 +1,7 @@
 // Toggle between rotation using rightStickX and rightTrigger - leftTrigger
 #define ROTATION_WITH_STICK
 
-#include "ros/ros.h"
+// #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
 //#define NEED_JOINT_STATES
 #ifdef NEED_JOINT_STATES
@@ -11,7 +11,6 @@
 #include "std_msgs/Bool.h"
 #include <string>
 #include <cmath>
-#include <boost/bind.hpp>
 
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
@@ -208,7 +207,7 @@ void preemptActionlibServers(void)
 	// dont forget to add new actionlib servers here
 }
 
-void buttonBoxCallback(const ros::MessageEvent<std_msgs::Bool const>& event)
+void buttonBoxCallback(const ros::MessageEvent<std_msgs::Bool const>& /*event*/)
 {
 	ROS_WARN("Called unimplemented function \"buttonBoxCallback\"");
 }

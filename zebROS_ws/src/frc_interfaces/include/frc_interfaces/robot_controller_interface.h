@@ -131,7 +131,7 @@ class RobotControllerState
 		double      current6v_{0};
 		bool        enabled6v_{0};
 		int         fault_count6v_{0};
-		float       can_percent_bus_utilization_{0};
+		double      can_percent_bus_utilization_{0};
 		int         can_bus_off_count_{0};
 		int         can_tx_full_count_{0};
 		int         can_receive_error_count_{0};

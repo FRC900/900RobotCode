@@ -25,7 +25,7 @@ TalonOrchestraDevices<SIMFLAG>::TalonOrchestraDevices(ros::NodeHandle &root_nh)
 
         if (joint_type == "orchestra")
         {
-            devices_.emplace_back(std::make_unique<TalonOrchestraDevice<SIMFLAG>>(root_nh.getNamespace(), i, joint_name));
+            devices_.emplace_back(std::make_unique<TalonOrchestraDevice<SIMFLAG>>(i, joint_name));
         }
     }
 }

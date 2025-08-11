@@ -216,7 +216,7 @@ void CANdleDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Duration
                 ),
                 "candle_->SetLEDs"
             )) {
-                for (size_t led_id = group.start_; led_id < static_cast<size_t>(group.start_ + group.count_); led_id++) {
+                for (size_t led_id = group.start_; led_id < (static_cast<size_t>(group.start_) + group.count_); led_id++) {
                     state_->setLED(led_id, group.colour_);
                 }
 

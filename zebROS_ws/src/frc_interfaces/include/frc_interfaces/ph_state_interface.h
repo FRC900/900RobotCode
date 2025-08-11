@@ -47,8 +47,8 @@ class PHHWState
 		double  getCompressorMinAnalogVoltage(void) const { return compressor_min_analog_voltage_; }
 		double  getCompressorMaxAnalogVoltage(void) const { return compressor_max_analog_voltage_; }
 		bool    getCompressorForceDisable(void)     const { return compressor_force_disable_; }
-		bool    getCompressorUseDigital(void)       const { return compressor_use_digital_;; }
-		double  getAnalogVoltage(size_t channel)    const
+		bool    getCompressorUseDigital(void)       const { return compressor_use_digital_; }
+		double  getAnalogVoltage(const size_t channel) const
 		{
 			if (channel >= analog_voltage_.size())
 			{
@@ -57,7 +57,7 @@ class PHHWState
 			}
 			return analog_voltage_[channel];
 		}
-		double  getPressure(size_t channel)   const
+		double  getPressure(const size_t channel) const
 		{
 			if (channel >= pressure_.size())
 			{
@@ -74,7 +74,7 @@ class PHHWState
 		void setCompressorMaxAnalogVoltage(const double compressor_max_analog_voltage) { compressor_max_analog_voltage_ = compressor_max_analog_voltage; }
 		void setCompressorForceDisable(const bool compressor_force_disable)            { compressor_force_disable_ = compressor_force_disable; }
 		void setCompressorUseDigital(const bool compressor_use_digital)                { compressor_use_digital_ = compressor_use_digital; }
-		void setAnalogVoltage(const double analog_voltage, size_t channel)
+		void setAnalogVoltage(const double analog_voltage, const size_t channel)
 		{
 			if (channel >= analog_voltage_.size())
 			{

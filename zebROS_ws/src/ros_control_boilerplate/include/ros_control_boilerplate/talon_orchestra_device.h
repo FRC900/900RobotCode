@@ -27,8 +27,7 @@ template <bool SIMFLAG>
 class TalonOrchestraDevice : public CTREV6Device
 {
 public:
-    TalonOrchestraDevice(const std::string &name_space,
-                         const int joint_index,
+    TalonOrchestraDevice(const int joint_index,
                          const std::string &joint_name);
     TalonOrchestraDevice(const TalonOrchestraDevice &) = delete;
     TalonOrchestraDevice(TalonOrchestraDevice &&other) noexcept = delete;
