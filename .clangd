@@ -1,0 +1,2 @@
+CompileFlags:
+  Remove: [ -ftrack-macro-expansion=0, -fno-var-tracking-assignments -fno-fat-lto-objects -fuse-linker-plugin ]
