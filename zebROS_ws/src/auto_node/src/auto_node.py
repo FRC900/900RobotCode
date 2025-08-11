@@ -24,7 +24,11 @@ IDS_TO_AUTO_NAME: dict[int, str] = {0: AutonomousNames.DriveForward,
                                     2: AutonomousNames.FourCoralNonProcessor,
                                     3: AutonomousNames.OneCoralMidProcessor, # actually scores non processor side first, then for the 2-coral goes to the processor side
                                     4: AutonomousNames.OneCoralMidNonProcessor, # actually scores processor side first, then for the 2-coral goes to the non processor side
-                                    5: AutonomousNames.PushFourCoral}
+                                    5: AutonomousNames.PushFourCoral, 
+                                    6: AutonomousNames.TestCmdVel, 
+                                    7: AutonomousNames.Test4Note,
+                                    8: AutonomousNames.TestCmdVelCircle,
+                                    9: AutonomousNames.TestDriveRotate}
 
 class AutoNode():
     def __init__(self):        

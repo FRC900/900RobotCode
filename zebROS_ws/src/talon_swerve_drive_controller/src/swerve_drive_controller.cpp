@@ -57,6 +57,9 @@
 #include <talon_swerve_drive_controller/Swerve.h>
 #include "talon_swerve_drive_controller/get_wheel_names.h"
 
+// this seems useful https://www.cs.cmu.edu/afs/cs/academic/class/16741-s07/www/lectures/Lecture2.pdf
+#include "smooth/se2.hpp"
+
 namespace talon_swerve_drive_controller
 {
 
@@ -521,6 +524,11 @@ void update(const ros::Time &time, const ros::Duration &period) override
 		}
 		return;
 	}
+
+	// Discretize velocity, accounting for the fact that we're not controlling continuously
+	// This finds the pose we would travel in one timestep and converts it to a twist to account for the robot rotating during the timestep (if translation + rotation are both commanded)
+	// Tested in sim, it does help a bit
+	curr_cmd = discretize(curr_cmd, std::max(dt, 1./250.));
 
 	// We are not stopped, so reset the time which we were
 	// last not-stopped here. This is used later to give
@@ -1012,6 +1020,42 @@ struct Commands
 
 	Commands() = default;
 };
+
+// This fixes one aspect of skew. The robot's heading changes throughout the timestep, so we can't just drive at the velocity we want for the whole time
+// because our heading is changing (we're rotating), and we'll go in an arc instead of a straight line. We can take the log of the matrix representing the
+// pose we want to drive for this timestep to get the corresponding twist, and drive that instead (divided by the timestep to get velocity).
+// Helpful explanation here: https://www.youtube.com/watch?v=lrjyVhwNNBc
+// This is what 254 is doing here: https://www.chiefdelphi.com/t/whitepaper-swerve-drive-skew-and-second-order-kinematics/416964/5
+// and what WPILib is doing: https://docs.wpilib.org/en/stable/docs/software/advanced-controls/geometry/transformations.html
+// Also, I *think* second-order control of each individual module (from that same cd thread) would correct for this as well,
+// but I'm not sure entirely how it works or how we'd command a velocity and an acceleration to a motor.
+// Anyway, this is basically WPILib's discretize function.
+// (and now we have a cool library)
+Commands discretize(Commands cmd, double dt) {
+	if (dt < 1e-6) {
+		// ROS_WARN_STREAM("swerve_drive_controller: discretization: dt=0? command was " << cmd.lin.x << "," << cmd.lin.y << "," << cmd.ang);
+		return cmd;
+	}
+	// ROS_INFO_STREAM("In: " << cmd.lin.x << "," << cmd.lin.y << "," << cmd.ang << ", dt=" << dt);
+	smooth::SE2d group_element_aka_pose;
+	// set R2 part (translation)
+	group_element_aka_pose.r2()(0,0) = cmd.lin.x * dt;
+	group_element_aka_pose.r2()(1,0) = cmd.lin.y * dt;
+	// set SO2 part (rotation)
+	group_element_aka_pose.so2() = smooth::SO2d(cmd.ang * dt);
+	// ROS_INFO_STREAM("SE2: " << group_element_aka_pose);
+	// logarithmic map to go from pose to twist
+	Eigen::Vector3d tangent_aka_twist = group_element_aka_pose.log(); // {x, y, rotation}
+	// ROS_INFO_STREAM("Twist (vx,vy,omega): " << tangent_aka_twist);
+	
+	Commands discretized;
+	discretized.lin = swervemath::Point2d{tangent_aka_twist(0,0) / dt, tangent_aka_twist(1,0) / dt};
+	discretized.ang = tangent_aka_twist(2,0) / dt;
+	discretized.stamp = cmd.stamp;
+	// ROS_INFO_STREAM("Discretized: " << discretized.lin.x << "," << discretized.lin.y << "," << discretized.ang);
+
+	return discretized;
+}
 
 realtime_tools::RealtimeBuffer<Commands> command_;
 
