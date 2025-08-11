@@ -1,7 +1,7 @@
 // Toggle between rotation using rightStickX and rightTrigger - leftTrigger
 #define ROTATION_WITH_STICK
 
-#include "ros/ros.h"
+// #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
 //#define NEED_JOINT_STATES
 #ifdef NEED_JOINT_STATES

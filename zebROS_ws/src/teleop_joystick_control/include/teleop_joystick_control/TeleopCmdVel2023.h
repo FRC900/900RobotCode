@@ -6,8 +6,8 @@
 #include <Eigen/Dense>
 #include <geometry_msgs/Twist.h>
 #include <angles/angles.h>
+#include "frc_msgs/JoystickState.h"
 #include "teleop_joystick_control/rate_limiter.h"
-#include "teleop_joystick_control/TeleopJoystickCompConfig.h"
 #include "teleop_joystick_control/store_xy.h"
 #include "teleop_joystick_control/interpolating_map.h"
 
@@ -23,9 +23,10 @@ struct StrafeSpeeds
 };
 
 struct MovementCaps {
-	MovementCaps(double speed_cap, double rotation_cap) {
-		speed_cap_ = speed_cap;
-		rotation_cap_ = rotation_cap;
+	MovementCaps(const double speed_cap, const double rotation_cap)
+		: speed_cap_{speed_cap}
+		, rotation_cap_{rotation_cap}
+	{
 	}
 	double speed_cap_{};
 	double rotation_cap_{};
