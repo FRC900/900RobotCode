@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from abc import ABC, abstractmethod
 import rospy
 import actionlib
 from behavior_actions.msg import SysIdAction, SysIdGoal, SysIdResult, SysIdFeedback
@@ -14,13 +15,16 @@ from talon_controller_msgs.srv import Command, CommandRequest
 #   to the motor controller
 # More complex mechanisms (e.g. swerve drive) will have their own implementations
 #   of start / set_voltage / stop which inlcude additional processing
-class SysIdMechanism(object):
+class SysIdMechanism(ABC):
+    @abstractmethod
     def start(self):
         pass
 
+    @abstractmethod
     def stop(self):
         pass
 
+    @abstractmethod
     def set_voltage(self, voltage):
         pass
 
@@ -79,7 +83,7 @@ class SysIdServer(object):
         rospy.loginfo("Waiting for signal logger service")
         self.signal_logger_client.wait_for_service()
         rospy.loginfo("Found signal logger service")
-        
+
         self.server = actionlib.SimpleActionServer(name, SysIdAction, execute_cb=self.execute_cb, auto_start = False)
         self.server.start()
         rospy.loginfo("Started SysId actionlib server")
@@ -95,7 +99,7 @@ class SysIdServer(object):
                 return "dynamic-forward"
             else:
                 return "dynamic-reverse"
-  
+
     def execute_cb(self, goal : SysIdGoal):
         self.feedback.voltage_out = 0
         self.server.publish_feedback(self.feedback)
