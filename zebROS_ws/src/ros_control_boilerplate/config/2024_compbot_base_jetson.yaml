@@ -7,7 +7,7 @@ generic_hw_control_loop:
   cancoder_read_hz: 100
   #some processes have lower frequencies than the main control loop
   ctre_mc_read_hz: 100
-  talonfxpro_read_hz: 50
+  talonfxpro_read_hz: 100
   pigeon2_read_hz: 100
   pcm_read_hz: 20
   pdh_read_hz: 20
@@ -88,7 +88,11 @@ hardware_interface:
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
 
         #  taken out
-       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfx}, {name: fl_angle, type: talonfx}, {name: fr_drive, type: talonfx}, {name: fr_angle, type: talonfx}, {name: br_drive, type: talonfx}, {name: br_angle, type: talonfx}, {name: bl_drive, type: talonfx}, {name: bl_angle, type: talonfx}, {name: pigeon2, type: pigeon2_yaw}] }
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: fl_drive, type: talonfxpro}, {name: fl_angle, type: talonfxpro}, {name: fr_drive, type: talonfxpro}, {name: fr_angle, type: talonfxpro}, {name: br_drive, type: talonfxpro}, {name: br_angle, type: talonfxpro}, {name: bl_drive, type: talonfxpro}, {name: bl_angle, type: talonfxpro}, {name: pigeon2, type: pigeon2_yaw}] }
+
+       - {name: top_left_shooter_simulator, type: simulator, joints: [ {name: top_left_shooter_joint, type: talonfxpro} ]}
+       - {name: shooter_pivot_simulator, type: simulator, joints: [ {name: shooter_pivot_motionmagic_joint, type: talonfxpro} ]}
+    #    - {name: default_simulator, type: simulator} # This should be the last simulator and will do non-physics-accurate simulation (get to control position/velocity immediately)
 
 # Create controllers for each joint
 #
@@ -101,6 +105,71 @@ hardware_interface:
 # /frcrobot/joint1_talon_controller/command
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
+
+# https://first.wpi.edu/wpilib/allwpilib/docs/release/java/edu/wpi/first/wpilibj/simulation/FlywheelSim.html
+top_left_shooter_simulator:
+    joints: [top_left_shooter_joint]
+    type: general_simulators/FlywheelSimulator
+    gearing: 0.6923076923076923
+    moment_of_inertia: 0.00098765883 # kg m^2, 1/2 * (0.5 lb/wheel * 6 wheels) * (1.5 in)^2
+    # gearing: 0.83
+    # moment_of_inertia: 0.003 # kg m^2
+
+shooter_pivot_simulator:
+    joints: [shooter_pivot_motionmagic_joint]
+    type: general_simulators/SingleJointedArmSimulator
+    gearing: 35.56
+    # From Onshape: length = 0.21 m (to CoM), mass = 7.7 kg, length of entire thing is 0.33 m
+    moment_of_inertia: 0.11319 # kg m^2, for an arm this is 1/3 * m * l^2
+    arm_length: 0.21 # meters
+    min_angle: 0.357
+    max_angle: 2.3
+    simulate_gravity: true
+    starting_angle: 0.357
+
+# double gearing = simulator_info["gearing"]; // unitless
+# PacejkaConstants pacejka_constants;
+# pacejka_constants.B = simulator_info["pacejka_constants"]["B"];
+# pacejka_constants.C = simulator_info["pacejka_constants"]["C"];
+# pacejka_constants.D = simulator_info["pacejka_constants"]["D"];
+# pacejka_constants.E = simulator_info["pacejka_constants"]["E"];
+# KienckeConstants kiencke_constants;
+# kiencke_constants.A = simulator_info["kiencke_constants"]["A"];
+# kiencke_constants.B = simulator_info["kiencke_constants"]["B"];
+# units::meter_t wheel_radius = simulator_info["wheel_radius"]; // meters
+# Eigen::Matrix<double, WHEELCOUNT, 2> wheel_positions;
+# for (size_t i = 0; i < WHEELCOUNT; i++) {
+#     wheel_positions(i, 0) = simulator_info["wheel_positions"][i][0];
+#     wheel_positions(i, 1) = simulator_info["wheel_positions"][i][1];
+#     drive_joints_.push_back(simulator_info["drive_joints"][i]);
+#     turn_joints_.push_back(simulator_info["turn_joints"][i]);
+# }
+# units::kilogram_t mass = simulator_info["mass"]; // kg
+# units::kilogram_square_meter_t moment_of_inertia = simulator_info["moment_of_inertia"]; // kg m^2
+swerve_simulator:
+    joints: [fl_drive, fl_angle]
+    type: general_simulators/SwerveSimulator1
+    gearing: 5.35
+    # again, SysID from bagfile would be very cool here (like drive forward at some known voltage and see what happens)
+    pacejka_constants: # https://www.desmos.com/calculator/mtdxhksfjz
+        B: 10.0
+        C: 1.9
+        D: 1.0
+        E: 0.97
+    kiencke_constants:
+        A: 0.38
+        B: 0.27
+    wheel_radius: 0.0508 # meters
+    wheel_positions: # meters
+        - [0.0, 0.0]
+    drive_joints: [fl_drive]
+    turn_joints: [fl_angle]
+    damping_friction: 0.00001
+    mass: 13.5 # 54.0 # kg
+    moment_of_inertia: 4.589 # kg m^2
+    # motor_inertia: 5.822e-5 # kg m^2, from 971's 0.1 * (0.95 * 0.0254) * (0.95 * 0.0254)
+    # motor_inertia: 2.900e-5 # kg m^2 works surprisingly well for expected ground speed
+    motor_inertia: 0.006 # kg m^2, colson: (0.55 pounds) * (2 inches) * (2 inches) = 0.000643807238 m2 kg
 
 intake_talonfxpro_controller:
     type: talonfxpro_controllers/TalonFXProVoltageOutputController
@@ -201,7 +270,6 @@ shooter_pivot_controller:
     type: shooter_pivot_controller_2024/ShooterPivotController_2024
 
     feed_forward_map:
-
         - [0.49394181369917645, 0.58]
         - [0.5460971604872883, 0.58]
         - [0.5951845456996288, 0.54]

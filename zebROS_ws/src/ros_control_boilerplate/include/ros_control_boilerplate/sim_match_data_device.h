@@ -9,7 +9,6 @@
 // interface.  So split this out and only build it on x86, which works because 
 // the version of ROS we build for Ubuntu 22.04 is patched to work correctly
 // with C++20
-#include <string>
 
 #include <ros/node_handle.h>
 #include "frc_msgs/MatchSpecificData.h"
@@ -21,14 +20,14 @@ public:
     explicit SimMatchDataDevice(const ros::NodeHandle &nh);
     SimMatchDataDevice(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice(SimMatchDataDevice &&other) noexcept = delete;
-    virtual ~SimMatchDataDevice();
+    ~SimMatchDataDevice() override;
 
     SimMatchDataDevice &operator=(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice &operator=(SimMatchDataDevice &&) noexcept = delete;
 
     void read(const ros::Time& time, const ros::Duration& period);
 
-    void simInit(ros::NodeHandle nh);
+    void simInit(ros::NodeHandle &nh) override;
 
     std::optional<bool> isEnabled(void) const;
     bool getControlWord(HAL_ControlWord &cw) const;

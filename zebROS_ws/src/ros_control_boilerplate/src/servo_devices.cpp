@@ -35,9 +35,9 @@ ServoDevices::ServoDevices(ros::NodeHandle &root_nh)
             int servo_channel = 0;
             // Sensible defaults from allwpilib/hal/src/main/native/athena/Servo.cpp
             double output_max = 2400.;
-            double deadband_max = 0.;
-            double center = 0.;
-            double deadband_min = 0.;
+            // double deadband_max = 0.;
+            // double center = 0.;
+            // double deadband_min = 0.;
             double output_min = 600.;
             int period_multiplier = 1;
             readJointLocalParams(joint_params, joint_name, local, saw_local_keyword, local_update, local_hardware);

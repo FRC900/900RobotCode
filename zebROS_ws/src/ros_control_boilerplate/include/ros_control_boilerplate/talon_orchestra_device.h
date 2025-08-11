@@ -3,9 +3,7 @@
 
 #include <map>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 #include "ros_control_boilerplate/ctre_v6_device.h"
 
 namespace ctre::phoenix6

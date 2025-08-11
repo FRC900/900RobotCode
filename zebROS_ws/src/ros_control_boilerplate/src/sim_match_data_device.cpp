@@ -1,8 +1,4 @@
-#include "frc/DriverStation.h"                        // for DriverStation
-#include "hal/DriverStation.h"                        // for HAL_GetAlliance...
 #include "hal/DriverStationTypes.h"                   // for HAL_ControlWord
-#include "hal/HALBase.h"                              // for HAL_GetErrorMes...
-#include "hal/Power.h"                                // for HAL_GetVinVoltage
 #include "hal/simulation/DriverStationData.h"
 
 #include "ros_control_boilerplate/sim_match_data_device.h"
@@ -26,7 +22,7 @@ void SimMatchDataDevice::read(const ros::Time &time, const ros::Duration &period
     }
 }
 
-void SimMatchDataDevice::simInit(ros::NodeHandle nh)
+void SimMatchDataDevice::simInit(ros::NodeHandle &nh)
 {
     if (getLocal())
     {
