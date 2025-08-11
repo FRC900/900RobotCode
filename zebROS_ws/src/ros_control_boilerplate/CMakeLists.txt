@@ -70,10 +70,11 @@ endif()
 
 add_service_files (
   FILES
-  set_limit_switch.srv
-  LineBreakSensors.srv
   DSError.srv
+  LineBreakSensors.srv
+  SignalLoggerString.srv
   set_current.srv
+  set_limit_switch.srv
 )
 
 generate_messages(

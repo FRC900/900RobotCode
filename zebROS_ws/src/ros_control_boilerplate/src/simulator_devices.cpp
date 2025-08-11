@@ -57,9 +57,8 @@ SimulatorDevices::SimulatorDevices(ros::NodeHandle &root_nh, const std::multimap
 
             for (int j = 0; j < joints_array.size(); j++)
             {
-                std::string controlled_joint_name;
-                readStringRequired(joints_array[j], "name", controlled_joint_name);
-                controlled_joints_.push_back(controlled_joint_name);
+                readStringRequired(joints_array[j], "name", joint_name);
+                controlled_joints_.push_back(joint_name);
             }
         }
     }
