@@ -4,9 +4,9 @@
 #include <array>
 #include "opencv2/core.hpp"
 #include "opencv2/calib3d.hpp"
-#include "warp_perspective_points.h"
+#include "deeptag_ros/warp_perspective_points.h"
 #undef  DEBUG
-#include "debug.h"
+#include "deeptag_ros/debug.h"
 
 template <size_t N>
 std::array<cv::Point2d, N> fromCropToUndistorted(const std::array<cv::Point2d, N> &pointsInCrop,

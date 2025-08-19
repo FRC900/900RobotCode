@@ -8,22 +8,22 @@
 #include <opencv2/core/types.hpp>            // for Point2d
 #include <string>                            // for string
 #include <vector>                            // for vector
-#include "decoded_tag.h"                     // for DecodedTag
-#include "decoder_engine.h"                  // for DecoderEngine
-#include "decoder_softmax.h"                 // for DecoderSoftmax
-#include "grid_prior.h"                      // for GridPrior
-#include "confidence_filter.h"               // for ConfidenceFilter
-#include "span.hpp"                          // for span
-#include "stage2_corners.h"                  // for Stage2Corners
-#include "stage2_keypoint_trust.h"           // for Stage2KeypointTrust
-#include "suppress_and_average_keypoints.h"  // for SuppressAndAverageKeypoints
+#include "deeptag_ros/decoded_tag.h"                     // for DecodedTag
+#include "deeptag_ros/decoder_engine.h"                  // for DecoderEngine
+#include "deeptag_ros/decoder_softmax.h"                 // for DecoderSoftmax
+#include "deeptag_ros/grid_prior.h"                      // for GridPrior
+#include "deeptag_ros/confidence_filter.h"               // for ConfidenceFilter
+#include "deeptag_ros/span.hpp"                          // for span
+#include "deeptag_ros/stage2_corners.h"                  // for Stage2Corners
+#include "deeptag_ros/stage2_keypoint_trust.h"           // for Stage2KeypointTrust
+#include "deeptag_ros/suppress_and_average_keypoints.h"  // for SuppressAndAverageKeypoints
 
 class GpuImageWrapper;
 struct GridPriorValue;
 class Stage2Keypoint;
 class Stage2KeypointGroup;
 class Timings;
-struct PointsAndIDs;
+template <size_t GRID_SIZE> struct PointsAndIDs;
 
 template <class MARKER_DICT, size_t GRID_SIZE>
 class STagDecoder
@@ -46,13 +46,14 @@ public:
     void   setMinGridMatchRatio(const double minGridMatchRatio);
     double getMinGridMatchRatio(void) const;
     ushort2 getModelSize(void) const;
+    cudaStream_t getCudaStream(void);
 
 private:
     void runInference(std::vector<std::vector<Stage2KeypointGroup>> &stage2KeypointGroupss,
-                      std::vector<std::vector<float2>> &stage2Corners,
+                      std::vector<std::array<float2, 4>> &stage2Corners,
                       const std::vector<std::vector<GpuImageWrapper>> &detectInputs,
                       const tcb::span<const std::array<cv::Point2d, 4>> &rois);
-    void fillEmptyIds(std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &orderedFineGridPointsIds,
+    void fillEmptyIds(PointsAndIDs<GRID_SIZE + 2> &orderedFineGridPointsIds,
                       const tcb::span<const Stage2KeypointGroup> &fineGridPointsWithIdsCandidates) const;
 
     const MARKER_DICT &m_markerDict;

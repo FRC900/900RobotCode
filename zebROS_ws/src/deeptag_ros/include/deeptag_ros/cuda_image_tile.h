@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "device_types.h"
-#include "image_format.h"
+#include "deeptag_ros/image_format.h"
 
 cudaError_t cudaImageTileRGB(const void *input,
 							 const imageFormat format,

@@ -6,7 +6,7 @@
 #ifndef __device__
 #define __device__
 #endif
-#include "ssd_box.h"
+#include "deeptag_ros/ssd_box.h"
 
 // Used to store merged Stage1Grid similar data as a single
 // group rather than deal with duplicates of individual results

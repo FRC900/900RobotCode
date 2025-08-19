@@ -1,8 +1,8 @@
 #ifndef GRID_PRIOR_INC__
 #define GRID_PRIOR_INC__
 #include <cuda_runtime.h>
-#include "grid_prior_value.h"
-#include "span.hpp"
+#include "deeptag_ros/grid_prior_value.h"
+#include "deeptag_ros/span.hpp"
 
 // Class to handle all of the GridPrior ops.
 // Stores the grid priors (a map from model output indexes to image coords) along

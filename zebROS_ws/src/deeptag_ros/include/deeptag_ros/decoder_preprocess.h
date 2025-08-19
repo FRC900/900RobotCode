@@ -3,7 +3,7 @@
 #include <array>
 #include "cuda_runtime.h"  // for cudaError
 
-#include "image_format.h"
+#include "deeptag_ros/image_format.h"
 
 class DecoderPreprocess
 {
