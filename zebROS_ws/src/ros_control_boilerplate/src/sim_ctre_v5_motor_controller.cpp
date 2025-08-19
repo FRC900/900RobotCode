@@ -1,7 +1,5 @@
 #include <ros/node_handle.h>
-#include "ctre/phoenix/motorcontrol/TalonFXSimCollection.h"
 #include "ctre/phoenix/motorcontrol/TalonSRXSimCollection.h"
-#include "ctre/phoenix/motorcontrol/can/TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/TalonSRX.h"
 
 #include "ctre_interfaces/talon_state_interface.h"
@@ -28,31 +26,10 @@ void SimCTREV5MotorController::setSimCollection(int position,
                                                 int velocity,
                                                 int delta_position) const
 {
-	if (talon_fx_)
-    {
-		setSimCollectionTalonFX(position, velocity, delta_position);
-    }
-	else if (talon_srx_)
+	if (talon_srx_)
     {
 		setSimCollectionTalonSRX(position, velocity, delta_position);
     }
-}
-
-void SimCTREV5MotorController::setSimCollectionTalonFX(int position,
-                                                       int velocity,
-                                                       int delta_position) const
-{
-	auto &collection = talon_fx_->GetSimCollection();
-	if (delta_position)
-    {
-		collection.AddIntegratedSensorPosition(delta_position);
-    }
-	else
-    {
-		collection.SetIntegratedSensorRawPosition(position);
-    }
-	collection.SetIntegratedSensorVelocity(velocity);
-	collection.SetBusVoltage(12.5);
 }
 
 void SimCTREV5MotorController::setSimCollectionTalonSRX(int position,
@@ -91,7 +68,7 @@ void SimCTREV5MotorController::setSimCollectionTalonSRX(int position,
 //   See https://www.reca.lc/motors for constants for various FRC motors
 void SimCTREV5MotorController::updateSimValues(const ros::Time &/*time*/, const ros::Duration &period)
 {
-    if (!talon_srx_ && !talon_fx_)
+    if (!talon_srx_)
     {
         return;
     }
@@ -155,13 +132,6 @@ bool SimCTREV5MotorController::setSimLimitSwitches(const bool forward_limit, con
         collection.SetLimitRev(reverse_limit);
         return true;
     }
-    if (talon_fx_)
-    {
-        auto &collection = talon_fx_->GetSimCollection();
-        collection.SetLimitFwd(forward_limit);
-        collection.SetLimitRev(reverse_limit);
-        return true;
-    }
     ROS_ERROR_STREAM("Couldn't set sim limit switches for CTRE V5 MC " << getName() << " : device not an FX or SRX");
     return false;
 }
@@ -176,13 +146,6 @@ bool SimCTREV5MotorController::setSimCurrent(const double stator_current, const 
     if (talon_srx_)
     {
         auto &collection = talon_srx_->GetSimCollection();
-        collection.SetStatorCurrent(stator_current);
-        collection.SetSupplyCurrent(supply_current);
-        return true;
-    }
-    if (talon_fx_)
-    {
-        auto &collection = talon_fx_->GetSimCollection();
         collection.SetStatorCurrent(stator_current);
         collection.SetSupplyCurrent(supply_current);
         return true;

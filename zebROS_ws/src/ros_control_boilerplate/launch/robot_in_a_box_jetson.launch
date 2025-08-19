@@ -20,9 +20,9 @@
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
-			 joint_state_controller
-			 joint_state_listener_controller
-			 match_state_listener_controller
+			 joint_state_controller_jetson
+			 joint_state_listener_controller_jetson
+			 match_state_listener_controller_jetson
 			 candle_controller
 			 candle_state_controller
 			 talonfxpro_state_controller

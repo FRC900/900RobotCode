@@ -44,7 +44,7 @@ button_box_controller:
     name: button_box
     publish_rate: 50
        
-joint_state_controller:
+joint_state_controller_rio:
    type:         joint_state_controller/JointStateController
    publish_rate: 100
 
@@ -63,22 +63,22 @@ spacemouse_controller:
 # encoder state used by the hw manager and publishes it as
 # a ROS topic.  This is generic ROS stuff, so we'll have
 # to figure out what to map e.g. effort to in the Talon world
-talon_state_controller:
+talon_state_controller_rio:
    type:         talon_state_controller/TalonStateController
    publish_rate: 100
-talon_config_controller:
+talon_config_controller_rio:
    type:         talon_config_controller/TalonConfigController
    publish_rate: 100
        
-pdp_state_controller:
+pdp_state_controller_rio:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
 
-pcm_state_controller:
+pcm_state_controller_rio:
    type : pcm_state_controller/PCMStateController
    publish_rate: 20
 
-match_state_controller:
+match_state_controller_rio:
    type:         match_state_controller/MatchStateController
    publish_rate: 20
 
@@ -86,7 +86,7 @@ robot_controller_state_controller:
    type: robot_controller_state_controller/RobotControllerStateController
    publish_rate: 20
 
-joint_state_listener_controller:
+joint_state_listener_controller_rio:
     type:      state_listener_controller/JointStateListenerController
     topic:     /frcrobot_jetson/joint_states
 

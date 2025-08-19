@@ -25,10 +25,10 @@
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn
-			 joint_state_controller
-			 joint_state_listener_controller
-			 match_state_controller
-			 robot_code_ready_controller" />
+			 joint_state_controller_rio
+			 joint_state_listener_controller_rio
+			 match_state_controller_rio
+			 robot_code_ready_controller_rio" />
 <!-- 
 			 clawster_controller
 			 button_box_controller

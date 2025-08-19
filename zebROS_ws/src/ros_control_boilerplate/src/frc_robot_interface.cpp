@@ -74,7 +74,7 @@
 #include "ros_control_boilerplate/rumble_devices.h"
 #include "ros_control_boilerplate/servo_devices.h"
 #include "ros_control_boilerplate/solenoid_devices.h"
-#include "ros_control_boilerplate/sparkmax_devices.h"
+// #include "ros_control_boilerplate/sparkmax_devices.h"
 #include "ros_control_boilerplate/talonfxpro_devices.h"
 #include "ros_control_boilerplate/talon_orchestra_devices.h"
 
@@ -193,7 +193,7 @@ bool FRCRobotInterface<SIM>::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*r
 	devices_.emplace_back(std::make_unique<CANCoderDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANdleDevices<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<CANifierDevices<SIM>>(root_nh));
-	// devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
+	devices_.emplace_back(std::make_unique<CTREV5MotorControllers<SIM>>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalInputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DigitalOutputDevices>(root_nh));
 	devices_.emplace_back(std::make_unique<DoubleSolenoidDevices>(root_nh));

@@ -80,6 +80,7 @@
   <depend>base_trajectory_msgs</depend>
   <depend>controllers_2025_msgs</depend>
   <depend>talon_controller_msgs</depend>
+  <depend>teleop_orientation_driver</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

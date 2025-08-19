@@ -30,7 +30,7 @@ CTREV5MotorControllers<SIM>::CTREV5MotorControllers(ros::NodeHandle &root_nh)
         readStringRequired(joint_params, "name", joint_name);
         readStringRequired(joint_params, "type", joint_type, joint_name);
 
-		if ((joint_type == "can_talon_srx") || (joint_type == "can_victor_spx") || (joint_type == "can_talon_fx"))
+		if ((joint_type == "can_talon_srx") || (joint_type == "can_victor_spx"))
         {
             bool local = true;
             readBooleanOptional(joint_params, "local", local, joint_name);

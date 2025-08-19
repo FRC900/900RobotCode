@@ -5,8 +5,6 @@
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
-#include "ctre_interfaces/absolute_sensor_range.h"
-#include "ctre_interfaces/sensor_initialization_strategy.h"
 #include "ctre_interfaces/talon_state_types.h"
 
 namespace hardware_interface
@@ -162,15 +160,6 @@ class TalonHWState
 		void setSupplyCurrentLimitEnable(bool supply_current_limit_enable);
 		bool getSupplyCurrentLimitEnable(void) const;
 
-		void setStatorCurrentLimit(double stator_current_limit);
-		double getStatorCurrentLimit(void) const;
-		void setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current);
-		double getStatorCurrentTriggerThresholdCurrent(void) const;
-		void setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time);
-		double getStatorCurrentTriggerThresholdTime(void) const;
-		void setStatorCurrentLimitEnable(bool stator_current_limit_enable);
-		bool getStatorCurrentLimitEnable(void) const;
-
 		void setMotionCruiseVelocity(double velocity);
 		double getMotionCruiseVelocity(void) const;
 		void setMotionAcceleration(double acceleration);
@@ -240,18 +229,6 @@ class TalonHWState
 		bool getClearPositionOnLimitF(void) const;
 		void setClearPositionOnLimitR(bool clear_position_on_limit_r);
 		bool getClearPositionOnLimitR(void) const;
-
-		//TalonFX only
-		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
-		hardware_interface::MotorCommutation getMotorCommutation(void) const;
-
-		//TalonFX only
-		void setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range);
-		hardware_interface::AbsoluteSensorRange getAbsoluteSensorRange(void) const;
-
-		//TalonFX only
-		void setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy);
-		hardware_interface::SensorInitializationStrategy getSensorInitializationStrategy(void) const;
 
 		void setEnableReadThread(bool enable_read_thread);
 		void setFirmwareVersion(int firmware_version);
@@ -356,16 +333,11 @@ class TalonHWState
 		int current_limit_continuous_amps_;
 		bool current_limit_enable_;
 
-		// TalonFX / Falcon500 only
+		// TalonSRX cuurent limiting
 		double supply_current_limit_;
 		double supply_current_trigger_threshold_current_;
 		double supply_current_trigger_threshold_time_;
 		bool   supply_current_limit_enable_;
-
-		double stator_current_limit_;
-		double stator_current_trigger_threshold_current_;
-		double stator_current_trigger_threshold_time_;
-		bool   stator_current_limit_enable_;
 
 		// Talon expects these in integral sensorUnitsPer100ms,
 		// but at this level we're still dealing with
@@ -391,11 +363,6 @@ class TalonHWState
 
 		bool clear_position_on_limit_f_{false};
 		bool clear_position_on_limit_r_{false};
-
-		// TalonFX / Falcon500 specific
-		hardware_interface::MotorCommutation motor_commutation_;
-		hardware_interface::AbsoluteSensorRange absolute_sensor_range_;
-		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
 
 		bool enable_read_thread_;
 

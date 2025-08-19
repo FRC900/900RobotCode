@@ -1,6 +1,8 @@
 #ifndef CTRE_V5_MOTOR_CONTROLLER_INC__
 #define CTRE_V5_MOTOR_CONTROLLER_INC__
 
+#include <ros/time.h>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>

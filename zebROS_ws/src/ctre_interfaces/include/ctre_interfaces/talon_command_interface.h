@@ -290,20 +290,6 @@ class TalonHWCommand
 				bool &supply_current_limit_enable);
 		void  resetSupplyCurrentLimit(void);
 
-		void setStatorCurrentLimit(double stator_current_limit);
-		double getStatorCurrentLimit(void) const;
-		void setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current);
-		double getStatorCurrentTriggerThresholdCurrent(void) const;
-		void setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time);
-		double getStatorCurrentTriggerThresholdTime(void) const;
-		void setStatorCurrentLimitEnable(bool stator_current_limit_enable);
-		bool getStatorCurrentLimitEnable(void) const;
-		bool statorCurrentLimitChanged(double &stator_current_limit,
-				double &stator_current_trigger_threshold_current,
-				double &stator_time_trigger_threshold_time,
-				bool &stator_current_limit_enable);
-		void  resetStatorCurrentLimit(void);
-
 		void setMotionCruiseVelocity(double velocity);
 		double getMotionCruiseVelocity(void) const;
 		void setMotionAcceleration(double acceleration);
@@ -366,24 +352,6 @@ class TalonHWCommand
 
 		void setConversionFactor(double conversion_factor);
 		double getConversionFactor(void) const;
-
-		//TalonFX only
-		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
-		hardware_interface::MotorCommutation getMotorCommutation(void) const;
-		bool motorCommutationChanged(hardware_interface::MotorCommutation &motor_commutation);
-		void resetMotorCommutation(void);
-
-		//TalonFX only
-		void setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range);
-		hardware_interface::AbsoluteSensorRange getAbsoluteSensorRange(void) const;
-		bool absoluteSensorRangeChanged(hardware_interface::AbsoluteSensorRange &absolute_sensor_range);
-		void resetAbsoluteSensorRange(void);
-
-		//TalonFX only
-		void setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy);
-		hardware_interface::SensorInitializationStrategy getSensorInitializationStrategy(void) const;
-		bool sensorInitializationStrategyChanged(hardware_interface::SensorInitializationStrategy &sensor_initialization_strategy);
-		void resetSensorInitializationStrategy(void);
 
 		void setEnableReadThread(bool enable_read_thread);
 		bool getEnableReadThread(void) const;
@@ -530,16 +498,6 @@ class TalonHWCommand
 		bool clear_position_on_limit_f_changed_{false};
 		bool clear_position_on_limit_r_{false};
 		bool clear_position_on_limit_r_changed_{false};
-
-		// TalonFX / Falcon500 specific
-		hardware_interface::MotorCommutation motor_commutation_;
-		bool                                 motor_commutation_changed_;
-
-		hardware_interface::AbsoluteSensorRange absolute_sensor_range_;
-		bool                                    absolute_sensor_range_changed_;
-
-		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
-		bool                                             sensor_initialization_strategy_changed_;
 
 		bool enable_read_thread_;
 		bool enable_read_thread_changed_;

@@ -1,10 +1,8 @@
 #ifndef SIM_CTRE_V5_MOTOR_CONTROLLER_INC__
 #define SIM_CTRE_V5_MOTOR_CONTROLLER_INC__
 
-#include <atomic>
-#include <mutex>
+#include <ros/time.h>
 #include <string>
-#include <thread>
 #include "ros_control_boilerplate/ctre_v5_motor_controller.h"
 
 namespace gazebo::physics
@@ -26,7 +24,7 @@ public:
                              const double read_hz);
     SimCTREV5MotorController(SimCTREV5MotorController &&other) noexcept = delete;
     SimCTREV5MotorController(const SimCTREV5MotorController &) = delete;
-    virtual ~SimCTREV5MotorController() = default;
+    ~SimCTREV5MotorController() override = default;
     SimCTREV5MotorController &operator=(const SimCTREV5MotorController &) = delete;
     SimCTREV5MotorController &operator=(SimCTREV5MotorController &&) noexcept = delete;
 
@@ -42,7 +40,6 @@ public:
 private:
     void setSimCollection(int position, int velocity, int delta_position = 0) const;
     void setSimCollectionTalonSRX(int position, int velocity, int delta_position) const;
-    void setSimCollectionTalonFX(int position, int velocity, int delta_position) const;
 
     boost::shared_ptr<gazebo::physics::Joint> gazebo_joint_;
 };

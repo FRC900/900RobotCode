@@ -1,8 +1,9 @@
-# Script to setup Jetson Orin  NX environment. 
-# See _xavier.sh script for a similar script for the Jetson Xavier NX
+# Script to setup Jetson Xavier NX environment. Probably would also work
+# with slight modifications on other Jetson hardware
 
 #install basic dependencies
 sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
+sudo apt-add-repository ppa:borglab/gtsam-release-4.1 -y
 sudo apt update
 
 # Keep these the original version to line up with kernel versions supported by arducam?
@@ -12,10 +13,6 @@ sudo apt -y upgrade
 
 # These are listed 1 package per line to hopefully make git merging easier
 # They're also sorted alphabetically to keep packages from being listed multiple times
-
-    # libclang1-9 \
-    # libgtsam-dev \
-    # libgtsam-unstable-dev \
 sudo apt install -y \
     build-essential \
     can-utils \
@@ -26,11 +23,12 @@ sudo apt install -y \
     cowsay \
     dbus-x11 \
     exfat-fuse \
+    exfat-utils \
+	gcc-10 \
     gcc-11 \
-    gcc-12 \
 	gcc-13 \
+	g++-10 \
     g++-11 \
-    g++-12 \
     g++-13 \
     gdb \
     gfortran \
@@ -45,9 +43,12 @@ sudo apt install -y \
     libcanberra-gtk-module \
     libcanberra-gtk3-module \
     libclang-12-dev \
+    libclang1-9 \
     libeigen3-dev \
     libflann-dev \
     libgflags-dev \
+    libgtsam-dev \
+    libgtsam-unstable-dev \
     libgoogle-glog-dev \
     libgoogle-perftools-dev \
     libgmock-dev \
@@ -100,22 +101,25 @@ sudo apt install -y \
     zlib1g-dev \
     zstd
 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 130 --slave /usr/bin/g++ g++ /usr/bin/g++-13
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120 --slave /usr/bin/g++ g++ /usr/bin/g++-12
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+# gcc-11 fails on CUDA code, so we need to use gcc-10 for now
+# sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9
 sudo update-alternatives --auto gcc
 
-# CUDA with c++20 requires a newer version of cmake than is provided via apt
+#TensorRT requires a newer version of cmake than standard apt repos provide
+# TODO - we don't use TensorRT anymore, so this can probably be removed
 cd
-wget https://github.com/Kitware/CMake/releases/download/v3.31.8/cmake-3.31.8.tar.gz
-tar -xf cmake-3.31.8.tar.gz
-cd cmake-3.31.8
+#wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+wget https://github.com/Kitware/CMake/releases/download/v3.27.0/cmake-3.27.0.tar.gz
+tar -xf cmake-3.27.0.tar.gz
+cd cmake-3.27.0
 cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
 sudo ninja install
 sudo mv /usr/bin/cmake /usr/bin/cmake.old
 sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 cd ..
-sudo rm -rf cmake-3.31.8*
+sudo rm -rf cmake-3.27.0*
 
 # Install tinyxml2
 cd
@@ -129,13 +133,14 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/5.0/l4t36.4/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/4.2/l4t35.4/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
 rm -rf /home/ubuntu/.local/lib/python3.8/site-packages/numpy
 
-# Grab repo to make it easier to copy files from there to the Jetson
+#mount and setup autostart script
+sudo mkdir /mnt/900_2
 cd
 git clone https://github.com/FRC900/900RobotCode.git
 cd ~/900RobotCode
@@ -149,20 +154,20 @@ cd ~/900RobotCode
 #echo "  down /sbin/ifconfig can0 down" >> can0
 #sudo mv can0 /etc/network/interfaces.d
 
-sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
-sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
-sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2024.list "https://deb.ctr-electronics.com/ctr2024.list"
-sudo sed -i -e 's/tools stable main/tools jetson main/' /etc/apt/sources.list.d/ctr2024.list
+# sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
+# sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
+# sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2024.list "https://deb.ctr-electronics.com/ctr2024.list"
+# sudo sed -i -e 's/tools stable main/tools jetson main/' /etc/apt/sources.list.d/ctr2024.list
 
 sudo apt remove linux-headers-generic linux-headers-5.4.0-* linux-headers-5.4.0-*-generic 
 sudo apt update
 sudo apt install -y dkms
-sudo apt install -y canivore-usb
-# cd /tmp
-# unzip /home/ubuntu/900RobotCode/scripts/jetson_install/canivore-usb-arm64-Ubuntu-20.04-v3.zip
-# sudo dpkg -i canivore-usb-kernel_1.13_arm64.deb
-# sudo dpkg -i canivore-usb_1.13_arm64.deb
-# sudo apt-mark hold canivore-usb canivore-usb-kernel
+#sudo apt install -y canivore-usb
+cd /tmp
+unzip /home/ubuntu/900RobotCode/scripts/jetson_install/canivore-usb-arm64-Ubuntu-20.04-v3.zip
+sudo dpkg -i canivore-usb-kernel_1.13_arm64.deb
+sudo dpkg -i canivore-usb_1.13_arm64.deb
+sudo apt-mark hold canivore-usb canivore-usb-kernel
 
 # Re-enable if we want to use a canivore usb interface
 # sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
@@ -309,7 +314,7 @@ sudo cp ~/900RobotCode/scripts/jetson_install/calibration_files/*.conf /usr/loca
 sudo chmod 644 /usr/local/zed/settings/*
 
 cp ~/900RobotCode/.vimrc ~/900RobotCode/.gvimrc ~
-sudo cp ~/900RobotCode/kjaget.vim /usr/share/vim/vim82/colors
+sudo cp ~/900RobotCode/kjaget.vim /usr/share/vim/vim81/colors
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson NX"
@@ -321,6 +326,17 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 sudo ln -s /usr/include/opencv4 /usr/include/opencv
 
 echo "source /home/ubuntu/900RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
+
+# Install make 4.3 (>4.2 is required for -flto=jobserver support
+cd
+wget https://ftp.gnu.org/gnu/make/make-4.3.tar.gz
+tar -xf make-4.3.tar.gz
+mkdir make-4.3/build
+cd make-4.3/build
+../configure --prefix=/usr
+sudo make -j`nproc --all` install
+cd
+sudo rm -rf make-4.3*
 
 # Give the ubuntu user dialout permission, which is used by the ADI IMU
 sudo adduser ubuntu dialout
@@ -354,29 +370,38 @@ sudo python3 -m pip install --no-cache-dir --upgrade psutil
 
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnx>=1.12'
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnxsim>=0.4.1'
-wget https://nvidia.box.com/shared/static/6l0u97rj80ifwkk8rqbzj1try89fk26z.whl -O onnxruntime_gpu-1-19.0-cp310-cp310-linux_aarch64.whl
-wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/869/e41abdc35e093/onnxruntime_gpu-1.22.0-cp310-cp310-linux_aarch64.whl#sha256=869e41abdc35e09345876f047fce49267d699df3e44b67c2518b0469739484ff
-wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/4eb/e6a8902dc7708/onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl#sha256=4ebe6a8902dc7708434b2e1541b3fe629ebf434e16ab5537d1d6a622b42c622b
-
-sudo pip3 install onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl 
-rm onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl 
+wget https://nvidia.box.com/shared/static/mvdcltm9ewdy2d5nurkiqorofz1s53ww.whl -O onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
+sudo pip3 install onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
+rm onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
 
 # cpu-only version : sudo python3 -m pip install --no-cache-dir --upgrade 'onnxruntime'
+# not available sudo python3 -m pip install --no-cache-dir --upgrade onnxruntime-gpu
 #sudo python3 -m pip install --no-cache-dir --upgrade nvidia-pyindex
 #sudo python3 -m pip install --no-cache-dir --upgrade nvidia-tensorrt
 
-sudo apt-get install -y libopenblas-base libopenmpi-dev
-wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/62a/1beee9f2f1470/torch-2.8.0-cp310-cp310-linux_aarch64.whl#sha256=62a1beee9f2f147076a974d2942c90060c12771c94740830327cae705b2595fc
-sudo pip3 install torch-2.8.0-cp310-cp310-linux_aarch64.whl 
-rm torch-2.8.0-cp310-cp310-linux_aarch64.whl
+#export PYTORCH_URL=https://nvidia.box.com/shared/static/rehpfc4dwsxuhpv4jgqv8u6rzpgb64bq.whl 
+#export PYTORCH_WHL=torch-2.0.0a0+ec3941ad.nv23.2-cp38-cp38-linux_aarch64.whl 
+export PYTORCH_URL=https://nvidia.box.com/shared/static/i8pukc49h3lhak4kkn67tg9j4goqm0m7.whl
+export PYTORCH_WHL=torch-2.0.0+nv23.05-cp38-cp38-linux_aarch64.whl
 
-wget https://pypi.jetson-ai-lab.io/jp6/cu126/+f/907/c4c1933789645/torchvision-0.23.0-cp310-cp310-linux_aarch64.whl#sha256=907c4c1933789645ebb20dd9181d40f8647978e6bd30086ae7b01febb937d2d1
-sudo pip3 install torchvision-0.23.0-cp310-cp310-linux_aarch64.whl 
-rm torchvision-0.23.0-cp310-cp310-linux_aarch64.whl
+sudo apt-get install -y libopenblas-base libopenmpi-dev
+wget --quiet --show-progress --progress=bar:force:noscroll --no-check-certificate ${PYTORCH_URL} -O ${PYTORCH_WHL}
+sudo pip3 install --no-cache-dir --verbose ${PYTORCH_WHL}
+rm ${PYTORCH_WHL}
+
+
+export TORCHVISION_VERSION=0.15
+export TORCH_CUDA_ARCH_LIST="7.2;8.7" 
+sudo apt install -y libjpeg-dev libpng-dev zlib1g-dev
+git clone --branch release/${TORCHVISION_VERSION} --recursive --depth=1 https://github.com/pytorch/vision torchvision
+cd torchvision
+git checkout release/${TORCHVISION_VERSION}
+sudo python3 setup.py install
+cd ..
+sudo rm -rf torchvision
 
 sudo python3 -m pip install --no-cache-dir --upgrade 'pytorch_pfn_extras'
 sudo python3 -m pip install --no-cache-dir --upgrade ultralytics
-
 cd /home/ubuntu
 git clone https://github.com/triple-Mu/YOLOv8-TensorRT.git
 # End of ultralytics YOLOv8 deps
@@ -400,9 +425,11 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 sudo pip3 install pyserial
 sudo pip3 install cupy-cuda11x
 
+# TODO - figure out a real fix for the build error in newer commits
 cd /home/ubuntu &&\
     git clone https://github.com/abseil/abseil-cpp.git &&\
     cd abseil-cpp &&\
+    git checkout a3f7e9866c67ca090995aa638276b8fd8938c6f3 &&\
     mkdir build &&\
     cd build &&\
     cmake -DABSL_BUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DABSL_USE_GOOGLETEST_HEAD=ON -DCMAKE_CXX_STANDARD=17 -GNinja .. &&\
@@ -418,179 +445,3 @@ cd ~
 wget https://github.com/ArduCAM/MIPI_Camera/releases/download/v0.0.3/install_full.sh
 chmod +x install_full.sh
 ./install_full.sh -m arducam
-
-# Install gtsam - tagslam prereq
-cd /home/ubuntu &&\
-    git clone https://github.com/borglab/gtsam.git &&\
-    cd gtsam &&\
-    git checkout release/4.2 &&\
-    mkdir build &&\
-    cd build &&\
-    cmake -DCMAKE_BUILD_TYPE=Release -DGTSAM_WITH_TBB=ON -DGTSAM_USE_SYSTEM_EIGEN=ON -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF -GNinja .. &&\
-    ninja &&\
-    sudo ninja install &&\
-    cd /home/ubuntu &&\
-    sudo rm -rf gtsam
-
-# Needed to get catkin to put python libs in the correct locations
-sudo pip3 install -U 'setuptools<66'
-
-### ROS setup
-# sudo sh -c "echo 'deb [arch=arm64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg' >> /etc/apt/sources.list.d/robotpkg.list"
-sudo apt update
-sudo apt install -y \
-    nlohmann-json3-dev \
-    libompl-dev \
-    libturbojpeg0-dev \
-    ompl-demos \
-    python3-rosdistro \
-    python3-rosinstall \
-    python3-rosinstall-generator  
-sudo python3 -m pip install --no-cache-dir "catkin-pkg==1.0.0" "catkin-tools==0.9.5" rosdep roslibpy vcstool vcstools
-cd /usr/lib/python3/dist-packages/
-sudo patch -p0 < /home/ubuntu/900RobotCode/scripts/jetson_install/catkin_pkg.patch 
-
-sudo rosdep init
-rosdep update
-
-mkdir ~/ros_catkin_ws
-cd ~/ros_catkin_ws
-mkdir src
-sudo apt update
-
-# TODO - do we need rqt on the Jetson?
-rosinstall_generator \
-       apriltag \
-       apriltag_ros \
-       camera_calibration \
-       controller_manager \
-       control_msgs \
-       control_toolbox \
-       cv_bridge \
-       ecl_geometry \
-       hardware_interface \
-       image_pipeline \
-       image_transport_plugins \
-       imu_filter_madgwick \
-       joint_limits_interface \
-       joint_state_publisher \
-       joint_state_publisher_gui \
-       joy \
-       map_server \
-       marker_msgs \
-       moveit \
-       navigation \
-       pcl_conversions \
-       pcl_ros \
-       robot_localization \
-       robot_state_publisher \
-       ros_base \
-       ros_type_introspection \
-       rosbridge_suite \
-       roslint \
-       rosparam_shortcuts \
-       rospy_message_converter \
-       rqt \
-       rqt_common_plugins \
-       rqt_controller_manager \
-       rqt_tf_tree \
-       rosserial \
-       serial \
-       smach \
-       smach_ros \
-       tf \
-       tf2_py \
-       tf2_ros \
-       tf2_tools \
-       transmission_interface \
-       turtlesim \
-       twist_mux \
-       twist_mux_msgs \
-       usb_cam \
-       xacro \
-       --rosdistro noetic --deps --tar > .rosinstall
-grep -n -A2 -B1 rosconsole$ .rosinstall  | sed -n 's/^\([0-9]\{1,\}\).*/\1d/p' | sed -i -f - .rosinstall
-echo '- git:' >> .rosinstall
-echo '    local-name: rosconsole' >> .rosinstall
-echo '    uri: https://github.com/ros-o/rosconsole' >> .rosinstall
-vcs import --input .rosinstall ./src
-sed -i -e 's/python3-catkin-pkg-modules/python3-catkin-pkg/' src/rospack/package.xml
-sed -i -e 's$<exec_depend condition="\$ROS_PYTHON_VERSION == 3">python3-rosdep-modules</exec_depend>$$' src/rospack/package.xml
-sed -i -e 's/python3-rospkg-modules/python3-rospkg/' src/rqt/rqt_gui/package.xml
-sed -i -e 's/set(CMAKE_CXX_STANDARD 14)/set(CMAKE_CXX_STANDARD 20)/' src/robot_localization/CMakeLists.txt
-sed -i -e 's/set(CMAKE_CXX_STANDARD 14)/set(CMAKE_CXX_STANDARD 20)/' src/urdf/urdf/CMakeLists.txt
-sed -i -e 's/add_compile_options(-std=c++14)/add_compile_options(-std=c++20)/' src/rosparam_shortcuts/CMakeLists.txt
-sed -i -e 's/add_compile_options(-std=c++11)/add_compile_options(-std=c++20)/' src/rqt_image_view/CMakeLists.txt
-sed -i -e 's/add_compile_options(-std=c++11)/add_compile_options(-std=c++20)/' src/geometry/tf/CMakeLists.txt
-sed -i -e 's/add_compile_options(-std=c++14)/add_compile_options(-std=c++20)/' src/perception_pcl/pcl_ros/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/resource_retriever/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/sophus/CMakeLists.txt
-sed -i -e 's/option(BUILD_TESTS "Build tests." ON)/option(BUILD_TESTS "Build tests." OFF)/' src/sophus/CMakeLists.txt
-sed -i -e 's/option(BUILD_EXAMPLES "Build examples." ON)/option(BUILD_EXAMPLES "Build examples." OFF)/' src/sophus/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/rosparam_shortcuts/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/robot_state_publisher/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/roscpp_core/rostime/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/g' src/pluginlib/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/geometry/tf/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/geometric_shapes/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/fcl/CMakeLists.txt
-sed -i -e 's/-std=c++11/-std=c++20/' src/ros_type_introspection/CMakeLists.txt
-sed -i -e 's/set(CMAKE_CXX_STANDARD 14)/set(CMAKE_CXX_STANDARD 20)/' src/class_loader/CMakeLists.txt
-sed -i -e 's/set(CMAKE_CXX_STANDARD 14)/set(CMAKE_CXX_STANDARD 20)/' src/kdl_parser/kdl_parser/CMakeLists.txt
-sed -i -e 's/project(laser_geometry)/project(laser_geometry)\nset(CMAKE_CXX_STANDARD 17)/' src/laser_geometry/CMakeLists.txt
-sed -i -e 's/set(CMAKE_CXX_STANDARD 11)/set(CMAKE_CXX_STANDARD 20)/' src/sophus/CMakeLists.txt
-sed -i -e 's/set(CMAKE_CXX_STANDARD 11)/set(CMAKE_CXX_STANDARD 20)/' src/joystick_drivers/joy/CMakeLists.txt
-sed -i -e 's/set(CMAKE_CXX_STANDARD 14)/set(CMAKE_CXX_STANDARD 20)/' src/perception_pcl/pcl_ros/CMakeLists.txt
-sed -i -e 's/${avcodec_LIBRARIES}/${avcodec_LIBRARIES} ${avutil_LIBRARIES}/' src/usb_cam/CMakeLists.txt
-sed -i -e 's/pkg_check_modules(avcodec libavcodec REQUIRED)/pkg_check_modules(avcodec libavcodec REQUIRED)\npkg_check_modules(avutil libavutil REQUIRED)/' src/usb_cam/CMakeLists.txt
-sed -i -e 's/project(rviz)/project(rviz)\nunset(CMAKE_CXX_STANDARD)\nset(CMAKE_CXX_STANDARD 17)/' src/rviz/CMakeLists.txt
-sed -i -e 's/project(gazebo_ros)/project(gazebo_ros)\nunset(CMAKE_CXX_STANDARD)\nset(CMAKE_CXX_STANDARD 17)/' src/gazebo_ros_pkgs/gazebo_ros/CMakeLists.txt
-sed -i -e 's/project(gazebo_plugins)/project(gazebo_plugins)\nunset(CMAKE_CXX_STANDARD)\nset(CMAKE_CXX_STANDARD 17)/' src/gazebo_ros_pkgs/gazebo_plugins/CMakeLists.txt
-sed -i -e 's/project(gazebo_ros_control)/project(gazebo_ros_control)\nunset(CMAKE_CXX_STANDARD)\nset(CMAKE_CXX_STANDARD 17)/' src/gazebo_ros_pkgs/gazebo_ros_control/CMakeLists.txt
-sed -i -e 's/project(rviz_imu_plugin)/project(rviz_imu_plugin)\nunset(CMAKE_CXX_STANDARD)\nset(CMAKE_CXX_STANDARD 17)/' src/imu_tools/rviz_imu_plugin/CMakeLists.txt
-sed -i -e 's/OcTreeBase<NODE>(double res) : OcTreeBaseImpl<NODE,AbstractOcTree>(res) {};/OcTreeBase(double res) : OcTreeBaseImpl<NODE,AbstractOcTree>(res) {};/' src/octomap/octomap/include/octomap/OcTreeBase.h
-sed -i -e 's/operator == (const ScanNode\& other)/operator == (const ScanNode\& other) const/' src/octomap/octomap/include/octomap/ScanGraph.h 
-sed -i -e 's/operator == (const ScanEdge\& other)/operator == (const ScanEdge\& other) const/' src/octomap/octomap/include/octomap/ScanGraph.h 
-sed -i -e 's/SphereSpecification<S>(S radius_, const Vector3<S>\& center_)/SphereSpecification(S radius_, const Vector3<S>\& center_)/' src/fcl/test/narrowphase/detail/convexity_based_algorithm/test_gjk_libccd-inl_signed_distance.cpp
-sed -i -e 's/project(moveit_kinematics)/project(moveit_kinematics)\nset(CMAKE_CXX_STANDARD 17)/' src/moveit/moveit_kinematics/CMakeLists.txt
-sed -i -e 's/project(moveit_ros_visualization)/project(moveit_ros_visualization)\nset(CMAKE_CXX_STANDARD 17)/' src/moveit/moveit_ros_visualization/CMakeLists.txt
-sed -i -e 's/project(moveit_setup_assistant)/project(moveit_setup_assistant)\nset(CMAKE_CXX_STANDARD 17)/' src/moveit/moveit_setup_assistant/CMakeLists.txt
-sed -i -e 's/PlanningContextBase<GeneratorT>(const std::string\& name, const std::string\& group/PlanningContextBase(const std::string\& name, const std::string\& group/' src/moveit/pilz_industrial_motion_planner/include/pilz_industrial_motion_planner/planning_context_base.h
-sed -i -e 's/#if span_CPP11_OR_GREATER && span_FEATURE( BYTE_SPAN ) \&\& ( span_HAVE( BYTE ) || span_HAVE( NONSTD_BYTE ) )/#if 0/' src/ros_type_introspection/include/ros_type_introspection/utils/span.hpp
-sed -i -e 's/python/python3/' ~/ros_catkin_ws/src/gazebo_ros_pkgs/gazebo_plugins/cfg/*.cfg
-cd ./src/roscpp_core/roscpp_serialization/include/ros
-rm serialization.h
-wget https://raw.githubusercontent.com/ros/roscpp_core/72ce04f8b2849e0e4587ea4d598be6ec5d24d8ca/roscpp_serialization/include/ros/serialization.h
-cd ../../../../..
-rosdep install --from-paths ./src --ignore-packages-from-source --rosdistro noetic -y
-rosdep update
-sed -i 's/${OMPL_LIBRARIES}/\/usr\/lib\/aarch64-linux-gnu\/libompl.so/' ./src/moveit/moveit_planners_ompl/ompl_interface/CMakeLists.txt
-sudo cp -r /usr/include/ompl-1.5/ompl/ /usr/include/ompl/ 
-cd src 
-rm -rf actionlib
-git clone -b noetic-devel https://github.com/FRC900/actionlib.git
-rm -rf realtime_tools
-git clone -b fix_non_realtime https://github.com/FRC900/realtime_tools
-cd ..
-catkin config --install --install-space /opt/ros/noetic -DSETUPTOOLS_DEB_LAYOUT=OFF -DPYTHON_EXECUTABLE=/usr/bin/python3
-
-sudo bash
-pip3 install 'numpy<2.0.0'
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DPYTHON_EXECUTABLE=/usr/bin/python3 catkin 
-export PATH=/opt/openrobots/bin:$PATH
-export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH
-export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH
-export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH
-export PYTHONPATH=/opt/openrobots/lib/python3.10/site-packages:$PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/dist-packages
-export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/lib/python3.10/site-packages
-export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
-export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/site-packages
-#devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3 dynamic_reconfigure
-#cp -r /opt/ros/noetic/lib/python3.10/site-packages/dynamic_reconfigure/* /opt/ros/noetic/local/lib/python3.10/dist-packages/dynamic_reconfigure
-# Build this with a lower number of jobs to prevent running out of memory
-devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3 -j2 eigenpy
-devel/env.sh catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-DBOOST_BIND_GLOBAL_PLACEHOLDERS -Wno-psabi -Wno-deprecated-copy -Wno-nonnull -Wno-float-conversion -Wno-class-memaccess -Wno-register -Wno-deprecated-copy -Wno-deprecated-enum-enum-conversion -Wno-deprecated-declarations -DNON_POLLING -ftrack-macro-expansion=0 -fno-var-tracking-assignments" -DPYTHON_EXECUTABLE=/usr/bin/python3
-rsync -avz /opt/ros/noetic/lib/python3.10/site-packages/ /opt/ros/noetic/local/lib/python3.10/dist-packages/
-### Be sure to exit sudo here
-
