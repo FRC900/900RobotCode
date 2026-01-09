@@ -58,6 +58,7 @@
 			 elevator_controller
 			 intake_controller
 			 roller_controller
+			 pigeon2_state_controller
 			 
 			 robot_code_ready_controller" />
 			 <!--

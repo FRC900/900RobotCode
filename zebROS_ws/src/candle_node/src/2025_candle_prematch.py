@@ -7,11 +7,13 @@ from candle_controller_msgs.srv import Colour, ColourRequest
 from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
 from sensor_msgs.msg import Imu
 from frc_msgs.msg import MatchSpecificData
+import time
 from time import sleep
 from candle_controller_msgs.srv import ColourArray, ColourArrayRequest
 from candle_controller_msgs.msg import CANdleColour
 from apriltag_msgs.msg import ApriltagArrayStamped
 from sensor_msgs.msg import JointState
+from pigeon2_state_msgs.msg import Pigeon2State
 from angles import shortest_angular_distance
 from math import hypot
 from geometry_msgs.msg import TwistStamped
@@ -52,6 +54,8 @@ HAS_BEEN_ZEROED = 14
 HEARTBEAT = 20 # last in row
 BLINK_STATE = True
 
+NO_MOTION_CALIBRATION = 15
+
 # ------------------
 TAGSLAM_TIMEOUT = 10.0 # seconds
 IMU_ZERO_ANGLE_THRESHOLD = 0.1 # radians, approx. 5 degrees
@@ -68,6 +72,14 @@ elevator_avoid_was_triggered = False
 has_been_zeroed = False
 
 imu_orientation: Quaternion = Quaternion(0,0,0,1)
+
+zeroed_while_calibrating = False
+
+time_last = time.time()
+
+time_since_last_change = 0
+
+pigeon_zeroing_count = 0 # pigeon2 no motion count of last message
 
 def twist_callback(msg: TwistStamped):
     if abs(hypot(msg.twist.linear.x, msg.twist.linear.y)) < 0.05 and abs(msg.twist.angular.z) < 0.05:
@@ -174,6 +186,29 @@ def button_box_callback(msg: ButtonBoxState2025):
     if has_been_zeroed:
         status_array[HAS_BEEN_ZEROED] = GREEN
 
+def imu_zero_callback(pigeon2state: Pigeon2State):
+    global zeroed_while_calibrating
+    global time_last
+    global time_since_last_change
+    global pigeon_zeroing_count
+
+    pigeon_no_motion_count = pigeon2state.no_motion_count[pigeon2state.name.index("pigeon2")]
+    time_delta = time.time() - time_last
+    if int(pigeon_no_motion_count) == pigeon_zeroing_count:
+        time_since_last_change += time_delta
+    else:
+        time_since_last_change == 0
+
+    if int(pigeon_no_motion_count) != pigeon_zeroing_count or time_since_last_change < 0.75: # what if msg is sent every 0.01 secs with no change after 0.75
+        zeroed_while_calibrating = True
+        time_last = time.time()
+        pigeon_zeroing_count = pigeon_no_motion_count
+        status_array[NO_MOTION_CALIBRATION] = GREEN
+        # print("zeroed green")
+    else:
+        zeroed_while_calibrating = False 
+        # print("not zeroed green")
+
 wanted_x = None
 imu_orientation = None
 is_enabled = False
@@ -198,6 +233,8 @@ if __name__ == "__main__":
     cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, twist_callback, tcp_nodelay=True)
     auto_mode_sub = rospy.Subscriber("/auto/auto_mode", AutoMode, auto_mode_callback, tcp_nodelay=True)
     button_box_sub = rospy.Subscriber("/frcrobot_rio/button_box_states", ButtonBoxState2025, button_box_callback, tcp_nodelay=True)
+    imu_zero_sub = rospy.Subscriber("/frcrobot_jetson/pigeon2_states", Pigeon2State, imu_zero_callback, tcp_nodelay=True)
+
     r = rospy.Rate(10)
     led_arr_msg = ColourArrayRequest()
     for idx, i in enumerate(status_array):
@@ -279,7 +316,7 @@ if __name__ == "__main__":
             colour_client(led_arr_msg)
         except:
             rospy.logerr_throttle(1.0, "2025_candle_prematch: unable to call LED service?")
-        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL, CMD_VEL_ZERO, CORRECT_AUTO, HAS_BEEN_ZEROED]:
+        for idx in [DOT9V0, DOT9V1, DOT10V0, DOT10V1, COLOR_RAW_MATCH_DATA, COLOR_MATCH_DATA, COLOR_MATCH_DATA_2, TAGSLAM_ALIVE, IMU_CORRECT, AUTO_POSITION_CLOSE, AUTO_ROTATION_CLOSE, ELEVATOR_AVOID_TRIGGERED, HAVE_CORAL, CMD_VEL_ZERO, CORRECT_AUTO, HAS_BEEN_ZEROED, NO_MOTION_CALIBRATION]:
             blink_idx(idx, ORANGE)
         blink_idx(HEARTBEAT, (255, 255, 255))
         if is_enabled:
