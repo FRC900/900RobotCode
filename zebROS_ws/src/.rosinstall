@@ -68,3 +68,6 @@
     local-name: cv_camera
     uri: https://github.com/FRC900/cv_camera
     version: mono16
+- git:
+    local-name: smooth
+    uri: https://github.com/pettni/smooth/

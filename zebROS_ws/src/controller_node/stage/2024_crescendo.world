@@ -32,8 +32,8 @@ define floorplan model
 )
 
 resolution 0.02
-interval_sim 15 # simulation timestep in milliseconds, was 5
-interval_real 15 # was 5
+interval_sim 5 # simulation timestep in milliseconds, was 5
+interval_real 5 # was 5
 threads 4
 
 window
