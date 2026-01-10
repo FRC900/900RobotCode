@@ -83,14 +83,12 @@ std::vector<DeepTagResult> DeepTagImpl<NUM_TILES, USE_SCALED_IMAGE, MARKER_GRID_
             }
             for (size_t j = 0; j < decodedTags[i].size(); j++)
             {
-                for (const auto &kp : decodedTags[i][j].m_keypointsWithIds)
-                {
-                    result.m_keypoints[j].push_back(kp.m_point);
-                    result.m_keypointIds[j].push_back(kp.m_id);
-                    result.m_keypointScores[j].push_back(kp.m_score);
-                }
+                const auto &kp = decodedTags[i][j].m_keypointsWithIds;
+                std::copy(kp.m_point.begin(), kp.m_point.end(), std::back_inserter(result.m_keypoints[j]));
+                std::copy(kp.m_id.begin(), kp.m_id.end(), std::back_inserter(result.m_keypointIds[j]));
+                std::copy(kp.m_score.begin(), kp.m_score.end(), std::back_inserter(result.m_keypointScores[j]));
             }
-            if (m_poseEstimator.fineGridKeypointsToPose(result.m_rVec, result.m_tVec, decodedTags[i][1].m_keypointsInImage))
+            if (m_poseEstimator.fineGridKeypointsToPose(result.m_rVec, result.m_tVec, decodedTags[i][1].m_keypointsWithIds.m_point))
             {
 #ifdef DEBUG
                 // std::cout << "result.m_rVec = " << result.m_rVec.t() << " m_tVec = " << result.m_tVec.t() << std::endl;

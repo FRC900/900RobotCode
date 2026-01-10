@@ -17,7 +17,7 @@ __global__ static void calculateStage2CornerKernel(float2 *output,
     }
     //printf("idx = %d, input[idx] = %f %f, centerVariance = %f, priors[idx] = %f %f\n", idx, input[idx], input[idx + length], centerVariance, priors[idx].x, priors[idx].y);
     output[idx].x = (input[idx] * centerVariance + priors[idx].m_scale.x) * priors[idx].m_imageSize.x + priors[idx].m_offset.x;
-    output[idx].y = (input[idx + length] * centerVariance + priors[idx].m_scale.y) * priors[idx].m_imageSize.x + priors[idx].m_offset.y;
+    output[idx].y = (input[idx + length] * centerVariance + priors[idx].m_scale.y) * priors[idx].m_imageSize.y + priors[idx].m_offset.y;
 }
 
 Stage2Corners::Stage2Corners(void)
@@ -45,11 +45,11 @@ void Stage2Corners::compute(const float *input,
     cudaSafeCall(cudaEventRecord(m_dataReadyEvent, cudaStream));
 }
 
-const tcb::span<const float2> Stage2Corners::getDeviceOutput(void)
-{
-    cudaEventSynchronize(m_dataReadyEvent);
-    return tcb::span<const float2>(m_dResults, 4);
-}
+// const tcb::span<const float2> Stage2Corners::getDeviceOutput(void)
+// {
+//     cudaEventSynchronize(m_dataReadyEvent);
+//     return tcb::span<const float2>(m_dResults, 4);
+// }
 
 const tcb::span<const float2> Stage2Corners::getHostOutput(void)
 {

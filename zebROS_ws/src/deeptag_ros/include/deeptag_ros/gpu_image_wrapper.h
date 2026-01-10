@@ -3,7 +3,7 @@
 #include <cstddef>
 #include "driver_types.h"  // for cudaStream_t
 
-#include "image_format.h"
+#include "deeptag_ros/image_format.h"
 namespace cv
 {
     class Mat;

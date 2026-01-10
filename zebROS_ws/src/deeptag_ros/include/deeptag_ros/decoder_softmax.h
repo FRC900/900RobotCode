@@ -2,8 +2,8 @@
 #define DECODER_SOFTMAX_
 
 #include <cuda_runtime.h>
-#include "decoder_softmax_results.h"
-#include "span.hpp"
+#include "deeptag_ros/decoder_softmax_results.h"
+#include "deeptag_ros/span.hpp"
 
 
 // Class to handle DecoderSoftmax ops.

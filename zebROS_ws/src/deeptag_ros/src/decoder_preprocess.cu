@@ -64,7 +64,7 @@ __global__ void gpuDecoderPreprocess(const float *H,
 		};
 
 		const float3 rgb = isBGR ? make_float3(px.z, px.y, px.x)
-								: make_float3(px.x, px.y, px.z);
+								 : make_float3(px.x, px.y, px.z);
 
 		output[n * 0 + m] = rgb.x * multiplier + min_value;
 		output[n * 1 + m] = rgb.y * multiplier + min_value;
@@ -127,8 +127,10 @@ cudaError_t DecoderPreprocess::launchDecoderPreprocess(const float *hH, void *in
 	} 
 	else
 	{
-		// Mono8 option - 1 channel grayscale image
+		// Mono8 option - 1 channel grayscale image, in either uint8_t or float format
 		if (format == imageFormat::IMAGE_MONO8)
+			gpuDecoderPreprocess<uint8_t, isBGR, isGray, threeOutputChannels><<<gridDim, blockDim, 0, stream>>>(m_dH, (uint8_t *)input, inputWidth, inputHeight, output, outputWidth, outputHeight, multiplier, range.x);
+		else if (format == imageFormat::IMAGE_MONO32F)
 			gpuDecoderPreprocess<float, isBGR, isGray, threeOutputChannels><<<gridDim, blockDim, 0, stream>>>(m_dH, (float *)input, inputWidth, inputHeight, output, outputWidth, outputHeight, multiplier, range.x);
 		else
 			return cudaErrorInvalidValue;

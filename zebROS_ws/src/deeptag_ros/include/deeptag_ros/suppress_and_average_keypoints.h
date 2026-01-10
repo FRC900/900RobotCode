@@ -1,7 +1,7 @@
 #ifndef SUPPRESS_AND_AVERAGE_KEYPOINTS_H__
 #define SUPPRESS_AND_AVERAGE_KEYPOINTS_H__
 
-#include "span.hpp"
+#include "deeptag_ros/span.hpp"
 
 template <class INPUT, class OUTPUT>
 class SuppressAndAverageKeypoints

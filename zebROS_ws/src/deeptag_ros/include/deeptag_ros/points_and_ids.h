@@ -2,25 +2,27 @@
 #define POINTS_AND_IDS_INC__
 #include "opencv2/core.hpp"
 
+template <size_t GRID_SIZE>
 struct PointsAndIDs
 {
     PointsAndIDs()
-        : m_point{0., 0.}
-        , m_id{-1}
-        , m_score{0.}
     {
+        std::ranges::fill(m_id, -1);
+        std::ranges::fill(m_score, -1);
     }
-    PointsAndIDs(const double x, const double y, const int id, const double score = 0)
-        : m_point{cv::Point2d{x, y}}, m_id{id}, m_score{score}
-    {
-    }
-    cv::Point2d m_point;
-    int m_id; 
-    double m_score;
+
+    std::array<cv::Point2d, GRID_SIZE * GRID_SIZE> m_point{};
+    std::array<int, GRID_SIZE * GRID_SIZE> m_id{};
+    std::array<double, GRID_SIZE * GRID_SIZE> m_score{};
+
+    size_t size(void) const { return m_point.size(); } // all arrays are the same size
 
     friend std::ostream& operator<<(std::ostream &os, const PointsAndIDs &pid)
     {
-        os << pid.m_point.x << ", " << pid.m_point.y << " id = " << pid.m_id << " score = " << pid.m_score;
+        for (size_t ii = 0; ii < pid.m_point.size(); ii++)
+        {
+            os << pid.m_point[ii].x << ", " << pid.m_point[ii].y << " id = " << pid.m_id[ii] << " score = " << pid.m_score[ii] << std::endl;
+        }
         return os;
     }
 };

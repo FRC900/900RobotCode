@@ -9,7 +9,7 @@
 #endif
 
 #include <cstdint>
-#include "ssd_box.h"
+#include "deeptag_ros/ssd_box.h"
 class SSDTagKeypoint
 {
 public:

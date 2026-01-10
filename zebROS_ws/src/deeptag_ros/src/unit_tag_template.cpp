@@ -1,4 +1,4 @@
-// #include <iostream>
+#include <iostream>
 #include <numeric>
 #include "opencv2/calib3d.hpp"
 #include "deeptag_ros/distorted_h_transform.h"
@@ -11,21 +11,21 @@
 
 static constexpr size_t maxWarpTry = 3;
 template <size_t FINE_GRID_SIZE>
-std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> iterativeMatchAndWarp(const tcb::span<const Stage2KeypointGroup> &unorderedPoints,
-                                                                                const std::array<cv::Point2d, FINE_GRID_SIZE * FINE_GRID_SIZE> &unitPoints,
-                                                                                const std::array<cv::Point2d, 4> &unitCorners,
-                                                                                const std::array<cv::Point2d, 4> &cptsInCrop, // ordered corners in crop
-                                                                                const std::array<double, 9> &cameraMatrix,
-                                                                                const std::array<double, 6> &distCoeffs,
-                                                                                const cv::Mat &H,
-                                                                                const std::vector<cv::Mat> &HListForCtpsInCrop,
-                                                                                const size_t maxWarpTry);
+PointsAndIDs<FINE_GRID_SIZE> iterativeMatchAndWarp(const tcb::span<const Stage2KeypointGroup> &unorderedPoints,
+                                                   const std::array<cv::Point2d, FINE_GRID_SIZE * FINE_GRID_SIZE> &unitPoints,
+                                                   const std::array<cv::Point2d, 4> &unitCorners,
+                                                   const std::array<cv::Point2d, 4> &cptsInCrop, // ordered corners in crop
+                                                   const std::array<double, 9> &cameraMatrix,
+                                                   const std::array<double, 6> &distCoeffs,
+                                                   const cv::Mat &H,
+                                                   const std::vector<cv::Mat> &HListForCtpsInCrop,
+                                                   const size_t maxWarpTry);
 
 template <size_t FINE_GRID_SIZE>
 static void checkMatchRatio(double &matchRatio,
                             int &count,
                             int &totalCount,
-                            const std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> &orderedPoints,
+                            const PointsAndIDs<FINE_GRID_SIZE> &orderedPoints,
                             const int unorderedPointsNum);
 
 template <size_t GRID_SIZE, class UNIT_TAG_CLASS, bool IS_NEED_MAIN_IDX, size_t STEP_ELEM_NUM, size_t KPT_START_IDX>
@@ -36,7 +36,7 @@ UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM, KPT_
 
 template <size_t GRID_SIZE, class UNIT_TAG_CLASS, bool IS_NEED_MAIN_IDX, size_t STEP_ELEM_NUM, size_t KPT_START_IDX>
 void UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM, KPT_START_IDX>::matchFineGrid(double &maxMatchRatio,
-                                                                                                               std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &bestOrderedPoints,
+                                                                                                               PointsAndIDs<GRID_SIZE + 2> &bestOrderedPoints,
                                                                                                                const tcb::span<const Stage2KeypointGroup> &unorderedPoints,
                                                                                                                const cv::Mat &H,
                                                                                                                const tcb::span<const float2> &stage2PredCorners,
@@ -44,10 +44,6 @@ void UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM,
                                                                                                                const cv::Mat &distCoeffs) const
 {
     // Make sure there are actually predictions to work with.
-    if (stage2PredCorners.size() < 4)
-    {
-        return;
-    }
     if (unorderedPoints.size() == 0)
     {
         return;
@@ -64,9 +60,10 @@ void UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM,
     printPoints("unitCorners", unitCorners);
     printPoints("orderedCorners", orderedCorners);
     maxMatchRatio = 0;
-    for (size_t i = 0; i < bestOrderedPoints.size(); i++)
+    for (size_t i = 0; i < bestOrderedPoints.m_point.size(); i++)
     {
-        bestOrderedPoints[i] = PointsAndIDs{unitPoints[i].x, unitPoints[i].y, -1};
+        bestOrderedPoints.m_point[i] = unitPoints[i];
+        bestOrderedPoints.m_id[i] = -1;
     }
 
     constexpr auto unitPointsSize = (GRID_SIZE + 2) * (GRID_SIZE + 2);
@@ -101,19 +98,19 @@ void UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM,
 }
 
 template <size_t GRID_SIZE, class UNIT_TAG_CLASS, bool IS_NEED_MAIN_IDX, size_t STEP_ELEM_NUM, size_t KPT_START_IDX>
-std::array<cv::Point2d, 4> UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM, KPT_START_IDX>::updateCornersInImage(const std::array<PointsAndIDs, (GRID_SIZE + 2) * (GRID_SIZE + 2)> &orderedPointsAndIds,
+std::array<cv::Point2d, 4> UnitTagTemplate<GRID_SIZE, UNIT_TAG_CLASS, IS_NEED_MAIN_IDX, STEP_ELEM_NUM, KPT_START_IDX>::updateCornersInImage(const PointsAndIDs<GRID_SIZE + 2> &orderedPointsAndIds,
                                                                                                                                             const cv::Mat &HCrop,
                                                                                                                                             const cv::Mat &cameraMatrix,
                                                                                                                                             const cv::Mat &distCoeffs) const
 {
     const auto unitPoints = m_unitTags.getFineGridPoints(0, true, STEP_ELEM_NUM);
-    std::array<cv::Point2d, (GRID_SIZE + 2) * (GRID_SIZE + 2)> orderedPoints;
-    for (size_t i = 0; i < orderedPointsAndIds.size(); i++)
-    {
-        orderedPoints[i] = orderedPointsAndIds[i].m_point;
-    }
     const auto unitCorners = m_unitTags.getOrderedCorners();
-    const auto cornersInCropUpdated = controlpointsToKeypointsInCropWithH(unitPoints, orderedPoints, unitCorners, cameraMatrix, distCoeffs, HCrop);
+    const auto cornersInCropUpdated = controlpointsToKeypointsInCropWithH(unitPoints,
+                                                                          orderedPointsAndIds.m_point,
+                                                                          unitCorners,
+                                                                          cameraMatrix,
+                                                                          distCoeffs,
+                                                                          HCrop);
 
     return warpPerspectivePts(HCrop.inv(), cornersInCropUpdated);
 }
@@ -240,15 +237,15 @@ static void matchAndWarp(cv::Mat &HNew,
 }
 
 template <size_t FINE_GRID_SIZE>
-std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> iterativeMatchAndWarp(const tcb::span<const Stage2KeypointGroup> &stage2KeypointGroups,              // keypoints in crop
-                                                                                const std::array<cv::Point2d, FINE_GRID_SIZE * FINE_GRID_SIZE> &orderedKptsGt, // unit points
-                                                                                const std::array<cv::Point2d, 4> &cptsGt,                                      // unit corners
-                                                                                const std::array<cv::Point2d, 4> &cptsInCrop,                                  // ordered corners in crop
-                                                                                const cv::Mat &cameraMatrix,
-                                                                                const cv::Mat &distCoeffs,
-                                                                                const cv::Mat &H,
-                                                                                const std::vector<cv::Mat> &HListForCtpsInCrop,
-                                                                                const size_t maxWarpTry)
+PointsAndIDs<FINE_GRID_SIZE> iterativeMatchAndWarp(const tcb::span<const Stage2KeypointGroup> &stage2KeypointGroups,              // keypoints in crop
+                                                   const std::array<cv::Point2d, FINE_GRID_SIZE * FINE_GRID_SIZE> &orderedKptsGt, // unit points
+                                                   const std::array<cv::Point2d, 4> &cptsGt,                                      // unit corners
+                                                   const std::array<cv::Point2d, 4> &cptsInCrop,                                  // ordered corners in crop
+                                                   const cv::Mat &cameraMatrix,
+                                                   const cv::Mat &distCoeffs,
+                                                   const cv::Mat &H,
+                                                   const std::vector<cv::Mat> &HListForCtpsInCrop,
+                                                   const size_t maxWarpTry)
 {
 #ifdef DEBUG
     std::cout << "iterativeMatchAndWarp" << std::endl;
@@ -416,14 +413,11 @@ std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> iterativeMatchAndWarp(
 #endif
         }
     }
-    std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> orderedKptsWithIds;
+    PointsAndIDs<FINE_GRID_SIZE> orderedKptsWithIds;
     //std::cout << "HCurr = " << HCurr << std::endl;
     if (HCurr.empty())
     {
-        for (size_t ii = 0; ii < orderedKptsWithIds.size(); ii++)
-        {
-            orderedKptsWithIds[ii] = PointsAndIDs{orderedKptsGt[ii].x, orderedKptsGt[ii].y, -1};
-        }
+        orderedKptsWithIds.m_point = orderedKptsGt;
     }
     else
     {
@@ -440,27 +434,25 @@ std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> iterativeMatchAndWarp(
             if (matchFlagsCandBest[ii])
             {
                 const auto &kp = stage2KeypointGroups[matchIdsBest[ii]];
-                orderedKptsWithIds[ii] = PointsAndIDs{kp.m_keypoint.x,
-                                                      kp.m_keypoint.y,
-                                                      kp.m_label,
-                                                      kp.m_score};
+                orderedKptsWithIds.m_point[ii].x = kp.m_keypoint.x;
+                orderedKptsWithIds.m_point[ii].y = kp.m_keypoint.y;
+                orderedKptsWithIds.m_id[ii] = kp.m_label;
+                orderedKptsWithIds.m_score[ii] = kp.m_score;
             }
             else
             {
-                orderedKptsWithIds[ii] = PointsAndIDs{orderedKptCandidatesWarp[ii].x,
-                                                      orderedKptCandidatesWarp[ii].y,
-                                                      -1};
+                orderedKptsWithIds.m_point[ii] = orderedKptCandidatesWarp[ii];
+                orderedKptsWithIds.m_id[ii] = -1;
             }
         }
     }
 #ifdef DEBUG
     std::cout << "orderedKptsWithIds" << std::endl;
-    for (const auto &o : orderedKptsWithIds)
+    for (size_t i = 0; i < orderedKptsWithIds.m_point.size(); i++)
     {
-        std::cout << o.m_point.x << " " << o.m_point.y << " " << o.m_id << std::endl;
+        std::cout << orderedKptsWithIds.m_point[i].x << " " << orderedKptsWithIds.m_point[i].y << " " << orderedKptsWithIds.m_id[i] << std::endl;
     }
 #endif
-
 
     return orderedKptsWithIds;
 }
@@ -469,18 +461,18 @@ template <size_t FINE_GRID_SIZE>
 static void checkMatchRatio(double &matchRatio,
                             int &count,
                             int &totalCount,
-                            const std::array<PointsAndIDs, FINE_GRID_SIZE * FINE_GRID_SIZE> &orderedPoints,
+                            PointsAndIDs<FINE_GRID_SIZE> &orderedPoints,
                             const int unorderedPointsNum)
 {
     count = 0;
-    for (const auto &op: orderedPoints)
+    for (const auto &id: orderedPoints.m_id)
     {
-        if (op.m_id >= 0)
+        if (id >= 0)
         {
             count += 1;
         }
     }
-    totalCount = std::max(static_cast<int>(orderedPoints.size()), count);
+    totalCount = std::max(static_cast<int>(orderedPoints.m_id.size()), count);
     matchRatio = static_cast<double>(count) / totalCount;
 #ifdef DEBUG
     std::cout << "checkMatchRatio : count = " << count << " unorderedPointNum = " << unorderedPointsNum << " totalCount = " << totalCount << " matchRatio = " << matchRatio << std::endl;

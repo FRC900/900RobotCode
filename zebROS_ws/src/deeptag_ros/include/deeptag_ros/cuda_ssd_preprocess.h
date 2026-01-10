@@ -1,7 +1,7 @@
 #ifndef CUDA_SSD_PREPROCESSING_H__
 #define CUDA_SSD_PREPROCESSING_H__
 
-#include "image_format.h"
+#include "deeptag_ros/image_format.h"
 
 /*
  * Downsample and apply pixel normalization, NCHW format

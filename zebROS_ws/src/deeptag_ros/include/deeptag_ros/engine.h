@@ -16,7 +16,7 @@
 #include "NvInferRuntimeCommon.h"  // for Dims, ILogger
 #include "driver_types.h"          // for cudaStream_t, CUstream_st, CUgraph...
 
-#include "cuda_event_timing.h"     // for Timings
+#include "deeptag_ros/cuda_event_timing.h" // for Timings
 class GpuImageWrapper;
 
 // Utility methods
