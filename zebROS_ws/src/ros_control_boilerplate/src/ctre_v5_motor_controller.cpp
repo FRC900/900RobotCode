@@ -3,7 +3,6 @@
 #include <ros/node_handle.h>
 
 #include <ctre/phoenix/motorcontrol/IMotorController.h>
-#include "ctre/phoenix/motorcontrol/can/TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/TalonSRX.h"
 #include "ctre/phoenix/motorcontrol/can/VictorSPX.h"
 
@@ -36,12 +35,6 @@ static bool convertStatusFrame(const hardware_interface::StatusFrame input,
                                ctre::phoenix::motorcontrol::StatusFrameEnhanced &output);
 static bool convertControlFrame(const hardware_interface::ControlFrame input,
                                 ctre::phoenix::motorcontrol::ControlFrame &output);
-static bool convertMotorCommutation(const hardware_interface::MotorCommutation input,
-                                    ctre::phoenix::motorcontrol::MotorCommutation &output);
-static bool convertAbsoluteSensorRange(const hardware_interface::AbsoluteSensorRange input,
-                                       ctre::phoenix::sensors::AbsoluteSensorRange &output);
-static bool convertSensorInitializationStrategy(const hardware_interface::SensorInitializationStrategy input,
-                                                ctre::phoenix::sensors::SensorInitializationStrategy &output);
 
 CTREV5MotorController::CTREV5MotorController(const std::string &name_space,
                                              const int joint_index,
@@ -55,7 +48,6 @@ CTREV5MotorController::CTREV5MotorController(const std::string &name_space,
     , local_{local}
     , ctre_mc_{nullptr}
     , talon_{nullptr}
-    , talon_fx_{nullptr}
     , talon_srx_{nullptr}
     , victor_spx_{nullptr}
     , state_{std::make_unique<hardware_interface::TalonHWState>(can_id)}
@@ -71,11 +63,7 @@ CTREV5MotorController::CTREV5MotorController(const std::string &name_space,
 
     if (local_)
     {
-        if (joint_type == "can_talon_fx")
-        {
-            ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_id, can_bus);
-        }
-        else if (joint_type == "can_talon_srx")
+        if (joint_type == "can_talon_srx")
         {
             ctre_mc_ = std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_id
 #ifndef __FRC_ROBORIO__
@@ -96,7 +84,6 @@ CTREV5MotorController::CTREV5MotorController(const std::string &name_space,
         // the features of a specific controller type.
         // If non-null, these are used to access the method calls for those particular features
         talon_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mc_);
-        talon_fx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc_);
         talon_srx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc_);
         victor_spx_ = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mc_);
 
@@ -250,10 +237,6 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
         }
         command_->resetMotionProfileTrajectoryPeriod();
         command_->resetSupplyCurrentLimit();
-        command_->resetStatorCurrentLimit();
-        command_->resetMotorCommutation();
-        command_->resetAbsoluteSensorRange();
-        command_->resetSensorInitializationStrategy();
         command_->resetClearPositionOnLimitF();
         command_->resetClearPositionOnLimitR();
     }
@@ -894,17 +877,13 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
                 return;
             }
         }
-    }
-
-    if (talon_fx_)
-    {
         double limit;
         double trigger_threshold_current;
         double trigger_threshold_time;
         bool   limit_enable;
         if (command_->supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
         {
-            if (safeConfigCall(talon_fx_->ConfigSupplyCurrentLimit(ctre::phoenix::motorcontrol::SupplyCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), configTimeoutMs), "ConfigSupplyCurrentLimit"))
+            if (safeConfigCall(talon_srx_->ConfigSupplyCurrentLimit(ctre::phoenix::motorcontrol::SupplyCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), configTimeoutMs), "ConfigSupplyCurrentLimit"))
             {
                 ROS_INFO_STREAM("Updated joint " << getName() << " supply current limit");
                 state_->setSupplyCurrentLimit(limit);
@@ -916,77 +895,6 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
             {
                 ROS_INFO_STREAM("Failed to update joint " << getName() << " supply current limit");
                 command_->resetSupplyCurrentLimit();
-                return;
-            }
-        }
-        if (command_->statorCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
-        {
-            if (safeConfigCall(talon_fx_->ConfigStatorCurrentLimit(ctre::phoenix::motorcontrol::StatorCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), configTimeoutMs), "ConfigStatorCurrentLimit"))
-            {
-                ROS_INFO_STREAM("Updated joint " << getName() << " stator current limit");
-                state_->setStatorCurrentLimit(limit);
-                state_->setStatorCurrentLimitEnable(limit_enable);
-                state_->setStatorCurrentTriggerThresholdCurrent(trigger_threshold_current);
-                state_->setStatorCurrentTriggerThresholdTime(trigger_threshold_time);
-            }
-            else
-            {
-                ROS_INFO_STREAM("Failed to update joint " << getName() << " stator current limit");
-                command_->resetStatorCurrentLimit();
-                return;
-            }
-        }
-
-        hardware_interface::MotorCommutation motor_commutation;
-        ctre::phoenix::motorcontrol::MotorCommutation motor_commutation_ctre;
-        if (command_->motorCommutationChanged(motor_commutation) &&
-            convertMotorCommutation(motor_commutation, motor_commutation_ctre))
-        {
-            if (safeConfigCall(talon_fx_->ConfigMotorCommutation(motor_commutation_ctre, configTimeoutMs), "ConfigMotorCommutation"))
-            {
-                ROS_INFO_STREAM("Updated joint " << getName() << " motor commutation");
-                state_->setMotorCommutation(motor_commutation);
-            }
-            else
-            {
-                ROS_INFO_STREAM("Failed to update joint " << getName() << " motor commutation");
-                command_->resetMotorCommutation();
-                return;
-            }
-        }
-
-        hardware_interface::AbsoluteSensorRange absolute_sensor_range;
-        ctre::phoenix::sensors::AbsoluteSensorRange absolute_sensor_range_ctre;
-        if (command_->absoluteSensorRangeChanged(absolute_sensor_range) &&
-            convertAbsoluteSensorRange(absolute_sensor_range, absolute_sensor_range_ctre))
-        {
-            if (safeConfigCall(talon_fx_->ConfigIntegratedSensorAbsoluteRange(absolute_sensor_range_ctre, configTimeoutMs), "ConfigIntegratedSensorAbsoluteRange"))
-            {
-                ROS_INFO_STREAM("Updated joint " << getName() << " absolute sensor range");
-                state_->setAbsoluteSensorRange(absolute_sensor_range);
-            }
-            else
-            {
-                ROS_INFO_STREAM("Failed to update joint " << getName() << " absolute sensor range");
-                command_->resetAbsoluteSensorRange();
-                return;
-            }
-        }
-
-        hardware_interface::SensorInitializationStrategy sensor_initialization_strategy;
-        ctre::phoenix::sensors::SensorInitializationStrategy sensor_initialization_strategy_ctre;
-        if (command_->sensorInitializationStrategyChanged(sensor_initialization_strategy) &&
-            convertSensorInitializationStrategy(sensor_initialization_strategy, sensor_initialization_strategy_ctre))
-        {
-            if (safeConfigCall(talon_fx_->ConfigIntegratedSensorInitializationStrategy(sensor_initialization_strategy_ctre, configTimeoutMs), "ConfigIntegratedSensorInitializationStrategy"))
-            {
-                ROS_INFO_STREAM("Updated joint " << getName() << " absolute sensor range");
-                state_->setSensorInitializationStrategy(sensor_initialization_strategy);
-            }
-            else
-            {
-                ROS_INFO_STREAM("Failed to update joint " << getName() << " absolute sensor range");
-                command_->resetSensorInitializationStrategy();
                 return;
             }
         }
@@ -1333,13 +1241,6 @@ void CTREV5MotorController::read_thread(std::unique_ptr<Tracer> tracer,
 			supply_current = talon_srx_->GetSupplyCurrent();
 			safeCall(victor_spx_->GetLastError(), "GetSupplyCurrent");
 		}
-		else if (talon_fx_)
-		{
-			stator_current = talon_fx_->GetStatorCurrent();
-			safeCall(victor_spx_->GetLastError(), "GetStatorCurrent");
-			supply_current = talon_fx_->GetSupplyCurrent();
-			safeCall(victor_spx_->GetLastError(), "GetSupplyCurrent");
-		}
 
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
 		safeCall(victor_spx_->GetStickyFaults(sticky_faults), "GetStickyFault");
@@ -1431,13 +1332,6 @@ void CTREV5MotorController::read_thread(std::unique_ptr<Tracer> tracer,
 			forward_limit_switch = sensor_collection.IsFwdLimitSwitchClosed();
 			reverse_limit_switch = sensor_collection.IsRevLimitSwitchClosed();
 		}
-		else if (talon_fx_)
-		{
-			auto sensor_collection = talon_fx_->GetSensorCollection();
-
-			forward_limit_switch = sensor_collection.IsFwdLimitSwitchClosed();
-			reverse_limit_switch = sensor_collection.IsRevLimitSwitchClosed();
-		}
 
 		const int firmware_version = victor_spx_->GetFirmwareVersion();
 
@@ -1469,7 +1363,7 @@ void CTREV5MotorController::read_thread(std::unique_ptr<Tracer> tracer,
 			{
 				read_thread_state_->setOutputCurrent(output_current);
 			}
-			if (talon_srx_ || talon_fx_)
+			if (talon_srx_)
 			{
 				read_thread_state_->setStatorCurrent(stator_current);
 				read_thread_state_->setSupplyCurrent(supply_current);
@@ -1624,9 +1518,6 @@ static bool convertFeedbackDevice(const hardware_interface::FeedbackDevice input
     {
     case hardware_interface::FeedbackDevice_QuadEncoder:
         output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::QuadEncoder;
-        break;
-    case hardware_interface::FeedbackDevice_IntegratedSensor:
-        output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::IntegratedSensor;
         break;
     case hardware_interface::FeedbackDevice_Analog:
         output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::Analog;
@@ -1932,57 +1823,6 @@ static bool convertControlFrame(const hardware_interface::ControlFrame input,
         break;
     default:
         ROS_ERROR("Invalid input in convertControlFrame");
-        return false;
-    }
-    return true;
-}
-
-static bool convertMotorCommutation(const hardware_interface::MotorCommutation input,
-                                    ctre::phoenix::motorcontrol::MotorCommutation &output)
-{
-    switch (input)
-    {
-    case hardware_interface::MotorCommutation::Trapezoidal:
-        output = ctre::phoenix::motorcontrol::MotorCommutation::Trapezoidal;
-        break;
-    default:
-        ROS_ERROR("Invalid input in convertMotorCommutation");
-        return false;
-    }
-    return true;
-}
-
-static bool convertAbsoluteSensorRange(const hardware_interface::AbsoluteSensorRange input,
-                                       ctre::phoenix::sensors::AbsoluteSensorRange &output)
-{
-    switch (input)
-    {
-    case hardware_interface::Unsigned_0_to_360:
-        output = ctre::phoenix::sensors::Unsigned_0_to_360;
-        break;
-    case hardware_interface::Signed_PlusMinus180:
-        output = ctre::phoenix::sensors::Signed_PlusMinus180;
-        break;
-    default:
-        ROS_ERROR("Invalid input in convertAbsoluteSensorRange");
-        return false;
-    }
-    return true;
-}
-
-static bool convertSensorInitializationStrategy(const hardware_interface::SensorInitializationStrategy input,
-                                                ctre::phoenix::sensors::SensorInitializationStrategy &output)
-{
-    switch (input)
-    {
-    case hardware_interface::BootToZero:
-        output = ctre::phoenix::sensors::BootToZero;
-        break;
-    case hardware_interface::BootToAbsolutePosition:
-        output = ctre::phoenix::sensors::BootToAbsolutePosition;
-        break;
-    default:
-        ROS_ERROR("Invalid input in convertSensorInitializationStrategy");
         return false;
     }
     return true;

@@ -29,7 +29,7 @@ hardware_interface:
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
        
-joint_state_controller:
+joint_state_controller_jetson:
    type:         joint_state_controller/JointStateController
    publish_rate: 100
 # Settings for ros_control hardware interface
@@ -54,10 +54,10 @@ joint_state_controller:
 # encoder state used by the hw manager and publishes it as
 # a ROS topic.  This is generic ROS stuff, so we'll have
 # to figure out what to map e.g. effort to in the Talon world
-talon_state_controller:
+talon_state_controller_jetson:
    type:         talon_state_controller/TalonStateController
    publish_rate: 100
-talon_config_controller:
+talon_config_controller_jetson:
    type:         talon_config_controller/TalonConfigController
    publish_rate: 5
 
@@ -114,19 +114,19 @@ talon9_motionmagic_controller:
 # Used to listen for joint state published from the given topic
 # (in this case the rio) and copy them to internal copies of 
 # joint data
-joint_state_listener_controller:
+joint_state_listener_controller_jetson:
     type:      state_listener_controller/JointStateListenerController
     topic:     /frcrobot_rio/joint_states
 
-match_state_listener_controller:
+match_state_listener_controller_jetson:
     type:      state_listener_controller/MatchStateListenerController
     topic:     /frcrobot_rio/match_data
 
-pdp_state_controller:
+pdp_state_controller_jetson:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
 
-pcm_state_controller:
+pcm_state_controller_jetson:
    type : pcm_state_controller/PCMStateController
    publish_rate: 20
 

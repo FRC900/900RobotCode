@@ -2,7 +2,6 @@
 #define CTRE_V5_DEVICE_INC__
 
 #include <atomic>
-#include <optional>
 #include <string>
 
 #include "ctre/phoenix/ErrorCode.h"

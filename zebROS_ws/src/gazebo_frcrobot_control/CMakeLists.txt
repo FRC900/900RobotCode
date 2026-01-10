@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6.3)
 project(gazebo_frcrobot_control)
 
+set(CMAKE_CXX_STANDARD 17)
 include ("../cmake_modules/CMakeOpt.cmake")
 
 # Load catkin and all dependencies required for this package

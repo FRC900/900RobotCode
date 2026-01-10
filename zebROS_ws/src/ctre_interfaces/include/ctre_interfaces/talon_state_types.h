@@ -49,7 +49,6 @@ enum FeedbackDevice
 	FeedbackDevice_Uninitialized,
 	FeedbackDevice_QuadEncoder,
 	FeedbackDevice_CTRE_MagEncoder_Relative = FeedbackDevice_QuadEncoder,
-	FeedbackDevice_IntegratedSensor,
 	FeedbackDevice_Analog,
 	FeedbackDevice_Tachometer,
 	FeedbackDevice_PulseWidthEncodedPosition,
@@ -199,38 +198,21 @@ enum SetValueMotionProfile
 	Disable = 0, Enable = 1, Hold = 2,
 };
 
-enum class MotorCommutation {
-	Trapezoidal //!< Trapezoidal Commutation
-};
-
 struct MotionProfileStatus
 {
-	int  topBufferRem;
-	int  topBufferCnt;
-	int  btmBufferCnt;
-	bool hasUnderrun;
-	bool isUnderrun;
-	bool activePointValid;
-	bool isLast;
-	int  profileSlotSelect0;
-	int  profileSlotSelect1;
-	SetValueMotionProfile outputEnable;
-	int  timeDurMs;
+	size_t  topBufferRem{0};
+	size_t  topBufferCnt{0};
+	int     btmBufferCnt{0};
+	bool    hasUnderrun{false};
+	bool    isUnderrun{false};
+	bool    activePointValid{false};
+	bool    isLast{false};
+	int     profileSlotSelect0{0};
+	int     profileSlotSelect1{0};
+	SetValueMotionProfile outputEnable{Disable};
+	int  timeDurMs{0};
 
-	MotionProfileStatus(void):
-		topBufferRem(0),
-		topBufferCnt(0),
-		btmBufferCnt(0),
-		hasUnderrun(false),
-		isUnderrun(false),
-		activePointValid(false),
-		isLast(false),
-		profileSlotSelect0(0),
-		profileSlotSelect1(0),
-		outputEnable(Disable),
-		timeDurMs(0)
-	{
-	}
+	explicit MotionProfileStatus(void) = default;
 
 };
 

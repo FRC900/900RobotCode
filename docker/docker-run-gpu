@@ -12,4 +12,4 @@ docker run "$@" -it --gpus all --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
  --ipc=host \
  -v /dev:/dev --privileged \
  --shm-size=8G \
- -e DISPLAY=$DISPLAY -e NVIDIA_DRIVER_CAPABILITIES=all --user ubuntu frc900/zebros-2025-dev:latest /bin/bash
+ -e DISPLAY=$DISPLAY -e NVIDIA_DRIVER_CAPABILITIES=all --user ubuntu frc900/zebros-2026-dev:latest /bin/bash

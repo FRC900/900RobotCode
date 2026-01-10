@@ -90,18 +90,12 @@ TalonHWCommand::TalonHWCommand(void) :
 	current_limit_enable_(false),
 	current_limit_changed_(true),
 
-	// current limiting - TalonFX / Falcon500
+	// current limiting - TalonSRX 
 	supply_current_limit_(0),
 	supply_current_trigger_threshold_current_(0),
 	supply_current_trigger_threshold_time_(0),
 	supply_current_limit_enable_(false),
 	supply_current_limit_changed_(true),
-
-	stator_current_limit_(0),
-	stator_current_trigger_threshold_current_(0),
-	stator_current_trigger_threshold_time_(0),
-	stator_current_limit_enable_(false),
-	stator_current_limit_changed_(true),
 
 	motion_cruise_velocity_(0),
 	motion_acceleration_(0),
@@ -128,15 +122,6 @@ TalonHWCommand::TalonHWCommand(void) :
 	aux_pid_polarity_changed_(true),
 
 	conversion_factor_(1.0),
-
-	motor_commutation_(hardware_interface::MotorCommutation::Trapezoidal),
-	motor_commutation_changed_(true),
-
-	absolute_sensor_range_(hardware_interface::Unsigned_0_to_360),
-	absolute_sensor_range_changed_(true),
-
-	sensor_initialization_strategy_(hardware_interface::BootToZero),
-	sensor_initialization_strategy_changed_(true),
 
 	enable_read_thread_(true),
 	enable_read_thread_changed_(false),
@@ -1484,73 +1469,6 @@ void  TalonHWCommand::resetSupplyCurrentLimit(void)
 	supply_current_limit_changed_ = true;
 }
 
-void TalonHWCommand::setStatorCurrentLimit(double stator_current_limit)
-{
-	if (stator_current_limit_ != stator_current_limit)
-	{
-		stator_current_limit_ = stator_current_limit;
-		stator_current_limit_changed_ = true;
-	}
-}
-double TalonHWCommand::getStatorCurrentLimit(void) const
-{
-	return stator_current_limit_;
-}
-void TalonHWCommand::setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current)
-{
-	if (stator_current_trigger_threshold_current_ != stator_current_trigger_threshold_current)
-	{
-		stator_current_trigger_threshold_current_ = stator_current_trigger_threshold_current;
-		stator_current_limit_changed_ = true;
-	}
-}
-double TalonHWCommand::getStatorCurrentTriggerThresholdCurrent(void) const
-{
-	return stator_current_trigger_threshold_current_;
-}
-void TalonHWCommand::setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time)
-{
-	if (stator_current_trigger_threshold_time_ != stator_current_trigger_threshold_time)
-	{
-		stator_current_trigger_threshold_time_ = stator_current_trigger_threshold_time;
-		stator_current_limit_changed_ = true;
-	}
-}
-double TalonHWCommand::getStatorCurrentTriggerThresholdTime(void) const
-{
-	return stator_current_trigger_threshold_time_;
-}
-void TalonHWCommand::setStatorCurrentLimitEnable(bool stator_current_limit_enable)
-{
-	if (stator_current_limit_enable_ != stator_current_limit_enable)
-	{
-		stator_current_limit_enable_ = stator_current_limit_enable;
-		stator_current_limit_changed_ = true;
-	}
-}
-bool TalonHWCommand::getStatorCurrentLimitEnable(void) const
-{
-	return stator_current_limit_enable_;
-}
-
-bool TalonHWCommand::statorCurrentLimitChanged(double &stator_current_limit,
-		double &stator_current_trigger_threshold_current,
-		double &stator_current_trigger_threshold_time,
-		bool   &stator_current_limit_enable)
-{
-	stator_current_limit = stator_current_limit_;
-	stator_current_trigger_threshold_current = stator_current_trigger_threshold_current_;
-	stator_current_trigger_threshold_time = stator_current_trigger_threshold_time_;
-	stator_current_limit_enable = stator_current_limit_enable_;
-	const bool ret = stator_current_limit_changed_;
-	stator_current_limit_changed_ = false;
-	return ret;
-}
-void  TalonHWCommand::resetStatorCurrentLimit(void)
-{
-	stator_current_limit_changed_ = true;
-}
-
 void TalonHWCommand::setMotionCruiseVelocity(double velocity)
 {
 	if (fabs(velocity - motion_cruise_velocity_) > double_value_epsilon)
@@ -1856,81 +1774,6 @@ void TalonHWCommand::setConversionFactor(double conversion_factor)
 double TalonHWCommand::getConversionFactor(void) const
 {
 	return conversion_factor_;
-}
-
-//TalonFX only
-void TalonHWCommand::setMotorCommutation(hardware_interface::MotorCommutation motor_commutation)
-{
-	if (motor_commutation_ != motor_commutation)
-	{
-		motor_commutation_ = motor_commutation;
-		motor_commutation_changed_ = true;
-	}
-}
-hardware_interface::MotorCommutation TalonHWCommand::getMotorCommutation(void) const
-{
-	return motor_commutation_;
-}
-bool TalonHWCommand::motorCommutationChanged(hardware_interface::MotorCommutation &motor_commutation)
-{
-	motor_commutation = motor_commutation_;
-	const bool ret = motor_commutation_changed_;
-	motor_commutation_changed_ = false;
-	return ret;
-}
-void TalonHWCommand::resetMotorCommutation(void)
-{
-	motor_commutation_changed_ = true;
-}
-
-//TalonFX only
-void TalonHWCommand::setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range)
-{
-	if (absolute_sensor_range_ != absolute_sensor_range)
-	{
-		absolute_sensor_range_ = absolute_sensor_range;
-		absolute_sensor_range_changed_ = true;
-	}
-}
-hardware_interface::AbsoluteSensorRange TalonHWCommand::getAbsoluteSensorRange(void) const
-{
-	return absolute_sensor_range_;
-}
-bool TalonHWCommand::absoluteSensorRangeChanged(hardware_interface::AbsoluteSensorRange &absolute_sensor_range)
-{
-	absolute_sensor_range = absolute_sensor_range_;
-	const bool ret = absolute_sensor_range_changed_;
-	absolute_sensor_range_changed_ = false;
-	return ret;
-}
-void TalonHWCommand::resetAbsoluteSensorRange(void)
-{
-	absolute_sensor_range_changed_ = true;
-}
-
-//TalonFX only
-void TalonHWCommand::setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy)
-{
-	if (sensor_initialization_strategy_ != sensor_initialization_strategy)
-	{
-		sensor_initialization_strategy_ = sensor_initialization_strategy;
-		sensor_initialization_strategy_changed_ = true;
-	}
-}
-hardware_interface::SensorInitializationStrategy TalonHWCommand::getSensorInitializationStrategy(void) const
-{
-	return sensor_initialization_strategy_;
-}
-bool TalonHWCommand::sensorInitializationStrategyChanged(hardware_interface::SensorInitializationStrategy &sensor_initialization_strategy)
-{
-	sensor_initialization_strategy = sensor_initialization_strategy_;
-	const bool ret = sensor_initialization_strategy_changed_;
-	sensor_initialization_strategy_changed_ = false;
-	return ret;
-}
-void TalonHWCommand::resetSensorInitializationStrategy(void)
-{
-	sensor_initialization_strategy_changed_ = true;
 }
 
 void TalonHWCommand::setEnableReadThread(bool enable_read_thread)

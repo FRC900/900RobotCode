@@ -19,8 +19,6 @@ double getConversionFactor(const int encoder_ticks_per_rotation,
             return 2. * M_PI / encoder_ticks_per_rotation;
         case hardware_interface::FeedbackDevice_Analog:
             return 2. * M_PI / 1024.;
-        case hardware_interface::FeedbackDevice_IntegratedSensor:
-            return 2. * M_PI / 2048.;
         case hardware_interface::FeedbackDevice_Tachometer:
         case hardware_interface::FeedbackDevice_SensorSum:
         case hardware_interface::FeedbackDevice_SensorDifference:
@@ -44,8 +42,6 @@ double getConversionFactor(const int encoder_ticks_per_rotation,
             return 2. * M_PI / encoder_ticks_per_rotation / .1;
         case hardware_interface::FeedbackDevice_Analog:
             return 2. * M_PI / 1024. / .1;
-        case hardware_interface::FeedbackDevice_IntegratedSensor:
-            return 2. * M_PI / 2048. / .1;
         case hardware_interface::FeedbackDevice_Tachometer:
         case hardware_interface::FeedbackDevice_SensorSum:
         case hardware_interface::FeedbackDevice_SensorDifference:
